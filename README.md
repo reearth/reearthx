@@ -1,3 +1,3 @@
 # reearthx
 
-Common library in Gos for Re:Earth
+Common Go library for Re:Earth
