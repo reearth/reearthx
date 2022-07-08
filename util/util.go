@@ -2,11 +2,10 @@ package util
 
 import "net/url"
 
-func Must[T any](v T, err error) T {
+func Must(err error) {
 	if err != nil {
 		panic(err)
 	}
-	return v
 }
 
 func IsZero[T comparable](v T) bool {

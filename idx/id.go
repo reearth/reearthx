@@ -45,7 +45,7 @@ func From[T Type](id string) (ID[T], error) {
 }
 
 func Must[T Type](id string) ID[T] {
-	return util.Must(From[T](id))
+	return util.Unwrap(From[T](id))
 }
 
 func FromRef[T Type](id *string) *ID[T] {

@@ -50,5 +50,5 @@ func includeUpperCase(s string) bool {
 }
 
 func mustParseID(id string) ulid.ULID {
-	return util.Must(parseID(id))
+	return util.Unwrap(parseID(id))
 }

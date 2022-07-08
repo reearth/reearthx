@@ -14,7 +14,7 @@ func ListFrom[T Type](ids []string) (List[T], error) {
 }
 
 func MustList[T Type](ids []string) List[T] {
-	return util.Must(ListFrom[T](ids))
+	return util.Unwrap(ListFrom[T](ids))
 }
 
 func (l List[T]) list() util.List[ID[T]] {

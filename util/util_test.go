@@ -10,11 +10,10 @@ import (
 )
 
 func TestMust(t *testing.T) {
-	a := &struct{}{}
 	err := errors.New("ERR")
-	assert.Same(t, a, Must(a, nil))
+	Must(nil)
 	assert.PanicsWithValue(t, err, func() {
-		_ = Must(a, err)
+		Must(err)
 	})
 }
 
