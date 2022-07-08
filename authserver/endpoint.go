@@ -20,7 +20,7 @@ import (
 const (
 	loginEndpoint  = "api/login"
 	logoutEndpoint = "api/logout"
-	jwksEndpoint   = ".well-known/jwks.json"
+	jwksEndpoint   = "jwks.json"
 )
 
 type EndpointConfig struct {
@@ -30,7 +30,7 @@ type EndpointConfig struct {
 	URL              *url.URL
 	WebURL           *url.URL
 	Key              string
-	UserInfoSetter   UserInfoSetter
+	UserInfoProvider UserInfoProvider
 	DefaultClientID  string
 	Dev              bool
 	DN               *DNConfig
@@ -40,7 +40,7 @@ type EndpointConfig struct {
 
 func (c EndpointConfig) storageConfig() StorageConfig {
 	return StorageConfig{
-		UserInfoSetter: c.UserInfoSetter,
+		UserInfoSetter: c.UserInfoProvider,
 		Domain:         c.URL.String(),
 		ClientDomain:   c.WebURL.String(),
 		ClientID:       c.DefaultClientID,

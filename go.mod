@@ -8,6 +8,7 @@ require (
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jarcoal/httpmock v1.2.0
 	github.com/labstack/echo/v4 v4.7.2

@@ -18,8 +18,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/reearth/reearthx/util"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/zitadel/oidc/pkg/oidc"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 func TestEndpoint(t *testing.T) {
@@ -34,7 +37,7 @@ func TestEndpoint(t *testing.T) {
 			}
 			return "", errors.New("not found")
 		},
-		UserInfoSetter: func(ctx context.Context, sub string, scope []string, ui oidc.UserInfoSetter) error {
+		UserInfoProvider: func(ctx context.Context, sub string, scope []string, ui oidc.UserInfoSetter) error {
 			if sub == "subsub" {
 				ui.SetEmail("aaa@example.com", true)
 				ui.SetName("aaa")
@@ -108,13 +111,15 @@ func TestEndpoint(t *testing.T) {
 	}, nil)
 	var r map[string]any
 	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res2.Body)), &r))
+	assert.Equal(t, map[string]any{
+		"id_token":     r["id_token"],
+		"access_token": r["access_token"],
+		"expires_in":   r["expires_in"],
+		"token_type":   "Bearer",
+		"state":        "hogestate",
+	}, r)
 	accessToken := r["access_token"].(string)
 	idToken := r["id_token"].(string)
-	assert.Greater(t, len(accessToken), 1)
-	assert.Greater(t, len(idToken), 1)
-	assert.Equal(t, "Bearer", r["token_type"])
-	assert.Equal(t, "hogestate", r["state"])
-	// assert.Greater(t, r["expires_in"], 1)
 
 	// userinfo
 	res3 := send(http.MethodGet, ts.URL+"/userinfo", false, nil, map[string]string{
@@ -133,15 +138,48 @@ func TestEndpoint(t *testing.T) {
 	res4 := send(http.MethodGet, ts.URL+"/.well-known/openid-configuration", false, nil, nil)
 	var r3 map[string]any
 	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res4.Body)), &r3))
-	assert.Greater(t, "https://example.com/jwks.json", r3["jwks_uri"])
+	assert.Equal(t, "https://example.com/jwks.json", r3["jwks_uri"])
 
 	// jwks
-	// res5 := send(http.MethodGet, ts.URL+"/jwks.json", false, nil, nil)
-	// var r4 jose.JSONWebKeySet
-	// util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res5.Body)), &r4))
-	// assert.Equal(t, nil, r4)
+	res5 := send(http.MethodGet, ts.URL+"/jwks.json", false, nil, nil)
+	var jwks jose.JSONWebKeySet
+	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res5.Body)), &jwks))
 
-	// TODO: validate access_token and id_token
+	// validate access_token
+	token := util.Unwrap(jwt.ParseSigned(accessToken))
+	header, _ := lo.Find(token.Headers, func(h jose.Header) bool {
+		return h.Algorithm == string(jose.RS256)
+	})
+	key := jwks.Key(header.KeyID)[0]
+	claims := map[string]any{}
+	util.Must(token.Claims(key.Key, &claims))
+	assert.Equal(t, map[string]any{
+		"iss": "https://example.com/",
+		"sub": "subsub",
+		"aud": []any{"https://example.com"},
+		"jti": claims["jti"],
+		"exp": claims["exp"],
+		"nbf": claims["nbf"],
+		"iat": claims["iat"],
+	}, claims)
+
+	// validate id_token
+	token2 := util.Unwrap(jwt.ParseSigned(idToken))
+	header2, _ := lo.Find(token2.Headers, func(h jose.Header) bool {
+		return h.Algorithm == string(jose.RS256)
+	})
+	key2 := jwks.Key(header2.KeyID)[0]
+	claims2 := map[string]any{}
+	util.Must(token.Claims(key2.Key, &claims2))
+	assert.Equal(t, map[string]any{
+		"iss": "https://example.com/",
+		"sub": "subsub",
+		"aud": []any{"https://example.com"},
+		"jti": claims["jti"],
+		"exp": claims["exp"],
+		"nbf": claims["nbf"],
+		"iat": claims["iat"],
+	}, claims2)
 }
 
 var httpClient = &http.Client{

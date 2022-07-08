@@ -12,6 +12,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/reearth/reearthx/log"
 	"github.com/zitadel/oidc/pkg/oidc"
 	"github.com/zitadel/oidc/pkg/op"
@@ -20,7 +21,7 @@ import (
 
 type Storage struct {
 	config         StorageConfig
-	userInfoSetter UserInfoSetter
+	userInfoSetter UserInfoProvider
 	clients        map[string]op.Client
 	requestRepo    RequestRepo
 	keySet         jose.JSONWebKeySet
@@ -30,7 +31,7 @@ type Storage struct {
 
 var _ op.Storage = (*Storage)(nil)
 
-type UserInfoSetter func(context.Context, string, []string, oidc.UserInfoSetter) error
+type UserInfoProvider func(context.Context, string, []string, oidc.UserInfoSetter) error
 
 type StorageConfig struct {
 	ClientID        string
@@ -40,7 +41,7 @@ type StorageConfig struct {
 	DN              *DNConfig
 	ConfigRepo      ConfigRepo
 	RequestRepo     RequestRepo
-	UserInfoSetter  UserInfoSetter
+	UserInfoSetter  UserInfoProvider
 	AudienceForTest string
 }
 
@@ -288,12 +289,12 @@ func (s *Storage) DeleteAuthRequest(ctx context.Context, requestID string) error
 }
 
 func (s *Storage) CreateAccessToken(_ context.Context, _ op.TokenRequest) (string, time.Time, error) {
-	return "id", time.Now().UTC().Add(5 * time.Hour), nil
+	return uuid.NewString(), time.Now().UTC().Add(5 * time.Hour), nil
 }
 
 func (s *Storage) CreateAccessAndRefreshTokens(_ context.Context, request op.TokenRequest, _ string) (accessTokenID string, newRefreshToken string, expiration time.Time, err error) {
 	authReq := request.(*Request)
-	return "id", authReq.GetID(), time.Now().UTC().Add(5 * time.Minute), nil
+	return uuid.NewString(), authReq.GetID(), time.Now().UTC().Add(5 * time.Minute), nil
 }
 
 func (s *Storage) TokenRequestByRefreshToken(ctx context.Context, refreshToken string) (op.RefreshTokenRequest, error) {
@@ -305,7 +306,7 @@ func (s *Storage) TokenRequestByRefreshToken(ctx context.Context, refreshToken s
 }
 
 func (s *Storage) TerminateSession(_ context.Context, _, _ string) error {
-	return errors.New("not implemented")
+	return nil
 }
 
 func (s *Storage) GetSigningKey(_ context.Context, keyCh chan<- jose.SigningKey) {
@@ -351,7 +352,7 @@ func (s *Storage) SetUserinfoFromScopes(ctx context.Context, userinfo oidc.UserI
 }
 
 func (s *Storage) GetPrivateClaimsFromScopes(_ context.Context, _, _ string, _ []string) (map[string]interface{}, error) {
-	return map[string]interface{}{"private_claim": "test"}, nil
+	return nil, nil
 }
 
 func (s *Storage) SetIntrospectionFromToken(ctx context.Context, introspect oidc.IntrospectionResponse, _, subject, clientID string) error {
@@ -371,7 +372,7 @@ func (s *Storage) ValidateJWTProfileScopes(_ context.Context, _ string, scope []
 }
 
 func (s *Storage) RevokeToken(_ context.Context, _ string, _ string, _ string) *oidc.Error {
-	panic("implement me")
+	return nil
 }
 
 func (s *Storage) CompleteAuthRequest(ctx context.Context, requestId, sub string) error {
