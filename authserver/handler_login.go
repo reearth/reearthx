@@ -83,13 +83,6 @@ func LoginHandler(ctx context.Context, cfg LoginHandlerConfig) func(ctx echo.Con
 	}
 }
 
-func LogoutHandler() echo.HandlerFunc {
-	return func(ec echo.Context) error {
-		u := ec.QueryParam("returnTo")
-		return ec.Redirect(http.StatusTemporaryRedirect, u)
-	}
-}
-
 func redirectURL(u *url.URL, p string, requestID, err string) string {
 	v := util.CopyURL(u)
 	if p != "" {

@@ -2,15 +2,11 @@ package authserver
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/json"
-	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/golang/gddo/httputil/header"
 	"github.com/gorilla/mux"
 	"github.com/labstack/echo/v4"
 	"github.com/reearth/reearthx/log"
@@ -20,7 +16,6 @@ import (
 const (
 	loginEndpoint  = "api/login"
 	logoutEndpoint = "api/logout"
-	jwksEndpoint   = "jwks.json"
 )
 
 type EndpointConfig struct {
@@ -51,7 +46,7 @@ func (c EndpointConfig) storageConfig() StorageConfig {
 	}
 }
 
-func Endpoint(ctx context.Context, cfg EndpointConfig, r *echo.Group) {
+func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 	if cfg.Issuer != "" && !strings.HasSuffix(cfg.Issuer, "/") {
 		cfg.Issuer = cfg.Issuer + "/"
 	}
@@ -61,43 +56,28 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, r *echo.Group) {
 		log.Fatalf("auth: failed to init: %s\n", err)
 	}
 
-	handler, err := op.NewOpenIDProvider(
-		ctx,
-		&op.Config{
-			Issuer:                cfg.Issuer,
-			CryptoKey:             sha256.Sum256([]byte(cfg.Key)),
-			GrantTypeRefreshToken: true,
-		},
-		storage,
-		op.WithHttpInterceptors(jsonToFormHandler()),
-		op.WithHttpInterceptors(setURLVarsHandler()),
-		op.WithCustomEndSessionEndpoint(op.NewEndpoint(logoutEndpoint)),
-		op.WithCustomKeysEndpoint(op.NewEndpoint(jwksEndpoint)),
-	)
-	if err != nil {
-		log.Fatalf("auth: init failed: %s\n", err)
-	}
+	router := Server(ctx, ServerConfig{
+		Issuer:  cfg.Issuer,
+		Key:     cfg.Key,
+		Storage: storage,
+	}).(*mux.Router)
 
-	router := handler.HttpHandler().(*mux.Router)
-
-	if err := router.Walk(muxToEchoMapper(r)); err != nil {
+	if err := router.Walk(muxToEchoMapper(g)); err != nil {
 		log.Fatalf("auth: walk failed: %s\n", err)
 	}
 
-	// Actual login endpoint
-	r.POST(loginEndpoint, LoginHandler(ctx, LoginHandlerConfig{
+	g.POST(loginEndpoint, LoginHandler(ctx, LoginHandlerConfig{
 		SubLoader: cfg.SubLoader,
 		URL:       cfg.URL,
 		WebURL:    cfg.WebURL,
 		Storage:   storage,
 	}))
 
-	r.GET(logoutEndpoint, LogoutHandler())
+	g.GET(logoutEndpoint, LogoutHandler())
 
-	// used for auth0/auth0-react; the logout endpoint URL is hard-coded
-	// can be removed when the mentioned issue is solved
+	// compability with auth0/auth0-spa-js; the logout endpoint URL is hard-coded
 	// https://github.com/auth0/auth0-spa-js/issues/845
-	r.GET("v2/logout", LogoutHandler())
+	g.GET("v2/logout", LogoutHandler())
 
 	debugMsg := ""
 	if dev, ok := os.LookupEnv(op.OidcDevMode); ok {
@@ -107,57 +87,6 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, r *echo.Group) {
 	}
 
 	log.Infof("auth: oidc server started%s", debugMsg)
-}
-
-func setURLVarsHandler() func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != "/authorize/callback" {
-				handler.ServeHTTP(w, r)
-				return
-			}
-
-			r2 := mux.SetURLVars(r, map[string]string{"id": r.URL.Query().Get("id")})
-			handler.ServeHTTP(w, r2)
-		})
-	}
-}
-
-func jsonToFormHandler() func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != "/oauth/token" {
-				handler.ServeHTTP(w, r)
-				return
-			}
-
-			if r.Header.Get("Content-Type") != "" {
-				value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
-				if value != "application/json" {
-					// Content-Type header is not application/json
-					handler.ServeHTTP(w, r)
-					return
-				}
-			}
-
-			if err := r.ParseForm(); err != nil {
-				return
-			}
-
-			var result map[string]string
-
-			if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			for key, value := range result {
-				r.Form.Set(key, value)
-			}
-
-			handler.ServeHTTP(w, r)
-		})
-	}
 }
 
 func muxToEchoMapper(r *echo.Group) func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
