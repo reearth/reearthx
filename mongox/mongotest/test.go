@@ -12,7 +12,10 @@ import (
 	"go.mongodb.org/mongo-driver/x/mongo/driver/uuid"
 )
 
-var Env = ""
+var (
+	Env      = ""
+	Database = "test"
+)
 
 func Connect(t *testing.T) func(*testing.T) *mongo.Database {
 	t.Helper()
@@ -38,7 +41,7 @@ func Connect(t *testing.T) func(*testing.T) *mongo.Database {
 		t.Helper()
 
 		database, _ := uuid.New()
-		databaseName := "reearth-cms-test-" + hex.EncodeToString(database[:])
+		databaseName := Database + "_" + hex.EncodeToString(database[:])
 
 		t.Cleanup(func() {
 			_ = c.Database(databaseName).Drop(context.Background())
