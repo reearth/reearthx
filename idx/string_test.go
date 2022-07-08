@@ -7,8 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestStringIDFromRef(t *testing.T) {
+	assert.Equal(t, lo.ToPtr(StringID[T]("aa")), StringIDFromRef[T](lo.ToPtr("aa")))
+	assert.Nil(t, StringIDFromRef[T](nil))
+}
+
 func TestStringID_Ref(t *testing.T) {
 	assert.Equal(t, lo.ToPtr(StringID[T]("a")), StringID[T]("a").Ref())
+	assert.Nil(t, StringID[T]("").Ref())
 }
 
 func TestStringID_CloneRef(t *testing.T) {
