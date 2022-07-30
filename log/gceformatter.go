@@ -33,9 +33,9 @@ var (
 		MessageKey:    "message",
 		LevelKey:      "severity",
 		TimeKey:       "time",
-		NameKey:       "N",
-		CallerKey:     "C",
-		StacktraceKey: "S",
+		NameKey:       "name",
+		CallerKey:     "call",
+		StacktraceKey: "stack",
 		LineEnding:    zapcore.DefaultLineEnding,
 		EncodeLevel: func(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 			enc.AppendString(string(levelsZapToGCE[l]))

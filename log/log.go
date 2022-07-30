@@ -10,12 +10,12 @@ import (
 
 var (
 	consoleEncoderConfig = zapcore.EncoderConfig{
-		MessageKey:     "M",
-		LevelKey:       "L",
-		TimeKey:        "T",
-		NameKey:        "N",
-		CallerKey:      "C",
-		StacktraceKey:  "S",
+		MessageKey:     "message",
+		LevelKey:       "level",
+		TimeKey:        "timestamp",
+		NameKey:        "name",
+		CallerKey:      "call",
+		StacktraceKey:  "stack",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
 		EncodeTime:     zapcore.ISO8601TimeEncoder,
