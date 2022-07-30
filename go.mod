@@ -26,6 +26,7 @@ require (
 	go.mongodb.org/mongo-driver v1.9.1
 	go.opentelemetry.io/otel v1.7.0
 	go.opentelemetry.io/otel/sdk v1.7.0
+	go.uber.org/zap v1.21.0
 	golang.org/x/exp v0.0.0-20220706164943-b4a6d9510983
 	gopkg.in/square/go-jose.v2 v2.6.0
 )

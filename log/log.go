@@ -4,19 +4,46 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+var (
+	consoleEncoderConfig = zapcore.EncoderConfig{
+		MessageKey:     "M",
+		LevelKey:       "L",
+		TimeKey:        "T",
+		NameKey:        "N",
+		CallerKey:      "C",
+		StacktraceKey:  "S",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+		EncodeName:     zapcore.FullNameEncoder,
+	}
+
+	logger *zap.Logger
 )
 
 func init() {
 	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
-	logrus.SetLevel(logrus.InfoLevel)
-	if gcp != "" {
-		logrus.SetFormatter(NewGCEFormatter(false))
+
+	var enc zapcore.Encoder
+	if gcp == "" {
+		enc = zapcore.NewJSONEncoder(gceEncoderConfig)
 	} else {
-		logrus.SetFormatter(&logrus.TextFormatter{
-			DisableColors: false,
-			FullTimestamp: true,
-		})
+		enc = zapcore.NewConsoleEncoder(gceEncoderConfig)
 	}
+
+	logger = zap.New(
+		zapcore.NewCore(
+			enc,
+			zapcore.Lock(zapcore.AddSync(os.Stdout)),
+			zap.NewAtomicLevelAt(zapcore.InfoLevel),
+		),
+	)
 }
 
 func Tracef(format string, args ...interface{}) {
