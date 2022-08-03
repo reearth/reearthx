@@ -24,6 +24,7 @@ var (
 		EncodeName:     zapcore.FullNameEncoder,
 	}
 
+	atom   = zap.NewAtomicLevel()
 	logger *zap.Logger
 )
 
@@ -41,9 +42,13 @@ func init() {
 		zapcore.NewCore(
 			enc,
 			zapcore.Lock(zapcore.AddSync(os.Stdout)),
-			zap.NewAtomicLevelAt(zapcore.InfoLevel),
+			atom,
 		),
 	)
+}
+
+func SetLevel(l zapcore.Level) {
+	atom.SetLevel(l)
 }
 
 func Tracef(format string, args ...interface{}) {
