@@ -6,6 +6,7 @@ import (
 
 type severity string
 
+// https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 const (
 	severityDEBUG     severity = "DEBUG"
 	severityINFO      severity = "INFO"
@@ -40,6 +41,7 @@ var (
 		EncodeLevel: func(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 			enc.AppendString(string(levelsZapToGCE[l]))
 		},
+		// https://github.com/GoogleCloudPlatform/fluent-plugin-google-cloud/issues/220#issuecomment-382505054
 		EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
 		EncodeDuration: zapcore.StringDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
