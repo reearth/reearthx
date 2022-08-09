@@ -115,6 +115,7 @@ func Any[T any](collection []T, predicate func(T) bool) bool {
 	}
 	return false
 }
+
 // Subset returns true if all the subCollection items are included in the collection
 func Subset[T comparable](collection, subCollection []T) bool {
 	if len(subCollection) == 0 {
