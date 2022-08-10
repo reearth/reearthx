@@ -34,7 +34,7 @@ func init() {
 	if gcp == "" {
 		enc = zapcore.NewJSONEncoder(gceEncoderConfig)
 	} else {
-		enc = zapcore.NewConsoleEncoder(gceEncoderConfig)
+		enc = zapcore.NewConsoleEncoder(consoleEncoderConfig)
 	}
 
 	l := zap.New(
