@@ -14,7 +14,7 @@ const (
 	severityERROR     severity = "ERROR"
 	severityCRITICAL  severity = "CRITICAL"
 	severityALERT     severity = "ALERT"
-	severityEmergency severity = "EMERGENCY"
+	severityEMERGENCY severity = "EMERGENCY"
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 		zapcore.ErrorLevel:  severityERROR,
 		zapcore.PanicLevel:  severityCRITICAL,
 		zapcore.DPanicLevel: severityALERT,
-		zapcore.FatalLevel:  severityEmergency,
+		zapcore.FatalLevel:  severityEMERGENCY,
 	}
 )
 
