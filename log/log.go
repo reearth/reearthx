@@ -3,7 +3,6 @@ package log
 import (
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -25,7 +24,7 @@ var (
 	}
 
 	atom   = zap.NewAtomicLevel()
-	logger *zap.Logger
+	logger *zap.SugaredLogger
 )
 
 func init() {
@@ -38,13 +37,15 @@ func init() {
 		enc = zapcore.NewConsoleEncoder(gceEncoderConfig)
 	}
 
-	logger = zap.New(
+	l := zap.New(
 		zapcore.NewCore(
 			enc,
 			zapcore.Lock(zapcore.AddSync(os.Stdout)),
 			atom,
 		),
 	)
+
+	logger = l.Sugar()
 }
 
 func SetLevel(l zapcore.Level) {
@@ -52,89 +53,89 @@ func SetLevel(l zapcore.Level) {
 }
 
 func Tracef(format string, args ...interface{}) {
-	logrus.Tracef(format, args...)
+	logger.Debugf(format, args...)
 }
 
 func Debugf(format string, args ...interface{}) {
-	logrus.Debugf(format, args...)
+	logger.Debugf(format, args)
 }
 
 func Infof(format string, args ...interface{}) {
-	logrus.Infof(format, args...)
+	logger.Infof(format, args)
 }
 
 func Printf(format string, args ...interface{}) {
-	logrus.Printf(format, args...)
+	logger.Infof(format, args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	logrus.Warnf(format, args...)
+	logger.Warnf(format, args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	logrus.Errorf(format, args...)
+	logger.Errorf(format, args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	logrus.Fatalf(format, args...)
+	logger.Fatalf(format, args...)
 }
 
 func Trace(args ...interface{}) {
-	logrus.Trace(args...)
+	logger.Debug(args...)
 }
 
 func Debug(args ...interface{}) {
-	logrus.Debug(args...)
+	logger.Debug(args...)
 }
 
 func Info(args ...interface{}) {
-	logrus.Info(args...)
+	logger.Info(args...)
 }
 
 func Print(args ...interface{}) {
-	logrus.Print(args...)
+	logger.Info(args...)
 }
 
 func Warn(args ...interface{}) {
-	logrus.Warn(args...)
+	logger.Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	logrus.Error(args...)
+	logger.Error(args...)
 }
 
 func Fatal(args ...interface{}) {
-	logrus.Fatal(args...)
+	logger.Fatal(args...)
 }
 
 func Traceln(args ...interface{}) {
-	logrus.Traceln(args...)
+	logger.Debug(args...)
 }
 
 func Debugln(args ...interface{}) {
-	logrus.Debugln(args...)
+	logger.Debug(args...)
 }
 
 func Infoln(args ...interface{}) {
-	logrus.Infoln(args...)
+	logger.Info(args...)
 }
 
 func Println(args ...interface{}) {
-	logrus.Println(args...)
+	logger.Info(args...)
 }
 
 func Warnln(args ...interface{}) {
-	logrus.Warnln(args...)
+	logger.Warn(args...)
 }
 
 func Errorln(args ...interface{}) {
-	logrus.Errorln(args...)
+	logger.Error(args...)
 }
 
 func Fatalln(args ...interface{}) {
-	logrus.Fatalln(args...)
+	logger.Fatal(args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	logrus.Panicf(format, args...)
+	logger.Panicf(format, args...)
 }
