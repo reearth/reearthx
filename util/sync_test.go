@@ -2,6 +2,7 @@ package util
 
 import (
 	"sort"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,6 +44,20 @@ func TestSyncMap_LoadOrStore(t *testing.T) {
 	res, ok = s.Load("a")
 	assert.Equal(t, "A", res)
 	assert.True(t, ok)
+}
+
+func TestSyncMap_LoadAndDelete(t *testing.T) {
+	s := &SyncMap[string, string]{}
+	res, ok := s.LoadAndDelete("a")
+	assert.Equal(t, "", res)
+	assert.False(t, ok)
+	s.Store("a", "AA")
+	res, ok = s.LoadAndDelete("a")
+	assert.Equal(t, "AA", res)
+	assert.True(t, ok)
+	res, ok = s.Load("a")
+	assert.Equal(t, "", res)
+	assert.False(t, ok)
 }
 
 func TestSyncMap_Delete(t *testing.T) {
@@ -201,4 +216,34 @@ func TestSyncMap_Len(t *testing.T) {
 	s.Store("a", 1)
 	s.Store("b", 2)
 	assert.Equal(t, 2, s.Len())
+}
+
+func TestLockMap(t *testing.T) {
+	m := LockMap[string]{}
+	res := []string{}
+	wg := sync.WaitGroup{}
+
+	wg.Add(3)
+	go func() {
+		u := m.Lock("a")
+		res = append(res, "a")
+		u()
+		wg.Done()
+	}()
+	go func() {
+		u := m.Lock("b")
+		res = append(res, "b")
+		u()
+		wg.Done()
+	}()
+	go func() {
+		u := m.Lock("a")
+		res = append(res, "c")
+		u()
+		wg.Done()
+	}()
+
+	wg.Wait()
+	slices.Sort(res)
+	assert.Equal(t, []string{"a", "b", "c"}, res)
 }
