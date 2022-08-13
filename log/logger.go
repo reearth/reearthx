@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -215,7 +214,8 @@ func (l *Logger) Hook() echo.MiddlewareFunc {
 func fromMap(fs map[string]interface{}) []interface{} {
 	fields := make([]interface{}, 0, len(fs))
 	for k, v := range fs {
-		fields = append(fields, zap.Any(k, v))
+		fields = append(fields, k)
+		fields = append(fields, v)
 	}
 
 	return fields
