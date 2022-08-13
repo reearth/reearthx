@@ -1,6 +1,7 @@
 package log
 
 import (
+	"io"
 	"os"
 
 	"go.uber.org/zap"
@@ -25,22 +26,14 @@ var (
 
 	atom   = zap.NewAtomicLevel()
 	logger *zap.SugaredLogger
+	writer = os.Stdout
 )
 
 func init() {
-	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
-
-	var enc zapcore.Encoder
-	if gcp == "" {
-		enc = zapcore.NewJSONEncoder(gceEncoderConfig)
-	} else {
-		enc = zapcore.NewConsoleEncoder(consoleEncoderConfig)
-	}
-
 	l := zap.New(
 		zapcore.NewCore(
-			enc,
-			zapcore.Lock(zapcore.AddSync(os.Stdout)),
+			enc(),
+			zapcore.Lock(zapcore.AddSync(writer)),
 			atom,
 		),
 	)
@@ -48,8 +41,30 @@ func init() {
 	logger = l.Sugar()
 }
 
+func enc() zapcore.Encoder {
+	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
+
+	if gcp == "" {
+		return zapcore.NewJSONEncoder(gceEncoderConfig)
+	} else {
+		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	}
+}
+
 func SetLevel(l zapcore.Level) {
 	atom.SetLevel(l)
+}
+
+func SetOutput(w io.Writer) {
+	l := zap.New(
+		zapcore.NewCore(
+			enc(),
+			zapcore.Lock(zapcore.AddSync(writer)),
+			atom,
+		),
+	)
+
+	logger = l.Sugar()
 }
 
 func Tracef(format string, args ...interface{}) {
@@ -80,6 +95,10 @@ func Fatalf(format string, args ...interface{}) {
 	logger.Fatalf(format, args...)
 }
 
+func Panicf(format string, args ...interface{}) {
+	logger.Panicf(format, args...)
+}
+
 func Trace(args ...interface{}) {
 	logger.Debug(args...)
 }
@@ -106,6 +125,10 @@ func Error(args ...interface{}) {
 
 func Fatal(args ...interface{}) {
 	logger.Fatal(args...)
+}
+
+func Panic(args ...interface{}) {
+	logger.Panic(args...)
 }
 
 func Traceln(args ...interface{}) {
@@ -136,6 +159,6 @@ func Fatalln(args ...interface{}) {
 	logger.Fatal(args...)
 }
 
-func Panicf(format string, args ...interface{}) {
-	logger.Panicf(format, args...)
+func Panicln(args ...interface{}) {
+	logger.Panic(args...)
 }
