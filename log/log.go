@@ -24,13 +24,14 @@ var (
 		EncodeName:     zapcore.FullNameEncoder,
 	}
 
-	atom   = zap.NewAtomicLevel()
-	logger *zap.SugaredLogger
-	writer = os.Stdout
+	atom          = zap.NewAtomicLevel()
+	sugaredLogger *zap.SugaredLogger
+	logger        *zap.Logger
+	writer        = os.Stdout
 )
 
 func init() {
-	l := zap.New(
+	logger = zap.New(
 		zapcore.NewCore(
 			enc(),
 			zapcore.Lock(zapcore.AddSync(writer)),
@@ -38,7 +39,7 @@ func init() {
 		),
 	)
 
-	logger = l.Sugar()
+	sugaredLogger = logger.Sugar()
 }
 
 func enc() zapcore.Encoder {
@@ -56,7 +57,7 @@ func SetLevel(l zapcore.Level) {
 }
 
 func SetOutput(w io.Writer) {
-	l := zap.New(
+	logger = zap.New(
 		zapcore.NewCore(
 			enc(),
 			zapcore.Lock(zapcore.AddSync(writer)),
@@ -64,101 +65,101 @@ func SetOutput(w io.Writer) {
 		),
 	)
 
-	logger = l.Sugar()
+	sugaredLogger = logger.Sugar()
 }
 
 func Tracef(format string, args ...interface{}) {
-	logger.Debugf(format, args...)
+	sugaredLogger.Debugf(format, args...)
 }
 
 func Debugf(format string, args ...interface{}) {
-	logger.Debugf(format, args)
+	sugaredLogger.Debugf(format, args)
 }
 
 func Infof(format string, args ...interface{}) {
-	logger.Infof(format, args)
+	sugaredLogger.Infof(format, args)
 }
 
 func Printf(format string, args ...interface{}) {
-	logger.Infof(format, args...)
+	sugaredLogger.Infof(format, args...)
 }
 
 func Warnf(format string, args ...interface{}) {
-	logger.Warnf(format, args...)
+	sugaredLogger.Warnf(format, args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	logger.Errorf(format, args...)
+	sugaredLogger.Errorf(format, args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	logger.Fatalf(format, args...)
+	sugaredLogger.Fatalf(format, args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	logger.Panicf(format, args...)
+	sugaredLogger.Panicf(format, args...)
 }
 
 func Trace(args ...interface{}) {
-	logger.Debug(args...)
+	sugaredLogger.Debug(args...)
 }
 
 func Debug(args ...interface{}) {
-	logger.Debug(args...)
+	sugaredLogger.Debug(args...)
 }
 
 func Info(args ...interface{}) {
-	logger.Info(args...)
+	sugaredLogger.Info(args...)
 }
 
 func Print(args ...interface{}) {
-	logger.Info(args...)
+	sugaredLogger.Info(args...)
 }
 
 func Warn(args ...interface{}) {
-	logger.Warn(args...)
+	sugaredLogger.Warn(args...)
 }
 
 func Error(args ...interface{}) {
-	logger.Error(args...)
+	sugaredLogger.Error(args...)
 }
 
 func Fatal(args ...interface{}) {
-	logger.Fatal(args...)
+	sugaredLogger.Fatal(args...)
 }
 
 func Panic(args ...interface{}) {
-	logger.Panic(args...)
+	sugaredLogger.Panic(args...)
 }
 
 func Traceln(args ...interface{}) {
-	logger.Debug(args...)
+	sugaredLogger.Debug(args...)
 }
 
 func Debugln(args ...interface{}) {
-	logger.Debug(args...)
+	sugaredLogger.Debug(args...)
 }
 
 func Infoln(args ...interface{}) {
-	logger.Info(args...)
+	sugaredLogger.Info(args...)
 }
 
 func Println(args ...interface{}) {
-	logger.Info(args...)
+	sugaredLogger.Info(args...)
 }
 
 func Warnln(args ...interface{}) {
-	logger.Warn(args...)
+	sugaredLogger.Warn(args...)
 }
 
 func Errorln(args ...interface{}) {
-	logger.Error(args...)
+	sugaredLogger.Error(args...)
 }
 
 func Fatalln(args ...interface{}) {
-	logger.Fatal(args...)
+	sugaredLogger.Fatal(args...)
 }
 
 func Panicln(args ...interface{}) {
-	logger.Panic(args...)
+	sugaredLogger.Panic(args...)
 }

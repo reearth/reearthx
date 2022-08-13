@@ -2,9 +2,11 @@ package log
 
 import (
 	"io"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -13,7 +15,7 @@ type Logger struct{}
 var _ echo.Logger = (*Logger)(nil)
 
 // GetEchoLogger returns Logger
-func GetEchoLogger() echo.Logger {
+func GetEchoLogger() *Logger {
 	return &Logger{}
 }
 
@@ -74,27 +76,27 @@ func (l *Logger) SetOutput(w io.Writer) {
 
 // Printj print JSON log
 func (l *Logger) Printj(j log.JSON) {
-	Print(j)
+	Print(fromMap(j))
 }
 
 // Debugj debug JSON log
 func (l *Logger) Debugj(j log.JSON) {
-	Debug(j)
+	Debug(fromMap(j))
 }
 
 // Infoj info JSON log
 func (l *Logger) Infoj(j log.JSON) {
-	Info(j)
+	Info(fromMap(j))
 }
 
 // Warnj warning JSON log
 func (l *Logger) Warnj(j log.JSON) {
-	Warn(j)
+	Warn(fromMap(j))
 }
 
 // Errorj error JSON log
 func (l *Logger) Errorj(j log.JSON) {
-	Error(j)
+	Error(fromMap(j))
 }
 
 // Fatalj fatal JSON log
@@ -175,4 +177,46 @@ func (l *Logger) Fatalf(format string, args ...interface{}) {
 // Panicf panic JSON log
 func (l *Logger) Panicf(format string, args ...interface{}) {
 	Panicf(format, args...)
+}
+
+// Hook is a function to process middleware.
+func (l *Logger) Hook() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			req := c.Request()
+			res := c.Response()
+			start := time.Now()
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
+			stop := time.Now()
+
+			fs := map[string]interface{}{
+				"remote_ip":     c.RealIP(),
+				"host":          req.Host,
+				"uri":           req.RequestURI,
+				"method":        req.Method,
+				"path":          req.URL.Path,
+				"referer":       req.Referer(),
+				"user_agent":    req.UserAgent(),
+				"status":        res.Status,
+				"latency":       stop.Sub(start).Microseconds(),
+				"latency_human": stop.Sub(start).String(),
+				"bytes_in":      req.ContentLength,
+				"bytes_out":     res.Size,
+			}
+
+			logger.Info("Handled request", fromMap(fs)...)
+			return nil
+		}
+	}
+}
+
+func fromMap(fs map[string]interface{}) []zap.Field {
+	fields := make([]zap.Field, 0, len(fs))
+	for k, v := range fs {
+		fields = append(fields, zap.Any(k, v))
+	}
+
+	return fields
 }
