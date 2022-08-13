@@ -46,9 +46,9 @@ func enc() zapcore.Encoder {
 	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
 
 	if gcp == "" {
-		return zapcore.NewJSONEncoder(gceEncoderConfig)
-	} else {
 		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	} else {
+		return zapcore.NewJSONEncoder(gceEncoderConfig)
 	}
 }
 
