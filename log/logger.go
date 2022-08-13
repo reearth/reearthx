@@ -206,14 +206,14 @@ func (l *Logger) Hook() echo.MiddlewareFunc {
 				"bytes_out":     res.Size,
 			}
 
-			logger.Info("Handled request", fromMap(fs)...)
+			logger.Infow("Handled request", fromMap(fs)...)
 			return nil
 		}
 	}
 }
 
-func fromMap(fs map[string]interface{}) []zap.Field {
-	fields := make([]zap.Field, 0, len(fs))
+func fromMap(fs map[string]interface{}) []interface{} {
+	fields := make([]interface{}, 0, len(fs))
 	for k, v := range fs {
 		fields = append(fields, zap.Any(k, v))
 	}
