@@ -223,22 +223,29 @@ func TestLockMap(t *testing.T) {
 	res := []string{}
 	wg := sync.WaitGroup{}
 
+	l := sync.Mutex{}
+	write := func(a string) {
+		l.Lock()
+		defer l.Unlock()
+		res = append(res, a)
+	}
+
 	wg.Add(3)
 	go func() {
 		u := m.Lock("a")
-		res = append(res, "a")
+		write("a")
 		u()
 		wg.Done()
 	}()
 	go func() {
 		u := m.Lock("b")
-		res = append(res, "b")
+		write("b")
 		u()
 		wg.Done()
 	}()
 	go func() {
 		u := m.Lock("a")
-		res = append(res, "c")
+		write("c")
 		u()
 		wg.Done()
 	}()
