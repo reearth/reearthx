@@ -57,6 +57,34 @@ func TestSliceConsumer(t *testing.T) {
 	}, c.Result)
 }
 
+func TestSliceRawFuncConsumer(t *testing.T) {
+	type d struct{ Test string }
+	raw, _ := bson.Marshal(map[string]any{
+		"test": "hoge",
+	})
+	c := NewSliceRawFuncConsumer(func(r bson.Raw) (string, error) {
+		var d2 d
+		if err := bson.Unmarshal(r, &d2); err != nil {
+			return "", err
+		}
+		return d2.Test, nil
+	})
+	assert.NoError(t, c.Consume(raw))
+	assert.Equal(t, []string{"hoge"}, c.Result)
+}
+
+func TestSliceFuncConsumer(t *testing.T) {
+	type d struct{ Test string }
+	raw, _ := bson.Marshal(map[string]any{
+		"test": "hoge",
+	})
+	c := NewSliceFuncConsumer(func(d d) (string, error) {
+		return d.Test, nil
+	})
+	assert.NoError(t, c.Consume(raw))
+	assert.Equal(t, []string{"hoge"}, c.Result)
+}
+
 func TestBatchConsumer(t *testing.T) {
 	c := &BatchConsumer{
 		Size: 10,

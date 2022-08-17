@@ -37,6 +37,50 @@ func (s *SliceConsumer[T]) Consume(raw bson.Raw) error {
 	return s.c.Consume(raw)
 }
 
+type SliceRawFuncConsumer[T any] struct {
+	Result []T
+	f      func(bson.Raw) (T, error)
+}
+
+func NewSliceRawFuncConsumer[T any](f func(t bson.Raw) (T, error)) *SliceRawFuncConsumer[T] {
+	return &SliceRawFuncConsumer[T]{
+		f: f,
+	}
+}
+
+func (s *SliceRawFuncConsumer[T]) Consume(raw bson.Raw) error {
+	data, err := s.f(raw)
+	if err != nil {
+		return err
+	}
+	s.Result = append(s.Result, data)
+	return nil
+}
+
+type SliceFuncConsumer[T, K any] struct {
+	Result []K
+	c      SimpleConsumer[T]
+}
+
+func NewSliceFuncConsumer[T, K any](f func(t T) (K, error)) *SliceFuncConsumer[T, K] {
+	var c *SliceFuncConsumer[T, K]
+	c = &SliceFuncConsumer[T, K]{
+		c: SimpleConsumer[T](func(d T) error {
+			e, err := f(d)
+			if err != nil {
+				return err
+			}
+			c.Result = append(c.Result, e)
+			return nil
+		}),
+	}
+	return c
+}
+
+func (s *SliceFuncConsumer[T, K]) Consume(raw bson.Raw) error {
+	return s.c.Consume(raw)
+}
+
 type BatchConsumer struct {
 	Size     int
 	Rows     []bson.Raw
