@@ -1,4 +1,4 @@
-package usecase
+package usecasex
 
 // Pagination is a struct for Relay-Style Cursor Pagination
 // ref: https://www.apollographql.com/docs/react/features/pagination/#relay-style-cursor-pagination

@@ -1,6 +1,8 @@
 package mongox
 
-import "github.com/reearth/reearthx/usecase"
+import (
+	"github.com/reearth/reearthx/usecasex"
+)
 
 type Transaction struct {
 	client *Client
@@ -12,8 +14,8 @@ func NewTransaction(client *Client) *Transaction {
 	}
 }
 
-func (t *Transaction) Begin() (usecase.Tx, error) {
+func (t *Transaction) Begin() (usecasex.Tx, error) {
 	return t.client.BeginTransaction()
 }
 
-var _ usecase.Transaction = (*Transaction)(nil)
+var _ usecasex.Transaction = (*Transaction)(nil)

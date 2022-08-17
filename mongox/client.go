@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/reearth/reearthx/rerror"
-	"github.com/reearth/reearthx/usecase"
+	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -187,7 +187,7 @@ func (c *Client) UpdateManyMany(ctx context.Context, col string, updates []Updat
 	return nil
 }
 
-func getCursor(raw bson.Raw, key string) (*usecase.Cursor, error) {
+func getCursor(raw bson.Raw, key string) (*usecasex.Cursor, error) {
 	val, err := raw.LookupErr(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to lookup cursor: %v", err.Error())
@@ -196,11 +196,11 @@ func getCursor(raw bson.Raw, key string) (*usecase.Cursor, error) {
 	if err := val.Unmarshal(&s); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cursor: %v", err.Error())
 	}
-	c := usecase.Cursor(s)
+	c := usecasex.Cursor(s)
 	return &c, nil
 }
 
-func (c *Client) Paginate(ctx context.Context, col string, filter interface{}, p *usecase.Pagination, consumer Consumer) (*usecase.PageInfo, error) {
+func (c *Client) Paginate(ctx context.Context, col string, filter interface{}, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
 	if p == nil {
 		return nil, nil
 	}
@@ -281,7 +281,7 @@ func (c *Client) Paginate(ctx context.Context, col string, filter interface{}, p
 		}
 	}
 
-	var startCursor, endCursor *usecase.Cursor
+	var startCursor, endCursor *usecasex.Cursor
 	if len(results) > 0 {
 		sc, err := getCursor(results[0], key)
 		if err != nil {
@@ -307,7 +307,7 @@ func (c *Client) Paginate(ctx context.Context, col string, filter interface{}, p
 		hasPreviousPage = hasMore
 	}
 
-	return usecase.NewPageInfo(int(count), startCursor, endCursor, hasNextPage, hasPreviousPage), nil
+	return usecasex.NewPageInfo(int(count), startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
 
 func (c *Client) CreateIndex(ctx context.Context, col string, keys []string) []string {
@@ -360,7 +360,7 @@ func indexes(ctx context.Context, coll *mongo.Collection) map[string]struct{} {
 	return keys
 }
 
-func (c *Client) BeginTransaction() (usecase.Tx, error) {
+func (c *Client) BeginTransaction() (usecasex.Tx, error) {
 	s, err := c.Client.Client().StartSession()
 	if err != nil {
 		return nil, err

@@ -1,4 +1,4 @@
-package usecase
+package usecasex
 
 type PageInfo struct {
 	TotalCount      int
