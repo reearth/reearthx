@@ -60,3 +60,15 @@ func CopyURL(u *url.URL) *url.URL {
 func DR[A, B any](a A, _ B) A {
 	return a
 }
+
+func Try(tries ...func() error) error {
+	for _, f := range tries {
+		if f == nil {
+			continue
+		}
+		if err := f(); err != nil {
+			return err
+		}
+	}
+	return nil
+}

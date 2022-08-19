@@ -10,6 +10,12 @@ type SyncMap[K comparable, V any] struct {
 	m sync.Map
 }
 
+func SyncMapFrom[K comparable, V any](entries map[K]V) *SyncMap[K, V] {
+	m := &SyncMap[K, V]{}
+	m.StoreAll(entries)
+	return m
+}
+
 func (m *SyncMap[K, V]) Load(key K) (vv V, _ bool) {
 	v, ok := m.m.Load(key)
 	if ok {
@@ -28,8 +34,22 @@ func (m *SyncMap[K, V]) LoadAll(keys ...K) (r []V) {
 	return r
 }
 
+func (m *SyncMap[K, V]) LoadOr(key K, o V) V {
+	v, ok := m.m.Load(key)
+	if ok {
+		return v.(V)
+	}
+	return o
+}
+
 func (m *SyncMap[K, V]) Store(key K, value V) {
 	m.m.Store(key, value)
+}
+
+func (m *SyncMap[K, V]) StoreAll(entries map[K]V) {
+	for k, v := range entries {
+		m.m.Store(k, v)
+	}
 }
 
 func (m *SyncMap[K, V]) LoadOrStore(key K, value V) (vv V, _ bool) {
@@ -63,6 +83,15 @@ func (m *SyncMap[K, V]) Range(f func(key K, value V) bool) {
 	m.m.Range(func(key, value any) bool {
 		return f(key.(K), value.(V))
 	})
+}
+
+func (m *SyncMap[K, V]) Unsync() map[K]V {
+	res := make(map[K]V, m.Len())
+	m.Range(func(k K, v V) bool {
+		res[k] = v
+		return true
+	})
+	return res
 }
 
 func (m *SyncMap[K, V]) Find(f func(key K, value V) bool) (v V) {
@@ -109,8 +138,8 @@ func (m *SyncMap[K, V]) Clone() *SyncMap[K, V] {
 }
 
 func (m *SyncMap[K, V]) Map(f func(K, V) V) *SyncMap[K, V] {
-	n := m.Clone()
-	n.Range(func(key K, value V) bool {
+	n := &SyncMap[K, V]{}
+	m.Range(func(key K, value V) bool {
 		n.Store(key, f(key, value))
 		return true
 	})

@@ -9,6 +9,12 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+func TestSyncMapFrom(t *testing.T) {
+	m := SyncMapFrom(map[string]int{"a": 1})
+	got, _ := m.Load("a")
+	assert.Equal(t, 1, got)
+}
+
 func TestSyncMap_Load_Store(t *testing.T) {
 	s := &SyncMap[string, int]{}
 	s.Store("a", 1)
@@ -20,6 +26,11 @@ func TestSyncMap_Load_Store(t *testing.T) {
 	res, ok = s.Load("b")
 	assert.Equal(t, 0, res)
 	assert.False(t, ok)
+
+	s.StoreAll(map[string]int{"c": 100, "d": 1000})
+	assert.Equal(t, 100, s.LoadOr("c", 0))
+	assert.Equal(t, 1000, s.LoadOr("d", 0))
+	assert.Equal(t, 10, s.LoadOr("e", 10))
 }
 
 func TestSyncMap_LoadAll(t *testing.T) {
@@ -102,6 +113,11 @@ func TestSyncMap_Range(t *testing.T) {
 		return true
 	})
 	assert.Equal(t, 1, vv)
+}
+
+func TestSyncMap_Unsync(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2}
+	assert.Equal(t, m, SyncMapFrom(m).Unsync())
 }
 
 func TestSyncMap_Find(t *testing.T) {

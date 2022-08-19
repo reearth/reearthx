@@ -116,3 +116,9 @@ func TestDR(t *testing.T) {
 	}
 	assert.Equal(t, "a", DR(f()))
 }
+
+func TestTry(t *testing.T) {
+	err := errors.New("try")
+	assert.Same(t, err, Try(func() error { return err }, func() error { panic("should not called") }))
+	assert.NoError(t, Try(func() error { return nil }, func() error { return nil }))
+}
