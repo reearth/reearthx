@@ -15,14 +15,14 @@ type MiddlewareHandler func(ctx context.Context) (context.Context, error)
 type Middleware func(next MiddlewareHandler) MiddlewareHandler
 
 func Run(ctx context.Context, h Handler, m ...Middleware) (err error) {
-	_, err = applyMiddleware(func(ctx context.Context) (context.Context, error) {
+	_, err = ApplyMiddleware(func(ctx context.Context) (context.Context, error) {
 		return ctx, h(ctx)
 	}, m...)(ctx)
 	return
 }
 
 func Run1[A any](ctx context.Context, h Handler1[A], m ...Middleware) (a A, err error) {
-	_, err = applyMiddleware(func(ctx context.Context) (context.Context, error) {
+	_, err = ApplyMiddleware(func(ctx context.Context) (context.Context, error) {
 		a2, err := h(ctx)
 		a = a2
 		return ctx, err
@@ -31,7 +31,7 @@ func Run1[A any](ctx context.Context, h Handler1[A], m ...Middleware) (a A, err 
 }
 
 func Run2[A, B any](ctx context.Context, h Handler2[A, B], m ...Middleware) (a A, b B, err error) {
-	_, err = applyMiddleware(func(ctx context.Context) (context.Context, error) {
+	_, err = ApplyMiddleware(func(ctx context.Context) (context.Context, error) {
 		a2, b2, err := h(ctx)
 		a = a2
 		b = b2
@@ -41,7 +41,7 @@ func Run2[A, B any](ctx context.Context, h Handler2[A, B], m ...Middleware) (a A
 }
 
 func Run3[A, B, C any](ctx context.Context, h Handler3[A, B, C], m ...Middleware) (a A, b B, c C, err error) {
-	_, err = applyMiddleware(func(ctx context.Context) (context.Context, error) {
+	_, err = ApplyMiddleware(func(ctx context.Context) (context.Context, error) {
 		a2, b2, c2, err := h(ctx)
 		a = a2
 		b = b2
@@ -51,14 +51,20 @@ func Run3[A, B, C any](ctx context.Context, h Handler3[A, B, C], m ...Middleware
 	return
 }
 
-func applyMiddleware(h MiddlewareHandler, middleware ...Middleware) MiddlewareHandler {
+func ComposeMiddleware(m ...Middleware) Middleware {
+	return func(next MiddlewareHandler) MiddlewareHandler {
+		return ApplyMiddleware(next, m...)
+	}
+}
+
+func ApplyMiddleware(h MiddlewareHandler, middleware ...Middleware) MiddlewareHandler {
 	for i := len(middleware) - 1; i >= 0; i-- {
 		h = middleware[i](h)
 	}
 	return h
 }
 
-func Context(f func(ctx context.Context) context.Context) Middleware {
+func UpdateContext(f func(ctx context.Context) context.Context) Middleware {
 	return func(next MiddlewareHandler) MiddlewareHandler {
 		return func(ctx context.Context) (context.Context, error) {
 			return next(f(ctx))

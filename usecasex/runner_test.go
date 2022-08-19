@@ -17,11 +17,11 @@ func TestRunner(t *testing.T) {
 			assert.Equal(t, []string{"1", "2"}, ctx.Value(ctxkey{}).([]string))
 			return nil
 		},
-		Context(func(ctx context.Context) context.Context {
+		UpdateContext(func(ctx context.Context) context.Context {
 			ctx = context.WithValue(ctx, ctxkey{}, []string{"1"})
 			return ctx
 		}),
-		Context(func(ctx context.Context) context.Context {
+		UpdateContext(func(ctx context.Context) context.Context {
 			s := ctx.Value(ctxkey{}).([]string)
 			s = append(s, "2")
 			ctx = context.WithValue(ctx, ctxkey{}, s)
@@ -104,4 +104,46 @@ func TestTxUsecase(t *testing.T) {
 	assert.Same(t, err, err4)
 	assert.True(t, tr4.IsCommitted())
 	assert.True(t, called)
+}
+
+func TestComposeMiddleware(t *testing.T) {
+	type ctxkey struct{}
+
+	m := ComposeMiddleware(
+		UpdateContext(func(ctx context.Context) context.Context {
+			return context.WithValue(ctx, ctxkey{}, "a")
+		}),
+		UpdateContext(func(ctx context.Context) context.Context {
+			return context.WithValue(ctx, ctxkey{}, ctx.Value(ctxkey{}).(string)+"b")
+		}),
+	)
+
+	called := false
+	err := Run(context.Background(), func(ctx context.Context) error {
+		assert.Equal(t, "ab", ctx.Value(ctxkey{}).(string))
+		called = true
+		return nil
+	}, m)
+
+	assert.NoError(t, err)
+	assert.True(t, called)
+}
+
+func TestApplyMiddleware(t *testing.T) {
+	type ctxkey struct{}
+
+	ctx, err := ApplyMiddleware(
+		func(ctx context.Context) (context.Context, error) {
+			return ctx, nil
+		},
+		UpdateContext(func(ctx context.Context) context.Context {
+			return context.WithValue(ctx, ctxkey{}, "a")
+		}),
+		UpdateContext(func(ctx context.Context) context.Context {
+			return context.WithValue(ctx, ctxkey{}, ctx.Value(ctxkey{}).(string)+"b")
+		}),
+	)(context.Background())
+
+	assert.NoError(t, err)
+	assert.Equal(t, "ab", ctx.Value(ctxkey{}).(string))
 }
