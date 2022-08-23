@@ -49,6 +49,13 @@ func Unwrap[T any](t T, err error) T {
 	return lo.Must(t, err)
 }
 
+func ToPtrIfNotEmpty[T comparable](t T) *T {
+	if lo.IsEmpty(t) {
+		return nil
+	}
+	return &t
+}
+
 func OrError[T comparable](t T, err error) (r T, _ error) {
 	if lo.IsEmpty(t) && err != nil {
 		return r, err

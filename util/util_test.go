@@ -63,6 +63,12 @@ func TestUnwrap(t *testing.T) {
 	assert.Same(t, res, Unwrap(res, nil))
 }
 
+func TestToPtrIfNotEmpty(t *testing.T) {
+	assert.Nil(t, ToPtrIfNotEmpty(""))
+	assert.NotEqual(t, lo.ToPtr(""), ToPtrIfNotEmpty(""))
+	assert.Equal(t, lo.ToPtr("a"), ToPtrIfNotEmpty("a"))
+}
+
 func TestOrError(t *testing.T) {
 	a := &struct{}{}
 	err := errors.New("err")
