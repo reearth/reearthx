@@ -45,7 +45,7 @@ func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consum
 		}
 
 		if !c {
-			if err := consumer.Consume(nil); err != nil {
+			if err := consumer.Consume(nil); err != nil && !errors.Is(err, io.EOF) {
 				return err
 			}
 			break
