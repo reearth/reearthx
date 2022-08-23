@@ -2,14 +2,13 @@ package mongotest
 
 import (
 	"context"
-	"encoding/hex"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/x/mongo/driver/uuid"
 )
 
 var (
@@ -40,13 +39,10 @@ func Connect(t *testing.T) func(*testing.T) *mongo.Database {
 	return func(t *testing.T) *mongo.Database {
 		t.Helper()
 
-		database, _ := uuid.New()
-		databaseName := Database + "_" + hex.EncodeToString(database[:])
-
+		databaseName := Database + "_" + uuid.NewString()
 		t.Cleanup(func() {
 			_ = c.Database(databaseName).Drop(context.Background())
 		})
-
 		return c.Database(databaseName)
 	}
 }

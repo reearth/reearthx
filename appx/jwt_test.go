@@ -24,7 +24,7 @@ import (
 )
 
 func TestMultiValidator(t *testing.T) {
-	key := util.Unwrap(rsa.GenerateKey(rand.Reader, 2048))
+	key := lo.Must(rsa.GenerateKey(rand.Reader, 2048))
 
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
@@ -41,7 +41,7 @@ func TestMultiValidator(t *testing.T) {
 	httpmock.RegisterResponder(
 		http.MethodGet,
 		"https://example.com/jwks",
-		httpmock.NewBytesResponder(http.StatusOK, util.Unwrap(json.Marshal(jose.JSONWebKeySet{
+		httpmock.NewBytesResponder(http.StatusOK, lo.Must(json.Marshal(jose.JSONWebKeySet{
 			Keys: []jose.JSONWebKey{
 				{KeyID: "0", Key: &key.PublicKey, Algorithm: jwt.SigningMethodRS256.Name},
 			},
@@ -67,7 +67,7 @@ func TestMultiValidator(t *testing.T) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "0"
-	tokenString := util.Unwrap(token.SignedString(key))
+	tokenString := lo.Must(token.SignedString(key))
 
 	claims2 := jwt.MapClaims{
 		"exp":      expiry,
@@ -79,7 +79,7 @@ func TestMultiValidator(t *testing.T) {
 	}
 	token2 := jwt.NewWithClaims(jwt.SigningMethodRS256, claims2)
 	token2.Header["kid"] = "0"
-	tokenString2 := util.Unwrap(token2.SignedString(key))
+	tokenString2 := lo.Must(token2.SignedString(key))
 
 	claims3 := jwt.MapClaims{
 		"exp": expiry,
@@ -88,7 +88,7 @@ func TestMultiValidator(t *testing.T) {
 	}
 	token3 := jwt.NewWithClaims(jwt.SigningMethodRS256, claims3)
 	token3.Header["kid"] = "0"
-	tokenString3 := util.Unwrap(token3.SignedString(key))
+	tokenString3 := lo.Must(token3.SignedString(key))
 
 	res, err := v.ValidateToken(context.Background(), tokenString)
 	assert.NoError(t, err)
@@ -205,7 +205,7 @@ func TestAuthMiddleware(t *testing.T) {
 	})))
 	defer ts.Close()
 
-	key := util.Unwrap(rsa.GenerateKey(rand.Reader, 2048))
+	key := lo.Must(rsa.GenerateKey(rand.Reader, 2048))
 
 	tr := NewTestTransport([]string{ts.URL})
 	defer tr.Activate()()
@@ -218,7 +218,7 @@ func TestAuthMiddleware(t *testing.T) {
 	httpmock.RegisterResponder(
 		http.MethodGet,
 		"https://example.com/jwks",
-		httpmock.NewBytesResponder(http.StatusOK, util.Unwrap(json.Marshal(jose.JSONWebKeySet{
+		httpmock.NewBytesResponder(http.StatusOK, lo.Must(json.Marshal(jose.JSONWebKeySet{
 			Keys: []jose.JSONWebKey{
 				{KeyID: "0", Key: &key.PublicKey, Algorithm: jwt.SigningMethodRS256.Name},
 			},
@@ -238,7 +238,7 @@ func TestAuthMiddleware(t *testing.T) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "0"
-	tokenString := util.Unwrap(token.SignedString(key))
+	tokenString := lo.Must(token.SignedString(key))
 
 	req, _ := http.NewRequest(http.MethodGet, ts.URL, nil)
 	req.Header.Set("Authorization", "Bearer "+tokenString)

@@ -58,10 +58,20 @@ func TestDerefOr(t *testing.T) {
 }
 
 func TestUnwrap(t *testing.T) {
-	err := errors.New("hoge")
+	assert.PanicsWithValue(t, "hoge", func() { _ = Unwrap(1, errors.New("hoge")) })
 	res := lo.ToPtr(1)
-	assert.PanicsWithValue(t, err, func() { _ = Unwrap(1, err) })
 	assert.Same(t, res, Unwrap(res, nil))
+}
+
+func TestOrError(t *testing.T) {
+	a := &struct{}{}
+	err := errors.New("err")
+	got, goterr := OrError(a, err)
+	assert.Same(t, a, got)
+	assert.Nil(t, goterr)
+	got, goterr = OrError[*struct{}](nil, err)
+	assert.Nil(t, got)
+	assert.Same(t, err, goterr)
 }
 
 func TestCopyRef(t *testing.T) {
@@ -121,4 +131,16 @@ func TestTry(t *testing.T) {
 	err := errors.New("try")
 	assert.Same(t, err, Try(func() error { return err }, func() error { panic("should not called") }))
 	assert.NoError(t, Try(func() error { return nil }, func() error { return nil }))
+}
+
+func TestSortedEntries(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		assert.Equal(t, []lo.Entry[string, string]{
+			{Key: "a", Value: "1"},
+			{Key: "b", Value: "2"},
+		}, SortedEntries(map[string]string{
+			"b": "2",
+			"a": "1",
+		}))
+	}
 }

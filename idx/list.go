@@ -2,6 +2,7 @@ package idx
 
 import (
 	"github.com/reearth/reearthx/util"
+	"github.com/samber/lo"
 	"golang.org/x/exp/slices"
 )
 
@@ -14,7 +15,7 @@ func ListFrom[T Type](ids []string) (List[T], error) {
 }
 
 func MustList[T Type](ids []string) List[T] {
-	return util.Unwrap(ListFrom[T](ids))
+	return lo.Must(ListFrom[T](ids))
 }
 
 func (l List[T]) list() util.List[ID[T]] {

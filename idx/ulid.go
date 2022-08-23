@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/oklog/ulid"
-	"github.com/reearth/reearthx/util"
+	"github.com/samber/lo"
 )
 
 var (
@@ -50,5 +50,5 @@ func includeUpperCase(s string) bool {
 }
 
 func mustParseID(id string) ulid.ULID {
-	return util.Unwrap(parseID(id))
+	return lo.Must(parseID(id))
 }

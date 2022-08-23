@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,8 +19,8 @@ func TestContextMiddleware(t *testing.T) {
 	})))
 	defer ts.Close()
 
-	res := util.Unwrap(http.Get(ts.URL))
-	body := string(util.Unwrap(io.ReadAll(res.Body)))
+	res := lo.Must(http.Get(ts.URL))
+	body := string(lo.Must(io.ReadAll(res.Body)))
 	assert.Equal(t, "a", body)
 }
 
@@ -39,11 +38,11 @@ func TestContextMiddlewareBy(t *testing.T) {
 	})))
 	defer ts.Close()
 
-	res := util.Unwrap(http.Get(ts.URL))
-	body := string(util.Unwrap(io.ReadAll(res.Body)))
+	res := lo.Must(http.Get(ts.URL))
+	body := string(lo.Must(io.ReadAll(res.Body)))
 	assert.Equal(t, "", body)
 
-	res = util.Unwrap(http.Post(ts.URL, "", nil))
-	body = string(util.Unwrap(io.ReadAll(res.Body)))
+	res = lo.Must(http.Post(ts.URL, "", nil))
+	body = string(lo.Must(io.ReadAll(res.Body)))
 	assert.Equal(t, "aaa", body)
 }

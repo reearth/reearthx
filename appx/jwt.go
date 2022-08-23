@@ -13,6 +13,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/golang-jwt/jwt"
 	"github.com/reearth/reearthx/util"
+	"github.com/samber/lo"
 )
 
 const defaultJWTTTL = 5
@@ -43,9 +44,9 @@ func (p JWTProvider) validator() (*validator.Validator, error) {
 		return nil, fmt.Errorf("failed to parse the issuer url")
 	}
 
-	ttl := time.Duration(util.DerefOr(p.TTL, defaultJWTTTL)) * time.Minute
+	ttl := time.Duration(lo.FromPtrOr(p.TTL, defaultJWTTTL)) * time.Minute
 	provider := jwks.NewCachingProvider(issuerURL, ttl)
-	algorithm := validator.SignatureAlgorithm(util.DerefOr(p.ALG, jwt.SigningMethodRS256.Name))
+	algorithm := validator.SignatureAlgorithm(lo.FromPtrOr(p.ALG, jwt.SigningMethodRS256.Name))
 
 	var aud []string
 	if p.AUD != nil {

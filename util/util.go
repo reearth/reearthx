@@ -1,6 +1,12 @@
 package util
 
-import "net/url"
+import (
+	"net/url"
+
+	"github.com/samber/lo"
+	"golang.org/x/exp/constraints"
+	"golang.org/x/exp/slices"
+)
 
 func Must(err error) {
 	if err != nil {
@@ -8,35 +14,46 @@ func Must(err error) {
 	}
 }
 
+// IsZero
+//
+// Deprecated: use lo.IsEmpty instead.
 func IsZero[T comparable](v T) bool {
-	var z T
-	return v == z
+	return lo.IsEmpty(v)
 }
 
+// IsNotZero
+//
+// Deprecated: use lo.IsNotEmpty instead.
 func IsNotZero[T comparable](v T) bool {
-	return !IsZero(v)
+	return lo.IsNotEmpty(v)
 }
 
+// Deref
+//
+// Deprecated: use lo.FromPtr instead.
 func Deref[T any](r *T) T {
-	if r == nil {
-		var z T
-		return z
-	}
-	return *r
+	return lo.FromPtr(r)
 }
 
+// DerefOr
+//
+// Deprecated: use lo.FromPtrOrust instead.
 func DerefOr[T any](ref *T, def T) T {
-	if ref == nil {
-		return def
-	}
-	return *ref
+	return lo.FromPtrOr(ref, def)
 }
 
+// Unwrap
+//
+// Deprecated: use lo.Must instead.
 func Unwrap[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
+	return lo.Must(t, err)
+}
+
+func OrError[T comparable](t T, err error) (r T, _ error) {
+	if lo.IsEmpty(t) && err != nil {
+		return r, err
 	}
-	return t
+	return t, nil
 }
 
 func CloneRef[T any](r *T) *T {
@@ -56,7 +73,7 @@ func CopyURL(u *url.URL) *url.URL {
 	return v
 }
 
-// DR discard right
+// DR discards right
 func DR[A, B any](a A, _ B) A {
 	return a
 }
@@ -71,4 +88,12 @@ func Try(tries ...func() error) error {
 		}
 	}
 	return nil
+}
+
+func SortedEntries[K constraints.Ordered, V any](m map[K]V) []lo.Entry[K, V] {
+	entries := lo.Entries(m)
+	slices.SortStableFunc(entries, func(a, b lo.Entry[K, V]) bool {
+		return a.Key < b.Key
+	})
+	return entries
 }

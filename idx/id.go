@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/oklog/ulid"
-	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 )
 
@@ -45,7 +44,7 @@ func From[T Type](id string) (ID[T], error) {
 }
 
 func Must[T Type](id string) ID[T] {
-	return util.Unwrap(From[T](id))
+	return lo.Must(From[T](id))
 }
 
 func FromRef[T Type](id *string) *ID[T] {

@@ -212,7 +212,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 }
 
 func fromMap(m map[string]any) (res []any) {
-	entries := util.StableEntries(m)
+	entries := util.SortedEntries(m)
 	for k, v := range entries {
 		res = append(res, k)
 		res = append(res, v)

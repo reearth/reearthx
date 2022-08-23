@@ -8,7 +8,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestOrInternal(t *testing.T) {
+	a := &struct{}{}
+	err := errors.New("a")
+
+	got, goterr := OrInternal(a, err)
+	assert.Same(t, a, got)
+	assert.Nil(t, goterr)
+
+	got, goterr = OrInternal[*struct{}](nil, err)
+	assert.Nil(t, got)
+	assert.Equal(t, ErrInternalBy(err), goterr)
+}
+
 func TestErrInternal(t *testing.T) {
+	assert.Nil(t, ErrInternalBy(nil))
+	assert.Nil(t, ErrInternalByWith("", nil))
+	assert.Nil(t, ErrInternalByWithError(nil, nil))
+
 	werr := errors.New("wrapped")
 	err := ErrInternalBy(werr)
 	assert.EqualError(t, err, "internal")

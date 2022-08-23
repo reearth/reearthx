@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
+	"github.com/reearth/reearthx/util"
 )
 
 var (
@@ -18,6 +19,10 @@ var (
 	// ErrNotImplemented indicates unimplemented.
 	ErrNotImplemented = errors.New("not implemented")
 )
+
+func OrInternal[T comparable](v T, err error) (r T, _ error) {
+	return util.OrError(v, errInternalBy(errInternal, err))
+}
 
 func ErrInternalBy(err error) error {
 	return errInternalBy(errInternal, err)
@@ -32,6 +37,10 @@ func ErrInternalByWithError(label, err error) error {
 }
 
 func errInternalBy(label, err error) *Error {
+	if err == nil {
+		return nil
+	}
+
 	log.Errorf("%s: %s", label.Error(), err.Error())
 	debug.PrintStack()
 	return &Error{

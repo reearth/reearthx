@@ -47,8 +47,8 @@ func TestEndpoint(t *testing.T) {
 		},
 		Issuer:           "https://example.com/",
 		AuthProviderName: "test",
-		URL:              util.Unwrap(url.Parse("https://example.com")),
-		WebURL:           util.Unwrap(url.Parse("https://web.example.com")),
+		URL:              lo.Must(url.Parse("https://example.com")),
+		WebURL:           lo.Must(url.Parse("https://web.example.com")),
 		Key:              "",
 		Dev:              false,
 		DefaultClientID:  "default-client",
@@ -73,7 +73,7 @@ func TestEndpoint(t *testing.T) {
 	assert.Equal(t, http.StatusFound, res.StatusCode)
 	loc := res.Header.Get("Location")
 	assert.Contains(t, loc, "https://web.example.com/login?id=")
-	reqID := util.Unwrap(url.Parse(loc)).Query().Get("id")
+	reqID := lo.Must(url.Parse(loc)).Query().Get("id")
 
 	// step 2
 	res = send(http.MethodPost, ts.URL+"/api/login", true, map[string]string{
@@ -97,7 +97,7 @@ func TestEndpoint(t *testing.T) {
 	assert.Equal(t, http.StatusFound, res.StatusCode)
 	loc = res.Header.Get("Location")
 	assert.Contains(t, loc, "https://web.example.com?code=")
-	locu := util.Unwrap(url.Parse(loc))
+	locu := lo.Must(url.Parse(loc))
 	assert.Equal(t, "hogestate", locu.Query().Get("state"))
 	code := locu.Query().Get("code")
 
@@ -110,7 +110,7 @@ func TestEndpoint(t *testing.T) {
 		"code_verifier": verifier,
 	}, nil)
 	var r map[string]any
-	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res2.Body)), &r))
+	util.Must(json.Unmarshal(lo.Must(io.ReadAll(res2.Body)), &r))
 	assert.Equal(t, map[string]any{
 		"id_token":     r["id_token"],
 		"access_token": r["access_token"],
@@ -126,7 +126,7 @@ func TestEndpoint(t *testing.T) {
 		"Authorization": "Bearer " + accessToken,
 	})
 	var r2 map[string]any
-	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res3.Body)), &r2))
+	util.Must(json.Unmarshal(lo.Must(io.ReadAll(res3.Body)), &r2))
 	assert.Equal(t, map[string]any{
 		"sub":            "subsub",
 		"email":          "aaa@example.com",
@@ -137,16 +137,16 @@ func TestEndpoint(t *testing.T) {
 	// openid-configuration
 	res4 := send(http.MethodGet, ts.URL+"/.well-known/openid-configuration", false, nil, nil)
 	var r3 map[string]any
-	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res4.Body)), &r3))
+	util.Must(json.Unmarshal(lo.Must(io.ReadAll(res4.Body)), &r3))
 	assert.Equal(t, "https://example.com/jwks.json", r3["jwks_uri"])
 
 	// jwks
 	res5 := send(http.MethodGet, ts.URL+"/jwks.json", false, nil, nil)
 	var jwks jose.JSONWebKeySet
-	util.Must(json.Unmarshal(util.Unwrap(io.ReadAll(res5.Body)), &jwks))
+	util.Must(json.Unmarshal(lo.Must(io.ReadAll(res5.Body)), &jwks))
 
 	// validate access_token
-	token := util.Unwrap(jwt.ParseSigned(accessToken))
+	token := lo.Must(jwt.ParseSigned(accessToken))
 	header, _ := lo.Find(token.Headers, func(h jose.Header) bool {
 		return h.Algorithm == string(jose.RS256)
 	})
@@ -164,7 +164,7 @@ func TestEndpoint(t *testing.T) {
 	}, claims)
 
 	// validate id_token
-	token2 := util.Unwrap(jwt.ParseSigned(idToken))
+	token2 := lo.Must(jwt.ParseSigned(idToken))
 	header2, _ := lo.Find(token2.Headers, func(h jose.Header) bool {
 		return h.Algorithm == string(jose.RS256)
 	})
@@ -199,11 +199,11 @@ func send(method, u string, form bool, body any, headers map[string]string) *htt
 				}
 				b = strings.NewReader(values.Encode())
 			} else {
-				j := util.Unwrap(json.Marshal(body))
+				j := lo.Must(json.Marshal(body))
 				b = bytes.NewReader(j)
 			}
 		} else if b, ok := body.(map[string]string); ok {
-			u2 := util.Unwrap(url.Parse(u))
+			u2 := lo.Must(url.Parse(u))
 			q := u2.Query()
 			for k, v := range b {
 				q.Set(k, v)
@@ -213,7 +213,7 @@ func send(method, u string, form bool, body any, headers map[string]string) *htt
 		}
 	}
 
-	req := util.Unwrap(http.NewRequest(method, u, b))
+	req := lo.Must(http.NewRequest(method, u, b))
 	if b != nil {
 		if !form {
 			req.Header.Set("Content-Type", "application/json")
@@ -224,7 +224,7 @@ func send(method, u string, form bool, body any, headers map[string]string) *htt
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
-	return util.Unwrap(httpClient.Do(req))
+	return lo.Must(httpClient.Do(req))
 }
 
 type configRepo struct {

@@ -24,7 +24,7 @@ func TestMustList(t *testing.T) {
 	ids := MustList[T]([]string{"01g0nzan4qnb2f2s9ehrgv62a3"})
 	assert.Equal(t, List[T]{id}, ids)
 
-	assert.PanicsWithValue(t, ErrInvalidID, func() {
+	assert.PanicsWithValue(t, ErrInvalidID.Error(), func() {
 		_ = MustList[T]([]string{"01g0nzan4qnb2f2s9ehrgv62a3", "a"})
 	})
 }
