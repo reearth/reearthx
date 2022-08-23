@@ -26,7 +26,7 @@ func (c *ClientCollection) Client() *mongo.Collection {
 	return c.client
 }
 
-func (c *ClientCollection) Find(ctx context.Context, col string, filter any, consumer Consumer) error {
+func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consumer) error {
 	cursor, err := c.client.Find(ctx, filter)
 	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 		return rerror.ErrNotFound
@@ -58,7 +58,7 @@ func (c *ClientCollection) Find(ctx context.Context, col string, filter any, con
 	return nil
 }
 
-func (c *ClientCollection) FindOne(ctx context.Context, col string, filter any, consumer Consumer) error {
+func (c *ClientCollection) FindOne(ctx context.Context, filter any, consumer Consumer) error {
 	raw, err := c.client.FindOne(ctx, filter).DecodeBytes()
 	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 		return rerror.ErrNotFound
@@ -69,7 +69,7 @@ func (c *ClientCollection) FindOne(ctx context.Context, col string, filter any, 
 	return nil
 }
 
-func (c *ClientCollection) Count(ctx context.Context, col string, filter any) (int64, error) {
+func (c *ClientCollection) Count(ctx context.Context, filter any) (int64, error) {
 	count, err := c.client.CountDocuments(ctx, filter)
 	if err != nil {
 		return count, err
@@ -77,7 +77,7 @@ func (c *ClientCollection) Count(ctx context.Context, col string, filter any) (i
 	return count, nil
 }
 
-func (c *ClientCollection) RemoveAll(ctx context.Context, col string, f any) error {
+func (c *ClientCollection) RemoveAll(ctx context.Context, f any) error {
 	_, err := c.client.DeleteMany(ctx, f)
 	if err != nil {
 		return rerror.ErrInternalBy(err)
@@ -85,7 +85,7 @@ func (c *ClientCollection) RemoveAll(ctx context.Context, col string, f any) err
 	return nil
 }
 
-func (c *ClientCollection) RemoveOne(ctx context.Context, col string, f any) error {
+func (c *ClientCollection) RemoveOne(ctx context.Context, f any) error {
 	res, err := c.client.DeleteOne(ctx, f)
 	if err != nil {
 		return err
@@ -96,7 +96,7 @@ func (c *ClientCollection) RemoveOne(ctx context.Context, col string, f any) err
 	return nil
 }
 
-func (c *ClientCollection) SaveOne(ctx context.Context, col string, id string, replacement any) error {
+func (c *ClientCollection) SaveOne(ctx context.Context, id string, replacement any) error {
 	_, err := c.client.ReplaceOne(
 		ctx,
 		bson.M{"id": id},
@@ -109,7 +109,7 @@ func (c *ClientCollection) SaveOne(ctx context.Context, col string, id string, r
 	return nil
 }
 
-func (c *ClientCollection) SetOne(ctx context.Context, col string, id string, replacement any) error {
+func (c *ClientCollection) SetOne(ctx context.Context, id string, replacement any) error {
 	_, err := c.client.UpdateOne(
 		ctx,
 		bson.M{"id": id},
@@ -122,7 +122,7 @@ func (c *ClientCollection) SetOne(ctx context.Context, col string, id string, re
 	return nil
 }
 
-func (c *ClientCollection) SaveAll(ctx context.Context, col string, ids []string, updates []any) error {
+func (c *ClientCollection) SaveAll(ctx context.Context, ids []string, updates []any) error {
 	if len(ids) == 0 || len(updates) == 0 {
 		return nil
 	}
@@ -146,7 +146,7 @@ func (c *ClientCollection) SaveAll(ctx context.Context, col string, ids []string
 	return nil
 }
 
-func (c *ClientCollection) UpdateMany(ctx context.Context, col string, filter, update any) error {
+func (c *ClientCollection) UpdateMany(ctx context.Context, filter, update any) error {
 	_, err := c.client.UpdateMany(ctx, filter, bson.M{
 		"$set": update,
 	})
@@ -162,7 +162,7 @@ type Update struct {
 	ArrayFilters []any
 }
 
-func (c *ClientCollection) UpdateManyMany(ctx context.Context, col string, updates []Update) error {
+func (c *ClientCollection) UpdateManyMany(ctx context.Context, updates []Update) error {
 	writeModels := make([]mongo.WriteModel, 0, len(updates))
 	for _, w := range updates {
 		wm := mongo.NewUpdateManyModel().SetFilter(w.Filter).SetUpdate(bson.M{
@@ -196,7 +196,7 @@ func getCursor(raw bson.Raw, key string) (*usecasex.Cursor, error) {
 	return &c, nil
 }
 
-func (c *ClientCollection) Paginate(ctx context.Context, col string, filter any, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
+func (c *ClientCollection) Paginate(ctx context.Context, filter any, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
 	if p == nil {
 		return nil, nil
 	}
@@ -306,7 +306,7 @@ func (c *ClientCollection) Paginate(ctx context.Context, col string, filter any,
 	return usecasex.NewPageInfo(int(count), startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
 
-func (c *ClientCollection) CreateIndex(ctx context.Context, col string, keys []string, uniqueKeys []string) []string {
+func (c *ClientCollection) CreateIndex(ctx context.Context, keys []string, uniqueKeys []string) []string {
 	indexes := lo.Must(c.indexes(ctx))
 	newIndexes := append(
 		lo.FilterMap(keys, func(k string, _ int) (mongo.IndexModel, bool) {
