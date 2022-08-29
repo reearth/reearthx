@@ -37,7 +37,6 @@ type Request struct {
 	redirectURI   string
 	nonce         string
 	codeChallenge *oidc.CodeChallenge
-	createdAt     time.Time
 	authorizedAt  *time.Time
 }
 
@@ -68,7 +67,7 @@ func (a *Request) GetAudience() []string {
 }
 
 func (a *Request) GetAuthTime() time.Time {
-	return a.createdAt
+	return a.CreatedAt()
 }
 
 func (a *Request) GetClientID() string {
@@ -117,11 +116,7 @@ func (a *Request) GetSubject() string {
 }
 
 func (a *Request) CreatedAt() time.Time {
-	return a.createdAt
-}
-
-func (a *Request) SetCreatedAt(createdAt time.Time) {
-	a.createdAt = createdAt
+	return a.id.Timestamp()
 }
 
 func (a *Request) AuthorizedAt() *time.Time {

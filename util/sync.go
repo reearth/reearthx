@@ -17,6 +17,10 @@ func SyncMapFrom[K comparable, V any](entries map[K]V) *SyncMap[K, V] {
 }
 
 func (m *SyncMap[K, V]) Load(key K) (vv V, _ bool) {
+	if m == nil {
+		return
+	}
+
 	v, ok := m.m.Load(key)
 	if ok {
 		vv = v.(V)
@@ -25,6 +29,10 @@ func (m *SyncMap[K, V]) Load(key K) (vv V, _ bool) {
 }
 
 func (m *SyncMap[K, V]) LoadAll(keys ...K) (r []V) {
+	if m == nil {
+		return
+	}
+
 	m.Range(func(k K, v V) bool {
 		if slices.Contains(keys, k) {
 			r = append(r, v)
@@ -34,7 +42,11 @@ func (m *SyncMap[K, V]) LoadAll(keys ...K) (r []V) {
 	return r
 }
 
-func (m *SyncMap[K, V]) LoadOr(key K, o V) V {
+func (m *SyncMap[K, V]) LoadOr(key K, o V) (res V) {
+	if m == nil {
+		return
+	}
+
 	v, ok := m.m.Load(key)
 	if ok {
 		return v.(V)

@@ -230,7 +230,6 @@ func (s *Storage) CreateAuthRequest(ctx context.Context, authReq *oidc.AuthReque
 		RedirectURI(authReq.RedirectURI).
 		Nonce(authReq.Nonce).
 		CodeChallenge(cc).
-		CreatedAt(time.Now().UTC()).
 		AuthorizedAt(nil).
 		MustBuild()
 

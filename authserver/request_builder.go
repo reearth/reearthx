@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/reearth/reearthx/idx"
-	"github.com/reearth/reearthx/util"
 	"github.com/zitadel/oidc/pkg/oidc"
 )
 
@@ -20,7 +19,6 @@ func (b *RequestBuilder) Build() (*Request, error) {
 	if b.r.id.IsNil() {
 		return nil, idx.ErrInvalidID
 	}
-	b.r.createdAt = util.Now()
 	return b.r, nil
 }
 
@@ -89,11 +87,6 @@ func (b *RequestBuilder) Nonce(nonce string) *RequestBuilder {
 
 func (b *RequestBuilder) CodeChallenge(CodeChallenge *oidc.CodeChallenge) *RequestBuilder {
 	b.r.codeChallenge = CodeChallenge
-	return b
-}
-
-func (b *RequestBuilder) CreatedAt(createdAt time.Time) *RequestBuilder {
-	b.r.createdAt = createdAt
 	return b
 }
 

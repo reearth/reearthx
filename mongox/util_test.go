@@ -3,9 +3,14 @@ package mongox
 import (
 	"testing"
 
+	"github.com/reearth/reearthx/mongox/mongotest"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+func init() {
+	mongotest.Env = "REEARTH_DB"
+}
 
 func TestConvertDToM(t *testing.T) {
 	assert.Equal(t, bson.M{"a": "b"}, DToM(bson.M{"a": "b"}))
