@@ -196,50 +196,32 @@ func getCursor(raw bson.Raw, key string) (*usecasex.Cursor, error) {
 	return &c, nil
 }
 
-func (c *ClientCollection) Paginate(ctx context.Context, filter any, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
+func (c *ClientCollection) Paginate(ctx context.Context, filter any, sort *string, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
 	if p == nil {
 		return nil, nil
 	}
-	coll := c.client
 
-	key := "id"
+	const key = "id"
+	pa := PaginationFrom(p)
+	findOptions := options.Find().SetCollation(&options.Collation{Strength: 1, Locale: "en"})
+	sortOptions, sortKey := pa.SortOptions(sort, key)
+	findOptions.Sort = sortOptions
 
-	count, err := coll.CountDocuments(ctx, filter)
+	count, err := c.client.CountDocuments(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count documents: %v", err.Error())
 	}
 
-	reverse := false
-	var limit int64
-	findOptions := options.Find()
-	if first := p.First; first != nil {
-		limit = int64(*first)
-		findOptions.Sort = bson.D{
-			{Key: key, Value: 1},
-		}
-		if after := p.After; after != nil {
-			filter = AppendE(filter, bson.E{Key: key, Value: bson.D{
-				{Key: "$gt", Value: *after},
-			}})
-		}
+	filter, limit, err := c.paginationFilter(ctx, pa, sortKey, key, filter)
+	if err != nil {
+		return nil, err
 	}
-	if last := p.Last; last != nil {
-		reverse = true
-		limit = int64(*last)
-		findOptions.Sort = bson.D{
-			{Key: key, Value: -1},
-		}
-		if before := p.Before; before != nil {
-			filter = AppendE(filter, bson.E{Key: key, Value: bson.D{
-				{Key: "$lt", Value: *before},
-			}})
-		}
-	}
+
 	// Read one more element so that we can see whether there's a further one
 	limit++
 	findOptions.Limit = &limit
 
-	cursor, err := coll.Find(ctx, filter, findOptions)
+	cursor, err := c.client.Find(ctx, filter, findOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find: %v", err.Error())
 	}
@@ -262,13 +244,6 @@ func (c *ClientCollection) Paginate(ctx context.Context, filter any, p *usecasex
 		hasMore = true
 		// Remove the extra one reading.
 		results = results[:len(results)-1]
-	}
-
-	if reverse {
-		for i := len(results)/2 - 1; i >= 0; i-- {
-			opp := len(results) - 1 - i
-			results[i], results[opp] = results[opp], results[i]
-		}
 	}
 
 	for _, result := range results {
@@ -363,4 +338,42 @@ func (c *ClientCollection) indexes(ctx context.Context) (map[string]struct{}, er
 
 func (c *ClientCollection) BeginTransaction() (usecasex.Tx, error) {
 	return NewClientWithDatabase(c.client.Database()).BeginTransaction()
+}
+
+func (c *ClientCollection) paginationFilter(ctx context.Context, p *pagination, sortKey, key string, filter any) (any, int64, error) {
+	limit, op, cur, err := p.Parameters()
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to parse pagination parameters: %w", err)
+	}
+
+	var paginationFilter bson.M
+
+	if cur != nil {
+		if sortKey == "" {
+			paginationFilter = bson.M{key: bson.M{op: *cur}}
+		} else {
+			var curObj bson.M
+			if err := c.client.FindOne(ctx, bson.M{key: *cur}).Decode(&curObj); err != nil {
+				return nil, 0, fmt.Errorf("failed to find cursor element")
+			}
+			if curObj[sortKey] == nil {
+				return nil, 0, fmt.Errorf("invalied sort key")
+			}
+			paginationFilter = bson.M{
+				"$or": []bson.M{
+					{sortKey: bson.M{op: curObj[sortKey]}},
+					{
+						sortKey: curObj[sortKey],
+						key:     bson.M{op: *cur},
+					},
+				},
+			}
+		}
+	}
+
+	return And(
+		filter,
+		"",
+		paginationFilter,
+	), limit, nil
 }
