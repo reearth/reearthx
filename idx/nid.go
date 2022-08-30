@@ -93,10 +93,6 @@ func (id *nid) CloneRef() *nid {
 	return &i
 }
 
-func (id *nid) CopyRef() *nid {
-	return id.CloneRef()
-}
-
 func (id nid) Timestamp() time.Time {
 	return ulid.Time(id.id.Time())
 }
@@ -124,10 +120,6 @@ func (id nid) GoString() string {
 
 func (id nid) Compare(id2 nid) int {
 	return id.id.Compare(id2.id)
-}
-
-func (i nid) Equal(i2 nid) bool {
-	return i.id.Compare(i2.id) == 0
 }
 
 func (id nid) IsEmpty() bool {

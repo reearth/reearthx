@@ -89,3 +89,14 @@ func (id ID[T]) GoString() string {
 func (id ID[T]) Compare(id2 ID[T]) int {
 	return id.nid.Compare(id2.nid)
 }
+
+func (id *ID[T]) IsNil() bool {
+	return id == nil || id.nid.IsNil()
+}
+
+func (id *ID[T]) StringRef() *string {
+	if id == nil {
+		return nil
+	}
+	return id.nid.StringRef()
+}
