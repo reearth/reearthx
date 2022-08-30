@@ -1,9 +1,10 @@
 package idx
 
 import (
+	"sort"
+
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
-	"golang.org/x/exp/slices"
 )
 
 type List[T Type] []ID[T]
@@ -11,27 +12,35 @@ type List[T Type] []ID[T]
 type RefList[T Type] []*ID[T]
 
 func ListFrom[T Type](ids []string) (List[T], error) {
-	return util.TryMap(ids, From[T])
+	got, err := util.TryMap(ids, fromNID)
+	if err != nil {
+		return nil, err
+	}
+	return nidsTo[T](got), nil
 }
 
 func MustList[T Type](ids []string) List[T] {
-	return lo.Must(ListFrom[T](ids))
+	got, err := ListFrom[T](ids)
+	if err != nil {
+		lo.Must[any](nil, err)
+	}
+	return got
 }
 
-func (l List[T]) list() util.List[ID[T]] {
-	return util.List[ID[T]](l)
+func (l List[T]) list() util.List[nid] {
+	return util.List[nid](newNIDs(l))
 }
 
 func (l List[T]) Has(ids ...ID[T]) bool {
-	return l.list().Has(ids...)
+	return l.list().Has(newNIDs(ids)...)
 }
 
 func (l List[T]) At(i int) *ID[T] {
-	return l.list().At(i)
+	return refNIDTo[T](l.list().At(i))
 }
 
 func (l List[T]) Index(id ID[T]) int {
-	return l.list().Index(id)
+	return l.list().Index(newNID(id))
 }
 
 func (l List[T]) Len() int {
@@ -39,78 +48,127 @@ func (l List[T]) Len() int {
 }
 
 func (l List[T]) Ref() *List[T] {
-	return (*List[T])(l.list().Ref())
+	if l == nil {
+		return nil
+	}
+
+	return &l
 }
 
 func (l List[T]) Refs() RefList[T] {
-	return l.list().Refs()
+	if l == nil {
+		return nil
+	}
+
+	return refNIDsTo[T](lo.ToSlicePtr(newNIDs(l)))
 }
 
 func (l List[T]) Delete(ids ...ID[T]) List[T] {
-	return List[T](l.list().Delete(ids...))
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](l.list().Delete(newNIDs(ids)...))
 }
 
 func (l List[T]) DeleteAt(i int) List[T] {
-	return List[T](l.list().DeleteAt(i))
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](l.list().DeleteAt(i))
 }
 
 func (l List[T]) Add(ids ...ID[T]) List[T] {
-	return List[T](l.list().Add(ids...))
+	return nidsTo[T](l.list().Add(newNIDs(ids)...))
 }
 
 func (l List[T]) AddUniq(ids ...ID[T]) List[T] {
-	return List[T](l.list().AddUniq(ids...))
+	return nidsTo[T](l.list().AddUniq(newNIDs(ids)...))
 }
 
 func (l List[T]) Insert(i int, ids ...ID[T]) List[T] {
-	return List[T](l.list().Insert(i, ids...))
+	return nidsTo[T](l.list().Insert(i, newNIDs(ids)...))
 }
 
 func (l List[T]) Move(e ID[T], to int) List[T] {
-	return List[T](l.list().Move(e, to))
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](l.list().Move(newNID(e), to))
 }
 
 func (l List[T]) MoveAt(from, to int) List[T] {
-	return List[T](l.list().MoveAt(from, to))
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](l.list().MoveAt(from, to))
 }
 
 func (l List[T]) Reverse() List[T] {
-	return List[T](l.list().Reverse())
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](l.list().Reverse())
 }
 
 func (l List[T]) Concat(m List[T]) List[T] {
-	return List[T](l.list().Concat(m))
+	return nidsTo[T](l.list().Concat(newNIDs(m)))
 }
 
 func (l List[T]) Intersect(m List[T]) List[T] {
-	return List[T](l.list().Intersect(m))
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](l.list().Intersect(newNIDs(m)))
 }
 
 func (l List[T]) Strings() []string {
-	return util.Map(l, func(id ID[T]) string {
+	if l == nil {
+		return nil
+	}
+
+	return util.Map(newNIDs(l), func(id nid) string {
 		return id.String()
 	})
 }
 
 func (l List[T]) Clone() List[T] {
-	return util.Map(l, func(id ID[T]) ID[T] {
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](util.Map(newNIDs(l), func(id nid) nid {
 		return id.Clone()
-	})
+	}))
 }
 
 func (l List[T]) Sort() List[T] {
-	m := l.list().Copy()
-	slices.SortStableFunc(m, func(a, b ID[T]) bool {
-		return a.Compare(b) <= 0
-	})
-	return List[T](m)
+	sort.Sort(l)
+	return l
 }
 
 func (l RefList[T]) Deref() List[T] {
-	return util.FilterMap(l, func(id *ID[T]) *ID[T] {
+	if l == nil {
+		return nil
+	}
+
+	return nidsTo[T](util.FilterMap(newRefNIDs(l), func(id *nid) *nid {
 		if id != nil && !(*id).IsNil() {
 			return id
 		}
 		return nil
-	})
+	}))
+}
+
+func (l List[T]) Less(i, j int) bool {
+	return l[i].Compare(l[j]) < 0
+}
+
+func (l List[T]) Swap(i, j int) {
+	l[i], l[j] = l[j], l[i]
 }
