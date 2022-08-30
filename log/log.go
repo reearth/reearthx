@@ -30,25 +30,7 @@ var (
 )
 
 func init() {
-	l := zap.New(
-		zapcore.NewCore(
-			enc(),
-			zapcore.Lock(zapcore.AddSync(writer)),
-			atom,
-		),
-	)
-
-	logger = l.Sugar()
-}
-
-func enc() zapcore.Encoder {
-	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
-
-	if gcp == "" {
-		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
-	} else {
-		return zapcore.NewJSONEncoder(gceEncoderConfig)
-	}
+	logger = new(writer)
 }
 
 func SetLevel(l zapcore.Level) {
@@ -56,109 +38,120 @@ func SetLevel(l zapcore.Level) {
 }
 
 func SetOutput(w io.Writer) {
-	l := zap.New(
-		zapcore.NewCore(
-			enc(),
-			zapcore.Lock(zapcore.AddSync(writer)),
-			atom,
-		),
-	)
-
-	logger = l.Sugar()
+	logger = new(w)
 }
 
-func Tracef(format string, args ...interface{}) {
+func new(w io.Writer) *zap.SugaredLogger {
+	return zap.New(
+		zapcore.NewCore(
+			enc(),
+			zapcore.Lock(zapcore.AddSync(w)),
+			atom,
+		),
+	).Sugar()
+}
+
+func enc() zapcore.Encoder {
+	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
+	if gcp == "" {
+		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	} else {
+		return zapcore.NewJSONEncoder(gceEncoderConfig)
+	}
+}
+
+func Tracef(format string, args ...any) {
 	logger.Debugf(format, args...)
 }
 
-func Debugf(format string, args ...interface{}) {
-	logger.Debugf(format, args)
+func Debugf(format string, args ...any) {
+	logger.Debugf(format, args...)
 }
 
-func Infof(format string, args ...interface{}) {
-	logger.Infof(format, args)
-}
-
-func Printf(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	logger.Infof(format, args...)
 }
 
-func Warnf(format string, args ...interface{}) {
+func Printf(format string, args ...any) {
+	logger.Infof(format, args...)
+}
+
+func Warnf(format string, args ...any) {
 	logger.Warnf(format, args...)
 }
 
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	logger.Errorf(format, args...)
 }
 
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	logger.Fatalf(format, args...)
 }
 
-func Panicf(format string, args ...interface{}) {
+func Panicf(format string, args ...any) {
 	logger.Panicf(format, args...)
 }
 
-func Trace(args ...interface{}) {
+func Trace(args ...any) {
 	logger.Debug(args...)
 }
 
-func Debug(args ...interface{}) {
+func Debug(args ...any) {
 	logger.Debug(args...)
 }
 
-func Info(args ...interface{}) {
+func Info(args ...any) {
 	logger.Info(args...)
 }
 
-func Print(args ...interface{}) {
+func Print(args ...any) {
 	logger.Info(args...)
 }
 
-func Warn(args ...interface{}) {
+func Warn(args ...any) {
 	logger.Warn(args...)
 }
 
-func Error(args ...interface{}) {
+func Error(args ...any) {
 	logger.Error(args...)
 }
 
-func Fatal(args ...interface{}) {
+func Fatal(args ...any) {
 	logger.Fatal(args...)
 }
 
-func Panic(args ...interface{}) {
+func Panic(args ...any) {
 	logger.Panic(args...)
 }
 
-func Traceln(args ...interface{}) {
+func Traceln(args ...any) {
 	logger.Debug(args...)
 }
 
-func Debugln(args ...interface{}) {
+func Debugln(args ...any) {
 	logger.Debug(args...)
 }
 
-func Infoln(args ...interface{}) {
+func Infoln(args ...any) {
 	logger.Info(args...)
 }
 
-func Println(args ...interface{}) {
+func Println(args ...any) {
 	logger.Info(args...)
 }
 
-func Warnln(args ...interface{}) {
+func Warnln(args ...any) {
 	logger.Warn(args...)
 }
 
-func Errorln(args ...interface{}) {
+func Errorln(args ...any) {
 	logger.Error(args...)
 }
 
-func Fatalln(args ...interface{}) {
+func Fatalln(args ...any) {
 	logger.Fatal(args...)
 }
 
-func Panicln(args ...interface{}) {
+func Panicln(args ...any) {
 	logger.Panic(args...)
 }
