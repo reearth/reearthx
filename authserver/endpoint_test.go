@@ -213,6 +213,24 @@ func send(method, u string, form bool, body any, headers map[string]string) *htt
 	return lo.Must(httpClient.Do(req))
 }
 
+func TestEndpointHTTPDomain(t *testing.T) {
+	cr := &configRepo{}
+	rr := &requestRepo{}
+
+	// should not fail
+	e := echo.New()
+	Endpoint(context.Background(), EndpointConfig{
+		// Issuer should be same as the URL
+		URL:             lo.Must(url.Parse("http://example.com")),
+		WebURL:          lo.Must(url.Parse("http://web.example.com")),
+		Key:             "",
+		DefaultClientID: "default-client",
+		UserRepo:        &userRepo{},
+		ConfigRepo:      cr,
+		RequestRepo:     rr,
+	}, e.Group(""))
+}
+
 type userRepo struct{}
 
 func (*userRepo) Sub(ctx context.Context, email, password, _requestID string) (string, error) {

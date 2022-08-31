@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -29,23 +28,26 @@ type EndpointConfig struct {
 	UserRepo        UserRepo
 	ConfigRepo      ConfigRepo
 	RequestRepo     RequestRepo
+	DenyHTTP        bool
 }
 
-func (c *EndpointConfig) Normalize() {
+func (c *EndpointConfig) normalize() {
 	if c.Issuer == "" {
 		c.Issuer = c.URL.String()
 	}
+
+	if strings.HasPrefix(c.Issuer, "http://") && !c.DenyHTTP {
+		c.Dev = true
+	}
+
 	if !strings.HasSuffix(c.Issuer, "/") {
 		c.Issuer = c.Issuer + "/"
 	}
+
 	if c.Dev {
 		os.Setenv(op.OidcDevMode, "true")
 	} else {
-		if dev, ok := os.LookupEnv(op.OidcDevMode); ok {
-			if isDev, _ := strconv.ParseBool(dev); isDev {
-				c.Dev = true
-			}
-		}
+		os.Unsetenv(op.OidcDevMode)
 	}
 }
 
@@ -63,18 +65,21 @@ func (c EndpointConfig) storageConfig() StorageConfig {
 }
 
 func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
-	cfg.Normalize()
+	cfg.normalize()
 
 	storage, err := NewStorage(ctx, cfg.storageConfig())
 	if err != nil {
-		log.Fatalf("auth: failed to init: %s\n", err)
+		log.Fatalf("auth: storage init failed: %s\n", err)
 	}
 
-	router := Server(ctx, ServerConfig{
+	router, err := Server(ctx, ServerConfig{
 		Issuer:  cfg.Issuer,
 		Key:     cfg.Key,
 		Storage: storage,
-	}).(*mux.Router)
+	})
+	if err != nil {
+		log.Fatalf("auth: server init failed: %s\n", err)
+	}
 
 	if err := router.Walk(muxToEchoMapper(g)); err != nil {
 		log.Fatalf("auth: walk failed: %s\n", err)
@@ -95,7 +100,7 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 
 	debugMsg := ""
 	if cfg.Dev {
-		debugMsg = " with debug mode"
+		debugMsg = " with dev mode"
 	}
 
 	log.Infof("auth: oidc server started%s", debugMsg)

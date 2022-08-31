@@ -8,7 +8,6 @@ import (
 
 	"github.com/golang/gddo/httputil/header"
 	"github.com/gorilla/mux"
-	"github.com/reearth/reearthx/log"
 	"github.com/zitadel/oidc/pkg/op"
 )
 
@@ -20,7 +19,7 @@ type ServerConfig struct {
 	Storage op.Storage
 }
 
-func Server(ctx context.Context, cfg ServerConfig) http.Handler {
+func Server(ctx context.Context, cfg ServerConfig) (*mux.Router, error) {
 	handler, err := op.NewOpenIDProvider(
 		ctx,
 		&op.Config{
@@ -35,10 +34,10 @@ func Server(ctx context.Context, cfg ServerConfig) http.Handler {
 		op.WithCustomKeysEndpoint(op.NewEndpoint(jwksEndpoint)),
 	)
 	if err != nil {
-		log.Fatalf("auth: init failed: %s\n", err)
+		return nil, err
 	}
 
-	return handler.HttpHandler()
+	return handler.HttpHandler().(*mux.Router), nil
 }
 
 func setURLVarsHandler() func(handler http.Handler) http.Handler {
