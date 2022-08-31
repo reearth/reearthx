@@ -19,23 +19,39 @@ const (
 )
 
 type EndpointConfig struct {
-	SubLoader        SubLoader
-	Issuer           string
-	AuthProviderName string
-	URL              *url.URL
-	WebURL           *url.URL
-	Key              string
-	UserInfoProvider UserInfoProvider
-	DefaultClientID  string
-	Dev              bool
-	DN               *DNConfig
-	ConfigRepo       ConfigRepo
-	RequestRepo      RequestRepo
+	Issuer          string
+	URL             *url.URL
+	WebURL          *url.URL
+	Key             string
+	DefaultClientID string
+	Dev             bool
+	DN              *DNConfig
+	UserRepo        UserRepo
+	ConfigRepo      ConfigRepo
+	RequestRepo     RequestRepo
+}
+
+func (c *EndpointConfig) Normalize() {
+	if c.Issuer == "" {
+		c.Issuer = c.URL.String()
+	}
+	if !strings.HasSuffix(c.Issuer, "/") {
+		c.Issuer = c.Issuer + "/"
+	}
+	if c.Dev {
+		os.Setenv(op.OidcDevMode, "true")
+	} else {
+		if dev, ok := os.LookupEnv(op.OidcDevMode); ok {
+			if isDev, _ := strconv.ParseBool(dev); isDev {
+				c.Dev = true
+			}
+		}
+	}
 }
 
 func (c EndpointConfig) storageConfig() StorageConfig {
 	return StorageConfig{
-		UserInfoSetter: c.UserInfoProvider,
+		UserInfoSetter: c.UserRepo.Info,
 		Domain:         c.URL.String(),
 		ClientDomain:   c.WebURL.String(),
 		ClientID:       c.DefaultClientID,
@@ -47,9 +63,7 @@ func (c EndpointConfig) storageConfig() StorageConfig {
 }
 
 func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
-	if cfg.Issuer != "" && !strings.HasSuffix(cfg.Issuer, "/") {
-		cfg.Issuer = cfg.Issuer + "/"
-	}
+	cfg.Normalize()
 
 	storage, err := NewStorage(ctx, cfg.storageConfig())
 	if err != nil {
@@ -67,7 +81,7 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 	}
 
 	g.POST(loginEndpoint, LoginHandler(ctx, LoginHandlerConfig{
-		SubLoader: cfg.SubLoader,
+		SubLoader: cfg.UserRepo.Sub,
 		URL:       cfg.URL,
 		WebURL:    cfg.WebURL,
 		Storage:   storage,
@@ -80,10 +94,8 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 	g.GET("v2/logout", LogoutHandler())
 
 	debugMsg := ""
-	if dev, ok := os.LookupEnv(op.OidcDevMode); ok {
-		if isDev, _ := strconv.ParseBool(dev); isDev {
-			debugMsg = " with debug mode"
-		}
+	if cfg.Dev {
+		debugMsg = " with debug mode"
 	}
 
 	log.Infof("auth: oidc server started%s", debugMsg)

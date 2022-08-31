@@ -1,6 +1,15 @@
 package authserver
 
-import "context"
+import (
+	"context"
+
+	"github.com/zitadel/oidc/pkg/oidc"
+)
+
+type UserRepo interface {
+	Sub(ctx context.Context, email, password, authRequestID string) (string, error)
+	Info(context.Context, string, []string, oidc.UserInfoSetter) error
+}
 
 type RequestRepo interface {
 	FindByID(context.Context, RequestID) (*Request, error)

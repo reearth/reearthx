@@ -58,8 +58,8 @@ func (r *Mongo) findOne(ctx context.Context, filter any) (*Request, error) {
 	return c.Result[0], nil
 }
 
-func newMongoConsumer() *mongox.SliceFuncConsumer[mongoDocument, *Request] {
-	return mongox.NewSliceFuncConsumer(func(d mongoDocument) (*Request, error) {
+func newMongoConsumer() *mongox.SliceFuncConsumer[*mongoDocument, *Request] {
+	return mongox.NewSliceFuncConsumer(func(d *mongoDocument) (*Request, error) {
 		return d.Model()
 	})
 }

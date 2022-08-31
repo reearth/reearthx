@@ -31,29 +31,15 @@ func TestEndpoint(t *testing.T) {
 	rr := &requestRepo{}
 
 	Endpoint(context.Background(), EndpointConfig{
-		SubLoader: func(ctx context.Context, email, password, _requestID string) (string, error) {
-			if email == "aaa@example.com" && password == "aaa" {
-				return "subsub", nil
-			}
-			return "", errors.New("not found")
-		},
-		UserInfoProvider: func(ctx context.Context, sub string, scope []string, ui oidc.UserInfoSetter) error {
-			if sub == "subsub" {
-				ui.SetEmail("aaa@example.com", true)
-				ui.SetName("aaa")
-				return nil
-			}
-			return errors.New("not found")
-		},
-		Issuer:           "https://example.com/",
-		AuthProviderName: "test",
-		URL:              lo.Must(url.Parse("https://example.com")),
-		WebURL:           lo.Must(url.Parse("https://web.example.com")),
-		Key:              "",
-		Dev:              false,
-		DefaultClientID:  "default-client",
-		ConfigRepo:       cr,
-		RequestRepo:      rr,
+		Issuer:          "https://example.com/",
+		URL:             lo.Must(url.Parse("https://example.com")),
+		WebURL:          lo.Must(url.Parse("https://web.example.com")),
+		Key:             "",
+		Dev:             false,
+		DefaultClientID: "default-client",
+		UserRepo:        &userRepo{},
+		ConfigRepo:      cr,
+		RequestRepo:     rr,
 	}, e.Group(""))
 
 	ts := httptest.NewServer(e)
@@ -225,6 +211,24 @@ func send(method, u string, form bool, body any, headers map[string]string) *htt
 		req.Header.Set(k, v)
 	}
 	return lo.Must(httpClient.Do(req))
+}
+
+type userRepo struct{}
+
+func (*userRepo) Sub(ctx context.Context, email, password, _requestID string) (string, error) {
+	if email == "aaa@example.com" && password == "aaa" {
+		return "subsub", nil
+	}
+	return "", errors.New("not found")
+}
+
+func (*userRepo) Info(ctx context.Context, sub string, _ []string, ui oidc.UserInfoSetter) error {
+	if sub == "subsub" {
+		ui.SetEmail("aaa@example.com", true)
+		ui.SetName("aaa")
+		return nil
+	}
+	return errors.New("not found")
 }
 
 type configRepo struct {
