@@ -18,15 +18,18 @@ var _ RequestRepo = (*Mongo)(nil)
 
 func NewMongo(client *mongox.ClientCollection) *Mongo {
 	r := &Mongo{client: client}
-	r.init()
 	return r
 }
 
-func (r *Mongo) init() {
-	i := r.client.CreateIndex(context.Background(), nil, []string{"code", "subject"})
+func (r *Mongo) Init() error {
+	i, err := r.client.Indexes(context.Background(), []string{"code", "subject"}, nil)
+	if err != nil {
+		return err
+	}
 	if len(i) > 0 {
 		log.Infof("mongo: %s: index created: %s", "authRequest", i)
 	}
+	return nil
 }
 
 func (r *Mongo) FindByID(ctx context.Context, id2 RequestID) (*Request, error) {

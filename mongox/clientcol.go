@@ -8,7 +8,6 @@ import (
 
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
-	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -279,61 +278,6 @@ func (c *ClientCollection) Paginate(ctx context.Context, filter any, sort *strin
 	}
 
 	return usecasex.NewPageInfo(int(count), startCursor, endCursor, hasNextPage, hasPreviousPage), nil
-}
-
-func (c *ClientCollection) CreateIndex(ctx context.Context, keys []string, uniqueKeys []string) []string {
-	indexes := lo.Must(c.indexes(ctx))
-	newIndexes := append(
-		lo.FilterMap(keys, func(k string, _ int) (mongo.IndexModel, bool) {
-			if _, ok := indexes[k]; ok {
-				return mongo.IndexModel{}, false
-			}
-
-			return mongo.IndexModel{
-				Keys: map[string]int{
-					k: 1,
-				},
-				Options: options.Index().SetUnique(false),
-			}, true
-		}),
-		lo.FilterMap(uniqueKeys, func(k string, _ int) (mongo.IndexModel, bool) {
-			if _, ok := indexes[k]; ok {
-				return mongo.IndexModel{}, false
-			}
-
-			return mongo.IndexModel{
-				Keys: map[string]int{
-					k: 1,
-				},
-				Options: options.Index().SetUnique(true),
-			}, true
-		})...,
-	)
-
-	if len(newIndexes) > 0 {
-		return lo.Must(c.client.Indexes().CreateMany(ctx, newIndexes))
-	}
-	return nil
-}
-
-func (c *ClientCollection) indexes(ctx context.Context) (map[string]struct{}, error) {
-	cur, err := c.client.Indexes().List(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	indexes := []struct{ Key map[string]int }{}
-	if err := cur.All(ctx, &indexes); err != nil {
-		return nil, err
-	}
-
-	keys := map[string]struct{}{}
-	for _, i := range indexes {
-		for k := range i.Key {
-			keys[k] = struct{}{}
-		}
-	}
-	return keys, nil
 }
 
 func (c *ClientCollection) BeginTransaction() (usecasex.Tx, error) {
