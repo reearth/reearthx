@@ -31,7 +31,7 @@ func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consum
 		return rerror.ErrNotFound
 	}
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	defer func() {
 		_ = cursor.Close(ctx)
@@ -40,7 +40,7 @@ func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consum
 	for {
 		c := cursor.Next(ctx)
 		if err := cursor.Err(); err != nil && !errors.Is(err, io.EOF) {
-			return err
+			return rerror.ErrInternalBy(err)
 		}
 
 		if !c {
@@ -59,10 +59,13 @@ func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consum
 
 func (c *ClientCollection) FindOne(ctx context.Context, filter any, consumer Consumer) error {
 	raw, err := c.client.FindOne(ctx, filter).DecodeBytes()
-	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
-		return rerror.ErrNotFound
+	if err != nil {
+		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
+			return rerror.ErrNotFound
+		}
+		return rerror.ErrInternalBy(err)
 	}
-	if err := consumer.Consume(raw); err != nil {
+	if err := consumer.Consume(raw); err != nil && !errors.Is(err, io.EOF) {
 		return err
 	}
 	return nil
@@ -71,7 +74,7 @@ func (c *ClientCollection) FindOne(ctx context.Context, filter any, consumer Con
 func (c *ClientCollection) Count(ctx context.Context, filter any) (int64, error) {
 	count, err := c.client.CountDocuments(ctx, filter)
 	if err != nil {
-		return count, err
+		return 0, rerror.ErrInternalBy(err)
 	}
 	return count, nil
 }
@@ -87,7 +90,7 @@ func (c *ClientCollection) RemoveAll(ctx context.Context, f any) error {
 func (c *ClientCollection) RemoveOne(ctx context.Context, f any) error {
 	res, err := c.client.DeleteOne(ctx, f)
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	if res != nil && res.DeletedCount == 0 {
 		return rerror.ErrNotFound
@@ -96,14 +99,18 @@ func (c *ClientCollection) RemoveOne(ctx context.Context, f any) error {
 }
 
 func (c *ClientCollection) SaveOne(ctx context.Context, id string, replacement any) error {
+	return c.ReplaceOne(ctx, bson.M{"id": id}, replacement)
+}
+
+func (c *ClientCollection) ReplaceOne(ctx context.Context, filter any, replacement any) error {
 	_, err := c.client.ReplaceOne(
 		ctx,
-		bson.M{"id": id},
+		filter,
 		replacement,
 		options.Replace().SetUpsert(true),
 	)
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	return nil
 }
@@ -116,7 +123,7 @@ func (c *ClientCollection) SetOne(ctx context.Context, id string, replacement an
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	return nil
 }
@@ -140,7 +147,7 @@ func (c *ClientCollection) SaveAll(ctx context.Context, ids []string, updates []
 
 	_, err := c.client.BulkWrite(ctx, writeModels)
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	return nil
 }
@@ -150,7 +157,7 @@ func (c *ClientCollection) UpdateMany(ctx context.Context, filter, update any) e
 		"$set": update,
 	})
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	return nil
 }
@@ -177,7 +184,7 @@ func (c *ClientCollection) UpdateManyMany(ctx context.Context, updates []Update)
 
 	_, err := c.client.BulkWrite(ctx, writeModels)
 	if err != nil {
-		return err
+		return rerror.ErrInternalBy(err)
 	}
 	return nil
 }
@@ -208,12 +215,12 @@ func (c *ClientCollection) Paginate(ctx context.Context, filter any, sort *strin
 
 	count, err := c.client.CountDocuments(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to count documents: %v", err.Error())
+		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to count documents: %v", err.Error()))
 	}
 
 	filter, limit, err := c.paginationFilter(ctx, pa, sortKey, key, filter)
 	if err != nil {
-		return nil, err
+		return nil, rerror.ErrInternalBy(err)
 	}
 
 	// Read one more element so that we can see whether there's a further one
@@ -222,7 +229,7 @@ func (c *ClientCollection) Paginate(ctx context.Context, filter any, sort *strin
 
 	cursor, err := c.client.Find(ctx, filter, findOptions)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find: %v", err.Error())
+		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to find: %v", err.Error()))
 	}
 	defer func() {
 		_ = cursor.Close(ctx)
@@ -235,7 +242,7 @@ func (c *ClientCollection) Paginate(ctx context.Context, filter any, sort *strin
 		results = append(results, raw)
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, fmt.Errorf("failed to read cursor: %v", err.Error())
+		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to read cursor: %v", err.Error()))
 	}
 
 	hasMore := false
@@ -255,12 +262,12 @@ func (c *ClientCollection) Paginate(ctx context.Context, filter any, sort *strin
 	if len(results) > 0 {
 		sc, err := getCursor(results[0], key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get start cursor: %v", err.Error())
+			return nil, rerror.ErrInternalBy(fmt.Errorf("failed to get start cursor: %v", err.Error()))
 		}
 		startCursor = sc
 		ec, err := getCursor(results[len(results)-1], key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get end cursor: %v", err.Error())
+			return nil, rerror.ErrInternalBy(fmt.Errorf("failed to get end cursor: %v", err.Error()))
 		}
 		endCursor = ec
 	}
