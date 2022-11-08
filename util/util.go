@@ -8,47 +8,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func Must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-// IsZero
-//
-// Deprecated: use lo.IsEmpty instead.
-func IsZero[T comparable](v T) bool {
-	return lo.IsEmpty(v)
-}
-
-// IsNotZero
-//
-// Deprecated: use lo.IsNotEmpty instead.
-func IsNotZero[T comparable](v T) bool {
-	return lo.IsNotEmpty(v)
-}
-
-// Deref
-//
-// Deprecated: use lo.FromPtr instead.
-func Deref[T any](r *T) T {
-	return lo.FromPtr(r)
-}
-
-// DerefOr
-//
-// Deprecated: use lo.FromPtrOrust instead.
-func DerefOr[T any](ref *T, def T) T {
-	return lo.FromPtrOr(ref, def)
-}
-
-// Unwrap
-//
-// Deprecated: use lo.Must instead.
-func Unwrap[T any](t T, err error) T {
-	return lo.Must(t, err)
-}
-
 func ToPtrIfNotEmpty[T comparable](t T) *T {
 	if lo.IsEmpty(t) {
 		return nil
@@ -57,10 +16,19 @@ func ToPtrIfNotEmpty[T comparable](t T) *T {
 }
 
 func OrError[T comparable](t T, err error) (r T, _ error) {
-	if lo.IsEmpty(t) && err != nil {
-		return r, err
+	return MapError(t, err)(nil)
+}
+
+func MapError[T comparable](t T, err error) func(m func(error) error) (T, error) {
+	return func(m func(error) error) (T, error) {
+		if err != nil {
+			if m == nil {
+				return t, err
+			}
+			return t, m(err)
+		}
+		return t, nil
 	}
-	return t, nil
 }
 
 func CloneRef[T any](r *T) *T {

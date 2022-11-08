@@ -42,6 +42,29 @@ func TestTryMap(t *testing.T) {
 	assert.Equal(t, errors.New("aaa"), err)
 }
 
+func TestTryFilterMap(t *testing.T) {
+	res, err := TryMap[int, bool](nil, nil)
+	assert.Nil(t, res)
+	assert.NoError(t, err)
+
+	iteratee := func(i int) (bool, bool, error) {
+		if i == 0 {
+			return false, false, errors.New("aaa")
+		}
+		if i == 1 {
+			return true, false, nil
+		}
+		return true, true, nil
+	}
+	res, err = TryFilterMap([]int{1, 2, 3}, iteratee)
+	assert.Equal(t, []bool{true, true}, res)
+	assert.NoError(t, err)
+
+	res, err = TryFilterMap([]int{1, 0, 3}, iteratee)
+	assert.Nil(t, res)
+	assert.Equal(t, errors.New("aaa"), err)
+}
+
 func TestFilterMap(t *testing.T) {
 	assert.Nil(t, FilterMap[int, bool](nil, nil))
 	assert.Equal(t, []bool{true, false}, FilterMap([]int{1, 0, 2}, func(i int) *bool {

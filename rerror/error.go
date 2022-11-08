@@ -20,6 +20,10 @@ var (
 	ErrNotImplemented = errors.New("not implemented")
 )
 
+func IsInternal(err error) bool {
+	return Is(err, errInternal)
+}
+
 func OrInternal[T comparable](v T, err error) (r T, _ error) {
 	return util.OrError(v, errInternalBy(errInternal, err))
 }

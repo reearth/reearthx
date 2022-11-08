@@ -9,60 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMust(t *testing.T) {
-	err := errors.New("ERR")
-	Must(nil)
-	assert.PanicsWithValue(t, err, func() {
-		Must(err)
-	})
-}
-
-func TestIsZero(t *testing.T) {
-	assert.True(t, IsZero(0))
-	assert.False(t, IsZero(-1))
-	assert.True(t, IsZero(struct {
-		A int
-		B string
-	}{}))
-	assert.False(t, IsZero(struct {
-		A int
-		B string
-	}{A: 1}))
-	assert.True(t, IsZero((*(struct{}))(nil)))
-	assert.False(t, IsZero((*(struct{}))(&struct{}{})))
-}
-
-func TestIsNotZero(t *testing.T) {
-	assert.False(t, IsNotZero(0))
-	assert.True(t, IsNotZero(-1))
-	assert.False(t, IsNotZero(struct {
-		A int
-		B string
-	}{}))
-	assert.True(t, IsNotZero(struct {
-		A int
-		B string
-	}{A: 1}))
-	assert.False(t, IsNotZero((*(struct{}))(nil)))
-	assert.True(t, IsNotZero((*(struct{}))(&struct{}{})))
-}
-
-func TestDeref(t *testing.T) {
-	assert.Equal(t, struct{ A int }{}, Deref((*(struct{ A int }))(nil)))
-	assert.Equal(t, struct{ A int }{A: 1}, Deref((*(struct{ A int }))(&struct{ A int }{A: 1})))
-}
-
-func TestDerefOr(t *testing.T) {
-	assert.Equal(t, "b", DerefOr((*string)(nil), "b"))
-	assert.Equal(t, "a", DerefOr(lo.ToPtr("a"), ""))
-}
-
-func TestUnwrap(t *testing.T) {
-	assert.PanicsWithValue(t, "hoge", func() { _ = Unwrap(1, errors.New("hoge")) })
-	res := lo.ToPtr(1)
-	assert.Same(t, res, Unwrap(res, nil))
-}
-
 func TestToPtrIfNotEmpty(t *testing.T) {
 	assert.Nil(t, ToPtrIfNotEmpty(""))
 	assert.NotEqual(t, lo.ToPtr(""), ToPtrIfNotEmpty(""))
@@ -74,10 +20,17 @@ func TestOrError(t *testing.T) {
 	err := errors.New("err")
 	got, goterr := OrError(a, err)
 	assert.Same(t, a, got)
-	assert.Nil(t, goterr)
+	assert.Same(t, err, goterr)
 	got, goterr = OrError[*struct{}](nil, err)
 	assert.Nil(t, got)
 	assert.Same(t, err, goterr)
+}
+
+func TestMapError(t *testing.T) {
+	f := func() (string, error) { return "a", errors.New("a") }
+	got, goterr := MapError(f())(func(e error) error { return errors.New("b" + e.Error()) })
+	assert.Equal(t, "a", got)
+	assert.Equal(t, errors.New("ba"), goterr)
 }
 
 func TestCopyRef(t *testing.T) {

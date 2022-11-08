@@ -49,6 +49,25 @@ func TryMap[T any, V any](collection []T, iteratee func(v T) (V, error)) ([]V, e
 	return m, nil
 }
 
+// TryFilterMap is similar to TryMap, but if the iteratee returns nil, that element will be omitted from the new slice.
+func TryFilterMap[T any, V any](collection []T, iteratee func(v T) (V, bool, error)) ([]V, error) {
+	if collection == nil {
+		return nil, nil
+	}
+
+	m := make([]V, 0, len(collection))
+	for _, e := range collection {
+		j, ok, err := iteratee(e)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			m = append(m, j)
+		}
+	}
+	return m, nil
+}
+
 // Filter is similar to lo.Filter, but accepts an iteratee without the index argument.
 func Filter[T any](collection []T, iteratee func(v T) bool) []T {
 	if collection == nil {

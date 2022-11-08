@@ -12,7 +12,7 @@ func TestOrInternal(t *testing.T) {
 	a := &struct{}{}
 	err := errors.New("a")
 
-	got, goterr := OrInternal(a, err)
+	got, goterr := OrInternal(a, nil)
 	assert.Same(t, a, got)
 	assert.Nil(t, goterr)
 
