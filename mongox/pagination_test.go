@@ -18,7 +18,9 @@ func TestClientCollection_Paginate(t *testing.T) {
 
 	// seeds
 	seeds := []string{"a", "b", "c"}
-	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s string, i int) any { return bson.M{"id": s, "i": len(seeds) - i} }))
+	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s string, i int) any {
+		return bson.M{"id": s, "i": len(seeds) - i}
+	}))
 
 	// nil
 	got, goterr := c.Paginate(ctx, nil, nil, nil, nil)

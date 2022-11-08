@@ -15,8 +15,8 @@ func TestPagination_Wrap(t *testing.T) {
 		Last:   lo.ToPtr(int64(10)),
 	}
 	op := OffsetPagination{Offset: 100, Limit: 10}
-	assert.Equal(t, Pagination{Cursor: &cp}, cp.Wrap())
-	assert.Equal(t, Pagination{Offset: &op}, op.Wrap())
+	assert.Equal(t, &Pagination{Cursor: &cp}, cp.Wrap())
+	assert.Equal(t, &Pagination{Offset: &op}, op.Wrap())
 }
 
 func TestPagination_Clone(t *testing.T) {
