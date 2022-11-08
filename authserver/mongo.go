@@ -22,7 +22,7 @@ func NewMongo(client *mongox.ClientCollection) *Mongo {
 }
 
 func (r *Mongo) Init() error {
-	added, deleted, err := r.client.Indexes(context.Background(), []string{"code", "subject"}, nil)
+	added, deleted, err := r.client.Indexes(context.Background(), []string{"code", "subject"}, []string{"id"})
 	if err != nil {
 		return err
 	}
@@ -68,18 +68,18 @@ func newMongoConsumer() *mongox.SliceFuncConsumer[*mongoDocument, *Request] {
 }
 
 type mongoDocument struct {
-	ID            string
-	ClientID      string
-	Subject       string
-	Code          string
-	State         string
-	ResponseType  string
-	Scopes        []string
-	Audiences     []string
-	RedirectURI   string
-	Nonce         string
-	CodeChallenge *mongoCodeChallengeDocument
-	AuthorizedAt  *time.Time
+	ID            string                      `bson:"id"`
+	ClientID      string                      `bson:"clientid"`
+	Subject       string                      `bson:"subject"`
+	Code          string                      `bson:"code"`
+	State         string                      `bson:"state"`
+	ResponseType  string                      `bson:"responseType"`
+	Scopes        []string                    `bson:"scopes"`
+	Audiences     []string                    `bson:"audiences"`
+	RedirectURI   string                      `bson:"redirecturi"`
+	Nonce         string                      `bson:"nonce"`
+	CodeChallenge *mongoCodeChallengeDocument `bson:"codechallenge"`
+	AuthorizedAt  *time.Time                  `bson:"authorizedat"`
 }
 
 type mongoCodeChallengeDocument struct {
