@@ -1,14 +1,14 @@
 package usecasex
 
 type PageInfo struct {
-	TotalCount      int
+	TotalCount      int64
 	StartCursor     *Cursor
 	EndCursor       *Cursor
 	HasNextPage     bool
 	HasPreviousPage bool
 }
 
-func NewPageInfo(totalCount int, startCursor, endCursor *Cursor, hasNextPage, hasPreviousPage bool) *PageInfo {
+func NewPageInfo(totalCount int64, startCursor, endCursor *Cursor, hasNextPage, hasPreviousPage bool) *PageInfo {
 	return &PageInfo{
 		TotalCount:      totalCount,
 		StartCursor:     startCursor.CopyRef(),
@@ -32,6 +32,7 @@ func (p *PageInfo) OrEmpty() *PageInfo {
 	if p == nil {
 		return EmptyPageInfo()
 	}
+
 	return p
 }
 
@@ -39,6 +40,7 @@ func (p *PageInfo) Clone() *PageInfo {
 	if p == nil {
 		return nil
 	}
+
 	return &PageInfo{
 		TotalCount:      p.TotalCount,
 		StartCursor:     p.StartCursor.CopyRef(),
