@@ -11,6 +11,19 @@ type CursorPagination struct {
 	Last   *int64  `json:"last"`
 }
 
+func (p *CursorPagination) Clone() *CursorPagination {
+	if p == nil {
+		return nil
+	}
+
+	return &CursorPagination{
+		Before: util.CloneRef(p.Before),
+		After:  util.CloneRef(p.After),
+		First:  util.CloneRef(p.First),
+		Last:   util.CloneRef(p.Last),
+	}
+}
+
 func (p CursorPagination) Wrap() *Pagination {
 	return &Pagination{
 		Cursor: &p,
@@ -39,7 +52,7 @@ func (p *Pagination) Clone() *Pagination {
 	}
 
 	return &Pagination{
-		Cursor: util.CloneRef(p.Cursor),
+		Cursor: p.Cursor.Clone(),
 		Offset: util.CloneRef(p.Offset),
 	}
 }
