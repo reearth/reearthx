@@ -73,7 +73,7 @@ type mongoDocument struct {
 	Subject       string                      `bson:"subject"`
 	Code          string                      `bson:"code"`
 	State         string                      `bson:"state"`
-	ResponseType  string                      `bson:"responseType"`
+	ResponseType  string                      `bson:"responsetype"`
 	Scopes        []string                    `bson:"scopes"`
 	Audiences     []string                    `bson:"audiences"`
 	RedirectURI   string                      `bson:"redirecturi"`

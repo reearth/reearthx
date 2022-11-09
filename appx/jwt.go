@@ -36,7 +36,6 @@ type JWTProvider struct {
 
 func (p JWTProvider) validator() (*validator.Validator, error) {
 	issuerURL, err := url.Parse(p.ISS)
-	issuerURL.Path = "/"
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse the issuer url: %w", err)
 	}
