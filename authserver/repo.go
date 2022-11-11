@@ -19,6 +19,12 @@ type RequestRepo interface {
 	Remove(context.Context, RequestID) error
 }
 
+type TokenRepo interface {
+	FindByToken(context.Context, string) (*Token, error)
+	Save(context.Context, *Token) error
+	Remove(context.Context, string) error
+}
+
 type Config struct {
 	Cert string
 	Key  string

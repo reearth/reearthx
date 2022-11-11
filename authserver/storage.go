@@ -17,9 +17,10 @@ import (
 
 type Storage struct {
 	config         StorageConfig
+	requestRepo    RequestRepo
+	tokenRepo      TokenRepo
 	userInfoSetter UserInfoProvider
 	clients        map[string]op.Client
-	requestRepo    RequestRepo
 	keySet         jose.JSONWebKeySet
 	key            *rsa.PrivateKey
 	sigKey         jose.SigningKey
@@ -37,6 +38,7 @@ type StorageConfig struct {
 	DN              *DNConfig
 	ConfigRepo      ConfigRepo
 	RequestRepo     RequestRepo
+	TokenRepo       TokenRepo
 	UserInfoSetter  UserInfoProvider
 	AudienceForTest string
 }
@@ -118,6 +120,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 		config:         cfg,
 		userInfoSetter: cfg.UserInfoSetter,
 		requestRepo:    cfg.RequestRepo,
+		tokenRepo:      cfg.TokenRepo,
 		key:            key,
 		sigKey:         *sigKey,
 		keySet:         *keySet,
@@ -202,7 +205,7 @@ func (s *Storage) SaveAuthCode(ctx context.Context, requestID, code string) erro
 	}
 	request2 := request.(*Request)
 	request2.SetCode(code)
-	return s.updateRequest(ctx, requestID, *request2)
+	return s.updateRequest(ctx, requestID, request2)
 }
 
 func (s *Storage) DeleteAuthRequest(ctx context.Context, requestID string) error {
@@ -217,17 +220,24 @@ func (s *Storage) CreateAccessToken(_ context.Context, _ op.TokenRequest) (strin
 	return uuid.NewString(), time.Now().UTC().Add(5 * time.Hour), nil
 }
 
-func (s *Storage) CreateAccessAndRefreshTokens(_ context.Context, request op.TokenRequest, _ string) (accessTokenID string, newRefreshToken string, expiration time.Time, err error) {
-	authReq := request.(*Request)
-	return uuid.NewString(), authReq.GetID(), time.Now().UTC().Add(5 * time.Minute), nil
+func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, currentRefreshToken string) (accessTokenID string, newRefreshToken string, expiration time.Time, err error) {
+	req := request.(*Request)
+	if currentRefreshToken != "" {
+		req, err := s.tokenRepo.FindByRefreshToken(ctx, currentRefreshToken)
+		if err != nil {
+			return "", "", time.Time{}, err
+		}
+	}
+
+	return uuid.NewString(), uuid.NewString(), time.Now().UTC().Add(5 * time.Minute), nil
 }
 
 func (s *Storage) TokenRequestByRefreshToken(ctx context.Context, refreshToken string) (op.RefreshTokenRequest, error) {
-	r, err := s.AuthRequestByID(ctx, refreshToken)
+	r, err := s.tokenRepo.FindByRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return nil, err
 	}
-	return r.(op.RefreshTokenRequest), err
+	return r, nil
 }
 
 func (s *Storage) TerminateSession(_ context.Context, _, _ string) error {
@@ -307,11 +317,11 @@ func (s *Storage) CompleteAuthRequest(ctx context.Context, requestId, sub string
 	}
 	req := request.(*Request)
 	req.Complete(sub)
-	err = s.updateRequest(ctx, requestId, *req)
+	err = s.updateRequest(ctx, requestId, req)
 	return err
 }
 
-func (s *Storage) updateRequest(ctx context.Context, requestID string, req Request) error {
+func (s *Storage) updateRequest(ctx context.Context, requestID string, req *Request) error {
 	if requestID == "" {
 		return errors.New("invalid id")
 	}
@@ -324,7 +334,7 @@ func (s *Storage) updateRequest(ctx context.Context, requestID string, req Reque
 		return err
 	}
 
-	if err := s.requestRepo.Save(ctx, &req); err != nil {
+	if err := s.requestRepo.Save(ctx, req); err != nil {
 		return err
 	}
 

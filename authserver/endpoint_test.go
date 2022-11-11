@@ -28,7 +28,7 @@ import (
 func TestEndpoint(t *testing.T) {
 	e := echo.New()
 	cr := &configRepo{}
-	rr := &requestRepo{}
+	rr := NewMemory()
 
 	Endpoint(context.Background(), EndpointConfig{
 		Issuer:          "https://example.com/",
@@ -98,11 +98,12 @@ func TestEndpoint(t *testing.T) {
 	var r map[string]any
 	lo.Must0(json.Unmarshal(lo.Must(io.ReadAll(res2.Body)), &r))
 	assert.Equal(t, map[string]any{
-		"id_token":     r["id_token"],
-		"access_token": r["access_token"],
-		"expires_in":   r["expires_in"],
-		"token_type":   "Bearer",
-		"state":        "hogestate",
+		"id_token":      r["id_token"],
+		"access_token":  r["access_token"],
+		"refresh_token": r["refresh_token"],
+		"expires_in":    r["expires_in"],
+		"token_type":    "Bearer",
+		"state":         "hogestate",
 	}, r)
 	accessToken := r["access_token"].(string)
 	idToken := r["id_token"].(string)
@@ -166,6 +167,26 @@ func TestEndpoint(t *testing.T) {
 		"nbf": claims["nbf"],
 		"iat": claims["iat"],
 	}, claims2)
+
+	// refresh access token
+	res6 := send(http.MethodPost, ts.URL+"/oauth/token", true, map[string]string{
+		"grant_type":    "refresh_token",
+		"refresh_token": r["refresh_token"].(string),
+	}, map[string]string{
+		"Authorization": "Bearer " + r["access_token"].(string),
+	})
+	var r4 map[string]any
+	util.Must(json.Unmarshal(lo.Must(io.ReadAll(res6.Body)), &r4))
+	assert.Equal(t, map[string]any{
+		"id_token":      r4["id_token"],
+		"access_token":  r4["access_token"],
+		"refresh_token": r4["refresh_token"],
+		"expires_in":    r4["expires_in"],
+	}, r4)
+	assert.NotEqual(t, r4["id_token"], r["id_token"])
+	assert.NotEqual(t, r4["access_token"], r["access_token"])
+	assert.NotEqual(t, r4["refresh_token"], r["refresh_token"])
+	assert.NotEqual(t, r4["expires_in"], r["expires_in"])
 }
 
 var httpClient = &http.Client{
@@ -215,7 +236,7 @@ func send(method, u string, form bool, body any, headers map[string]string) *htt
 
 func TestEndpointHTTPDomain(t *testing.T) {
 	cr := &configRepo{}
-	rr := &requestRepo{}
+	rr := NewMemory()
 
 	// should not fail
 	e := echo.New()
@@ -273,36 +294,6 @@ func (r *configRepo) Save(_ context.Context, config *Config) error {
 }
 
 func (r *configRepo) Unlock(_ context.Context) error {
-	return nil
-}
-
-type requestRepo struct {
-	m util.SyncMap[RequestID, *Request]
-}
-
-func (r *requestRepo) FindByID(ctx context.Context, id RequestID) (*Request, error) {
-	return util.DR(r.m.Load(id)), nil
-}
-
-func (r *requestRepo) FindByCode(ctx context.Context, code string) (*Request, error) {
-	return r.m.Find(func(k RequestID, r *Request) bool {
-		return r.GetCode() == code
-	}), nil
-}
-
-func (r *requestRepo) FindBySubject(ctx context.Context, sub string) (*Request, error) {
-	return r.m.Find(func(k RequestID, r *Request) bool {
-		return r.GetSubject() == sub
-	}), nil
-}
-
-func (r *requestRepo) Save(ctx context.Context, req *Request) error {
-	r.m.Store(req.ID(), req)
-	return nil
-}
-
-func (r *requestRepo) Remove(ctx context.Context, id RequestID) error {
-	r.m.Delete(id)
 	return nil
 }
 
