@@ -122,7 +122,9 @@ func TestClientCollection_Paginate(t *testing.T) {
 	}
 
 	con = &consumer{}
-	got, goterr = c.Paginate(ctx, bson.M{}, lo.ToPtr("i"), op.Wrap(), con)
+	got, goterr = c.Paginate(ctx, bson.M{}, &usecasex.Sort{
+		Key: "i",
+	}, op.Wrap(), con)
 	assert.Equal(t, &usecasex.PageInfo{
 		TotalCount:      3,
 		StartCursor:     usecasex.Cursor("c").Ref(),

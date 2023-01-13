@@ -56,3 +56,8 @@ func (p *Pagination) Clone() *Pagination {
 		Offset: util.CloneRef(p.Offset),
 	}
 }
+
+type Sort struct {
+	Key      string
+	Reverted bool
+}

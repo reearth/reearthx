@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (c *ClientCollection) Paginate(ctx context.Context, rawFilter any, sort *string, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
+func (c *ClientCollection) Paginate(ctx context.Context, rawFilter any, sort *usecasex.Sort, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
 	if p == nil || p.Cursor == nil && p.Offset == nil {
 		return nil, nil
 	}
@@ -72,8 +72,15 @@ func (c *ClientCollection) Paginate(ctx context.Context, rawFilter any, sort *st
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
 
-func (c *ClientCollection) paginationFilter(ctx context.Context, p usecasex.Pagination, sortKey *string, filter any) (any, *options.FindOptions, error) {
-	opts := findOptionsFromPagination(p, sortKey)
+func (c *ClientCollection) paginationFilter(ctx context.Context, p usecasex.Pagination, sort *usecasex.Sort, filter any) (any, *options.FindOptions, error) {
+	var sortKey *string
+	reverted := false
+	if sort != nil {
+		sortKey = &sort.Key
+		reverted = sort.Reverted
+	}
+
+	opts := findOptionsFromPagination(p, sortKey, reverted || (p.Cursor != nil && p.Cursor.Last != nil))
 
 	if p.Offset != nil {
 		return filter, opts, nil
@@ -125,7 +132,7 @@ func (c *ClientCollection) paginationFilter(ctx context.Context, p usecasex.Pagi
 	return And(filter, "", paginationFilter), opts, nil
 }
 
-func findOptionsFromPagination(p usecasex.Pagination, sort *string) *options.FindOptions {
+func findOptionsFromPagination(p usecasex.Pagination, sort *string, reverted bool) *options.FindOptions {
 	const defaultLimit = 20
 	o := options.Find()
 
@@ -150,7 +157,7 @@ func findOptionsFromPagination(p usecasex.Pagination, sort *string) *options.Fin
 
 	// sort
 	sortDirection := 1
-	if p.Cursor != nil && p.Cursor.Last != nil {
+	if reverted {
 		sortDirection = -1
 	}
 
