@@ -6,22 +6,35 @@ import (
 	"runtime/debug"
 
 	"github.com/labstack/gommon/log"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/pkg/errors"
 	"github.com/reearth/reearthx/util"
 )
 
+const (
+	IDErrInternal       = "internal"
+	IDErrNotFound       = "not found"
+	IDErrInvalidParams  = "invalid params"
+	IDErrNotImplemented = "not implemented"
+)
+
 var (
-	errInternal = errors.New("internal")
+	errInternal = WrapE(&i18n.Message{ID: IDErrInternal}, errInternalRaw)
 	// ErrNotFound indicates something was not found.
-	ErrNotFound = errors.New("not found")
+	ErrNotFound = WrapE(&i18n.Message{ID: IDErrNotFound}, ErrNotFoundRaw)
 	// ErrInvalidParams represents the params are invalid, such as empty string.
-	ErrInvalidParams = errors.New("invalid params")
+	ErrInvalidParams = WrapE(&i18n.Message{ID: IDErrInvalidParams}, ErrInvalidParamsRaw)
 	// ErrNotImplemented indicates unimplemented.
-	ErrNotImplemented = errors.New("not implemented")
+	ErrNotImplemented = WrapE(&i18n.Message{ID: IDErrNotImplemented}, ErrNotImplementedRaw)
+
+	errInternalRaw       = errors.New("internal")
+	ErrNotFoundRaw       = errors.New("not found")
+	ErrInvalidParamsRaw  = errors.New("invalid params")
+	ErrNotImplementedRaw = errors.New("not implemented")
 )
 
 func IsInternal(err error) bool {
-	return Is(err, errInternal)
+	return Is(err, errInternal) || errors.Is(err, errInternal)
 }
 
 func OrInternal[T comparable](v T, err error) (r T, _ error) {
@@ -55,7 +68,11 @@ func errInternalBy(label, err error) *Error {
 }
 
 func UnwrapErrInternal(err error) error {
-	return As(err, errInternal)
+	var e *Error
+	if errors.As(err, &e) {
+		return As(e, errInternal)
+	}
+	return nil
 }
 
 // Error can hold an error together with label.
@@ -78,6 +95,12 @@ func FromSep(label string, err error) *Error {
 	return &Error{Label: errors.New(label), Err: err, Separate: true}
 }
 
+func Fmt(format string, a ...any) *Error {
+	return &Error{
+		Err: fmt.Errorf(format, a...),
+	}
+}
+
 // Error implements error interface.
 func (e *Error) Error() string {
 	if e == nil {
@@ -92,6 +115,25 @@ func (e *Error) Error() string {
 		}
 	}
 	return fmt.Sprintf("%s: %s", e.Label, e.Err)
+}
+
+func (e *Error) LocalizeError(l *i18n.Localizer) error {
+	if e == nil {
+		return nil
+	}
+	e2 := &Error{
+		Label:    e.Label,
+		Err:      e.Err,
+		Hidden:   e.Hidden,
+		Separate: e.Separate,
+	}
+	if le, ok := e2.Label.(Localizable); ok {
+		e2.Label = le.LocalizeError(l)
+	}
+	if le, ok := e2.Err.(Localizable); ok {
+		e2.Err = le.LocalizeError(l)
+	}
+	return e2
 }
 
 // Unwrap implements the interface for errors.Unwrap.
@@ -163,4 +205,18 @@ func ErrIfNil[T any](t T, err error) (T, error) {
 		return t, err
 	}
 	return t, nil
+}
+
+// W simply wraps an error, without printing it.
+type W struct {
+	Msg string
+	Err error
+}
+
+func (w *W) Unwrap() error {
+	return w.Err
+}
+
+func (w *W) Error() string {
+	return w.Msg
 }
