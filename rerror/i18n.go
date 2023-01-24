@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/reearth/reearthx/i18n"
 	"golang.org/x/exp/slices"
 )
 
@@ -30,7 +30,7 @@ func FmtE(m *i18n.Message, args ...any) *E {
 		m:      m,
 		format: true,
 		args:   args,
-		err:    errors.Unwrap(fmt.Errorf(defaultMessage(m), args...)),
+		err:    errors.Unwrap(fmt.Errorf(i18n.DefaultMessage(m), args...)),
 	}
 }
 
@@ -44,7 +44,7 @@ func WrapE(m *i18n.Message, err error) *E {
 func (e *E) LocalizeError(l *i18n.Localizer) error {
 	s, err := l.LocalizeMessage(e.m)
 	if err != nil || s == "" {
-		return errors.New(defaultMessage(e.m))
+		return errors.New(i18n.DefaultMessage(e.m))
 	}
 
 	if e.format {
@@ -74,9 +74,9 @@ func (e *E) Unwrap() error {
 
 func (e *E) Error() string {
 	if e.format {
-		return fmt.Errorf(defaultMessage(e.m), e.args...).Error()
+		return fmt.Errorf(i18n.DefaultMessage(e.m), e.args...).Error()
 	}
-	return defaultMessage(e.m)
+	return i18n.DefaultMessage(e.m)
 }
 
 func Localize(l *i18n.Localizer, err error) error {
@@ -103,8 +103,4 @@ func NewLocalizer(err error, l *i18n.Localizer) *Localizer {
 
 func (l *Localizer) Error() string {
 	return Localize(l.l, l.err).Error()
-}
-
-func defaultMessage(m *i18n.Message) string {
-	return m.ID
 }

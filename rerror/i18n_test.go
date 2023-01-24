@@ -3,7 +3,7 @@ package rerror
 import (
 	"testing"
 
-	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/reearth/reearthx/i18n"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
 )
@@ -11,28 +11,14 @@ import (
 func TestE(t *testing.T) {
 	b := i18n.NewBundle(language.Japanese)
 	l := i18n.NewLocalizer(b, "ja")
-	b.MustAddMessages(language.Japanese, &i18n.Message{
-		ID:    "hello",
-		Other: "こんにちは",
-	})
-	b.MustAddMessages(language.Japanese, &i18n.Message{
-		ID:    "hello: %s",
-		Other: "こんにちは: %s",
-	})
-	b.MustAddMessages(language.Japanese, &i18n.Message{
-		ID:    "hello: %w",
-		Other: "こんにちは: %w",
-	})
-	b.MustAddMessages(language.Japanese, &i18n.Message{
-		ID:    IDErrInternal,
-		Other: "内部エラー",
-	})
-	b.MustAddMessages(language.Japanese, &i18n.Message{
-		ID:    IDErrNotFound,
-		Other: "見つかりませんでした",
-	})
-
-	// ---
+	b.MustAddMessages(
+		language.Japanese,
+		&i18n.Message{ID: "hello", Other: "こんにちは"},
+		&i18n.Message{ID: "hello: %s", Other: "こんにちは: %s"},
+		&i18n.Message{ID: "hello: %w", Other: "こんにちは: %w"},
+		&i18n.Message{ID: IDErrInternal, Other: "内部エラー"},
+		&i18n.Message{ID: IDErrNotFound, Other: "見つかりませんでした"},
+	)
 
 	e1 := NewE(&i18n.Message{ID: "hello"})
 	assert.Equal(t, "こんにちは", e1.LocalizeError(l).Error())
