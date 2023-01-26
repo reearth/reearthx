@@ -70,10 +70,18 @@ func (c *Config) execute() error {
 		}
 
 		messages = append(messages, msgs...)
+
+		l := len(msgs)
+		if l > 0 {
+			os.Stderr.WriteString(fmt.Sprintf("%s ... %d messages\n", path, l))
+		}
+
 		return nil
 	}); err != nil {
 		return err
 	}
+
+	os.Stderr.WriteString(fmt.Sprintf("\n%d messages found\n", len(messages)))
 
 	messageTemplates := map[string]*i18n.MessageTemplate{}
 	for _, m := range messages {
@@ -89,12 +97,15 @@ func (c *Config) execute() error {
 	content := marshalTemplates(messageTemplates, true)
 	for _, l := range c.Lang {
 		path := fmt.Sprintf("%s.%s", l, format)
+		os.Stderr.WriteString(fmt.Sprintf("writing messages to %s\n", path))
 		if u, err := c.mergeFile(path, format, content); err != nil {
 			return err
 		} else if u {
 			update = u
 		}
 	}
+
+	os.Stderr.WriteString("done\n")
 
 	if update && c.FailOnUpdate {
 		return ErrUpdate
@@ -118,12 +129,8 @@ func (c *Config) mergeFile(path, format string, data any) (bool, error) {
 		}
 	}
 
-	merged, updated := merge(a, data)
+	merged := merge(a, data)
 	if merged == nil {
-		return false, nil
-	}
-
-	if !updated {
 		return false, nil
 	}
 
@@ -168,20 +175,28 @@ func onlyID(m *i18n.MessageTemplate) bool {
 	return m.ID != "" && len(m.PluralTemplates) == 0
 }
 
-func merge(a, b any) (any, bool) {
+func merge(a, b any) any {
 	am, _ := a.(map[string]any)
 	bm, ok := b.(map[string]any)
 	if !ok || bm == nil {
-		return nil, false
+		return nil
 	}
 
 	if len(am) == 0 && len(bm) == 0 {
-		return nil, false
+		return nil
 	}
 
 	unusedKeys, newKeys := lo.Difference(maps.Keys(am), maps.Keys(bm))
 	if len(newKeys) == 0 && len(unusedKeys) == 0 {
-		return nil, false
+		return nil
+	}
+
+	if len(unusedKeys) > 0 {
+		os.Stderr.WriteString(fmt.Sprintf("deleted: %s\n", strings.Join(unusedKeys, ",")))
+	}
+
+	if len(newKeys) > 0 {
+		os.Stderr.WriteString(fmt.Sprintf("added: %s\n", strings.Join(newKeys, ",")))
 	}
 
 	for _, k := range unusedKeys {
@@ -190,7 +205,7 @@ func merge(a, b any) (any, bool) {
 	for _, k := range newKeys {
 		am[k] = bm[k]
 	}
-	return am, true
+	return am
 }
 
 func marshal(v any, format string) ([]byte, error) {
