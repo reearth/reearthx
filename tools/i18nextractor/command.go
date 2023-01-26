@@ -17,7 +17,7 @@ import (
 )
 
 type Config struct {
-	Path         string   `opts:"mode=arg"`
+	Inputdir     string   `opts:"default=." help:"Source codes directory path"`
 	Lang         []string `help:"The language tag of the extracted messages (e.g. en, en-US, zh-Hant-CN)."`
 	Outdir       string   `opts:"default=." help:"Write message files to this directory."`
 	FailOnUpdate bool     `opts:"name=fail-on-update"`
@@ -41,7 +41,7 @@ func (c *Config) Execute() error {
 		return strings.Split(l, ",")
 	})
 
-	c.Input = afero.NewBasePathFs(afero.NewOsFs(), c.Path)
+	c.Input = afero.NewBasePathFs(afero.NewOsFs(), c.Inputdir)
 	if c.Outdir == "" || path.Clean(c.Outdir) == "." {
 		// https://github.com/spf13/afero/issues/344
 		c.Output = afero.NewOsFs()
@@ -118,8 +118,12 @@ func (c *Config) mergeFile(path, format string, data any) (bool, error) {
 		}
 	}
 
-	merged := merge(a, data)
+	merged, updated := merge(a, data)
 	if merged == nil {
+		return false, nil
+	}
+
+	if !updated {
 		return false, nil
 	}
 
@@ -164,20 +168,20 @@ func onlyID(m *i18n.MessageTemplate) bool {
 	return m.ID != "" && len(m.PluralTemplates) == 0
 }
 
-func merge(a, b any) any {
+func merge(a, b any) (any, bool) {
 	am, _ := a.(map[string]any)
 	bm, ok := b.(map[string]any)
 	if !ok || bm == nil {
-		return nil
+		return nil, false
 	}
 
 	if len(am) == 0 && len(bm) == 0 {
-		return nil
+		return nil, false
 	}
 
 	unusedKeys, newKeys := lo.Difference(maps.Keys(am), maps.Keys(bm))
 	if len(newKeys) == 0 && len(unusedKeys) == 0 {
-		return nil
+		return nil, false
 	}
 
 	for _, k := range unusedKeys {
@@ -186,7 +190,7 @@ func merge(a, b any) any {
 	for _, k := range newKeys {
 		am[k] = bm[k]
 	}
-	return am
+	return am, true
 }
 
 func marshal(v any, format string) ([]byte, error) {
