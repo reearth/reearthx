@@ -41,7 +41,8 @@ func (c *Config) Execute() error {
 		return strings.Split(l, ",")
 	})
 
-	c.Input = afero.NewBasePathFs(afero.NewOsFs(), c.Inputdir)
+	dir := filepath.Base(lo.Must(os.Getwd()))
+	c.Input = afero.NewBasePathFs(afero.NewOsFs(), filepath.Join("..", dir, c.Inputdir)) // workaround
 	if c.Outdir == "" || path.Clean(c.Outdir) == "." {
 		// https://github.com/spf13/afero/issues/344
 		c.Output = afero.NewOsFs()
@@ -81,7 +82,10 @@ func (c *Config) execute() error {
 		return err
 	}
 
-	os.Stderr.WriteString(fmt.Sprintf("\n%d messages found\n", len(messages)))
+	if len(messages) > 0 {
+		os.Stderr.WriteString("\n")
+	}
+	os.Stderr.WriteString(fmt.Sprintf("%d messages found\n", len(messages)))
 
 	messageTemplates := map[string]*i18n.MessageTemplate{}
 	for _, m := range messages {
@@ -97,7 +101,6 @@ func (c *Config) execute() error {
 	content := marshalTemplates(messageTemplates, true)
 	for _, l := range c.Lang {
 		path := fmt.Sprintf("%s.%s", l, format)
-		os.Stderr.WriteString(fmt.Sprintf("writing messages to %s\n", path))
 		if u, err := c.mergeFile(path, format, content); err != nil {
 			return err
 		} else if u {
@@ -114,8 +117,11 @@ func (c *Config) execute() error {
 }
 
 func (c *Config) mergeFile(path, format string, data any) (bool, error) {
+	os.Stderr.WriteString(fmt.Sprintf("writing messages to %s", path))
+
 	f, err := c.Output.Open(path)
 	if err != nil && !errors.Is(err, afero.ErrFileNotFound) {
+		os.Stderr.WriteString("\n")
 		return false, err
 	}
 
@@ -125,24 +131,29 @@ func (c *Config) mergeFile(path, format string, data any) (bool, error) {
 			_ = f.Close()
 		}()
 		if err := unmarshal(f, &a, format); err != nil {
+			os.Stderr.WriteString("\n")
 			return false, err
 		}
 	}
 
 	merged := merge(a, data)
 	if merged == nil {
+		os.Stderr.WriteString(" ... no updates\n")
 		return false, nil
 	}
 
 	o, err := marshal(merged, format)
 	if err != nil {
+		os.Stderr.WriteString("\n")
 		return false, err
 	}
 
 	if err := afero.WriteFile(c.Output, path, o, 0644); err != nil {
+		os.Stderr.WriteString("\n")
 		return false, err
 	}
 
+	os.Stderr.WriteString(" ... done\n")
 	return true, nil
 }
 
@@ -189,14 +200,6 @@ func merge(a, b any) any {
 	unusedKeys, newKeys := lo.Difference(maps.Keys(am), maps.Keys(bm))
 	if len(newKeys) == 0 && len(unusedKeys) == 0 {
 		return nil
-	}
-
-	if len(unusedKeys) > 0 {
-		os.Stderr.WriteString(fmt.Sprintf("deleted: %s\n", strings.Join(unusedKeys, ",")))
-	}
-
-	if len(newKeys) > 0 {
-		os.Stderr.WriteString(fmt.Sprintf("added: %s\n", strings.Join(newKeys, ",")))
 	}
 
 	for _, k := range unusedKeys {
