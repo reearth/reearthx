@@ -41,8 +41,13 @@ func (c *Config) Execute() error {
 		return strings.Split(l, ",")
 	})
 
-	dir := filepath.Base(lo.Must(os.Getwd()))
-	c.Input = afero.NewBasePathFs(afero.NewOsFs(), filepath.Join("..", dir, c.Inputdir)) // workaround
+	// workaround
+	if !filepath.IsAbs(c.Inputdir) {
+		dir := filepath.Base(lo.Must(os.Getwd()))
+		c.Inputdir = filepath.Join("..", dir, c.Inputdir)
+	}
+	c.Input = afero.NewBasePathFs(afero.NewOsFs(), c.Inputdir)
+
 	if c.Outdir == "" || path.Clean(c.Outdir) == "." {
 		// https://github.com/spf13/afero/issues/344
 		c.Output = afero.NewOsFs()
