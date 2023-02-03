@@ -33,7 +33,7 @@ func NewLocalClient(dev bool, id string, domain string) op.Client {
 		responseTypes:   []oidc.ResponseType{oidc.ResponseTypeCode},
 		grantTypes:      []oidc.GrantType{oidc.GrantTypeCode, oidc.GrantTypeRefreshToken},
 		redirectURIs:    []string{domain},
-		allowedScopes:   []string{"openid", "profile", "email"},
+		allowedScopes:   []string{"openid", "profile", "email", "offline_access"},
 		loginURI:        domain + "/login?id=%s",
 		idTokenLifetime: 5 * time.Minute,
 		clockSkew:       0,

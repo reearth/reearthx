@@ -67,7 +67,7 @@ func (c EndpointConfig) storageConfig() StorageConfig {
 func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 	cfg.normalize()
 
-	storage, err := NewStorage(ctx, cfg.storageConfig())
+	storage, err := NewStorage(ctx, cfg.storageConfig(), cfg.Issuer)
 	if err != nil {
 		log.Fatalf("auth: storage init failed: %s\n", err)
 	}
@@ -94,7 +94,7 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 
 	g.GET(logoutEndpoint, LogoutHandler())
 
-	// compability with auth0/auth0-spa-js; the logout endpoint URL is hard-coded
+	// compatibility with auth0/auth0-spa-js; the logout endpoint URL is hard-coded
 	// https://github.com/auth0/auth0-spa-js/issues/845
 	g.GET("v2/logout", LogoutHandler())
 

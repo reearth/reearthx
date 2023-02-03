@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/log"
+	"github.com/zitadel/oidc/pkg/crypto"
 	"github.com/zitadel/oidc/pkg/oidc"
 	"github.com/zitadel/oidc/pkg/op"
 	"gopkg.in/square/go-jose.v2"
@@ -23,6 +24,7 @@ type Storage struct {
 	keySet         jose.JSONWebKeySet
 	key            *rsa.PrivateKey
 	sigKey         jose.SigningKey
+	issuer         string
 }
 
 var _ op.Storage = (*Storage)(nil)
@@ -63,7 +65,7 @@ var dummyName = pkix.Name{
 	PostalCode:         []string{"1"},
 }
 
-func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
+func NewStorage(ctx context.Context, cfg StorageConfig, issuer string) (op.Storage, error) {
 	client := NewLocalClient(cfg.Dev, cfg.ClientID, cfg.ClientDomain)
 
 	name := dummyName
@@ -124,6 +126,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 		clients: map[string]op.Client{
 			client.GetID(): client,
 		},
+		issuer: issuer,
 	}, nil
 }
 
@@ -217,17 +220,64 @@ func (s *Storage) CreateAccessToken(_ context.Context, _ op.TokenRequest) (strin
 	return uuid.NewString(), time.Now().UTC().Add(5 * time.Hour), nil
 }
 
-func (s *Storage) CreateAccessAndRefreshTokens(_ context.Context, request op.TokenRequest, _ string) (accessTokenID string, newRefreshToken string, expiration time.Time, err error) {
-	authReq := request.(*Request)
-	return uuid.NewString(), authReq.GetID(), time.Now().UTC().Add(5 * time.Minute), nil
+func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.TokenRequest, refreshToken string) (accessTokenID string, newRefreshToken string, expiration time.Time, err error) {
+	keyCh := make(chan jose.SigningKey, 1)
+	s.GetSigningKey(ctx, keyCh)
+	signer := op.NewSigner(ctx, s, keyCh)
+
+	now := time.Now().UTC()
+	refreshTokenExpiresAt := now.Add(24 * time.Hour)
+
+	var client op.Client
+	var authTime time.Time
+	var authID string
+	var amr []string
+	switch authReq := request.(type) {
+	case *Request:
+		client, _ = s.GetClientByClientID(ctx, authReq.GetClientID())
+		authID = uuid.NewString()
+		authTime = now
+		amr = authReq.GetAMR()
+	case *refreshTokenClaims:
+		client, _ = s.GetClientByClientID(ctx, authReq.GetClientID())
+		authID = authReq.AuthID
+		authTime = authReq.GetAuthTime()
+		amr = authReq.GetAMR()
+	}
+
+	audience := request.GetAudience()
+	skew := client.ClockSkew()
+	if len(audience) == 0 {
+		audience = append(audience, client.GetID())
+	}
+	claims := &refreshTokenClaims{
+		JWTID:     uuid.NewString(),
+		AuthID:    authID,
+		AMR:       amr,
+		Issuer:    s.issuer,
+		Subject:   request.GetSubject(),
+		Scope:     request.GetScopes(),
+		Audience:  audience,
+		IssuedAt:  oidc.Time(now.Add(-skew)),
+		ExpiresAt: oidc.Time(refreshTokenExpiresAt),
+		ClientID:  client.GetID(),
+		AuthTime:  oidc.Time(authTime),
+	}
+
+	newRefreshToken, err = crypto.Sign(claims, signer.Signer())
+	if err != nil {
+		return
+	}
+	return uuid.NewString(), newRefreshToken, now.Add(5 * time.Minute), nil
 }
 
 func (s *Storage) TokenRequestByRefreshToken(ctx context.Context, refreshToken string) (op.RefreshTokenRequest, error) {
-	r, err := s.AuthRequestByID(ctx, refreshToken)
+	v := op.NewAccessTokenVerifier(s.issuer, keySet{&s.keySet})
+	claims, err := s.verifyRefreshToken(ctx, refreshToken, v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid refresh token: %w", err)
 	}
-	return r.(op.RefreshTokenRequest), err
+	return claims, nil
 }
 
 func (s *Storage) TerminateSession(_ context.Context, _, _ string) error {
@@ -329,4 +379,39 @@ func (s *Storage) updateRequest(ctx context.Context, requestID string, req Reque
 	}
 
 	return nil
+}
+
+func (s *Storage) verifyRefreshToken(ctx context.Context, token string, v op.AccessTokenVerifier) (*refreshTokenClaims, error) {
+	claims := new(refreshTokenClaims)
+	decrypted, err := oidc.DecryptToken(token)
+	if err != nil {
+		return nil, err
+	}
+	payload, err := oidc.ParseToken(decrypted, claims)
+	if err != nil {
+		return nil, err
+	}
+	if err = oidc.CheckIssuer(claims, v.Issuer()); err != nil {
+		return nil, err
+	}
+	if err = oidc.CheckSignature(ctx, decrypted, payload, claims, v.SupportedSignAlgs(), v.KeySet()); err != nil {
+		return nil, err
+	}
+	if err = oidc.CheckExpiration(claims, v.Offset()); err != nil {
+		return nil, err
+	}
+	return claims, nil
+}
+
+type keySet struct {
+	keySet *jose.JSONWebKeySet
+}
+
+func (k keySet) VerifySignature(ctx context.Context, jws *jose.JSONWebSignature) (payload []byte, err error) {
+	keyID, alg := oidc.GetKeyIDAndAlg(jws)
+	key, err := oidc.FindMatchingKey(keyID, oidc.KeyUseSignature, alg, k.keySet.Keys...)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signature: %w", err)
+	}
+	return jws.Verify(&key)
 }
