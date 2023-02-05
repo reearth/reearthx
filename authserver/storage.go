@@ -41,6 +41,7 @@ type StorageConfig struct {
 	RequestRepo     RequestRepo
 	UserInfoSetter  UserInfoProvider
 	AudienceForTest string
+	Issuer          string
 }
 
 type DNConfig struct {
@@ -65,7 +66,7 @@ var dummyName = pkix.Name{
 	PostalCode:         []string{"1"},
 }
 
-func NewStorage(ctx context.Context, cfg StorageConfig, issuer string) (op.Storage, error) {
+func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 	client := NewLocalClient(cfg.Dev, cfg.ClientID, cfg.ClientDomain)
 
 	name := dummyName
@@ -126,7 +127,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig, issuer string) (op.Stora
 		clients: map[string]op.Client{
 			client.GetID(): client,
 		},
-		issuer: issuer,
+		issuer: cfg.Issuer,
 	}, nil
 }
 

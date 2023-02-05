@@ -61,13 +61,14 @@ func (c EndpointConfig) storageConfig() StorageConfig {
 		DN:             c.DN,
 		ConfigRepo:     c.ConfigRepo,
 		RequestRepo:    c.RequestRepo,
+		Issuer:         c.Issuer,
 	}
 }
 
 func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 	cfg.normalize()
 
-	storage, err := NewStorage(ctx, cfg.storageConfig(), cfg.Issuer)
+	storage, err := NewStorage(ctx, cfg.storageConfig())
 	if err != nil {
 		log.Fatalf("auth: storage init failed: %s\n", err)
 	}
