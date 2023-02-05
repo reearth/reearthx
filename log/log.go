@@ -24,14 +24,11 @@ var (
 		EncodeName:     zapcore.FullNameEncoder,
 	}
 
-	atom   = zap.NewAtomicLevel()
-	logger *zap.SugaredLogger
-	writer = os.Stdout
+	DefaultLevel  = zap.DebugLevel
+	DefaultOutput = os.Stdout
+	atom          = zap.NewAtomicLevelAt(DefaultLevel)
+	logger        = new(DefaultOutput)
 )
-
-func init() {
-	logger = new(writer)
-}
 
 func SetLevel(l zapcore.Level) {
 	atom.SetLevel(l)
@@ -52,11 +49,10 @@ func new(w io.Writer) *zap.SugaredLogger {
 }
 
 func enc() zapcore.Encoder {
-	gcp, _ := os.LookupEnv("GOOGLE_CLOUD_PROJECT")
-	if gcp == "" {
-		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
-	} else {
+	if isGCP() {
 		return zapcore.NewJSONEncoder(gceEncoderConfig)
+	} else {
+		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
 	}
 }
 

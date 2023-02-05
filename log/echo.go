@@ -66,7 +66,7 @@ func (l *Echo) SetLevel(lvl log.Lvl) {
 
 // Output logger output func
 func (l *Echo) Output() io.Writer {
-	return writer
+	return DefaultOutput
 }
 
 // SetOutput change output, default os.Stdout
