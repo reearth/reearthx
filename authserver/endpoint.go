@@ -61,6 +61,7 @@ func (c EndpointConfig) storageConfig() StorageConfig {
 		DN:             c.DN,
 		ConfigRepo:     c.ConfigRepo,
 		RequestRepo:    c.RequestRepo,
+		Issuer:         c.Issuer,
 	}
 }
 
@@ -94,7 +95,7 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 
 	g.GET(logoutEndpoint, LogoutHandler())
 
-	// compability with auth0/auth0-spa-js; the logout endpoint URL is hard-coded
+	// compatibility with auth0/auth0-spa-js; the logout endpoint URL is hard-coded
 	// https://github.com/auth0/auth0-spa-js/issues/845
 	g.GET("v2/logout", LogoutHandler())
 
