@@ -130,7 +130,7 @@ func (c *Config) mergeFile(path, format string, data any) (bool, error) {
 		return false, err
 	}
 
-	var a any
+	a := map[string]any{}
 	if f != nil {
 		defer func() {
 			_ = f.Close()
