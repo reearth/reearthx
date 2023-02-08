@@ -1,4 +1,4 @@
-package accountdomain
+package user
 
 import (
 	"testing"
@@ -10,8 +10,8 @@ import (
 
 func TestUser(t *testing.T) {
 	u := &User{
-		id:        GenerateUserID(""),
-		workspace: GenerateWorkspaceID(""),
+		id:        NewID(),
+		workspace: NewWorkspaceID(),
 		name:      "xxx",
 		lang:      language.Make("en"),
 		email:     "ff@xx.zz",

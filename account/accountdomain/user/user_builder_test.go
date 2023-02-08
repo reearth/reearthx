@@ -1,4 +1,4 @@
-package accountdomain
+package user
 
 import (
 	"testing"
@@ -9,30 +9,30 @@ import (
 )
 
 func TestBuilder_ID(t *testing.T) {
-	uid := GenerateUserID("")
+	uid := NewID()
 	b := New().ID(uid).Name("aaa").Email("aaa@bbb.com").MustBuild()
 	assert.Equal(t, uid, b.ID())
 	assert.Nil(t, b.passwordReset)
 }
 
 func TestBuilder_Name(t *testing.T) {
-	b := New().NewID("").Name("xxx").Email("aaa@bbb.com").MustBuild()
+	b := New().NewID().Name("xxx").Email("aaa@bbb.com").MustBuild()
 	assert.Equal(t, "xxx", b.Name())
 }
 
 func TestBuilder_NewID(t *testing.T) {
-	b := New().NewID("").Name("aaa").Email("aaa@bbb.com").MustBuild()
+	b := New().NewID().Name("aaa").Email("aaa@bbb.com").MustBuild()
 	assert.NotNil(t, b.ID())
 }
 
 func TestBuilder_Workspace(t *testing.T) {
-	tid := GenerateWorkspaceID("")
-	b := New().NewID("").Name("aaa").Email("aaa@bbb.com").Workspace(tid).MustBuild()
+	tid := NewWorkspaceID()
+	b := New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(tid).MustBuild()
 	assert.Equal(t, tid, b.Workspace())
 }
 
 func TestBuilder_Auths(t *testing.T) {
-	b := New().NewID("").Name("aaa").Email("aaa@bbb.com").Auths([]Auth{
+	b := New().NewID().Name("aaa").Email("aaa@bbb.com").Auths([]Auth{
 		{
 			Provider: "xxx",
 			Sub:      "aaa",
@@ -47,13 +47,13 @@ func TestBuilder_Auths(t *testing.T) {
 }
 
 func TestBuilder_Email(t *testing.T) {
-	b := New().NewID("").Name("aaa").Email("xx@yy.zz").MustBuild()
+	b := New().NewID().Name("aaa").Email("xx@yy.zz").MustBuild()
 	assert.Equal(t, "xx@yy.zz", b.Email())
 }
 
 func TestBuilder_Lang(t *testing.T) {
 	l := language.Make("en")
-	b := New().NewID("").Name("aaa").Email("aaa@bbb.com").Lang(l).MustBuild()
+	b := New().NewID().Name("aaa").Email("aaa@bbb.com").Lang(l).MustBuild()
 	assert.Equal(t, l, b.Lang())
 }
 
@@ -83,7 +83,7 @@ func TestBuilder_LangFrom(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			b := New().NewID("").Name("aaa").Email("aaa@bbb.com").LangFrom(tc.Lang).MustBuild()
+			b := New().NewID().Name("aaa").Email("aaa@bbb.com").LangFrom(tc.Lang).MustBuild()
 			assert.Equal(t, tc.Expected, b.Lang())
 		})
 	}
@@ -99,13 +99,13 @@ func TestBuilder_Build(t *testing.T) {
 	// bcrypt is not suitable for unit tests as it requires heavy computation
 	DefaultPasswordEncoder = &NoopPasswordEncoder{}
 
-	uid := GenerateUserID("")
-	wid := GenerateWorkspaceID("")
+	uid := NewID()
+	wid := NewWorkspaceID()
 	pass := MustEncodedPassword("abcDEF0!")
 
 	type args struct {
 		Name, Lang, Email string
-		ID                UserID
+		ID                ID
 		Workspace         WorkspaceID
 		Auths             []Auth
 		PasswordBin       []byte
@@ -176,13 +176,13 @@ func TestBuilder_MustBuild(t *testing.T) {
 	// bcrypt is not suitable for unit tests as it requires heavy computation
 	DefaultPasswordEncoder = &NoopPasswordEncoder{}
 
-	uid := GenerateUserID("")
-	wid := GenerateWorkspaceID("")
+	uid := NewID()
+	wid := NewWorkspaceID()
 	pass := MustEncodedPassword("abcDEF0!")
 
 	type args struct {
 		Name, Lang, Email string
-		ID                UserID
+		ID                ID
 		Workspace         WorkspaceID
 		PasswordBin       []byte
 		Auths             []Auth

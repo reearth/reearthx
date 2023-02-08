@@ -1,4 +1,4 @@
-package accountdomain
+package workspace
 
 import (
 	"testing"
@@ -7,22 +7,22 @@ import (
 )
 
 func TestWorkspaceList_FilterByID(t *testing.T) {
-	tid1 := GenerateWorkspaceID("")
-	tid2 := GenerateWorkspaceID("")
+	tid1 := NewID()
+	tid2 := NewID()
 	t1 := &Workspace{id: tid1}
 	t2 := &Workspace{id: tid2}
 
 	assert.Equal(t, WorkspaceList{t1}, WorkspaceList{t1, t2}.FilterByID(tid1))
 	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByID(tid2))
 	assert.Equal(t, WorkspaceList{t1, t2}, WorkspaceList{t1, t2}.FilterByID(tid1, tid2))
-	assert.Equal(t, WorkspaceList{}, WorkspaceList{t1, t2}.FilterByID(GenerateWorkspaceID("")))
+	assert.Equal(t, WorkspaceList{}, WorkspaceList{t1, t2}.FilterByID(NewID()))
 	assert.Equal(t, WorkspaceList(nil), WorkspaceList(nil).FilterByID(tid1))
 }
 
 func TestWorkspaceList_FilterByUserRole(t *testing.T) {
-	uid := GenerateUserID("")
-	tid1 := GenerateWorkspaceID("")
-	tid2 := GenerateWorkspaceID("")
+	uid := NewUserID()
+	tid1 := NewID()
+	tid2 := NewID()
 	t1 := &Workspace{
 		id: tid1,
 		members: &Members{
@@ -47,9 +47,9 @@ func TestWorkspaceList_FilterByUserRole(t *testing.T) {
 }
 
 func TestWorkspaceList_FilterByIntegrationRole(t *testing.T) {
-	iid := GenerateIntegrationID("")
-	tid1 := GenerateWorkspaceID("")
-	tid2 := GenerateWorkspaceID("")
+	iid := NewIntegrationID()
+	tid1 := NewID()
+	tid2 := NewID()
 	t1 := &Workspace{
 		id: tid1,
 		members: &Members{
@@ -74,9 +74,9 @@ func TestWorkspaceList_FilterByIntegrationRole(t *testing.T) {
 }
 
 func TestWorkspaceList_FilterByUserRoleIncluding(t *testing.T) {
-	uid := GenerateUserID("")
-	tid1 := GenerateWorkspaceID("")
-	tid2 := GenerateWorkspaceID("")
+	uid := NewUserID()
+	tid1 := NewID()
+	tid2 := NewID()
 	t1 := &Workspace{
 		id: tid1,
 		members: &Members{
@@ -101,9 +101,9 @@ func TestWorkspaceList_FilterByUserRoleIncluding(t *testing.T) {
 }
 
 func TestWorkspaceList_FilterByIntegrationRoleIncluding(t *testing.T) {
-	uid := GenerateIntegrationID("")
-	tid1 := GenerateWorkspaceID("")
-	tid2 := GenerateWorkspaceID("")
+	uid := NewIntegrationID()
+	tid1 := NewID()
+	tid2 := NewID()
 	t1 := &Workspace{
 		id: tid1,
 		members: &Members{
@@ -128,12 +128,12 @@ func TestWorkspaceList_FilterByIntegrationRoleIncluding(t *testing.T) {
 }
 
 func TestWorkspaceList_IDs(t *testing.T) {
-	wid1 := GenerateWorkspaceID("")
-	wid2 := GenerateWorkspaceID("")
+	wid1 := NewID()
+	wid2 := NewID()
 	t1 := &Workspace{id: wid1}
 	t2 := &Workspace{id: wid2}
 
-	assert.Equal(t, []WorkspaceID{wid1, wid2}, WorkspaceList{t1, t2}.IDs())
-	assert.Equal(t, []WorkspaceID{}, WorkspaceList{}.IDs())
-	assert.Equal(t, []WorkspaceID(nil), WorkspaceList(nil).IDs())
+	assert.Equal(t, []ID{wid1, wid2}, WorkspaceList{t1, t2}.IDs())
+	assert.Equal(t, []ID{}, WorkspaceList{}.IDs())
+	assert.Equal(t, []ID(nil), WorkspaceList(nil).IDs())
 }

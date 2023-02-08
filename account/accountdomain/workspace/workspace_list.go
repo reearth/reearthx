@@ -1,8 +1,8 @@
-package accountdomain
+package workspace
 
 type WorkspaceList []*Workspace
 
-func (l WorkspaceList) FilterByID(ids ...WorkspaceID) WorkspaceList {
+func (l WorkspaceList) FilterByID(ids ...ID) WorkspaceList {
 	if l == nil {
 		return nil
 	}
@@ -79,12 +79,12 @@ func (l WorkspaceList) FilterByIntegrationRoleIncluding(i IntegrationID, r Role)
 	return res
 }
 
-func (l WorkspaceList) IDs() []WorkspaceID {
+func (l WorkspaceList) IDs() []ID {
 	if l == nil {
 		return nil
 	}
 
-	res := make([]WorkspaceID, 0, len(l))
+	res := make([]ID, 0, len(l))
 	for _, t := range l {
 		res = append(res, t.ID())
 	}

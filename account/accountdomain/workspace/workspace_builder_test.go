@@ -1,4 +1,4 @@
-package accountdomain
+package workspace
 
 import (
 	"testing"
@@ -7,15 +7,15 @@ import (
 )
 
 func TestWorkspaceBuilder_ID(t *testing.T) {
-	wid := GenerateWorkspaceID("")
+	wid := NewID()
 	b := NewWorkspace().ID(wid)
 	assert.Equal(t, wid, b.w.id)
 }
 
 func TestWorkspaceBuilder_Members(t *testing.T) {
-	m := InitMembers(GenerateUserID(""))
+	m := map[UserID]Member{NewUserID(): {Role: RoleOwner}}
 	b := NewWorkspace().Members(m)
-	assert.Equal(t, m, b.w.members)
+	assert.Equal(t, m, b.members)
 }
 
 func TestWorkspaceBuilder_Name(t *testing.T) {
@@ -24,30 +24,26 @@ func TestWorkspaceBuilder_Name(t *testing.T) {
 }
 
 func TestWorkspaceBuilder_NewID(t *testing.T) {
-	b := NewWorkspace().NewID("")
+	b := NewWorkspace().NewID()
 	assert.False(t, b.w.id.IsEmpty())
 }
 
 func TestWorkspaceBuilder_Build(t *testing.T) {
-	m := InitMembers(GenerateUserID(""))
-	id := GenerateWorkspaceID("")
-	w, err := NewWorkspace().ID(id).Name("a").Members(m).Build()
+	m := map[UserID]Member{NewUserID(): {Role: RoleOwner}}
+	id := NewID()
+	b := NewWorkspace().ID(id).Name("a").Members(m)
+
+	w, err := b.Build()
 	assert.NoError(t, err)
+
 	assert.Equal(t, &Workspace{
 		id:      id,
 		name:    "a",
-		members: m,
+		members: NewMembersWith(m),
 	}, w)
 
 	w, err = NewWorkspace().Build()
 	assert.Equal(t, ErrInvalidID, err)
 	assert.Nil(t, w)
 
-	w, err = NewWorkspace().ID(id).Build()
-	assert.Equal(t, ErrMembersRequired, err)
-	assert.Nil(t, w)
-
-	w, err = NewWorkspace().ID(id).Members(&Members{}).Build()
-	assert.Equal(t, ErrMembersRequired, err)
-	assert.Nil(t, w)
 }

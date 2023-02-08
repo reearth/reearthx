@@ -1,4 +1,4 @@
-package accountdomain
+package user
 
 import (
 	"testing"
@@ -38,7 +38,7 @@ func TestAuthFromAuth0Sub(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tc.Expected, AuthFromAuth0Sub(tc.Sub))
+			assert.Equal(t, tc.Expected, AuthFrom(tc.Sub))
 		})
 	}
 }
@@ -77,7 +77,7 @@ func TestAuth_IsAuth0(t *testing.T) {
 }
 
 func TestReearthSub(t *testing.T) {
-	uid := GenerateUserID("")
+	uid := NewID()
 
 	tests := []struct {
 		name  string

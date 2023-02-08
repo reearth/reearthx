@@ -1,4 +1,4 @@
-package accountdomain
+package workspace
 
 import (
 	"errors"
@@ -33,6 +33,14 @@ func NewMembers(u map[UserID]Member, i map[IntegrationID]Member, fixed bool) *Me
 		integrations: maps.Clone(i),
 		fixed:        fixed,
 	}
+}
+
+func NewMembersWith(users map[UserID]Member) *Members {
+	m := &Members{
+		users:        maps.Clone(users),
+		integrations: map[IntegrationID]Member{},
+	}
+	return m
 }
 
 func InitMembers(u UserID) *Members {
