@@ -35,10 +35,10 @@ func NewMembers(u map[UserID]Member, i map[IntegrationID]Member, fixed bool) *Me
 	}
 }
 
-func NewMembersWith(users map[UserID]Member) *Members {
+func NewMembersWith(users map[UserID]Member, integrations map[IntegrationID]Member) *Members {
 	m := &Members{
 		users:        maps.Clone(users),
-		integrations: map[IntegrationID]Member{},
+		integrations: maps.Clone(integrations),
 	}
 	return m
 }

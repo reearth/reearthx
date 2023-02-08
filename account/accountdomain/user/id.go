@@ -1,19 +1,19 @@
 package user
 
 import (
-	"github.com/reearth/reearthx/account/accountdomain/id"
+	"github.com/reearth/reearthx/account/accountdomain"
 )
 
-type ID = id.UserID
-type WorkspaceID = id.WorkspaceID
+type ID = accountdomain.UserID
+type WorkspaceID = accountdomain.WorkspaceID
 
-var NewID = id.NewUserID
-var NewWorkspaceID = id.NewWorkspaceID
+var NewID = accountdomain.NewUserID
+var NewWorkspaceID = accountdomain.NewWorkspaceID
 
-var IDFrom = id.UserIDFrom
-var WorkspaceIDFrom = id.WorkspaceIDFrom
+var IDFrom = accountdomain.UserIDFrom
+var WorkspaceIDFrom = accountdomain.WorkspaceIDFrom
 
-var IDFromRef = id.UserIDFromRef
-var WorkspaceIDFromRef = id.WorkspaceIDFromRef
+var IDFromRef = accountdomain.UserIDFromRef
+var WorkspaceIDFromRef = accountdomain.WorkspaceIDFromRef
 
-var ErrInvalidID = id.ErrInvalidID
+var ErrInvalidID = accountdomain.ErrInvalidID

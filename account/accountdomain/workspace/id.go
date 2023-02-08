@@ -1,22 +1,20 @@
 package workspace
 
-import (
-	"github.com/reearth/reearthx/account/accountdomain/id"
-)
+import "github.com/reearth/reearthx/account/accountdomain"
 
-type ID = id.WorkspaceID
-type UserID = id.UserID
-type IntegrationID = id.IntegrationID
+type ID = accountdomain.WorkspaceID
+type UserID = accountdomain.UserID
+type IntegrationID = accountdomain.IntegrationID
 
-var NewID = id.NewWorkspaceID
-var NewUserID = id.NewUserID
-var NewIntegrationID = id.NewIntegrationID
+var NewID = accountdomain.NewWorkspaceID
+var NewUserID = accountdomain.NewUserID
+var NewIntegrationID = accountdomain.NewIntegrationID
 
-var IDFrom = id.WorkspaceIDFrom
+var IDFrom = accountdomain.WorkspaceIDFrom
 
-var IDFromRef = id.WorkspaceIDFromRef
+var IDFromRef = accountdomain.WorkspaceIDFromRef
 
-var ErrInvalidID = id.ErrInvalidID
+var ErrInvalidID = accountdomain.ErrInvalidID
 
 type PolicyID string
 

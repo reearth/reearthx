@@ -3,7 +3,7 @@ package workspace
 import (
 	"errors"
 
-	"github.com/reearth/reearthx/account/accountdomain/id"
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/idx"
 )
 
@@ -27,15 +27,12 @@ func (b *WorkspaceBuilder) Build() (*Workspace, error) {
 
 	if b.members == nil {
 		b.w.members = NewMembers(
-			map[idx.ID[*id.UserIDType]]Member{},
-			map[idx.ID[*id.IntegrationIDType]]Member{},
+			map[idx.ID[*accountdomain.UserIDType]]Member{},
+			map[idx.ID[*accountdomain.IntegrationIDType]]Member{},
 			false,
 		)
 	} else {
-		b.w.members = NewMembersWith(b.members)
-	}
-	if b.integrations != nil {
-		b.w.members.integrations = b.integrations
+		b.w.members = NewMembersWith(b.members, b.integrations)
 	}
 	b.w.members.fixed = b.personal
 	return b.w, nil

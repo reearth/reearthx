@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 
-	"github.com/reearth/reearthx/account/accountdomain/id"
+	"github.com/reearth/reearthx/account/accountdomain"
 	"golang.org/x/text/language"
 )
 
@@ -48,7 +48,7 @@ func (b *Builder) MustBuild() *User {
 	return r
 }
 
-func (b *Builder) ID(id id.UserID) *Builder {
+func (b *Builder) ID(id accountdomain.UserID) *Builder {
 	b.u.id = id
 	return b
 }

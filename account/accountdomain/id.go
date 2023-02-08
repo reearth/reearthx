@@ -1,4 +1,4 @@
-package id
+package accountdomain
 
 import (
 	"github.com/reearth/reearthx/idx"
