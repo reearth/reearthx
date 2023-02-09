@@ -51,7 +51,7 @@ func TestEndpoint(t *testing.T) {
 		"response_type":         "code",
 		"client_id":             "default-client",
 		"redirect_uri":          "https://web.example.com",
-		"scope":                 "openid email profile",
+		"scope":                 "openid email profile offline_access",
 		"state":                 "hogestate",
 		"code_challenge":        challenge,
 		"code_challenge_method": "S256",
@@ -98,14 +98,16 @@ func TestEndpoint(t *testing.T) {
 	var r map[string]any
 	lo.Must0(json.Unmarshal(lo.Must(io.ReadAll(res2.Body)), &r))
 	assert.Equal(t, map[string]any{
-		"id_token":     r["id_token"],
-		"access_token": r["access_token"],
-		"expires_in":   r["expires_in"],
-		"token_type":   "Bearer",
-		"state":        "hogestate",
+		"id_token":      r["id_token"],
+		"access_token":  r["access_token"],
+		"expires_in":    r["expires_in"],
+		"refresh_token": r["refresh_token"],
+		"token_type":    "Bearer",
+		"state":         "hogestate",
 	}, r)
 	accessToken := r["access_token"].(string)
 	idToken := r["id_token"].(string)
+	refreshToken := r["refresh_token"].(string)
 
 	// userinfo
 	res3 := send(http.MethodGet, ts.URL+"/userinfo", false, nil, map[string]string{
@@ -130,6 +132,27 @@ func TestEndpoint(t *testing.T) {
 	res5 := send(http.MethodGet, ts.URL+"/jwks.json", false, nil, nil)
 	var jwks jose.JSONWebKeySet
 	lo.Must0(json.Unmarshal(lo.Must(io.ReadAll(res5.Body)), &jwks))
+
+	res6 := send(http.MethodPost, ts.URL+"/oauth/token", true, map[string]string{
+		"grant_type":    "refresh_token",
+		"client_id":     "default-client",
+		"refresh_token": refreshToken,
+	}, nil)
+	var r4 map[string]any
+	lo.Must0(json.Unmarshal(lo.Must(io.ReadAll(res6.Body)), &r4))
+	assert.Equal(t, map[string]any{
+		"access_token":  r4["access_token"],
+		"refresh_token": r4["refresh_token"],
+		"id_token":      r4["id_token"],
+		"token_type":    "Bearer",
+		"expires_in":    r4["expires_in"],
+	}, r4)
+	accessToken2 := r4["access_token"].(string)
+	refreshToken2 := r4["refresh_token"].(string)
+
+	// confirm access_token and refresh_token are rotated
+	assert.NotEqual(t, accessToken, accessToken2)
+	assert.NotEqual(t, refreshToken, refreshToken2)
 
 	// validate access_token
 	token := lo.Must(jwt.ParseSigned(accessToken))
@@ -156,16 +179,87 @@ func TestEndpoint(t *testing.T) {
 	})
 	key2 := jwks.Key(header2.KeyID)[0]
 	claims2 := map[string]any{}
-	lo.Must0(token.Claims(key2.Key, &claims2))
+	lo.Must0(token2.Claims(key2.Key, &claims2))
+	assert.Equal(t, map[string]any{
+		"sub":            "subsub",
+		"iss":            "https://example.com/",
+		"aud":            []any{"https://example.com", "default-client"},
+		"exp":            claims2["exp"],
+		"iat":            claims2["iat"],
+		"amr":            []any{"password"},
+		"azp":            "default-client",
+		"auth_time":      claims2["auth_time"],
+		"at_hash":        claims2["at_hash"],
+		"c_hash":         claims2["c_hash"],
+		"email":          "aaa@example.com",
+		"email_verified": true,
+		"name":           "aaa",
+	}, claims2)
+
+	// validate refresh_token
+	token3 := lo.Must(jwt.ParseSigned(refreshToken))
+	header3, _ := lo.Find(token3.Headers, func(h jose.Header) bool {
+		return h.Algorithm == string(jose.RS256)
+	})
+	key3 := jwks.Key(header3.KeyID)[0]
+	claims3 := map[string]any{}
+	lo.Must0(token3.Claims(key3.Key, &claims3))
+	assert.Equal(t, map[string]any{
+		"iss":       "https://example.com/",
+		"sub":       "subsub",
+		"aud":       []any{"https://example.com"},
+		"jti":       claims3["jti"],
+		"exp":       claims3["exp"],
+		"iat":       claims3["iat"],
+		"client_id": "default-client",
+		"auth_id":   claims3["auth_id"],
+		"auth_time": claims3["auth_time"],
+		"scope":     "openid email profile offline_access",
+		"amr":       []any{"password"},
+	}, claims3)
+
+	// validate access_token 2
+	token4 := lo.Must(jwt.ParseSigned(accessToken2))
+	header4, _ := lo.Find(token4.Headers, func(h jose.Header) bool {
+		return h.Algorithm == string(jose.RS256)
+	})
+	key4 := jwks.Key(header4.KeyID)[0]
+	claims4 := map[string]any{}
+	lo.Must0(token4.Claims(key4.Key, &claims4))
 	assert.Equal(t, map[string]any{
 		"iss": "https://example.com/",
 		"sub": "subsub",
 		"aud": []any{"https://example.com"},
-		"jti": claims["jti"],
-		"exp": claims["exp"],
-		"nbf": claims["nbf"],
-		"iat": claims["iat"],
-	}, claims2)
+		"jti": claims4["jti"],
+		"exp": claims4["exp"],
+		"nbf": claims4["nbf"],
+		"iat": claims4["iat"],
+	}, claims4)
+
+	// validate refresh_token 2
+	token5 := lo.Must(jwt.ParseSigned(refreshToken2))
+	header5, _ := lo.Find(token5.Headers, func(h jose.Header) bool {
+		return h.Algorithm == string(jose.RS256)
+	})
+	key5 := jwks.Key(header5.KeyID)[0]
+	claims5 := map[string]any{}
+	lo.Must0(token5.Claims(key5.Key, &claims5))
+	assert.Equal(t, map[string]any{
+		"iss":       "https://example.com/",
+		"sub":       "subsub",
+		"aud":       []any{"https://example.com"},
+		"jti":       claims5["jti"],
+		"exp":       claims5["exp"],
+		"iat":       claims5["iat"],
+		"client_id": "default-client",
+		"auth_id":   claims5["auth_id"],
+		"auth_time": claims5["auth_time"],
+		"scope":     "openid email profile offline_access",
+		"amr":       []any{"password"},
+	}, claims5)
+
+	assert.Equal(t, claims3["auth_id"], claims5["auth_id"])
+	assert.Equal(t, claims3["auth_time"], claims5["auth_time"])
 }
 
 var httpClient = &http.Client{
