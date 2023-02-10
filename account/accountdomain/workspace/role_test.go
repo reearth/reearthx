@@ -1,4 +1,4 @@
-package accountdomain
+package workspace
 
 import (
 	"testing"

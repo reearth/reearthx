@@ -3,7 +3,7 @@ package usecasex
 import (
 	"errors"
 
-	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/account/accountdomain/workspace"
 )
 
 var ErrPolicyVioration = errors.New("policy violation")
@@ -13,6 +13,6 @@ type Operator struct {
 }
 
 type OperatableWorkspace struct {
-	Workspace accountdomain.WorkspaceID
-	Role      accountdomain.Role
+	Workspace workspace.ID
+	Role      workspace.Role
 }

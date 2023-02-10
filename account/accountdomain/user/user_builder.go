@@ -1,8 +1,9 @@
-package accountdomain
+package user
 
 import (
 	"errors"
 
+	"github.com/reearth/reearthx/account/accountdomain"
 	"golang.org/x/text/language"
 )
 
@@ -47,13 +48,13 @@ func (b *Builder) MustBuild() *User {
 	return r
 }
 
-func (b *Builder) ID(id UserID) *Builder {
+func (b *Builder) ID(id accountdomain.UserID) *Builder {
 	b.u.id = id
 	return b
 }
 
-func (b *Builder) NewID(domain string) *Builder {
-	b.u.id = GenerateUserID(domain)
+func (b *Builder) NewID() *Builder {
+	b.u.id = NewID()
 	return b
 }
 

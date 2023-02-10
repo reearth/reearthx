@@ -1,4 +1,4 @@
-package accountdomain
+package user
 
 import (
 	"time"

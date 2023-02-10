@@ -1,12 +1,15 @@
-package accountdomain
+package workspace
+
+import "github.com/reearth/reearthx/util"
 
 type Workspace struct {
-	id      WorkspaceID
+	id      ID
 	name    string
 	members *Members
+	policy  *PolicyID
 }
 
-func (t *Workspace) ID() WorkspaceID {
+func (t *Workspace) ID() ID {
 	return t.id
 }
 
@@ -24,4 +27,12 @@ func (t *Workspace) IsPersonal() bool {
 
 func (t *Workspace) Rename(name string) {
 	t.name = name
+}
+
+func (w *Workspace) Policy() *PolicyID {
+	return util.CloneRef(w.policy)
+}
+
+func (w *Workspace) SetPolicy(policy *PolicyID) {
+	w.policy = util.CloneRef(policy)
 }

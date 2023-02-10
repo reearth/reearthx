@@ -1,4 +1,4 @@
-package accountdomain
+package workspace
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestWorkspace_ID(t *testing.T) {
-	wid := GenerateWorkspaceID("")
+	wid := NewID()
 	assert.Equal(t, wid, (&Workspace{id: wid}).ID())
 }
 
@@ -17,14 +17,14 @@ func TestWorkspace_Name(t *testing.T) {
 
 func TestWorkspace_Members(t *testing.T) {
 	m := NewMembers(map[UserID]Member{
-		GenerateUserID(""): {Role: RoleOwner},
+		NewUserID(): {Role: RoleOwner},
 	}, nil, false)
 	assert.Equal(t, m, (&Workspace{members: m}).Members())
 }
 
 func TestWorkspace_IsPersonal(t *testing.T) {
 	m := NewMembers(map[UserID]Member{
-		GenerateUserID(""): {Role: RoleOwner},
+		NewUserID(): {Role: RoleOwner},
 	}, nil, true)
 	assert.True(t, (&Workspace{members: m}).IsPersonal())
 	assert.False(t, (&Workspace{}).IsPersonal())
@@ -34,4 +34,10 @@ func TestWorkspace_Rename(t *testing.T) {
 	w := &Workspace{}
 	w.Rename("a")
 	assert.Equal(t, "a", w.name)
+}
+
+func TestWorkspace_Policy(t *testing.T) {
+	w := &Workspace{}
+	w.SetPolicy(PolicyID("ccc").Ref())
+	assert.Equal(t, PolicyID("ccc").Ref(), w.Policy())
 }

@@ -1,4 +1,4 @@
-package accountdomain
+package user
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ var (
 )
 
 type User struct {
-	id            UserID
+	id            ID
 	name          string
 	email         string
 	password      EncodedPassword
@@ -26,7 +26,7 @@ type User struct {
 	passwordReset *PasswordReset
 }
 
-func (u *User) ID() UserID {
+func (u *User) ID() ID {
 	return u.id
 }
 

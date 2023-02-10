@@ -1,6 +1,4 @@
-package accountdomain
-
-type PolicyID string
+package workspace
 
 type Policy struct {
 	ID       PolicyID
