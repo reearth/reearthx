@@ -27,24 +27,24 @@ type Members struct {
 	fixed        bool
 }
 
-func NewMembers(u map[UserID]Member, i map[IntegrationID]Member, fixed bool) *Members {
+func NewMembers() *Members {
 	return &Members{
-		users:        maps.Clone(u),
-		integrations: maps.Clone(i),
-		fixed:        fixed,
+		users:        map[UserID]Member{},
+		integrations: map[IntegrationID]Member{},
 	}
 }
 
-func NewMembersWith(users map[UserID]Member, integrations map[IntegrationID]Member) *Members {
+func NewMembersWith(users map[UserID]Member, integrations map[IntegrationID]Member, fixed bool) *Members {
 	m := &Members{
 		users:        maps.Clone(users),
 		integrations: maps.Clone(integrations),
+		fixed:        fixed,
 	}
 	return m
 }
 
 func InitMembers(u UserID) *Members {
-	return NewMembers(
+	return NewMembersWith(
 		map[UserID]Member{
 			u: {
 				Role:      RoleOwner,
@@ -123,6 +123,14 @@ func (m *Members) Count() int {
 	return len(m.users)
 }
 
+func (m *Members) UserRole(u UserID) Role {
+	return m.users[u].Role
+}
+
+func (m *Members) IntegrationRole(iId IntegrationID) Role {
+	return m.integrations[iId].Role
+}
+
 func (m *Members) IsEmpty() bool {
 	return m.Count() == 0
 }
@@ -133,6 +141,10 @@ func (m *Members) Fixed() bool {
 
 func (m *Members) IsOnlyOwner(u UserID) bool {
 	return len(m.UsersByRole(RoleOwner)) == 1 && m.users[u].Role == RoleOwner
+}
+
+func (m *Members) IsOwnerOrMaintainer(u UserID) bool {
+	return m.users[u].Role == RoleOwner || m.users[u].Role == RoleMaintainer
 }
 
 func (m *Members) UpdateUserRole(u UserID, role Role) error {

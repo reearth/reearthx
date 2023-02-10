@@ -16,14 +16,14 @@ func TestWorkspace_Name(t *testing.T) {
 }
 
 func TestWorkspace_Members(t *testing.T) {
-	m := NewMembers(map[UserID]Member{
+	m := NewMembersWith(map[UserID]Member{
 		NewUserID(): {Role: RoleOwner},
 	}, nil, false)
 	assert.Equal(t, m, (&Workspace{members: m}).Members())
 }
 
 func TestWorkspace_IsPersonal(t *testing.T) {
-	m := NewMembers(map[UserID]Member{
+	m := NewMembersWith(map[UserID]Member{
 		NewUserID(): {Role: RoleOwner},
 	}, nil, true)
 	assert.True(t, (&Workspace{members: m}).IsPersonal())

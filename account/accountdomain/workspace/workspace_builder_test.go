@@ -40,7 +40,7 @@ func TestWorkspaceBuilder_Build(t *testing.T) {
 	assert.Equal(t, &Workspace{
 		id:      id,
 		name:    "a",
-		members: NewMembersWith(m, i),
+		members: NewMembersWith(m, i, false),
 	}, w)
 
 	w, err = NewWorkspace().ID(id).Name("a").Build()
@@ -69,7 +69,7 @@ func TestWorkspaceBuilder_MustBuild(t *testing.T) {
 	assert.Equal(t, &Workspace{
 		id:      id,
 		name:    "a",
-		members: NewMembersWith(m, i),
+		members: NewMembersWith(m, i, false),
 	}, w)
 
 	assert.Panics(t, func() { NewWorkspace().MustBuild() })

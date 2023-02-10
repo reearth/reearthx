@@ -7,8 +7,16 @@ import (
 )
 
 func TestNewMembers(t *testing.T) {
+	m := NewMembers()
+	assert.Equal(t, &Members{
+		users:        map[UserID]Member{},
+		integrations: map[IntegrationID]Member{},
+		fixed:        false,
+	}, m)
+}
+func TestNewMembersWith(t *testing.T) {
 	uid := NewUserID()
-	m := NewMembers(map[UserID]Member{uid: {Role: RoleOwner}}, nil, true)
+	m := NewMembersWith(map[UserID]Member{uid: {Role: RoleOwner}}, nil, true)
 	assert.Equal(t, &Members{
 		users:        map[UserID]Member{uid: {Role: RoleOwner}},
 		integrations: map[IntegrationID]Member{},
@@ -114,6 +122,21 @@ func TestMembers_IsOnlyOwner(t *testing.T) {
 	assert.True(t, (&Members{
 		users: map[UserID]Member{uid: {Role: RoleOwner}},
 	}).IsOnlyOwner(uid))
+}
+
+func TestMembers_IsOwnerOrMaintainer(t *testing.T) {
+	uid := NewUserID()
+	assert.True(t, (&Members{
+		users: map[UserID]Member{uid: {Role: RoleMaintainer}},
+	}).IsOwnerOrMaintainer(uid))
+
+	assert.True(t, (&Members{
+		users: map[UserID]Member{uid: {Role: RoleOwner}},
+	}).IsOwnerOrMaintainer(uid))
+
+	assert.False(t, (&Members{
+		users: map[UserID]Member{uid: {Role: RoleReader}},
+	}).IsOwnerOrMaintainer(uid))
 }
 
 func TestMembers_Join(t *testing.T) {

@@ -2,9 +2,6 @@ package workspace
 
 import (
 	"errors"
-
-	"github.com/reearth/reearthx/account/accountdomain"
-	"github.com/reearth/reearthx/idx"
 )
 
 var ErrMembersRequired = errors.New("members required")
@@ -26,13 +23,9 @@ func (b *WorkspaceBuilder) Build() (*Workspace, error) {
 	}
 
 	if b.members == nil {
-		b.w.members = NewMembers(
-			map[idx.ID[*accountdomain.UserIDType]]Member{},
-			map[idx.ID[*accountdomain.IntegrationIDType]]Member{},
-			false,
-		)
+		b.w.members = NewMembers()
 	} else {
-		b.w.members = NewMembersWith(b.members, b.integrations)
+		b.w.members = NewMembersWith(b.members, b.integrations, false)
 	}
 	b.w.members.fixed = b.personal
 	return b.w, nil
