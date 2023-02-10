@@ -66,6 +66,10 @@ func (u *User) UpdateEmail(email string) error {
 	return nil
 }
 
+func (u *User) UpdateWorkspace(workspace WorkspaceID) {
+	u.workspace = workspace
+}
+
 func (u *User) UpdateLang(lang language.Tag) {
 	u.lang = lang
 }

@@ -43,6 +43,10 @@ func TestUser(t *testing.T) {
 	u.UpdateTheme(ThemeLight)
 	assert.Equal(t, ThemeLight, u.theme)
 
+	wid := NewWorkspaceID()
+	u.UpdateWorkspace(wid)
+	assert.Equal(t, wid, u.Workspace())
+
 	u2 := u.Clone()
 	assert.Equal(t, u, u2)
 	assert.NotSame(t, u, u2)
