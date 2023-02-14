@@ -104,3 +104,10 @@ func (a Auths) RemoveByProvider(p string) Auths {
 	}
 	return slices.Delete(a, i, 1)
 }
+
+func GenReearthSub(userID string) *Auth {
+	return &Auth{
+		Provider: "reearth",
+		Sub:      "reearth|" + userID,
+	}
+}

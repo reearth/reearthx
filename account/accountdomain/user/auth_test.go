@@ -3,6 +3,7 @@ package user
 import (
 	"testing"
 
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -207,4 +208,30 @@ func TestAuths_RemoveByProvider(t *testing.T) {
 		Provider: "auth0",
 		Sub:      "xxx",
 	}}), Auths(a).RemoveByProvider("foo"))
+}
+
+func TestGenReearthSub(t *testing.T) {
+	uid := accountdomain.NewUserID()
+
+	tests := []struct {
+		name  string
+		input string
+		want  *Auth
+	}{
+		{
+			name:  "should return reearth sub",
+			input: uid.String(),
+			want: &Auth{
+				Provider: "reearth",
+				Sub:      "reearth|" + uid.String(),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GenReearthSub(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
