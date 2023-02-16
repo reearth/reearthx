@@ -151,11 +151,6 @@ func (i *Workspace) AddIntegrationMember(ctx context.Context, wId accountdomain.
 			return nil, err
 		}
 
-		// _, err = i.repos.Integration.FindByID(ctx, iId)
-		// if err != nil {
-		// 	return nil, err
-		// }
-
 		err = workspace.Members().AddIntegration(iId, role, *operator.User)
 		if err != nil {
 			return nil, err

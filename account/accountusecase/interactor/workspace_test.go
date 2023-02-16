@@ -649,6 +649,102 @@ func TestWorkspace_AddMember(t *testing.T) {
 	}
 }
 
+func TestWorkspace_AddIntegrationMember(t *testing.T) {
+	userID := accountdomain.NewUserID()
+	id1 := accountdomain.NewWorkspaceID()
+	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	id2 := accountdomain.NewWorkspaceID()
+	id3 := accountdomain.NewWorkspaceID()
+	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
+
+	op := &accountusecase.Operator{
+		User:               &userID,
+		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
+		OwningWorkspaces:   []accountdomain.WorkspaceID{id1, id2, id3},
+	}
+
+	iid1 := accountdomain.NewIntegrationID()
+
+	tests := []struct {
+		name       string
+		seeds      []*workspace.Workspace
+		usersSeeds []*user.User
+		args       struct {
+			wId           accountdomain.WorkspaceID
+			integrationID accountdomain.IntegrationID
+			role          workspace.Role
+			operator      *accountusecase.Operator
+		}
+		wantErr          error
+		mockWorkspaceErr bool
+		want             []accountdomain.IntegrationID
+	}{
+		{
+			name:       "Add non existing",
+			seeds:      []*workspace.Workspace{w1},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId           accountdomain.WorkspaceID
+				integrationID accountdomain.IntegrationID
+				role          workspace.Role
+				operator      *accountusecase.Operator
+			}{
+				wId:           id1,
+				integrationID: iid1,
+				role:          workspace.RoleReader,
+				operator:      op,
+			},
+			want: []accountdomain.IntegrationID{iid1},
+		},
+		{
+			name: "mock error",
+			args: struct {
+				wId           accountdomain.WorkspaceID
+				integrationID accountdomain.IntegrationID
+				role          workspace.Role
+				operator      *accountusecase.Operator
+			}{
+				wId:           id1,
+				integrationID: iid1,
+				role:          workspace.RoleReader,
+				operator:      op,
+			},
+			wantErr:          errors.New("test"),
+			mockWorkspaceErr: true,
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			db := memory.New()
+			if tc.mockWorkspaceErr {
+				memory.SetWorkspaceError(db.Workspace, tc.wantErr)
+			}
+			for _, p := range tc.seeds {
+				err := db.Workspace.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+			for _, p := range tc.usersSeeds {
+				err := db.User.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+
+			workspaceUC := NewWorkspace(db)
+
+			got, err := workspaceUC.AddIntegrationMember(ctx, tc.args.wId, tc.args.integrationID, tc.args.role, tc.args.operator)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, got.Members().IntegrationIDs())
+		})
+	}
+}
+
 func TestWorkspace_RemoveMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
