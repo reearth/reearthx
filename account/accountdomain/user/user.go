@@ -82,7 +82,7 @@ func (u *User) Verification() *Verification {
 	return u.verification
 }
 
-func (u *User) Auths() []Auth {
+func (u *User) Auths() Auths {
 	if u == nil {
 		return nil
 	}

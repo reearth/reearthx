@@ -38,12 +38,12 @@ func TestBuilder_Auths(t *testing.T) {
 			Sub:      "aaa",
 		},
 	}).MustBuild()
-	assert.Equal(t, []Auth{
+	assert.Equal(t, Auths([]Auth{
 		{
 			Provider: "xxx",
 			Sub:      "aaa",
 		},
-	}, b.Auths())
+	}), b.Auths())
 }
 
 func TestBuilder_Email(t *testing.T) {

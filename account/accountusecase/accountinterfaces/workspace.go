@@ -25,9 +25,9 @@ type Workspace interface {
 	Update(context.Context, accountdomain.WorkspaceID, string, *accountusecase.Operator) (*workspace.Workspace, error)
 	AddUserMember(context.Context, accountdomain.WorkspaceID, map[accountdomain.UserID]workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
 	AddIntegrationMember(context.Context, accountdomain.WorkspaceID, accountdomain.IntegrationID, workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
-	UpdateUser(context.Context, accountdomain.WorkspaceID, accountdomain.UserID, workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
+	UpdateUserMember(context.Context, accountdomain.WorkspaceID, accountdomain.UserID, workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
 	UpdateIntegration(context.Context, accountdomain.WorkspaceID, accountdomain.IntegrationID, workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
-	RemoveUser(context.Context, accountdomain.WorkspaceID, accountdomain.UserID, *accountusecase.Operator) (*workspace.Workspace, error)
+	RemoveUserMember(context.Context, accountdomain.WorkspaceID, accountdomain.UserID, *accountusecase.Operator) (*workspace.Workspace, error)
 	RemoveIntegration(context.Context, accountdomain.WorkspaceID, accountdomain.IntegrationID, *accountusecase.Operator) (*workspace.Workspace, error)
 	Remove(context.Context, accountdomain.WorkspaceID, *accountusecase.Operator) error
 }

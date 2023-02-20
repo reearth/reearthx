@@ -25,10 +25,10 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, u.id, u.ID())
 	assert.Equal(t, "xxx", u.Name())
 	assert.Equal(t, u.workspace, u.Workspace())
-	assert.Equal(t, []Auth{{
+	assert.Equal(t, Auths([]Auth{{
 		Provider: "aaa",
 		Sub:      "sss",
-	}}, u.Auths())
+	}}), u.Auths())
 	assert.Equal(t, "ff@xx.zz", u.Email())
 	assert.Equal(t, language.Make("en"), u.Lang())
 	assert.Equal(t, ThemeDark, u.Theme())
@@ -57,7 +57,7 @@ func TestUser_Auths(t *testing.T) {
 
 	assert.True(t, u.AddAuth(Auth{Provider: "xxx", Sub: "zzz"}))
 	assert.Equal(t, &User{auths: []Auth{{Provider: "xxx", Sub: "zzz"}}}, u)
-	assert.Equal(t, []Auth{{Provider: "xxx", Sub: "zzz"}}, u.Auths())
+	assert.Equal(t, Auths([]Auth{{Provider: "xxx", Sub: "zzz"}}), u.Auths())
 	assert.Equal(t, &Auth{Provider: "xxx", Sub: "zzz"}, u.GetAuthByProvider("xxx"))
 	assert.Nil(t, u.GetAuthByProvider("xx"))
 
