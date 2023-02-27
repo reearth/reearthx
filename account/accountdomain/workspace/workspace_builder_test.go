@@ -50,8 +50,8 @@ func TestWorkspaceBuilder_Build(t *testing.T) {
 		id:   id,
 		name: "a",
 		members: &Members{
-			users:        map[idx.ID[*accountdomain.UserIDType]]Member{},
-			integrations: map[idx.ID[*accountdomain.IntegrationIDType]]Member{},
+			users:        map[idx.ID[accountdomain.User]]Member{},
+			integrations: map[idx.ID[accountdomain.Integration]]Member{},
 		},
 	}, w)
 
