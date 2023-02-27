@@ -18,6 +18,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/mailer"
+	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/util"
 
 	"github.com/stretchr/testify/assert"
@@ -344,4 +345,74 @@ func TestIssToURL(t *testing.T) {
 	assert.Equal(t, &url.URL{Scheme: "https", Host: "iss.com", Path: ""}, issToURL("https://iss.com/", ""))
 	assert.Equal(t, &url.URL{Scheme: "https", Host: "iss.com", Path: "/hoge"}, issToURL("https://iss.com/hoge", ""))
 	assert.Equal(t, &url.URL{Scheme: "https", Host: "iss.com", Path: "/hoge/foobar"}, issToURL("https://iss.com/hoge", "foobar"))
+}
+
+func TestUser_CreateVerification(t *testing.T) {
+	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
+	uid := accountdomain.NewUserID()
+	tid := accountdomain.NewWorkspaceID()
+	r := accountmemory.New()
+
+	m := mailer.NewMock()
+	g := &accountgateway.Container{Mailer: m}
+	uc := NewUser(r, g, "", "")
+	mocktime := time.Time{}
+	mockcode := "CODECODE"
+
+	tests := []struct {
+		name             string
+		createUserBefore *user.User
+		email            string
+		wantError        error
+	}{
+		{
+			name: "ok",
+			createUserBefore: user.New().
+				ID(uid).
+				Workspace(tid).
+				Email("aaa@bbb.com").
+				Name("NAME").
+				Verification(user.VerificationFrom(mockcode, mocktime, false)).
+				MustBuild(),
+			email:     "aaa@bbb.com",
+			wantError: nil,
+		},
+		{
+			name: "verified user",
+			createUserBefore: user.New().
+				ID(uid).
+				Workspace(tid).
+				Email("aaa@bbb.com").
+				Name("NAME").
+				Verification(user.VerificationFrom(mockcode, mocktime, true)).
+				MustBuild(),
+			email:     "aaa@bbb.com",
+			wantError: nil,
+		},
+		{
+			name:      "not found",
+			email:     "ccc@bbb.com",
+			wantError: rerror.ErrNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			if tt.createUserBefore != nil {
+				assert.NoError(t, r.User.Save(ctx, tt.createUserBefore))
+			}
+			err := uc.CreateVerification(ctx, tt.email)
+
+			if err != nil {
+				assert.Equal(t, tt.wantError, err)
+			} else {
+				user, err := r.User.FindByEmail(ctx, tt.email)
+				assert.NoError(t, err)
+				assert.NotNil(t, user.Verification())
+			}
+		})
+	}
 }

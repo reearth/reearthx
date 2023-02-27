@@ -352,3 +352,27 @@ func (i *User) verifySignupSecret(secret *string) error {
 	}
 	return nil
 }
+
+func (i *User) CreateVerification(ctx context.Context, email string) error {
+	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func() error {
+		u, err := i.repos.User.FindByEmail(ctx, email)
+		if err != nil {
+			return err
+		}
+		if u.Verification().IsVerified() {
+			return nil
+		}
+		vr := user.NewVerification()
+		u.SetVerification(vr)
+
+		if err := i.repos.User.Save(ctx, u); err != nil {
+			return err
+		}
+
+		if err := i.sendVerificationMail(ctx, u, vr); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

@@ -68,4 +68,10 @@ type User interface {
 	RemoveMyAuth(context.Context, string, *accountusecase.Operator) (*user.User, error)
 	SearchUser(context.Context, string, *accountusecase.Operator) (*user.User, error)
 	DeleteMe(context.Context, accountdomain.UserID, *accountusecase.Operator) error
+
+	// from reearth/server
+	CreateVerification(context.Context, string) error
+	VerifyUser(context.Context, string) (*user.User, error)
+	StartPasswordReset(context.Context, string) error
+	PasswordReset(context.Context, string, string) error
 }

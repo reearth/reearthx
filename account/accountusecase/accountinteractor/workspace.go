@@ -165,7 +165,7 @@ func (i *Workspace) AddIntegrationMember(ctx context.Context, wId accountdomain.
 	})
 }
 
-func (i *Workspace) RemoveUser(ctx context.Context, id accountdomain.WorkspaceID, u accountdomain.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.WorkspaceID, u accountdomain.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -226,7 +226,7 @@ func (i *Workspace) RemoveIntegration(ctx context.Context, wId accountdomain.Wor
 	})
 }
 
-func (i *Workspace) UpdateUser(ctx context.Context, id accountdomain.WorkspaceID, u accountdomain.UserID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.WorkspaceID, u accountdomain.UserID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
