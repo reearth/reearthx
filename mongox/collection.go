@@ -15,20 +15,22 @@ import (
 
 const idKey = "id"
 
-type ClientCollection struct {
+var findOptions = options.Find().SetAllowDiskUse(true)
+
+type Collection struct {
 	client *mongo.Collection
 }
 
-func NewClientCollection(c *mongo.Collection) *ClientCollection {
-	return &ClientCollection{client: c}
+func NewCollection(c *mongo.Collection) *Collection {
+	return &Collection{client: c}
 }
 
-func (c *ClientCollection) Client() *mongo.Collection {
+func (c *Collection) Client() *mongo.Collection {
 	return c.client
 }
 
-func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consumer) error {
-	cursor, err := c.client.Find(ctx, filter)
+func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer) error {
+	cursor, err := c.client.Find(ctx, filter, findOptions)
 	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 		return rerror.ErrNotFound
 	}
@@ -59,7 +61,7 @@ func (c *ClientCollection) Find(ctx context.Context, filter any, consumer Consum
 	return nil
 }
 
-func (c *ClientCollection) FindOne(ctx context.Context, filter any, consumer Consumer) error {
+func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer) error {
 	raw, err := c.client.FindOne(ctx, filter).DecodeBytes()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
@@ -73,7 +75,7 @@ func (c *ClientCollection) FindOne(ctx context.Context, filter any, consumer Con
 	return nil
 }
 
-func (c *ClientCollection) Count(ctx context.Context, filter any) (int64, error) {
+func (c *Collection) Count(ctx context.Context, filter any) (int64, error) {
 	count, err := c.client.CountDocuments(ctx, filter)
 	if err != nil {
 		return 0, rerror.ErrInternalBy(err)
@@ -81,7 +83,7 @@ func (c *ClientCollection) Count(ctx context.Context, filter any) (int64, error)
 	return count, nil
 }
 
-func (c *ClientCollection) RemoveAll(ctx context.Context, f any) error {
+func (c *Collection) RemoveAll(ctx context.Context, f any) error {
 	_, err := c.client.DeleteMany(ctx, f)
 	if err != nil {
 		return rerror.ErrInternalBy(err)
@@ -89,7 +91,7 @@ func (c *ClientCollection) RemoveAll(ctx context.Context, f any) error {
 	return nil
 }
 
-func (c *ClientCollection) RemoveOne(ctx context.Context, f any) error {
+func (c *Collection) RemoveOne(ctx context.Context, f any) error {
 	res, err := c.client.DeleteOne(ctx, f)
 	if err != nil {
 		return rerror.ErrInternalBy(err)
@@ -100,11 +102,11 @@ func (c *ClientCollection) RemoveOne(ctx context.Context, f any) error {
 	return nil
 }
 
-func (c *ClientCollection) SaveOne(ctx context.Context, id string, replacement any) error {
+func (c *Collection) SaveOne(ctx context.Context, id string, replacement any) error {
 	return c.ReplaceOne(ctx, bson.M{idKey: id}, replacement)
 }
 
-func (c *ClientCollection) ReplaceOne(ctx context.Context, filter any, replacement any) error {
+func (c *Collection) ReplaceOne(ctx context.Context, filter any, replacement any) error {
 	_, err := c.client.ReplaceOne(
 		ctx,
 		filter,
@@ -117,7 +119,7 @@ func (c *ClientCollection) ReplaceOne(ctx context.Context, filter any, replaceme
 	return nil
 }
 
-func (c *ClientCollection) SetOne(ctx context.Context, id string, replacement any) error {
+func (c *Collection) SetOne(ctx context.Context, id string, replacement any) error {
 	_, err := c.client.UpdateOne(
 		ctx,
 		bson.M{idKey: id},
@@ -130,7 +132,7 @@ func (c *ClientCollection) SetOne(ctx context.Context, id string, replacement an
 	return nil
 }
 
-func (c *ClientCollection) SaveAll(ctx context.Context, ids []string, updates []any) error {
+func (c *Collection) SaveAll(ctx context.Context, ids []string, updates []any) error {
 	if len(ids) == 0 || len(updates) == 0 {
 		return nil
 	}
@@ -154,7 +156,7 @@ func (c *ClientCollection) SaveAll(ctx context.Context, ids []string, updates []
 	return nil
 }
 
-func (c *ClientCollection) UpdateMany(ctx context.Context, filter, update any) error {
+func (c *Collection) UpdateMany(ctx context.Context, filter, update any) error {
 	_, err := c.client.UpdateMany(ctx, filter, bson.M{
 		"$set": update,
 	})
@@ -170,7 +172,7 @@ type Update struct {
 	ArrayFilters []any
 }
 
-func (c *ClientCollection) UpdateManyMany(ctx context.Context, updates []Update) error {
+func (c *Collection) UpdateManyMany(ctx context.Context, updates []Update) error {
 	writeModels := make([]mongo.WriteModel, 0, len(updates))
 	for _, w := range updates {
 		wm := mongo.NewUpdateManyModel().SetFilter(w.Filter).SetUpdate(bson.M{
@@ -204,6 +206,6 @@ func getCursor(raw bson.Raw) (*usecasex.Cursor, error) {
 	return &c, nil
 }
 
-func (c *ClientCollection) BeginTransaction() (usecasex.Tx, error) {
+func (c *Collection) BeginTransaction() (usecasex.Tx, error) {
 	return NewClientWithDatabase(c.client.Database()).BeginTransaction()
 }

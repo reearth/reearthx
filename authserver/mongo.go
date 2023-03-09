@@ -11,12 +11,12 @@ import (
 )
 
 type Mongo struct {
-	client *mongox.ClientCollection
+	client *mongox.Collection
 }
 
 var _ RequestRepo = (*Mongo)(nil)
 
-func NewMongo(client *mongox.ClientCollection) *Mongo {
+func NewMongo(client *mongox.Collection) *Mongo {
 	r := &Mongo{client: client}
 	return r
 }

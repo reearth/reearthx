@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (c *ClientCollection) Paginate(ctx context.Context, rawFilter any, sort *usecasex.Sort, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
+func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex.Sort, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
 	if p == nil || p.Cursor == nil && p.Offset == nil {
 		return nil, nil
 	}
@@ -72,7 +72,7 @@ func (c *ClientCollection) Paginate(ctx context.Context, rawFilter any, sort *us
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
 
-func (c *ClientCollection) paginationFilter(ctx context.Context, p usecasex.Pagination, sort *usecasex.Sort, filter any) (any, *options.FindOptions, error) {
+func (c *Collection) paginationFilter(ctx context.Context, p usecasex.Pagination, sort *usecasex.Sort, filter any) (any, *options.FindOptions, error) {
 	var sortKey *string
 	reverted := false
 	if sort != nil {
@@ -134,7 +134,7 @@ func (c *ClientCollection) paginationFilter(ctx context.Context, p usecasex.Pagi
 
 func findOptionsFromPagination(p usecasex.Pagination, sort *string, reverted bool) *options.FindOptions {
 	const defaultLimit = 20
-	o := options.Find()
+	o := options.Find().SetAllowDiskUse(true)
 
 	if p.Offset != nil {
 		o = o.SetSkip(p.Offset.Offset).SetLimit(p.Offset.Limit)

@@ -21,7 +21,7 @@ func init() {
 
 func TestNewMongo(t *testing.T) {
 	c := mongotest.Connect(t)(t)
-	col := mongox.NewClientCollection(c.Collection("auth_request"))
+	col := mongox.NewCollection(c.Collection("auth_request"))
 	assert.Equal(t, &Mongo{
 		client: col,
 	}, NewMongo(col))
@@ -30,7 +30,7 @@ func TestNewMongo(t *testing.T) {
 func TestMongo_FindByID(t *testing.T) {
 	c := mongotest.Connect(t)(t)
 	col := c.Collection("auth_request")
-	m := &Mongo{client: mongox.NewClientCollection(col)}
+	m := &Mongo{client: mongox.NewCollection(col)}
 
 	ctx := context.Background()
 	id := NewRequestID()
@@ -52,7 +52,7 @@ func TestMongo_FindByID(t *testing.T) {
 func TestMongo_FindByCode(t *testing.T) {
 	c := mongotest.Connect(t)(t)
 	col := c.Collection("auth_request")
-	m := &Mongo{client: mongox.NewClientCollection(col)}
+	m := &Mongo{client: mongox.NewCollection(col)}
 
 	ctx := context.Background()
 	r := NewRequest().NewID().Code("aaa").MustBuild()
@@ -74,7 +74,7 @@ func TestMongo_FindByCode(t *testing.T) {
 func TestMongo_FindBySubject(t *testing.T) {
 	c := mongotest.Connect(t)(t)
 	col := c.Collection("auth_request")
-	m := &Mongo{client: mongox.NewClientCollection(col)}
+	m := &Mongo{client: mongox.NewCollection(col)}
 
 	ctx := context.Background()
 	r := NewRequest().NewID().Subject("sss").MustBuild()
@@ -96,7 +96,7 @@ func TestMongo_FindBySubject(t *testing.T) {
 func TestMongo_Save(t *testing.T) {
 	c := mongotest.Connect(t)(t)
 	col := c.Collection("auth_request")
-	m := &Mongo{client: mongox.NewClientCollection(col)}
+	m := &Mongo{client: mongox.NewCollection(col)}
 
 	ctx := context.Background()
 	aa := time.Now()
@@ -144,7 +144,7 @@ func TestMongo_Save(t *testing.T) {
 func TestMongo_Remove(t *testing.T) {
 	c := mongotest.Connect(t)(t)
 	col := c.Collection("auth_request")
-	m := &Mongo{client: mongox.NewClientCollection(col)}
+	m := &Mongo{client: mongox.NewCollection(col)}
 
 	ctx := context.Background()
 	r := NewRequest().NewID().MustBuild()

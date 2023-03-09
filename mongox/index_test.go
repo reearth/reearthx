@@ -14,7 +14,7 @@ func TestClientCollection_Indexes(t *testing.T) {
 	ctx := context.Background()
 	db := mongotest.Connect(t)(t)
 	col := db.Collection("test")
-	c := NewClientCollection(col)
+	c := NewCollection(col)
 
 	_, _ = col.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys: bson.M{"a": 1},

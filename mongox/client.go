@@ -18,8 +18,8 @@ func NewClientWithDatabase(c *mongo.Database) *Client {
 	return &Client{Client: c}
 }
 
-func (c *Client) WithCollection(col string) *ClientCollection {
-	return NewClientCollection(c.Client.Collection(col))
+func (c *Client) WithCollection(col string) *Collection {
+	return NewCollection(c.Client.Collection(col))
 }
 
 func (c *Client) BeginTransaction() (usecasex.Tx, error) {

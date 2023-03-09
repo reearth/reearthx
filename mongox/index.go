@@ -12,7 +12,7 @@ import (
 )
 
 // Indexes creates or deletes indexes by keys declaratively
-func (c *ClientCollection) Indexes(ctx context.Context, keys, uniqueKeys []string) ([]string, []string, error) {
+func (c *Collection) Indexes(ctx context.Context, keys, uniqueKeys []string) ([]string, []string, error) {
 	cur, err := c.client.Indexes().List(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -56,7 +56,7 @@ func (c *ClientCollection) Indexes(ctx context.Context, keys, uniqueKeys []strin
 	return added, deleted, nil
 }
 
-func (c *ClientCollection) dropIndexes(ctx context.Context, indexes []string) error {
+func (c *Collection) dropIndexes(ctx context.Context, indexes []string) error {
 	for _, name := range indexes {
 		if name == "_id_" {
 			continue // cannot drop _id index

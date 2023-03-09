@@ -14,7 +14,7 @@ import (
 func TestClientCollection_Paginate(t *testing.T) {
 	ctx := context.Background()
 	initDB := mongotest.Connect(t)
-	c := NewClientCollection(initDB(t).Collection("test"))
+	c := NewCollection(initDB(t).Collection("test"))
 
 	// seeds
 	seeds := []string{"a", "b", "c"}
