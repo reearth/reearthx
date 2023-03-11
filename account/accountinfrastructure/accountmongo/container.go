@@ -10,12 +10,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func New(ctx context.Context, mc *mongo.Client, databaseName string) (*accountrepo.Container, error) {
+func New(ctx context.Context, mc *mongo.Client, databaseName string, useTransaction bool) (*accountrepo.Container, error) {
 	if databaseName == "" {
 		databaseName = "reearth_cms"
 	}
 
 	client := mongox.NewClient(databaseName, mc)
+	if useTransaction {
+		client = client.WithTransaction()
+	}
+
 	c := &accountrepo.Container{
 		Workspace:   NewWorkspace(client),
 		User:        NewUser(client),
@@ -30,8 +34,8 @@ func New(ctx context.Context, mc *mongo.Client, databaseName string) (*accountre
 	return c, nil
 }
 
-func NewWithDB(ctx context.Context, db *mongo.Database) (*accountrepo.Container, error) {
-	return New(ctx, db.Client(), db.Name())
+func NewWithDB(ctx context.Context, db *mongo.Database, useTransaction bool) (*accountrepo.Container, error) {
+	return New(ctx, db.Client(), db.Name(), useTransaction)
 }
 
 func Init(r *accountrepo.Container) error {
