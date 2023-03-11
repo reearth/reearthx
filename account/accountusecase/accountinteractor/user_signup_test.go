@@ -66,7 +66,7 @@ func TestUser_Signup(t *testing.T) {
 					Verification(user.VerificationFrom(mockcode, mocktime.Add(24*time.Hour), false)).
 					MustBuild()
 			},
-			wantWorkspace: workspace.NewWorkspace().
+			wantWorkspace: workspace.New().
 				ID(tid).
 				Name("NAME").
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
@@ -143,7 +143,7 @@ func TestUser_Signup(t *testing.T) {
 					Verification(user.VerificationFrom(mockcode, mocktime.Add(24*time.Hour), false)).
 					MustBuild()
 			},
-			wantWorkspace: workspace.NewWorkspace().
+			wantWorkspace: workspace.New().
 				ID(tid).
 				Name("NAME").
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
@@ -181,7 +181,7 @@ func TestUser_Signup(t *testing.T) {
 					Verification(user.VerificationFrom(mockcode, mocktime.Add(24*time.Hour), false)).
 					MustBuild()
 			},
-			wantWorkspace: workspace.NewWorkspace().
+			wantWorkspace: workspace.New().
 				ID(tid).
 				Name("NAME").
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).

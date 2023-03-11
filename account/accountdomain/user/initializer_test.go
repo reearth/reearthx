@@ -40,7 +40,7 @@ func TestInit(t *testing.T) {
 				Workspace(tid).
 				Auths([]Auth{expectedSub}).
 				MustBuild(),
-			ExpectedWorkspace: workspace.NewWorkspace().
+			ExpectedWorkspace: workspace.New().
 				ID(tid).
 				Name("nnn").
 				Members(map[ID]workspace.Member{uid: {Role: workspace.RoleOwner}}).
@@ -65,7 +65,7 @@ func TestInit(t *testing.T) {
 				Workspace(tid).
 				Auths([]Auth{expectedSub}).
 				MustBuild(),
-			ExpectedWorkspace: workspace.NewWorkspace().
+			ExpectedWorkspace: workspace.New().
 				NewID().
 				Name("nnn").
 				Members(map[ID]workspace.Member{uid: {Role: workspace.RoleOwner}}).
@@ -90,7 +90,7 @@ func TestInit(t *testing.T) {
 				Workspace(tid).
 				Auths([]Auth{expectedSub}).
 				MustBuild(),
-			ExpectedWorkspace: workspace.NewWorkspace().
+			ExpectedWorkspace: workspace.New().
 				ID(tid).
 				Name("nnn").
 				Members(map[ID]workspace.Member{uid: {Role: workspace.RoleOwner}}).

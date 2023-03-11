@@ -85,7 +85,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 			}
 		}
 	}
-	return workspace.NewWorkspace().
+	return workspace.New().
 		ID(tid).
 		Name(d.Name).
 		Members(members).

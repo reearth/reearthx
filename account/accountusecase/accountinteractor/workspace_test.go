@@ -49,9 +49,9 @@ func TestWorkspace_Create(t *testing.T) {
 
 func TestWorkspace_Fetch(t *testing.T) {
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).MustBuild()
+	w1 := workspace.New().ID(id1).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).MustBuild()
+	w2 := workspace.New().ID(id2).MustBuild()
 
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(id1).MustBuild()
 	op := &accountusecase.Operator{
@@ -159,9 +159,9 @@ func TestWorkspace_Fetch(t *testing.T) {
 func TestWorkspace_FindByUser(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleReader}}).MustBuild()
+	w1 := workspace.New().ID(id1).Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleReader}}).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).MustBuild()
+	w2 := workspace.New().ID(id2).MustBuild()
 
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(id1).MustBuild()
 	op := &accountusecase.Operator{
@@ -256,12 +256,12 @@ func TestWorkspace_FindByUser(t *testing.T) {
 func TestWorkspace_Update(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
-	w1Updated := workspace.NewWorkspace().ID(id1).Name("WW1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1Updated := workspace.New().ID(id1).Name("WW1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).Name("W2").MustBuild()
+	w2 := workspace.New().ID(id2).Name("W2").MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.NewWorkspace().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleReader}}).MustBuild()
+	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleReader}}).MustBuild()
 
 	op := &accountusecase.Operator{
 		User:               &userID,
@@ -375,13 +375,13 @@ func TestWorkspace_Update(t *testing.T) {
 func TestWorkspace_Remove(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).Name("W2").MustBuild()
+	w2 := workspace.New().ID(id2).Name("W2").MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.NewWorkspace().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleReader}}).MustBuild()
+	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleReader}}).MustBuild()
 	id4 := accountdomain.NewWorkspaceID()
-	w4 := workspace.NewWorkspace().ID(id4).Name("W4").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
+	w4 := workspace.New().ID(id4).Name("W4").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
 	id5 := accountdomain.NewWorkspaceID()
 	id6 := accountdomain.NewWorkspaceID()
 
@@ -504,13 +504,13 @@ func TestWorkspace_Remove(t *testing.T) {
 func TestWorkspace_AddMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w2 := workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.NewWorkspace().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
+	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
 	id4 := accountdomain.NewWorkspaceID()
-	w4 := workspace.NewWorkspace().ID(id3).Name("W4").Members(map[user.ID]workspace.Member{accountdomain.NewUserID(): {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
+	w4 := workspace.New().ID(id3).Name("W4").Members(map[user.ID]workspace.Member{accountdomain.NewUserID(): {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
 
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
 
@@ -652,7 +652,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 func TestWorkspace_AddIntegrationMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
 	id3 := accountdomain.NewWorkspaceID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
@@ -749,13 +749,13 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleReader}}).Personal(false).MustBuild()
+	w2 := workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleReader}}).Personal(false).MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.NewWorkspace().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
+	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
 	id4 := accountdomain.NewWorkspaceID()
-	w4 := workspace.NewWorkspace().ID(id4).Name("W4").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w4 := workspace.New().ID(id4).Name("W4").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 
 	op := &accountusecase.Operator{
 		User:               &userID,
@@ -895,11 +895,11 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.NewWorkspace().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.NewWorkspace().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleReader}}).Personal(false).MustBuild()
+	w2 := workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleReader}}).Personal(false).MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.NewWorkspace().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
+	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
 
 	op := &accountusecase.Operator{
 		User:               &userID,

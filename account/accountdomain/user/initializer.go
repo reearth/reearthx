@@ -50,7 +50,7 @@ func Init(p InitParams) (*User, *workspace.Workspace, error) {
 	}
 
 	// create a user's own workspace
-	t, err := workspace.NewWorkspace().
+	t, err := workspace.New().
 		ID(*p.WorkspaceID).
 		Name(p.Name).
 		Members(map[ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, Disabled: false, InvitedBy: u.ID()}}).

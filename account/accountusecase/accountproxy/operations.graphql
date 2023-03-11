@@ -1,0 +1,18 @@
+query Me {
+  me {
+    id
+  }
+}
+
+query UserByIDs($id: [ID!]!) {
+  nodes(id: $id, type: USER) {
+    ... on User {
+      id
+      name
+      email
+      workspaces {
+        id
+      }
+    }
+  }
+}

@@ -60,7 +60,7 @@ type UpdateMeParam struct {
 }
 
 type User interface {
-	Fetch(context.Context, []accountdomain.UserID, *accountusecase.Operator) ([]*user.User, error)
+	Fetch(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.User, error)
 	Signup(context.Context, SignupParam) (*user.User, error)
 	SignupOIDC(context.Context, SignupOIDC) (*user.User, error)
 	FindOrCreate(context.Context, UserFindOrCreateParam) (*user.User, error)
@@ -74,4 +74,13 @@ type User interface {
 	VerifyUser(context.Context, string) (*user.User, error)
 	StartPasswordReset(context.Context, string) error
 	PasswordReset(context.Context, string, string) error
+}
+
+func FilterUsers(res []*user.User, workspaces accountdomain.WorkspaceIDList, operator *accountusecase.Operator) []*user.User {
+	for k := range res {
+		if !operator.IsReadableWorkspace(workspaces...) {
+			res[k] = nil
+		}
+	}
+	return res
 }

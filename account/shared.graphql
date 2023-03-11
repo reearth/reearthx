@@ -4,3 +4,13 @@ scalar Theme
 interface Node {
   id: ID!
 }
+
+enum NodeType {
+  USER
+  WORKSPACE
+}
+
+type Query {
+  node(id: ID!, type: NodeType!): Node
+  nodes(id: [ID!]!, type: NodeType!): [Node]
+}

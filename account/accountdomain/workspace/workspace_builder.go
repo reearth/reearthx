@@ -6,18 +6,22 @@ import (
 
 var ErrMembersRequired = errors.New("members required")
 
-type WorkspaceBuilder struct {
+type Builder struct {
 	w            *Workspace
 	members      map[UserID]Member
 	integrations map[IntegrationID]Member
 	personal     bool
+	err          error
 }
 
-func NewWorkspace() *WorkspaceBuilder {
-	return &WorkspaceBuilder{w: &Workspace{}}
+func New() *Builder {
+	return &Builder{w: &Workspace{}}
 }
 
-func (b *WorkspaceBuilder) Build() (*Workspace, error) {
+func (b *Builder) Build() (*Workspace, error) {
+	if b.err != nil {
+		return nil, b.err
+	}
 	if b.w.id.IsEmpty() {
 		return nil, ErrInvalidID
 	}
@@ -31,7 +35,7 @@ func (b *WorkspaceBuilder) Build() (*Workspace, error) {
 	return b.w, nil
 }
 
-func (b *WorkspaceBuilder) MustBuild() *Workspace {
+func (b *Builder) MustBuild() *Workspace {
 	r, err := b.Build()
 	if err != nil {
 		panic(err)
@@ -39,32 +43,37 @@ func (b *WorkspaceBuilder) MustBuild() *Workspace {
 	return r
 }
 
-func (b *WorkspaceBuilder) ID(id ID) *WorkspaceBuilder {
+func (b *Builder) ID(id ID) *Builder {
 	b.w.id = id
 	return b
 }
 
-func (b *WorkspaceBuilder) NewID() *WorkspaceBuilder {
+func (b *Builder) ParseID(id string) *Builder {
+	b.w.id, b.err = IDFrom(id)
+	return b
+}
+
+func (b *Builder) NewID() *Builder {
 	b.w.id = NewID()
 	return b
 }
 
-func (b *WorkspaceBuilder) Name(name string) *WorkspaceBuilder {
+func (b *Builder) Name(name string) *Builder {
 	b.w.name = name
 	return b
 }
 
-func (b *WorkspaceBuilder) Members(members map[UserID]Member) *WorkspaceBuilder {
+func (b *Builder) Members(members map[UserID]Member) *Builder {
 	b.members = members
 	return b
 }
 
-func (b *WorkspaceBuilder) Integrations(integrations map[IntegrationID]Member) *WorkspaceBuilder {
+func (b *Builder) Integrations(integrations map[IntegrationID]Member) *Builder {
 	b.integrations = integrations
 	return b
 }
 
-func (b *WorkspaceBuilder) Personal(p bool) *WorkspaceBuilder {
+func (b *Builder) Personal(p bool) *Builder {
 	b.personal = p
 	return b
 }

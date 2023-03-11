@@ -55,7 +55,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdo
 			return nil, user.ErrInvalidName
 		}
 
-		ws, err := workspace.NewWorkspace().
+		ws, err := workspace.New().
 			NewID().
 			Name(name).
 			Build()

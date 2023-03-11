@@ -8,33 +8,42 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWorkspaceBuilder_ID(t *testing.T) {
+func TestBuilder_ID(t *testing.T) {
 	wid := NewID()
-	b := NewWorkspace().ID(wid)
+	b := New().ID(wid)
 	assert.Equal(t, wid, b.w.id)
 }
 
-func TestWorkspaceBuilder_Members(t *testing.T) {
-	m := map[UserID]Member{NewUserID(): {Role: RoleOwner}}
-	b := NewWorkspace().Members(m)
-	assert.Equal(t, m, b.members)
-}
-
-func TestWorkspaceBuilder_Name(t *testing.T) {
-	w := NewWorkspace().Name("xxx")
-	assert.Equal(t, "xxx", w.w.name)
-}
-
-func TestWorkspaceBuilder_NewID(t *testing.T) {
-	b := NewWorkspace().NewID()
+func TestBuilder_NewID(t *testing.T) {
+	b := New().NewID()
 	assert.False(t, b.w.id.IsEmpty())
 }
 
-func TestWorkspaceBuilder_Build(t *testing.T) {
+func TestBuilder_ParseID(t *testing.T) {
+	id := NewID()
+	b := New().ParseID(id.String()).MustBuild()
+	assert.Equal(t, id, b.ID())
+
+	_, err := New().ParseID("invalid").Build()
+	assert.Equal(t, idx.ErrInvalidID, err)
+}
+
+func TestBuilder_Members(t *testing.T) {
+	m := map[UserID]Member{NewUserID(): {Role: RoleOwner}}
+	b := New().Members(m)
+	assert.Equal(t, m, b.members)
+}
+
+func TestBuilder_Name(t *testing.T) {
+	w := New().Name("xxx")
+	assert.Equal(t, "xxx", w.w.name)
+}
+
+func TestBuilder_Build(t *testing.T) {
 	m := map[UserID]Member{NewUserID(): {Role: RoleOwner}}
 	i := map[IntegrationID]Member{NewIntegrationID(): {Role: RoleOwner}}
 	id := NewID()
-	w, err := NewWorkspace().ID(id).Name("a").Integrations(i).Members(m).Build()
+	w, err := New().ID(id).Name("a").Integrations(i).Members(m).Build()
 	assert.NoError(t, err)
 
 	assert.Equal(t, &Workspace{
@@ -43,7 +52,7 @@ func TestWorkspaceBuilder_Build(t *testing.T) {
 		members: NewMembersWith(m, i, false),
 	}, w)
 
-	w, err = NewWorkspace().ID(id).Name("a").Build()
+	w, err = New().ID(id).Name("a").Build()
 	assert.NoError(t, err)
 
 	assert.Equal(t, &Workspace{
@@ -55,16 +64,16 @@ func TestWorkspaceBuilder_Build(t *testing.T) {
 		},
 	}, w)
 
-	w, err = NewWorkspace().Build()
+	w, err = New().Build()
 	assert.Equal(t, ErrInvalidID, err)
 	assert.Nil(t, w)
 }
 
-func TestWorkspaceBuilder_MustBuild(t *testing.T) {
+func TestBuilder_MustBuild(t *testing.T) {
 	m := map[UserID]Member{NewUserID(): {Role: RoleOwner}}
 	i := map[IntegrationID]Member{NewIntegrationID(): {Role: RoleOwner}}
 	id := NewID()
-	w := NewWorkspace().ID(id).Name("a").Integrations(i).Members(m).MustBuild()
+	w := New().ID(id).Name("a").Integrations(i).Members(m).MustBuild()
 
 	assert.Equal(t, &Workspace{
 		id:      id,
@@ -72,20 +81,20 @@ func TestWorkspaceBuilder_MustBuild(t *testing.T) {
 		members: NewMembersWith(m, i, false),
 	}, w)
 
-	assert.Panics(t, func() { NewWorkspace().MustBuild() })
+	assert.Panics(t, func() { New().MustBuild() })
 }
 
-func TestWorkspaceBuilder_Integrations(t *testing.T) {
+func TestBuilder_Integrations(t *testing.T) {
 	i := map[IntegrationID]Member{NewIntegrationID(): {Role: RoleOwner}}
-	assert.Equal(t, &WorkspaceBuilder{
+	assert.Equal(t, &Builder{
 		w:            &Workspace{},
 		integrations: i,
-	}, NewWorkspace().Integrations(i))
+	}, New().Integrations(i))
 }
 
-func TestWorkspaceBuilder_Personal(t *testing.T) {
-	assert.Equal(t, &WorkspaceBuilder{
+func TestBuilder_Personal(t *testing.T) {
+	assert.Equal(t, &Builder{
 		w:        &Workspace{},
 		personal: true,
-	}, NewWorkspace().Personal(true))
+	}, New().Personal(true))
 }

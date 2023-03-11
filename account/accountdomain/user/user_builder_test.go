@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/reearth/reearthx/idx"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
 )
@@ -15,14 +16,23 @@ func TestBuilder_ID(t *testing.T) {
 	assert.Nil(t, b.passwordReset)
 }
 
-func TestBuilder_Name(t *testing.T) {
-	b := New().NewID().Name("xxx").Email("aaa@bbb.com").MustBuild()
-	assert.Equal(t, "xxx", b.Name())
-}
-
 func TestBuilder_NewID(t *testing.T) {
 	b := New().NewID().Name("aaa").Email("aaa@bbb.com").MustBuild()
 	assert.NotNil(t, b.ID())
+}
+
+func TestBuilder_ParseID(t *testing.T) {
+	id := NewID()
+	b := New().ParseID(id.String()).Name("aaa").Email("aaa@bbb.com").MustBuild()
+	assert.Equal(t, id, b.ID())
+
+	_, err := New().ParseID("invalid").Name("aaa").Email("aaa@bbb.com").Build()
+	assert.Equal(t, idx.ErrInvalidID, err)
+}
+
+func TestBuilder_Name(t *testing.T) {
+	b := New().NewID().Name("xxx").Email("aaa@bbb.com").MustBuild()
+	assert.Equal(t, "xxx", b.Name())
 }
 
 func TestBuilder_Workspace(t *testing.T) {

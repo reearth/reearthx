@@ -11,6 +11,7 @@ var ErrInvalidName = errors.New("invalid user name")
 
 type Builder struct {
 	u            *User
+	err          error
 	passwordText string
 	email        string
 }
@@ -20,6 +21,9 @@ func New() *Builder {
 }
 
 func (b *Builder) Build() (*User, error) {
+	if b.err != nil {
+		return nil, b.err
+	}
 	if b.u.id.IsEmpty() {
 		return nil, ErrInvalidID
 	}
@@ -50,6 +54,11 @@ func (b *Builder) MustBuild() *User {
 
 func (b *Builder) ID(id accountdomain.UserID) *Builder {
 	b.u.id = id
+	return b
+}
+
+func (b *Builder) ParseID(id string) *Builder {
+	b.u.id, b.err = IDFrom(id)
 	return b
 }
 

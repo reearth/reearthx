@@ -7,6 +7,7 @@ import (
 	"errors"
 	htmlTmpl "html/template"
 
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
@@ -41,29 +42,24 @@ func NewUser(r *accountrepo.Container, g *accountgateway.Container, signupSecret
 	}
 }
 
-func (i *User) Fetch(ctx context.Context, ids []user.ID, operator *accountusecase.Operator) ([]*user.User, error) {
+func (i *User) Fetch(ctx context.Context, ids accountdomain.UserIDList, operator *accountusecase.Operator) ([]*user.User, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*user.User, error) {
 		res, err := i.repos.User.FindByIDs(ctx, ids)
 		if err != nil {
 			return res, err
 		}
-		// filter
-		for k, u := range res {
-			workspaces, err := i.repos.Workspace.FindByUser(ctx, u.ID())
+
+		workspaces := []accountdomain.WorkspaceID{}
+		for _, u := range res {
+			w, err := i.repos.Workspace.FindByUser(ctx, u.ID())
 			if err != nil {
 				return res, err
 			}
-			workspaceIDs := make([]user.WorkspaceID, 0, len(workspaces))
-			for _, t := range workspaces {
-				if t != nil {
-					workspaceIDs = append(workspaceIDs, t.ID())
-				}
-			}
-			if !operator.IsReadableWorkspace(workspaceIDs...) {
-				res[k] = nil
-			}
+			workspaces = append(workspaces, w.IDs()...)
 		}
-		return res, nil
+
+		// filter
+		return accountinterfaces.FilterUsers(res, workspaces, operator), nil
 	})
 }
 

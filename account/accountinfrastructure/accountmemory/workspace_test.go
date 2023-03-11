@@ -23,7 +23,7 @@ func TestNewWorkspace(t *testing.T) {
 
 func TestWorkspace_FindByID(t *testing.T) {
 	ctx := context.Background()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}
@@ -43,8 +43,8 @@ func TestWorkspace_FindByID(t *testing.T) {
 
 func TestWorkspace_FindByIDs(t *testing.T) {
 	ctx := context.Background()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
-	ws2 := workspace.NewWorkspace().NewID().Name("foo").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").MustBuild()
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}
@@ -65,7 +65,7 @@ func TestWorkspace_FindByIDs(t *testing.T) {
 func TestWorkspace_FindByUser(t *testing.T) {
 	ctx := context.Background()
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").MustBuild()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").Members(map[accountdomain.UserID]workspace.Member{u.ID(): {Role: workspace.RoleOwner}}).MustBuild()
+	ws := workspace.New().NewID().Name("hoge").Members(map[accountdomain.UserID]workspace.Member{u.ID(): {Role: workspace.RoleOwner}}).MustBuild()
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}
@@ -86,7 +86,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 
 func TestWorkspace_Save(t *testing.T) {
 	ctx := context.Background()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
 
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
@@ -101,8 +101,8 @@ func TestWorkspace_Save(t *testing.T) {
 
 func TestWorkspace_SaveAll(t *testing.T) {
 	ctx := context.Background()
-	ws1 := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
-	ws2 := workspace.NewWorkspace().NewID().Name("foo").MustBuild()
+	ws1 := workspace.New().NewID().Name("hoge").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").MustBuild()
 
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
@@ -117,8 +117,8 @@ func TestWorkspace_SaveAll(t *testing.T) {
 
 func TestWorkspace_Remove(t *testing.T) {
 	ctx := context.Background()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
-	ws2 := workspace.NewWorkspace().NewID().Name("foo").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").MustBuild()
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}
@@ -135,8 +135,8 @@ func TestWorkspace_Remove(t *testing.T) {
 
 func TestWorkspace_RemoveAll(t *testing.T) {
 	ctx := context.Background()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
-	ws2 := workspace.NewWorkspace().NewID().Name("foo").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").MustBuild()
 	r := &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}

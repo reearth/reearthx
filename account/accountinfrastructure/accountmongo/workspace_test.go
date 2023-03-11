@@ -14,7 +14,7 @@ import (
 )
 
 func TestWorkspace_FindByID(t *testing.T) {
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
 	tests := []struct {
 		Name               string
 		Input              accountdomain.WorkspaceID
@@ -62,9 +62,9 @@ func TestWorkspace_FindByID(t *testing.T) {
 }
 
 func TestWorkspace_FindByIDs(t *testing.T) {
-	ws1 := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
-	ws2 := workspace.NewWorkspace().NewID().Name("foo").MustBuild()
-	ws3 := workspace.NewWorkspace().NewID().Name("xxx").MustBuild()
+	ws1 := workspace.New().NewID().Name("hoge").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").MustBuild()
+	ws3 := workspace.New().NewID().Name("xxx").MustBuild()
 
 	tests := []struct {
 		Name               string
@@ -113,7 +113,7 @@ func TestWorkspace_FindByIDs(t *testing.T) {
 
 func TestWorkspace_FindByUser(t *testing.T) {
 	u := user.New().Name("aaa").NewID().Email("aaa@bbb.com").MustBuild()
-	ws := workspace.NewWorkspace().NewID().Name("hoge").Members(map[user.ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, InvitedBy: u.ID()}}).MustBuild()
+	ws := workspace.New().NewID().Name("hoge").Members(map[user.ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, InvitedBy: u.ID()}}).MustBuild()
 	tests := []struct {
 		Name     string
 		Input    accountdomain.UserID
@@ -161,7 +161,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 }
 
 func TestWorkspace_Remove(t *testing.T) {
-	ws := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
 
 	init := mongotest.Connect(t)
 	client := mongox.NewClientWithDatabase(init(t))
@@ -176,8 +176,8 @@ func TestWorkspace_Remove(t *testing.T) {
 }
 
 func TestWorkspace_RemoveAll(t *testing.T) {
-	ws1 := workspace.NewWorkspace().NewID().Name("hoge").MustBuild()
-	ws2 := workspace.NewWorkspace().NewID().Name("foo").MustBuild()
+	ws1 := workspace.New().NewID().Name("hoge").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").MustBuild()
 
 	init := mongotest.Connect(t)
 	client := mongox.NewClientWithDatabase(init(t))

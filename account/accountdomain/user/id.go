@@ -5,7 +5,9 @@ import (
 )
 
 type ID = accountdomain.UserID
+type IDList = accountdomain.UserIDList
 type WorkspaceID = accountdomain.WorkspaceID
+type WorkspaceIDList = accountdomain.WorkspaceIDList
 
 var NewID = accountdomain.NewUserID
 var NewWorkspaceID = accountdomain.NewWorkspaceID
