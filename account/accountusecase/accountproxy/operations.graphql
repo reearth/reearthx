@@ -10,9 +10,6 @@ query UserByIDs($id: [ID!]!) {
       id
       name
       email
-      workspaces {
-        id
-      }
     }
   }
 }

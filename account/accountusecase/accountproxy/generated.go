@@ -99,11 +99,10 @@ func __marshalUserByIDsNodesNode(v *UserByIDsNodesNode) ([]byte, error) {
 
 // UserByIDsNodesUser includes the requested fields of the GraphQL type User.
 type UserByIDsNodesUser struct {
-	Typename   string                                  `json:"__typename"`
-	Id         string                                  `json:"id"`
-	Name       string                                  `json:"name"`
-	Email      string                                  `json:"email"`
-	Workspaces []UserByIDsNodesUserWorkspacesWorkspace `json:"workspaces"`
+	Typename string `json:"__typename"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
 }
 
 // GetTypename returns UserByIDsNodesUser.Typename, and is useful for accessing the field via an interface.
@@ -117,19 +116,6 @@ func (v *UserByIDsNodesUser) GetName() string { return v.Name }
 
 // GetEmail returns UserByIDsNodesUser.Email, and is useful for accessing the field via an interface.
 func (v *UserByIDsNodesUser) GetEmail() string { return v.Email }
-
-// GetWorkspaces returns UserByIDsNodesUser.Workspaces, and is useful for accessing the field via an interface.
-func (v *UserByIDsNodesUser) GetWorkspaces() []UserByIDsNodesUserWorkspacesWorkspace {
-	return v.Workspaces
-}
-
-// UserByIDsNodesUserWorkspacesWorkspace includes the requested fields of the GraphQL type Workspace.
-type UserByIDsNodesUserWorkspacesWorkspace struct {
-	Id string `json:"id"`
-}
-
-// GetId returns UserByIDsNodesUserWorkspacesWorkspace.Id, and is useful for accessing the field via an interface.
-func (v *UserByIDsNodesUserWorkspacesWorkspace) GetId() string { return v.Id }
 
 // UserByIDsNodesWorkspace includes the requested fields of the GraphQL type Workspace.
 type UserByIDsNodesWorkspace struct {
@@ -273,9 +259,6 @@ query UserByIDs ($id: [ID!]!) {
 			id
 			name
 			email
-			workspaces {
-				id
-			}
 		}
 	}
 }

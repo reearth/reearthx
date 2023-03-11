@@ -61,6 +61,7 @@ type UpdateMeParam struct {
 
 type User interface {
 	Fetch(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.User, error)
+	FetchSimple(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.Simple, error)
 	Signup(context.Context, SignupParam) (*user.User, error)
 	SignupOIDC(context.Context, SignupOIDC) (*user.User, error)
 	FindOrCreate(context.Context, UserFindOrCreateParam) (*user.User, error)

@@ -16,6 +16,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/samber/lo"
 )
 
 type User struct {
@@ -61,6 +62,13 @@ func (i *User) Fetch(ctx context.Context, ids accountdomain.UserIDList, operator
 		// filter
 		return accountinterfaces.FilterUsers(res, workspaces, operator), nil
 	})
+}
+
+func (i *User) FetchSimple(ctx context.Context, ids accountdomain.UserIDList, operator *accountusecase.Operator) ([]*user.Simple, error) {
+	users, err := i.Fetch(ctx, ids, operator)
+	return lo.Map(users, func(u *user.User, _ int) *user.Simple {
+		return user.SimpleFrom(u)
+	}), err
 }
 
 func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.GetUserByCredentials) (u *user.User, err error) {

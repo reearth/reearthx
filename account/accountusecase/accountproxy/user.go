@@ -15,7 +15,6 @@ import (
 )
 
 type User struct {
-	accountinterfaces.User
 	http     HTTPClient
 	gql      graphql.Client
 	endpoint string
@@ -30,11 +29,11 @@ func NewUser(endpoint string, h HTTPClient) *User {
 }
 
 func (u *User) Fetch(ctx context.Context, ids accountdomain.UserIDList, op *accountusecase.Operator) ([]*user.User, error) {
-	users, wids, err := UserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
-	if err != nil {
-		return nil, err
-	}
-	return accountinterfaces.FilterUsers(users, wids, op), nil
+	panic("not implemented")
+}
+
+func (u *User) FetchSimple(ctx context.Context, ids accountdomain.UserIDList, op *accountusecase.Operator) ([]*user.Simple, error) {
+	return UserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
 }
 
 func (*User) Signup(context.Context, accountinterfaces.SignupParam) (*user.User, error) {
