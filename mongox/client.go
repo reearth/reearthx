@@ -2,37 +2,56 @@ package mongox
 
 import (
 	"context"
+	"net/url"
+	"strings"
 
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 )
 
 type Client struct {
-	Client *mongo.Database
+	db          *mongo.Database
+	transaction usecasex.Transaction
 }
 
 func NewClient(database string, c *mongo.Client) *Client {
-	return &Client{Client: c.Database(database)}
+	return &Client{
+		db:          c.Database(database),
+		transaction: &usecasex.NopTransaction{},
+	}
 }
 
-func NewClientWithDatabase(c *mongo.Database) *Client {
-	return &Client{Client: c}
+func NewClientWithDatabase(db *mongo.Database) *Client {
+	return &Client{
+		db:          db,
+		transaction: &usecasex.NopTransaction{},
+	}
 }
 
+func (c *Client) WithTransaction() *Client {
+	c.transaction = NewTransaction(c.db.Client())
+	return c
+}
+
+func (c *Client) Collection(col string) *Collection {
+	return NewCollection(c.db.Collection(col))
+}
+
+// WithCollection is deprecated
 func (c *Client) WithCollection(col string) *Collection {
-	return NewCollection(c.Client.Collection(col))
+	return c.Collection(col)
+}
+
+func (c *Client) Database() *mongo.Database {
+	return c.db
 }
 
 func (c *Client) BeginTransaction(ctx context.Context) (usecasex.Tx, error) {
-	s, err := c.Client.Client().StartSession()
-	if err != nil {
-		return nil, err
-	}
+	return c.transaction.Begin(ctx)
+}
 
-	if err := s.StartTransaction(options.Transaction()); err != nil {
-		return nil, err
-	}
-
-	return newTx(ctx, s), nil
+func IsTransactionAvailable(original string) bool {
+	u, _ := url.Parse(original)
+	return u.Scheme == connstring.SchemeMongoDBSRV || u.Scheme == connstring.SchemeMongoDB && strings.Contains(u.Host, ",")
 }

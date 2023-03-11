@@ -24,7 +24,7 @@ func NewWorkspace(r *accountrepo.Container) accountinterfaces.Workspace {
 }
 
 func (i *Workspace) Fetch(ctx context.Context, ids []accountdomain.WorkspaceID, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() ([]*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
 		res, err := i.repos.Workspace.FindByIDs(ctx, ids)
 		res2, err := i.filterWorkspaces(res, operator, err)
 		return res2, err
@@ -32,7 +32,7 @@ func (i *Workspace) Fetch(ctx context.Context, ids []accountdomain.WorkspaceID, 
 }
 
 func (i *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() ([]*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
 		res, err := i.repos.Workspace.FindByUser(ctx, id)
 		res2, err := i.filterWorkspaces(res, operator, err)
 		return res2, err
@@ -40,7 +40,7 @@ func (i *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID, ope
 }
 
 func (i *Workspace) FetchPolicy(ctx context.Context, ids []workspace.PolicyID, operator *accountusecase.Operator) ([]*workspace.Policy, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() ([]*workspace.Policy, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Policy, error) {
 		res, err := i.repos.Policy.FindByIDs(ctx, ids)
 		return res, err
 	})
@@ -50,7 +50,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdo
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		if len(strings.TrimSpace(name)) == 0 {
 			return nil, user.ErrInvalidName
 		}
@@ -80,7 +80,7 @@ func (i *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, na
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return nil, err
@@ -111,7 +111,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID accountdomain
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(workspaceID), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(workspaceID), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, workspaceID)
 		if err != nil {
 			return nil, err
@@ -145,7 +145,7 @@ func (i *Workspace) AddIntegrationMember(ctx context.Context, wId accountdomain.
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(wId), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(wId), func(ctx context.Context) (*workspace.Workspace, error) {
 		workspace, err := i.repos.Workspace.FindByID(ctx, wId)
 		if err != nil {
 			return nil, err
@@ -169,7 +169,7 @@ func (i *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.Works
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return nil, err
@@ -206,7 +206,7 @@ func (i *Workspace) RemoveIntegration(ctx context.Context, wId accountdomain.Wor
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		workspace, err := i.repos.Workspace.FindByID(ctx, wId)
 		if err != nil {
 			return nil, err
@@ -230,7 +230,7 @@ func (i *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.Works
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(id), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(id), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return nil, err
@@ -261,7 +261,7 @@ func (i *Workspace) UpdateIntegration(ctx context.Context, wId accountdomain.Wor
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func() (*workspace.Workspace, error) {
+	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		workspace, err := i.repos.Workspace.FindByID(ctx, wId)
 		if err != nil {
 			return nil, err
@@ -285,7 +285,7 @@ func (i *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, op
 	if operator.User == nil {
 		return accountinterfaces.ErrInvalidOperator
 	}
-	return Run0(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(id), func() error {
+	return Run0(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(id), func(ctx context.Context) error {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return err

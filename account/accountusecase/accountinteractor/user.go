@@ -42,7 +42,7 @@ func NewUser(r *accountrepo.Container, g *accountgateway.Container, signupSecret
 }
 
 func (i *User) Fetch(ctx context.Context, ids []user.ID, operator *accountusecase.Operator) ([]*user.User, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() ([]*user.User, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*user.User, error) {
 		res, err := i.repos.User.FindByIDs(ctx, ids)
 		if err != nil {
 			return res, err
@@ -68,7 +68,7 @@ func (i *User) Fetch(ctx context.Context, ids []user.ID, operator *accountusecas
 }
 
 func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.GetUserByCredentials) (u *user.User, err error) {
-	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		u, err = i.repos.User.FindByNameOrEmail(ctx, inp.Email)
 		if err != nil && !errors.Is(rerror.ErrNotFound, err) {
 			return nil, err
@@ -90,7 +90,7 @@ func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.G
 }
 
 func (i *User) GetUserBySubject(ctx context.Context, sub string) (u *user.User, err error) {
-	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		u, err = i.repos.User.FindBySub(ctx, sub)
 		if err != nil {
 			return nil, err
@@ -103,7 +103,7 @@ func (i *User) UpdateMe(ctx context.Context, p accountinterfaces.UpdateMeParam, 
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		if p.Password != nil {
 			if p.PasswordConfirmation == nil || *p.Password != *p.PasswordConfirmation {
 				return nil, accountinterfaces.ErrUserInvalidPasswordConfirmation
@@ -188,7 +188,7 @@ func (i *User) RemoveMyAuth(ctx context.Context, authProvider string, operator *
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		u, err = i.repos.User.FindByID(ctx, *operator.User)
 		if err != nil {
 			return nil, err
@@ -206,7 +206,7 @@ func (i *User) RemoveMyAuth(ctx context.Context, authProvider string, operator *
 }
 
 func (i *User) SearchUser(ctx context.Context, nameOrEmail string, operator *accountusecase.Operator) (u *user.User, err error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		u, err = i.repos.User.FindByNameOrEmail(ctx, nameOrEmail)
 		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
 			return nil, err
@@ -219,7 +219,7 @@ func (i *User) DeleteMe(ctx context.Context, userID user.ID, operator *accountus
 	if operator.User == nil {
 		return accountinterfaces.ErrInvalidOperator
 	}
-	return Run0(ctx, operator, i.repos, Usecase().Transaction(), func() error {
+	return Run0(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
 		if userID.IsNil() || userID != *operator.User {
 			return rerror.NewE(i18n.T("invalid user id"))
 		}
@@ -271,7 +271,7 @@ func (i *User) DeleteMe(ctx context.Context, userID user.ID, operator *accountus
 }
 
 func (i *User) VerifyUser(ctx context.Context, code string) (*user.User, error) {
-	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 
 		u, err := i.repos.User.FindByVerification(ctx, code)
 		if err != nil {
@@ -290,7 +290,7 @@ func (i *User) VerifyUser(ctx context.Context, code string) (*user.User, error) 
 	})
 }
 func (i *User) StartPasswordReset(ctx context.Context, email string) error {
-	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func() error {
+	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
 
 		u, err := i.repos.User.FindByEmail(ctx, email)
 		if err != nil {
@@ -335,7 +335,7 @@ func (i *User) StartPasswordReset(ctx context.Context, email string) error {
 	})
 }
 func (i *User) PasswordReset(ctx context.Context, password string, token string) error {
-	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func() error {
+	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
 		u, err := i.repos.User.FindByPasswordResetRequest(ctx, token)
 		if err != nil {
 			return err

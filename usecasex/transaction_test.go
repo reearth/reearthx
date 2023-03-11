@@ -8,6 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var _ Transaction = (*NopTransaction)(nil)
+var _ Tx = (*NopTx)(nil)
+
 func TestNopTransactional(t *testing.T) {
 	err := errors.New("!")
 	tr := &NopTransaction{}
@@ -33,4 +36,55 @@ func TestNopTransactional(t *testing.T) {
 
 	tr.CommitError = nil
 	assert.Nil(t, tx.End(context.Background()))
+}
+
+func TestDoTransaction(t *testing.T) {
+	ctx := context.Background()
+	tr := &NopTransaction{}
+	r := 0
+
+	err := DoTransaction(ctx, tr, 2, func(ctx context.Context) error {
+		r++
+		if r <= 2 {
+			return ErrTransaction
+		}
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 3, r)
+
+	r = 0
+	err = DoTransaction(ctx, tr, 2, func(ctx context.Context) error {
+		r++
+		return ErrTransaction
+	})
+	assert.Same(t, ErrTransaction, err)
+	assert.Equal(t, 3, r)
+
+	r = 0
+	err = DoTransaction(ctx, tr, -1, func(ctx context.Context) error {
+		r++
+		return ErrTransaction
+	})
+	assert.Same(t, ErrTransaction, err)
+	assert.Equal(t, 1, r)
+
+	r = 0
+	cerr := errors.New("commit")
+	tr.CommitError = cerr
+	err = DoTransaction(ctx, tr, 3, func(ctx context.Context) error {
+		r++
+		return nil
+	})
+	assert.Same(t, cerr, err)
+	assert.Equal(t, 1, r)
+
+	r = 0
+	tr.CommitError = nil
+	err = DoTransaction(ctx, nil, 3, func(ctx context.Context) error {
+		r++
+		return ErrTransaction
+	})
+	assert.Same(t, ErrTransaction, err)
+	assert.Equal(t, 1, r)
 }

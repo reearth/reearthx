@@ -19,7 +19,7 @@ func New(ctx context.Context, mc *mongo.Client, databaseName string) (*accountre
 	c := &accountrepo.Container{
 		Workspace:   NewWorkspace(client),
 		User:        NewUser(client),
-		Transaction: mongox.NewTransaction(client),
+		Transaction: mongox.NewTransaction(mc),
 	}
 
 	// init

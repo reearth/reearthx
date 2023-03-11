@@ -149,7 +149,7 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 }
 
 func (i *User) FindOrCreate(ctx context.Context, param accountinterfaces.UserFindOrCreateParam) (u *user.User, err error) {
-	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func() (*user.User, error) {
+	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		if param.Sub == "" {
 			return nil, rerror.ErrNotFound
 		}
@@ -354,7 +354,7 @@ func (i *User) verifySignupSecret(secret *string) error {
 }
 
 func (i *User) CreateVerification(ctx context.Context, email string) error {
-	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func() error {
+	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
 		u, err := i.repos.User.FindByEmail(ctx, email)
 		if err != nil {
 			return err

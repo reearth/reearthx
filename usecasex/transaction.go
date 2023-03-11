@@ -2,8 +2,18 @@ package usecasex
 
 import (
 	"context"
+	"errors"
 
+	"github.com/reearth/reearthx/i18n"
+	"github.com/reearth/reearthx/rerror"
 	"go.uber.org/atomic"
+)
+
+const IDErrTransaction = "transaction error"
+
+var (
+	ErrTransaction    = rerror.WrapE(&i18n.Message{ID: IDErrTransaction}, rawErrTransaction)
+	rawErrTransaction = errors.New("transaction conflicted")
 )
 
 type Transaction interface {
@@ -61,5 +71,38 @@ func (t *NopTx) Context() context.Context {
 	return t.ctx
 }
 
-var _ Transaction = (*NopTransaction)(nil)
-var _ Tx = (*NopTx)(nil)
+func DoTransaction(ctx context.Context, t Transaction, retry int, fn func(ctx context.Context) error) (err error) {
+	if t == nil {
+		return fn(ctx)
+	}
+
+	tx, err := t.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	ctx2 := tx.Context()
+	defer func() {
+		if err2 := tx.End(ctx2); err2 != nil && err == nil {
+			err = err2
+		}
+	}()
+
+	r := 0
+	for {
+		if r > 0 && (retry <= 0 || r > retry) {
+			break
+		}
+		if err = fn(ctx2); err != nil {
+			if !errors.Is(err, ErrTransaction) {
+				break
+			}
+		} else {
+			tx.Commit()
+			break
+		}
+		r++
+	}
+
+	return err
+}

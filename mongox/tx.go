@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// Tx implements usecasex.Tx, but note that it's not goroutine-safe.
 type Tx struct {
 	ctx     mongo.SessionContext
 	session mongo.Session

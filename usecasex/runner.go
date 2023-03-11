@@ -77,26 +77,17 @@ type TxUsecase struct {
 }
 
 func (t TxUsecase) UseTx() Middleware {
+	return t.UseTxWithRetries(0)
+}
+
+func (t TxUsecase) UseTxWithRetries(retry int) Middleware {
 	return func(next MiddlewareHandler) MiddlewareHandler {
-		return func(ctx context.Context) (_ context.Context, err error) {
-			tx, err2 := t.Transaction.Begin(ctx)
-			if err2 != nil {
-				return ctx, err2
-			}
-
-			ctx2 := tx.Context()
-			defer func() {
-				if err2 := tx.End(ctx2); err2 != nil && err == nil {
-					err = err2
-					return
-				}
-			}()
-
-			ctx3, err := next(ctx2)
-			if err == nil {
-				tx.Commit()
-			}
-			return ctx3, err
+		return func(ctx context.Context) (ctx2 context.Context, err error) {
+			err = DoTransaction(ctx, t.Transaction, retry, func(ctx context.Context) (err2 error) {
+				ctx2, err2 = next(ctx)
+				return err2
+			})
+			return
 		}
 	}
 }
