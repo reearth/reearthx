@@ -3,11 +3,10 @@ package rerror
 import (
 	"fmt"
 	"reflect"
-	"runtime/debug"
 
-	"github.com/labstack/gommon/log"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/pkg/errors"
+	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/util"
 )
 
@@ -59,7 +58,8 @@ func errInternalBy(label, err error) *Error {
 	}
 
 	log.Errorf("%s: %s", label.Error(), err.Error())
-	debug.PrintStack()
+	log.Errorf("STACK: \n%s", Stack())
+
 	return &Error{
 		Label:  label,
 		Err:    err,
