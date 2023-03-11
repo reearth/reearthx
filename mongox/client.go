@@ -1,7 +1,6 @@
 package mongox
 
 import (
-	"context"
 	"net/url"
 	"strings"
 
@@ -47,8 +46,8 @@ func (c *Client) Database() *mongo.Database {
 	return c.db
 }
 
-func (c *Client) BeginTransaction(ctx context.Context) (usecasex.Tx, error) {
-	return c.transaction.Begin(ctx)
+func (c *Client) Transaction() usecasex.Transaction {
+	return c.transaction
 }
 
 func IsTransactionAvailable(original string) bool {

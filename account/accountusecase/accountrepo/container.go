@@ -24,9 +24,8 @@ func (c *Container) Filtered(workspace WorkspaceFilter) *Container {
 		return c
 	}
 	return &Container{
-		Transaction: c.Transaction,
-		Workspace:   c.Workspace,
-		User:        c.User,
+		Workspace: c.Workspace,
+		User:      c.User,
 	}
 }
 
