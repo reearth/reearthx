@@ -206,6 +206,6 @@ func getCursor(raw bson.Raw) (*usecasex.Cursor, error) {
 	return &c, nil
 }
 
-func (c *Collection) BeginTransaction() (usecasex.Tx, error) {
-	return NewClientWithDatabase(c.client.Database()).BeginTransaction()
+func (c *Collection) BeginTransaction(ctx context.Context) (usecasex.Tx, error) {
+	return NewClientWithDatabase(c.client.Database()).BeginTransaction(ctx)
 }

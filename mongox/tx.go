@@ -7,8 +7,21 @@ import (
 )
 
 type Tx struct {
+	ctx     mongo.SessionContext
 	session mongo.Session
 	commit  bool
+}
+
+func newTx(ctx context.Context, session mongo.Session) *Tx {
+	return &Tx{
+		ctx:     mongo.NewSessionContext(ctx, session),
+		session: session,
+		commit:  false,
+	}
+}
+
+func (t *Tx) Context() context.Context {
+	return t.ctx
 }
 
 func (t *Tx) Commit() {

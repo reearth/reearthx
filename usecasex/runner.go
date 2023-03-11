@@ -79,23 +79,24 @@ type TxUsecase struct {
 func (t TxUsecase) UseTx() Middleware {
 	return func(next MiddlewareHandler) MiddlewareHandler {
 		return func(ctx context.Context) (_ context.Context, err error) {
-			tx, err2 := t.Transaction.Begin()
+			tx, err2 := t.Transaction.Begin(ctx)
 			if err2 != nil {
 				return ctx, err2
 			}
 
+			ctx2 := tx.Context()
 			defer func() {
-				if err2 := tx.End(ctx); err2 != nil && err == nil {
+				if err2 := tx.End(ctx2); err2 != nil && err == nil {
 					err = err2
 					return
 				}
 			}()
 
-			ctx2, err := next(ctx)
+			ctx3, err := next(ctx2)
 			if err == nil {
 				tx.Commit()
 			}
-			return ctx2, err
+			return ctx3, err
 		}
 	}
 }

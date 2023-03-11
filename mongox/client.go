@@ -1,6 +1,8 @@
 package mongox
 
 import (
+	"context"
+
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,7 +24,7 @@ func (c *Client) WithCollection(col string) *Collection {
 	return NewCollection(c.Client.Collection(col))
 }
 
-func (c *Client) BeginTransaction() (usecasex.Tx, error) {
+func (c *Client) BeginTransaction(ctx context.Context) (usecasex.Tx, error) {
 	s, err := c.Client.Client().StartSession()
 	if err != nil {
 		return nil, err
@@ -32,5 +34,5 @@ func (c *Client) BeginTransaction() (usecasex.Tx, error) {
 		return nil, err
 	}
 
-	return &Tx{session: s, commit: false}, nil
+	return newTx(ctx, s), nil
 }

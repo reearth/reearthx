@@ -7,10 +7,12 @@ import (
 )
 
 type Transaction interface {
-	Begin() (Tx, error)
+	Begin(context.Context) (Tx, error)
 }
 
 type Tx interface {
+	// Context returns a context suitable for use under transaction.
+	Context() context.Context
 	// Commit informs the Tx to commit when End() is called.
 	// If this was not called once, rollback is done when End() is called.
 	Commit()
@@ -28,14 +30,15 @@ type NopTransaction struct {
 }
 
 type NopTx struct {
-	t *NopTransaction
+	ctx context.Context
+	t   *NopTransaction
 }
 
-func (t *NopTransaction) Begin() (Tx, error) {
+func (t *NopTransaction) Begin(ctx context.Context) (Tx, error) {
 	if t.BeginError != nil {
 		return nil, t.BeginError
 	}
-	return &NopTx{t: t}, nil
+	return &NopTx{ctx: ctx, t: t}, nil
 }
 
 func (t *NopTransaction) IsCommitted() bool {
@@ -52,6 +55,10 @@ func (t *NopTx) IsCommitted() bool {
 
 func (t *NopTx) End(_ context.Context) error {
 	return t.t.CommitError
+}
+
+func (t *NopTx) Context() context.Context {
+	return t.ctx
 }
 
 var _ Transaction = (*NopTransaction)(nil)

@@ -1,6 +1,8 @@
 package mongox
 
 import (
+	"context"
+
 	"github.com/reearth/reearthx/usecasex"
 )
 
@@ -14,8 +16,8 @@ func NewTransaction(client *Client) *Transaction {
 	}
 }
 
-func (t *Transaction) Begin() (usecasex.Tx, error) {
-	return t.client.BeginTransaction()
+func (t *Transaction) Begin(ctx context.Context) (usecasex.Tx, error) {
+	return t.client.BeginTransaction(ctx)
 }
 
 var _ usecasex.Transaction = (*Transaction)(nil)

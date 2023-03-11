@@ -82,7 +82,7 @@ func Run3[A, B, C any](ctx context.Context, op *accountusecase.Operator, r *acco
 		return
 	}
 	if e.tx && r.Transaction != nil {
-		tx, err2 := r.Transaction.Begin()
+		tx, err2 := r.Transaction.Begin(ctx)
 		if err2 != nil {
 			err = err2
 			return
