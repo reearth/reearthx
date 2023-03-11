@@ -1,0 +1,6 @@
+scalar Lang
+scalar Theme
+
+interface Node {
+  id: ID!
+}

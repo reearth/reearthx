@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/99designs/gqlgen v0.17.12
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.8.3
+	github.com/Khan/genqlient v0.5.0
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/chrispappas/golang-generics-set v1.0.1
 	github.com/goccy/go-yaml v1.9.8
@@ -46,6 +47,8 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.32.3 // indirect
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
+	github.com/alexflint/go-arg v1.4.2 // indirect
+	github.com/alexflint/go-scalar v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.10.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
@@ -84,15 +87,18 @@ require (
 	go.opentelemetry.io/contrib v1.7.0 // indirect
 	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.74.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220405205423-9d709892a2bf // indirect
 	google.golang.org/grpc v1.45.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

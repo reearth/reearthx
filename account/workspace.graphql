@@ -19,7 +19,6 @@ type WorkspaceIntegrationMember {
     active: Boolean!
     invitedById: ID!
     invitedBy: User
-    integration: Integration
 }
 
 enum Role {
