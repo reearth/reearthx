@@ -13,6 +13,7 @@ require (
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
+	github.com/iancoleman/strcase v0.2.0
 	github.com/jarcoal/httpmock v1.2.0
 	github.com/jpillora/opts v1.2.3
 	github.com/labstack/echo/v4 v4.7.2

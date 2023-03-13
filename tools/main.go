@@ -6,11 +6,13 @@ import (
 
 	"github.com/jpillora/opts"
 	"github.com/reearth/reearthx/tools/i18nextractor"
+	"github.com/reearth/reearthx/tools/migrategen"
 )
 
 type Config struct {
 	Command     string                `opts:"mode=cmdname"`
 	I18nExtract *i18nextractor.Config `opts:"name=i18n-extract,mode=cmd"`
+	Migrategen  *migrategen.Config    `opts:"name=migrategen,mode=cmd"`
 }
 
 func main() {
@@ -21,6 +23,8 @@ func main() {
 	switch c.Command {
 	case "i18n-extract":
 		err = c.I18nExtract.Execute()
+	case "migrategen":
+		err = c.Migrategen.Execute()
 	}
 
 	if err != nil {

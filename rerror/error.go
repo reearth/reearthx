@@ -75,6 +75,13 @@ func UnwrapErrInternal(err error) error {
 	return nil
 }
 
+func UnwrapErrInternalOr(err error) error {
+	if err2 := UnwrapErrInternal(err); err2 != nil {
+		return err2
+	}
+	return err
+}
+
 // Error can hold an error together with label.
 // This is useful for displaying a hierarchical error message cleanly and searching by label later to retrieve a wrapped error.
 // Currently, Go standard error library does not support these use cases. That's why we need our own error type.
