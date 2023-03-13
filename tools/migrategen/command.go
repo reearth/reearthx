@@ -3,6 +3,7 @@ package migrategen
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,11 +11,13 @@ import (
 	"time"
 
 	"github.com/iancoleman/strcase"
+	"github.com/samber/lo"
 )
 
 type Config struct {
 	Name string
 	Dest string
+	Type string
 }
 
 func (a *Config) Execute() error {
@@ -26,12 +29,16 @@ func (a *Config) Execute() error {
 		Key:     key,
 		Name:    camel,
 		Package: last,
+		Type:    a.Type,
 	}
 
 	files, err := os.ReadDir(a.Dest)
 	if err != nil {
 		return fmt.Errorf("unable to get dir: %w", err)
 	}
+	files = lo.Filter(files, func(f fs.DirEntry, _ int) bool {
+		return !f.IsDir() && filepath.Ext(f.Name()) == ".go" && !strings.HasSuffix(filepath.Base(f.Name()), "_test.go")
+	})
 
 	migrations := make([]migration, 0, len(files)+1)
 	for _, file := range files {
@@ -58,6 +65,7 @@ func (a *Config) Execute() error {
 	buf = bytes.NewBuffer(nil)
 	if err := templ2.Execute(buf, map[string]any{
 		"Package":    last,
+		"Type":       a.Type,
 		"Migrations": migrations,
 	}); err != nil {
 		return fmt.Errorf("unable to generate code: %w", err)
@@ -74,12 +82,10 @@ type migration struct {
 	Key     string
 	Name    string
 	Package string
+	Type    string
 }
 
 func migrationFromFileName(n string) (m *migration) {
-	if filepath.Ext(n) != ".go" {
-		return
-	}
 	s := strings.SplitN(n[:len(n)-3], "_", 2)
 	if len(s) != 2 {
 		return
@@ -95,7 +101,7 @@ var templ = template.Must(template.New("generated").Parse(`package {{.Package}}
 
 import "context"
 
-func {{.Name}}(ctx context.Context, c DBClient) error {
+func {{.Name}}(ctx context.Context, c {{.Type}}) error {
 	// TODO: Write your migration code here
 
 	// WARNING:
@@ -110,12 +116,14 @@ var templ2 = template.Must(template.New("generated2").Parse(`// Code generated b
 
 package {{.Package}}
 
+import "github.com/reearth/reearthx/usecasex/migration"
+
 // To add a new migration, run go run ./tools/cmd/migrategen migration_name
 
 // WARNING:
 // If the migration takes too long, the deployment may fail in a serverless environment.
 // Set the batch size to as large a value as possible without using up the RAM of the deployment destination.
-var migrations = map[int64]MigrationFunc{
+var migrations = migration.Migrations[{{.Type}}]{
 {{range .Migrations}}  {{.Key}}: {{.Name}},
 {{end}}}
 `))
