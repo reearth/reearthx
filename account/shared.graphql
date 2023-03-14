@@ -1,5 +1,3 @@
-scalar Lang
-scalar Theme
 
 interface Node {
   id: ID!
@@ -10,7 +8,23 @@ enum NodeType {
   WORKSPACE
 }
 
+# Basic types
+scalar Lang
+
+enum Theme {
+  DEFAULT
+  LIGHT
+  DARK
+}
+
 type Query {
   node(id: ID!, type: NodeType!): Node
   nodes(id: [ID!]!, type: NodeType!): [Node]
+}
+
+type Mutation
+
+schema {
+  query: Query
+  mutation: Mutation
 }
