@@ -13,6 +13,39 @@ import (
 	"github.com/reearth/reearthx/log"
 )
 
+type Config struct {
+	Mailer   string
+	SMTP     SMTPConfig
+	SendGrid SendGridConfig
+}
+
+type SendGridConfig struct {
+	Email string
+	Name  string
+	API   string
+}
+
+type SMTPConfig struct {
+	Host         string
+	Port         string
+	SMTPUsername string
+	Email        string
+	Password     string
+}
+
+func New(conf *Config) accountgateway.Mailer {
+	if conf.Mailer == "sendgrid" {
+		log.Infoln("mailer: sendgrid is used")
+		return NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
+	}
+	if conf.Mailer == "smtp" {
+		log.Infoln("mailer: smtp is used")
+		return NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
+	}
+	log.Infoln("mailer: logger is used")
+	return NewLogger()
+}
+
 func verifyEmails(contacts []accountgateway.Contact) ([]string, error) {
 	emails := make([]string, 0, len(contacts))
 	for _, c := range contacts {
