@@ -1,3 +1,4 @@
+//go:generate go run github.com/Khan/genqlient
 package accountproxy
 
 import (
