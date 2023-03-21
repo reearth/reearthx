@@ -16,7 +16,7 @@ type Cache[T any] struct {
 	now       func() time.Time
 }
 
-func New[T any](updater func(context.Context, T) (T, error), expiresIn time.Duration) *Cache[T] {
+func NewCache[T any](updater func(context.Context, T) (T, error), expiresIn time.Duration) *Cache[T] {
 	return &Cache[T]{updater: updater, expiresIn: expiresIn}
 }
 

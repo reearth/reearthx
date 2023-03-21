@@ -20,7 +20,7 @@ func TestCache_Get(t *testing.T) {
 	assert.NoError(t, e)
 	assert.Nil(t, res)
 
-	cache = New(func(c context.Context, i *struct{}) (*struct{}, error) {
+	cache = NewCache(func(c context.Context, i *struct{}) (*struct{}, error) {
 		assert.Same(t, ctx, c)
 		if called == 0 {
 			assert.Nil(t, i)
@@ -56,7 +56,7 @@ func TestCache_Get2(t *testing.T) {
 	now := time.Date(2022, 6, 4, 0, 0, 0, 0, time.UTC)
 	called := 0
 
-	cache := New(func(_ context.Context, _ *struct{}) (*struct{}, error) {
+	cache := NewCache(func(_ context.Context, _ *struct{}) (*struct{}, error) {
 		called++
 		return data, nil
 	}, time.Second)
