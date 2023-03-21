@@ -15,7 +15,9 @@ import (
 
 const idKey = "id"
 
-var findOptions = options.Find().SetAllowDiskUse(true)
+var findOptions = []*options.FindOptions{
+	options.Find().SetAllowDiskUse(true),
+}
 
 type Collection struct {
 	client *mongo.Collection
@@ -29,8 +31,8 @@ func (c *Collection) Client() *mongo.Collection {
 	return c.client
 }
 
-func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer) error {
-	cursor, err := c.client.Find(ctx, filter, findOptions)
+func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer, options ...*options.FindOptions) error {
+	cursor, err := c.client.Find(ctx, filter, append(findOptions, options...)...)
 	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 		return rerror.ErrNotFound
 	}
@@ -61,8 +63,8 @@ func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer) er
 	return nil
 }
 
-func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer) error {
-	raw, err := c.client.FindOne(ctx, filter).DecodeBytes()
+func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer, options ...*options.FindOneOptions) error {
+	raw, err := c.client.FindOne(ctx, filter, options...).DecodeBytes()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 			return rerror.ErrNotFound
