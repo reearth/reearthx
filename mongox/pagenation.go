@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex.Sort, p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
+func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.FindOptions) (*usecasex.PageInfo, error) {
 	if p == nil || p.Cursor == nil && p.Offset == nil {
 		return nil, nil
 	}
@@ -27,7 +27,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex
 		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to count: %w", err))
 	}
 
-	cursor, err := c.client.Find(ctx, filter, findOptions)
+	cursor, err := c.client.Find(ctx, filter, append([]*options.FindOptions{findOptions}, opts...)...)
 	if err != nil {
 		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to find: %w", err))
 	}
