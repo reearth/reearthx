@@ -178,8 +178,8 @@ func TestIndexDocument_Models(t *testing.T) {
 
 func TestIndexDocument_AddNamePrefix(t *testing.T) {
 	assert.Equal(t, IndexList{
-		{Name: "re_b"}, {Name: "re_c"},
-	}, IndexList{{Name: "re_b"}, {Name: "c"}}.AddNamePrefix())
+		{Name: "re_b"}, {Name: "re_c"}, {Name: ""},
+	}, IndexList{{Name: "re_b"}, {Name: "c"}, {Name: ""}}.AddNamePrefix())
 }
 
 func TestIndexDocument_RemoveDefaultIndex(t *testing.T) {

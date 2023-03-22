@@ -103,7 +103,7 @@ func (l IndexList) Normalize() []Index {
 
 func (l IndexList) AddNamePrefix() IndexList {
 	return lo.Map(l, func(i Index, _ int) Index {
-		if !strings.HasPrefix(i.Name, prefix) {
+		if i.Name != "" && !strings.HasPrefix(i.Name, prefix) {
 			i.Name = prefix + i.Name
 		}
 		return i
