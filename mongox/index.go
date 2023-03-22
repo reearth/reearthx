@@ -3,26 +3,16 @@ package mongox
 import (
 	"context"
 
+	"github.com/reearth/reearthx/mongox/mongoxindexcompat"
 	"github.com/reearth/reearthx/util"
-	"github.com/samber/lo"
 )
 
-// Indexes creates or deletes indexes by keys declaratively
+// Indexes creates and deletes indexes by keys declaratively
 func (c *Collection) Indexes(ctx context.Context, keys, uniqueKeys []string) ([]string, []string, error) {
-	nu := lo.Map(keys, func(k string, _ int) Index {
-		return IndexFromKey(k, false)
-	})
-	u := lo.Map(uniqueKeys, func(k string, _ int) Index {
-		return IndexFromKey(k, true)
-	})
-	r, err := c.Indexes2(ctx, append(nu, u...)...)
-	if err != nil {
-		return nil, nil, err
-	}
-	updated := r.UpdatedNames()
-	return append(r.AddedNames(), updated...), append(updated, r.DeletedNames()...), nil
+	return mongoxindexcompat.Indexes(ctx, c.client, keys, uniqueKeys)
 }
 
+// Indexes creates and deletes indexes declaratively
 func (c *Collection) Indexes2(ctx context.Context, inputs ...Index) (IndexResult, error) {
 	inputIndexes := IndexList(inputs).AddNamePrefix().Normalize()
 	indexes, err := c.findIndexes(ctx)

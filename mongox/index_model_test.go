@@ -11,21 +11,21 @@ import (
 
 func TestIndexFromKey(t *testing.T) {
 	assert.Equal(t, Index{
-		Name: "a,b.c",
+		Name: "re_a,b.c",
 		Key: bson.D{
 			{Key: "a", Value: 1},
 			{Key: "b.c", Value: 1},
 		},
 	}, IndexFromKey("a,b.c", false))
 
-	assert.Equal(t, Index{
-		Name:   "!a,b",
+	assert.Equal(t, []Index{{
+		Name:   "re_!a,b",
 		Unique: true,
 		Key: bson.D{
 			{Key: "a", Value: -1},
 			{Key: "b", Value: 1},
 		},
-	}, IndexFromKey("!a,b", true))
+	}}, IndexFromKeys([]string{"!a,b"}, true))
 }
 
 func TestToKeyBSON(t *testing.T) {
@@ -47,7 +47,7 @@ func TestIndex_Model(t *testing.T) {
 			{Key: "a", Value: -1},
 			{Key: "b.c", Value: 1},
 		},
-		Options: options.Index().SetName("re_aaa").SetUnique(true).SetPartialFilterExpression(bson.M{
+		Options: options.Index().SetName("aaa").SetUnique(true).SetPartialFilterExpression(bson.M{
 			"a": "A",
 			"b": "B",
 		}),

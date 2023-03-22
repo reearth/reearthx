@@ -28,6 +28,12 @@ func IndexFromKey(key string, unique bool) Index {
 	}
 }
 
+func IndexFromKeys(keys []string, unique bool) []Index {
+	return lo.Map(keys, func(k string, _ int) Index {
+		return IndexFromKey(k, unique)
+	})
+}
+
 func toKeyBSON(key string) bson.D {
 	return lo.Map(
 		strings.Split(key, ","),
