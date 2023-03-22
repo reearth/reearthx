@@ -10,6 +10,10 @@ type SyncMap[K comparable, V any] struct {
 	m sync.Map
 }
 
+func NewSyncMap[K comparable, V any]() *SyncMap[K, V] {
+	return &SyncMap[K, V]{}
+}
+
 func SyncMapFrom[K comparable, V any](entries map[K]V) *SyncMap[K, V] {
 	m := &SyncMap[K, V]{}
 	m.StoreAll(entries)

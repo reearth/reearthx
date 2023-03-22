@@ -16,7 +16,7 @@ func TestSyncMapFrom(t *testing.T) {
 }
 
 func TestSyncMap_Load_Store(t *testing.T) {
-	s := &SyncMap[string, int]{}
+	s := NewSyncMap[string, int]()
 	s.Store("a", 1)
 
 	res, ok := s.Load("a")
