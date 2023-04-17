@@ -26,7 +26,7 @@ func (b *Builder) Build() (*Workspace, error) {
 		return nil, ErrInvalidID
 	}
 
-	if b.members == nil {
+	if b.members == nil && b.integrations == nil {
 		b.w.members = NewMembers()
 	} else {
 		b.w.members = NewMembersWith(b.members, b.integrations, false)
