@@ -14,10 +14,11 @@ import (
 const prefix = "re_"
 
 type Index struct {
-	Name   string
-	Key    bson.D
-	Unique bool
-	Filter bson.M `bson:"partialFilterExpression"`
+	Name               string
+	Key                bson.D
+	Unique             bool
+	ExpireAfterSeconds *int32
+	Filter             bson.M `bson:"partialFilterExpression"`
 }
 
 func IndexFromKey(key string, unique bool) Index {
@@ -32,6 +33,14 @@ func IndexFromKeys(keys []string, unique bool) []Index {
 	return lo.Map(keys, func(k string, _ int) Index {
 		return IndexFromKey(k, unique)
 	})
+}
+
+func TTLIndexFromKey(key string, expireAfterSeconds int32) Index {
+	return Index{
+		Name:               prefix + key,
+		Key:                toKeyBSON(key),
+		ExpireAfterSeconds: &expireAfterSeconds,
+	}
 }
 
 func toKeyBSON(key string) bson.D {
@@ -71,6 +80,9 @@ func (i Index) Model() mongo.IndexModel {
 	}
 	if i.Filter != nil {
 		o.SetPartialFilterExpression(i.Filter)
+	}
+	if i.ExpireAfterSeconds != nil {
+		o.SetExpireAfterSeconds(*i.ExpireAfterSeconds)
 	}
 	return mongo.IndexModel{
 		Keys:    i.Key,
