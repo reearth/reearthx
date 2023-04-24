@@ -21,9 +21,9 @@ func TestClientCollection_Indexes2(t *testing.T) {
 	})
 
 	// first
-	res, err := c.Indexes2(ctx, IndexFromKey("c", false), IndexFromKey("d.e,g", false), IndexFromKey("a", true), IndexFromKey("b", true))
+	res, err := c.Indexes2(ctx, IndexFromKey("c", false), IndexFromKey("d.e,g", false), IndexFromKey("a", true), IndexFromKey("b", true), TTLIndexFromKey("expires_at", 0))
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"c", "d.e,g", "a", "b"}, res.AddedNames())
+	assert.Equal(t, []string{"c", "d.e,g", "a", "b", "expires_at"}, res.AddedNames())
 	assert.Equal(t, []string{}, res.UpdatedNames())
 	assert.Equal(t, []string{"a_1"}, res.DeletedNames())
 
@@ -38,6 +38,7 @@ func TestClientCollection_Indexes2(t *testing.T) {
 		{Name: "re_d.e,g", Key: bson.D{{Key: "d.e", Value: int32(1)}, {Key: "g", Value: int32(1)}}, Unique: false},
 		{Name: "re_a", Key: bson.D{{Key: "a", Value: int32(1)}}, Unique: true},
 		{Name: "re_b", Key: bson.D{{Key: "b", Value: int32(1)}}, Unique: true},
+		{Name: "re_expires_at", Key: bson.D{{Key: "expires_at", Value: int32(1)}}, ExpireAfterSeconds: new(int32)},
 	}, indexes)
 
 	// second
@@ -49,7 +50,7 @@ func TestClientCollection_Indexes2(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{}, res.AddedNames())
 	assert.Equal(t, []string{"b"}, res.UpdatedNames())
-	assert.Equal(t, []string{"c"}, res.DeletedNames())
+	assert.Equal(t, []string{"c", "expires_at"}, res.DeletedNames())
 
 	cur, err = col.Indexes().List(ctx)
 	assert.NoError(t, err)
@@ -63,7 +64,7 @@ func TestClientCollection_Indexes2(t *testing.T) {
 		{Name: "re_b", Key: bson.D{{Key: "b", Value: int32(1)}}, Unique: false, Filter: bson.M{"f": true}},
 	}, indexes)
 
-	// thrid
+	// third
 	res, err = c.Indexes2(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{}, res.AddedNames())
