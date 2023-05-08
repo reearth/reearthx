@@ -23,7 +23,7 @@ func NewWorkspace(r *accountrepo.Container) accountinterfaces.Workspace {
 	}
 }
 
-func (i *Workspace) Fetch(ctx context.Context, ids []accountdomain.WorkspaceID, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
+func (i *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
 		res, err := i.repos.Workspace.FindByIDs(ctx, ids)
 		res2, err := i.filterWorkspaces(res, operator, err)

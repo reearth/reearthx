@@ -13,3 +13,113 @@ query UserByIDs($id: [ID!]!) {
     }
   }
 }
+
+
+query WorkspaceByIDs($id: [ID!]!) {
+  nodes(id: $id, type: WORKSPACE) {
+    ... on Workspace { ...TemplateWorkspace}
+  }
+}
+
+fragment TemplateMe on Me {
+    id
+    name
+    email
+    lang
+    theme
+    myWorkspaceId
+    auths
+}
+
+
+mutation RemoveMyAuth($input: RemoveMyAuthInput!) {
+    removeMyAuth(input: $input) {
+        me {...TemplateMe}
+    }
+}
+
+mutation UpdateMe($input: UpdateMeInput!) {
+    updateMe(input: $input) {
+        me {...TemplateMe}
+    }
+}
+
+mutation DeleteMe($input: DeleteMeInput!) {
+    deleteMe(input: $input) {
+        userId
+    }
+}
+
+fragment TemplateWorkspace on Workspace {
+    id
+    name
+    personal
+    members {
+        ... on WorkspaceUserMember {
+            userId
+            role
+        }
+        ... on WorkspaceIntegrationMember {
+            integrationId
+            role
+            active
+            invitedById
+        }
+    }
+}
+
+mutation CreateWorkspace($input: CreateWorkspaceInput!) {
+    createWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation DeleteWorkspace($input: DeleteWorkspaceInput!) {
+    deleteWorkspace(input: $input) {
+        workspaceId
+    }
+}
+
+mutation UpdateWorkspace($input: UpdateWorkspaceInput!) {
+    updateWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation AddUsersToWorkspace($input: AddUsersToWorkspaceInput!) {
+    addUsersToWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation AddIntegrationToWorkspace($input: AddIntegrationToWorkspaceInput!) {
+    addIntegrationToWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation RemoveUserFromWorkspace($input: RemoveUserFromWorkspaceInput!) {
+    removeUserFromWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation RemoveIntegrationFromWorkspace($input: RemoveIntegrationFromWorkspaceInput!) {
+    removeIntegrationFromWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation UpdateUserOfWorkspace($input: UpdateUserOfWorkspaceInput!) {
+    updateUserOfWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+mutation UpdateIntegrationOfWorkspace($input: UpdateIntegrationOfWorkspaceInput!) {
+    updateIntegrationOfWorkspace(input: $input) {
+        workspace{...TemplateWorkspace}
+    }
+}
+
+

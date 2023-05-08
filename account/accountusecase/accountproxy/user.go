@@ -20,7 +20,7 @@ type User struct {
 	endpoint string
 }
 
-func NewUser(endpoint string, h HTTPClient) *User {
+func NewUser(endpoint string, h HTTPClient) accountinterfaces.User {
 	return &User{
 		http:     h,
 		endpoint: endpoint,
@@ -48,20 +48,40 @@ func (*User) FindOrCreate(context.Context, accountinterfaces.UserFindOrCreatePar
 	panic("not implemented")
 }
 
-func (*User) UpdateMe(context.Context, accountinterfaces.UpdateMeParam, *accountusecase.Operator) (*user.User, error) {
-	panic("not implemented")
+func (u *User) UpdateMe(ctx context.Context, param accountinterfaces.UpdateMeParam, op *accountusecase.Operator) (*user.User, error) {
+	input := UpdateMeInput{
+		Name:                 *param.Name,
+		Email:                *param.Email,
+		Lang:                 param.Lang.String(),
+		Theme:                string(*param.Theme),
+		Password:             *param.Password,
+		PasswordConfirmation: *param.PasswordConfirmation,
+	}
+	res, err := UpdateMe(ctx, u.gql, input)
+	if err != nil {
+		return nil, err
+	}
+	return MeToUser(res.UpdateMe.Me.TemplateMe)
 }
 
-func (*User) RemoveMyAuth(context.Context, string, *accountusecase.Operator) (*user.User, error) {
-	panic("not implemented")
+func (u *User) RemoveMyAuth(ctx context.Context, auth string, op *accountusecase.Operator) (*user.User, error) {
+	res, err := RemoveMyAuth(ctx, u.gql, RemoveMyAuthInput{Auth: auth})
+	if err != nil {
+		return nil, err
+	}
+	return MeToUser(res.RemoveMyAuth.Me.TemplateMe)
 }
 
 func (*User) SearchUser(context.Context, string, *accountusecase.Operator) (*user.User, error) {
 	panic("not implemented")
 }
 
-func (*User) DeleteMe(context.Context, accountdomain.UserID, *accountusecase.Operator) error {
-	panic("not implemented")
+func (u *User) DeleteMe(ctx context.Context, id accountdomain.UserID, op *accountusecase.Operator) error {
+	_, err := DeleteMe(ctx, u.gql, DeleteMeInput{UserId: id.String()})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (*User) CreateVerification(context.Context, string) error {

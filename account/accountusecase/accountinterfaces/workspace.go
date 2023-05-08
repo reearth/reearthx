@@ -18,7 +18,7 @@ var (
 )
 
 type Workspace interface {
-	Fetch(context.Context, []accountdomain.WorkspaceID, *accountusecase.Operator) ([]*workspace.Workspace, error)
+	Fetch(context.Context, accountdomain.WorkspaceIDList, *accountusecase.Operator) ([]*workspace.Workspace, error)
 	FindByUser(context.Context, accountdomain.UserID, *accountusecase.Operator) ([]*workspace.Workspace, error)
 	FetchPolicy(context.Context, []workspace.PolicyID, *accountusecase.Operator) ([]*workspace.Policy, error)
 	Create(context.Context, string, accountdomain.UserID, *accountusecase.Operator) (*workspace.Workspace, error)
