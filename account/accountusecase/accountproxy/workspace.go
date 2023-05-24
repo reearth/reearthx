@@ -44,7 +44,7 @@ func (w *Workspace) Create(ctx context.Context, name string, userID accountdomai
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.CreateWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.CreateWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, name string, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -52,7 +52,7 @@ func (w *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, na
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.UpdateWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.UpdateWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) AddUserMember(ctx context.Context, id accountdomain.WorkspaceID, users map[accountdomain.UserID]workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -64,7 +64,7 @@ func (w *Workspace) AddUserMember(ctx context.Context, id accountdomain.Workspac
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.AddUsersToWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.AddUsersToWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) AddIntegrationMember(ctx context.Context, id accountdomain.WorkspaceID, integrationId accountdomain.IntegrationID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -72,7 +72,7 @@ func (w *Workspace) AddIntegrationMember(ctx context.Context, id accountdomain.W
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.AddIntegrationToWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.AddIntegrationToWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.WorkspaceID, userID accountdomain.UserID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -80,7 +80,7 @@ func (w *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.Works
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.UpdateUserOfWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.UpdateUserOfWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) UpdateIntegration(ctx context.Context, id accountdomain.WorkspaceID, integrationID accountdomain.IntegrationID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -88,7 +88,7 @@ func (w *Workspace) UpdateIntegration(ctx context.Context, id accountdomain.Work
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.UpdateIntegrationOfWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.UpdateIntegrationOfWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.WorkspaceID, userID accountdomain.UserID, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -96,7 +96,7 @@ func (w *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.Works
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.RemoveUserFromWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.RemoveUserFromWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) RemoveIntegration(ctx context.Context, id accountdomain.WorkspaceID, integrationID accountdomain.IntegrationID, op *accountusecase.Operator) (*workspace.Workspace, error) {
@@ -104,7 +104,7 @@ func (w *Workspace) RemoveIntegration(ctx context.Context, id accountdomain.Work
 	if err != nil {
 		return nil, err
 	}
-	return ToWorkspace(res.RemoveIntegrationFromWorkspace.Workspace.TemplateWorkspace)
+	return ToWorkspace(res.RemoveIntegrationFromWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, op *accountusecase.Operator) error {

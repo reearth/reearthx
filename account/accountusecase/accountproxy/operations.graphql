@@ -17,11 +17,11 @@ query UserByIDs($id: [ID!]!) {
 
 query WorkspaceByIDs($id: [ID!]!) {
   nodes(id: $id, type: WORKSPACE) {
-    ... on Workspace { ...TemplateWorkspace}
+    ... on Workspace { ...FragmentWorkspace}
   }
 }
 
-fragment TemplateMe on Me {
+fragment FragmentMe on Me {
     id
     name
     email
@@ -34,13 +34,13 @@ fragment TemplateMe on Me {
 
 mutation RemoveMyAuth($input: RemoveMyAuthInput!) {
     removeMyAuth(input: $input) {
-        me {...TemplateMe}
+        me {...FragmentMe}
     }
 }
 
 mutation UpdateMe($input: UpdateMeInput!) {
     updateMe(input: $input) {
-        me {...TemplateMe}
+        me {...FragmentMe}
     }
 }
 
@@ -50,7 +50,7 @@ mutation DeleteMe($input: DeleteMeInput!) {
     }
 }
 
-fragment TemplateWorkspace on Workspace {
+fragment FragmentWorkspace on Workspace {
     id
     name
     personal
@@ -70,7 +70,7 @@ fragment TemplateWorkspace on Workspace {
 
 mutation CreateWorkspace($input: CreateWorkspaceInput!) {
     createWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
@@ -82,43 +82,43 @@ mutation DeleteWorkspace($input: DeleteWorkspaceInput!) {
 
 mutation UpdateWorkspace($input: UpdateWorkspaceInput!) {
     updateWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
 mutation AddUsersToWorkspace($input: AddUsersToWorkspaceInput!) {
     addUsersToWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
 mutation AddIntegrationToWorkspace($input: AddIntegrationToWorkspaceInput!) {
     addIntegrationToWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
 mutation RemoveUserFromWorkspace($input: RemoveUserFromWorkspaceInput!) {
     removeUserFromWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
 mutation RemoveIntegrationFromWorkspace($input: RemoveIntegrationFromWorkspaceInput!) {
     removeIntegrationFromWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
 mutation UpdateUserOfWorkspace($input: UpdateUserOfWorkspaceInput!) {
     updateUserOfWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 
 mutation UpdateIntegrationOfWorkspace($input: UpdateIntegrationOfWorkspaceInput!) {
     updateIntegrationOfWorkspace(input: $input) {
-        workspace{...TemplateWorkspace}
+        workspace{...FragmentWorkspace}
     }
 }
 

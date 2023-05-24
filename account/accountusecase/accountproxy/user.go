@@ -61,7 +61,7 @@ func (u *User) UpdateMe(ctx context.Context, param accountinterfaces.UpdateMePar
 	if err != nil {
 		return nil, err
 	}
-	return MeToUser(res.UpdateMe.Me.TemplateMe)
+	return MeToUser(res.UpdateMe.Me.FragmentMe)
 }
 
 func (u *User) RemoveMyAuth(ctx context.Context, auth string, op *accountusecase.Operator) (*user.User, error) {
@@ -69,7 +69,7 @@ func (u *User) RemoveMyAuth(ctx context.Context, auth string, op *accountusecase
 	if err != nil {
 		return nil, err
 	}
-	return MeToUser(res.RemoveMyAuth.Me.TemplateMe)
+	return MeToUser(res.RemoveMyAuth.Me.FragmentMe)
 }
 
 func (*User) SearchUser(context.Context, string, *accountusecase.Operator) (*user.User, error) {
