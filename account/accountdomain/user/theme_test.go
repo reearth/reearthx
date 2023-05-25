@@ -14,3 +14,9 @@ func TestThemeFrom(t *testing.T) {
 	assert.Equal(t, ThemeDefault, ThemeFrom(""))
 	assert.Equal(t, ThemeDefault, ThemeFrom("a"))
 }
+
+func TestTheme_Ref(t *testing.T) {
+	th := ThemeDefault
+	assert.Equal(t, &th, th.Ref())
+	assert.NotSame(t, &th, th.Ref())
+}
