@@ -10,7 +10,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.25
 	github.com/aws/aws-sdk-go-v2/service/ses v1.15.9
-	github.com/chrispappas/golang-generics-set v1.0.1
 	github.com/goccy/go-yaml v1.9.8
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
@@ -26,7 +25,6 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/ravilushqa/otelgqlgen v0.8.0
-	github.com/reearth/reearth/server v0.0.0-20230525164317-a1391d154a8b
 	github.com/samber/lo v1.27.0
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible
 	github.com/spf13/afero v1.9.3
@@ -64,8 +62,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.19.0 // indirect
 	github.com/aws/smithy-go v1.13.5 // indirect
-	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/trifles v0.0.0-20200705224438-cafc02a1ee2b // indirect
 	github.com/fatih/color v1.12.0 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
@@ -93,6 +91,7 @@ require (
 	github.com/posener/complete v1.2.2-0.20190308074557-af07aa5181b3 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/tidwall/pretty v1.0.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

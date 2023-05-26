@@ -2,8 +2,6 @@ package mailer
 
 import (
 	"sync"
-
-	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 )
 
 type Mock struct {
@@ -12,7 +10,7 @@ type Mock struct {
 }
 
 type Mail struct {
-	To           []accountgateway.Contact
+	To           []Contact
 	Subject      string
 	PlainContent string
 	HTMLContent  string
@@ -22,11 +20,11 @@ func NewMock() *Mock {
 	return &Mock{}
 }
 
-func (m *Mock) SendMail(to []accountgateway.Contact, subject, text, html string) error {
+func (m *Mock) SendMail(to []Contact, subject, text, html string) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	m.mails = append(m.mails, Mail{
-		To:           append([]accountgateway.Contact{}, to...),
+		To:           append([]Contact{}, to...),
 		Subject:      subject,
 		PlainContent: text,
 		HTMLContent:  html,

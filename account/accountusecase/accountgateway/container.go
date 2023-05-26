@@ -1,6 +1,8 @@
 package accountgateway
 
+import "github.com/reearth/reearthx/mailer"
+
 type Container struct {
 	Authenticator Authenticator
-	Mailer        Mailer
+	Mailer        mailer.Mailer
 }

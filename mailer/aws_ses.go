@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/ses/types"
-	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 	"github.com/reearth/reearthx/log"
 	"github.com/samber/lo"
 )
@@ -18,11 +17,11 @@ var (
 )
 
 type awsMailer struct {
-	sender accountgateway.Contact
+	sender Contact
 	client *ses.Client
 }
 
-func NewSES(ctx context.Context, senderName, senderEmail string) accountgateway.Mailer {
+func NewSES(ctx context.Context, senderName, senderEmail string) Mailer {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		log.Errorf("mail: filed to load ses config: %+v\n", err)
@@ -30,7 +29,7 @@ func NewSES(ctx context.Context, senderName, senderEmail string) accountgateway.
 	}
 
 	return &awsMailer{
-		sender: accountgateway.Contact{
+		sender: Contact{
 			Email: senderEmail,
 			Name:  senderName,
 		},
@@ -38,11 +37,11 @@ func NewSES(ctx context.Context, senderName, senderEmail string) accountgateway.
 	}
 }
 
-func (m *awsMailer) SendMail(tos []accountgateway.Contact, subject, plainContent, htmlContent string) error {
+func (m *awsMailer) SendMail(tos []Contact, subject, plainContent, htmlContent string) error {
 	mail := &ses.SendEmailInput{
 		Destination: &types.Destination{
 			CcAddresses: []string{},
-			ToAddresses: lo.Map(tos, func(t accountgateway.Contact, _ int) string {
+			ToAddresses: lo.Map(tos, func(t Contact, _ int) string {
 				return formatContact(t)
 			}),
 		},
@@ -75,6 +74,6 @@ func (m *awsMailer) SendMail(tos []accountgateway.Contact, subject, plainContent
 	return nil
 }
 
-func formatContact(contact accountgateway.Contact) string {
+func formatContact(contact Contact) string {
 	return fmt.Sprintf("%s <%s>", contact.Name, contact.Email)
 }

@@ -6,7 +6,6 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 )
@@ -16,14 +15,14 @@ type direct struct {
 	from string
 }
 
-func NewDirect(from string) accountgateway.Mailer {
+func NewDirect(from string) Mailer {
 	if from == "" {
 		from = "reearth@localhost:8080"
 	}
 	return &direct{from: from}
 }
 
-func (m *direct) SendMail(to []accountgateway.Contact, subject, plainContent, htmlContent string) error {
+func (m *direct) SendMail(to []Contact, subject, plainContent, htmlContent string) error {
 	emails, err := verifyEmails(to)
 	if err != nil {
 		return err

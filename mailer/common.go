@@ -9,9 +9,17 @@ import (
 	"net/textproto"
 	"strings"
 
-	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 	"github.com/reearth/reearthx/log"
 )
+
+type Mailer interface {
+	SendMail(toContacts []Contact, subject, plainContent, htmlContent string) error
+}
+
+type Contact struct {
+	Email string
+	Name  string
+}
 
 type Config struct {
 	Mailer   string
@@ -33,7 +41,7 @@ type SMTPConfig struct {
 	Password     string
 }
 
-func New(conf *Config) accountgateway.Mailer {
+func New(conf *Config) Mailer {
 	if conf.Mailer == "sendgrid" {
 		log.Infoln("mailer: sendgrid is used")
 		return NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
@@ -46,7 +54,7 @@ func New(conf *Config) accountgateway.Mailer {
 	return NewLogger()
 }
 
-func verifyEmails(contacts []accountgateway.Contact) ([]string, error) {
+func verifyEmails(contacts []Contact) ([]string, error) {
 	emails := make([]string, 0, len(contacts))
 	for _, c := range contacts {
 		_, err := mail.ParseAddress(c.Email)
@@ -117,7 +125,7 @@ func (m *message) encodeMessage() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type ToList []accountgateway.Contact
+type ToList []Contact
 
 func (l ToList) String() string {
 	tos := &strings.Builder{}

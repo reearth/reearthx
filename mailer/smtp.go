@@ -3,7 +3,6 @@ package mailer
 import (
 	"net/smtp"
 
-	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 )
@@ -16,7 +15,7 @@ type smtpMailer struct {
 	password string
 }
 
-func NewSMTP(host, port, username, email, password string) accountgateway.Mailer {
+func NewSMTP(host, port, username, email, password string) Mailer {
 	return &smtpMailer{
 		host:     host,
 		port:     port,
@@ -26,7 +25,7 @@ func NewSMTP(host, port, username, email, password string) accountgateway.Mailer
 	}
 }
 
-func (m *smtpMailer) SendMail(to []accountgateway.Contact, subject, plainContent, htmlContent string) error {
+func (m *smtpMailer) SendMail(to []Contact, subject, plainContent, htmlContent string) error {
 	emails, err := verifyEmails(to)
 	if err != nil {
 		return err
