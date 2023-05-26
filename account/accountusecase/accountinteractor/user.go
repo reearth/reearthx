@@ -15,6 +15,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/i18n"
+	"github.com/reearth/reearthx/mailer"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
 )
@@ -325,7 +326,7 @@ func (i *User) StartPasswordReset(ctx context.Context, email string) error {
 			return err
 		}
 
-		err = i.gateways.Mailer.SendMail([]accountgateway.Contact{
+		err = i.gateways.Mailer.SendMail([]mailer.Contact{
 			{
 				Email: u.Email(),
 				Name:  u.Name(),

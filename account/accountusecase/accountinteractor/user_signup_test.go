@@ -39,7 +39,7 @@ func TestUser_Signup(t *testing.T) {
 		args             accountinterfaces.SignupParam
 		wantUser         func(u *user.User) *user.User
 		wantWorkspace    *workspace.Workspace
-		wantMailTo       []accountgateway.Contact
+		wantMailTo       []mailer.Contact
 		wantMailSubject  string
 		wantMailContent  string
 		wantError        error
@@ -72,7 +72,7 @@ func TestUser_Signup(t *testing.T) {
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
 				Personal(true).
 				MustBuild(),
-			wantMailTo:      []accountgateway.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
+			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
 			wantMailSubject: "email verification",
 			wantMailContent: "https://reearth.io/?user-verification-token=CODECODE",
 			wantError:       nil,
@@ -149,7 +149,7 @@ func TestUser_Signup(t *testing.T) {
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
 				Personal(true).
 				MustBuild(),
-			wantMailTo:      []accountgateway.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
+			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
 			wantMailSubject: "email verification",
 			wantMailContent: "/?user-verification-token=CODECODE",
 			wantError:       nil,
@@ -187,7 +187,7 @@ func TestUser_Signup(t *testing.T) {
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
 				Personal(true).
 				MustBuild(),
-			wantMailTo:      []accountgateway.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
+			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
 			wantMailSubject: "email verification",
 			wantMailContent: "/?user-verification-token=CODECODE",
 			wantError:       nil,

@@ -117,7 +117,7 @@ func TestUser_StartPasswordReset(t *testing.T) {
 		createUserBefore *user.User
 		email            string
 		wantMailSubject  string
-		wantMailTo       []accountgateway.Contact
+		wantMailTo       []mailer.Contact
 		wantError        error
 	}{
 		{
@@ -136,7 +136,7 @@ func TestUser_StartPasswordReset(t *testing.T) {
 				MustBuild(),
 			email:           "aaa@bbb.com",
 			wantMailSubject: "Password reset",
-			wantMailTo: []accountgateway.Contact{
+			wantMailTo: []mailer.Contact{
 				{
 					Email: "aaa@bbb.com",
 					Name:  "NAME",

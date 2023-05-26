@@ -15,11 +15,11 @@ import (
 	textTmpl "text/template"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
-	"github.com/reearth/reearthx/account/accountusecase/accountgateway"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/log"
+	"github.com/reearth/reearthx/mailer"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
 )
@@ -207,7 +207,7 @@ func (i *User) sendVerificationMail(ctx context.Context, u *user.User, vr *user.
 	}
 
 	if err := i.gateways.Mailer.SendMail(
-		[]accountgateway.Contact{
+		[]mailer.Contact{
 			{
 				Email: u.Email(),
 				Name:  u.Name(),
