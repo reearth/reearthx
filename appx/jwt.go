@@ -28,10 +28,11 @@ type AuthInfo struct {
 }
 
 type JWTProvider struct {
-	ISS string
-	AUD []string
-	ALG *string
-	TTL *int
+	ISS     string
+	JWKSURI *string
+	AUD     []string
+	ALG     *string
+	TTL     *int
 }
 
 func (p JWTProvider) validator() (*validator.Validator, error) {
@@ -43,8 +44,16 @@ func (p JWTProvider) validator() (*validator.Validator, error) {
 		return nil, fmt.Errorf("failed to parse the issuer url")
 	}
 
+	opts := []jwks.ProviderOption{}
+	if p.JWKSURI != nil && *p.JWKSURI != "" {
+		u, err := url.Parse(*p.JWKSURI)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse the jwks uri: %w", err)
+		}
+		opts = append(opts, jwks.WithCustomJWKSURI(u))
+	}
 	ttl := time.Duration(lo.FromPtrOr(p.TTL, defaultJWTTTL)) * time.Minute
-	provider := jwks.NewCachingProvider(issuerURL, ttl)
+	provider := jwks.NewCachingProvider(issuerURL, ttl, opts...)
 	algorithm := validator.SignatureAlgorithm(lo.FromPtrOr(p.ALG, jwt.SigningMethodRS256.Name))
 
 	var aud []string
