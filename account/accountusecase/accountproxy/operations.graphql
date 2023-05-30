@@ -4,16 +4,73 @@ query Me {
   }
 }
 
+fragment FragmentUser on User {
+    id
+    name
+    email
+    lang
+    theme
+    workspace
+    auths
+}
+
+
+
 query UserByIDs($id: [ID!]!) {
   nodes(id: $id, type: USER) {
     ... on User {
-      id
-      name
-      email
+        id
+        name
+        email
+        lang
+        theme
+        workspace
+        auths
     }
   }
 }
 
+query SearchUser($nameOrEmail: String!) {
+  searchUser(nameOrEmail: $nameOrEmail) {
+     ...FragmentUser
+  }
+}
+
+mutation SignUp($input: SignUpInput!) {
+    signUp(input: $input) {
+        user {...FragmentUser}
+    }
+}
+
+mutation SignupOIDC($input: SignupOIDCInput!) {
+    signUpOIDC(input: $input) {
+        user {...FragmentUser}
+    }
+}
+
+mutation VerifyUser($input: VerifyUserInput!) {
+    verifyUser(input: $input) {
+        user {...FragmentUser}
+    }
+}
+
+mutation FindOrCreate($input: FindOrCreateInput!) {
+    findOrCreate(input: $input) {
+        user {...FragmentUser}
+    }
+}
+
+mutation CreateVerification($input: CreateVerificationInput!) {
+    createVerification(input: $input)
+}
+
+mutation StartPasswordReset($input: StartPasswordResetInput!) {
+    startPasswordReset(input: $input)
+}
+
+mutation PasswordReset($input: PasswordResetInput!) {
+    passwordReset(input: $input)
+}
 
 query WorkspaceByIDs($id: [ID!]!) {
   nodes(id: $id, type: WORKSPACE) {
@@ -65,6 +122,26 @@ fragment FragmentWorkspace on Workspace {
             active
             invitedById
         }
+    }
+}
+
+query FindByUser($userId: ID!) {
+    findByUser(userId: $userId) {
+        ...FragmentWorkspace
+    }
+}
+
+query FetchPolicy($policyId: [ID!]!) {
+    fetchPolicy(policyId: $policyId) {
+        id
+        name
+        projectCount
+        memberCount
+        publishedProjectCount
+        layerCount
+        assetStorageSize
+        datasetSchemaCount
+        datasetCount
     }
 }
 

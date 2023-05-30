@@ -25,6 +25,18 @@ func WorkspaceByIDsNodeTo(r WorkspaceByIDsNodesNode) (*workspace.Workspace, erro
 	return ToWorkspace(w.FragmentWorkspace)
 }
 
+func ToWorkspaces(r []FragmentWorkspace) ([]*workspace.Workspace, error) {
+	ws := make([]*workspace.Workspace, len(r))
+	for i, w := range r {
+		wsp, err := ToWorkspace(w)
+		if err != nil {
+			return nil, err
+		}
+		ws[i] = wsp
+	}
+	return ws, nil
+}
+
 func ToWorkspace(r FragmentWorkspace) (*workspace.Workspace, error) {
 	id, err := workspace.IDFrom(r.Id)
 	if err != nil {
@@ -83,4 +95,25 @@ func ToRole(r Role) workspace.Role {
 	default:
 		return workspace.RoleOwner
 	}
+}
+
+func ToPolicies(r *FetchPolicyResponse) []*workspace.Policy {
+	ps := make([]*workspace.Policy, len(r.FetchPolicy))
+	for i, p := range r.FetchPolicy {
+		as := int64(p.AssetStorageSize)
+		op := workspace.PolicyOption{
+			ID:                    workspace.PolicyID(p.Id),
+			Name:                  p.Name,
+			ProjectCount:          &p.ProjectCount,
+			MemberCount:           &p.MemberCount,
+			PublishedProjectCount: &p.PublishedProjectCount,
+			LayerCount:            &p.LayerCount,
+			AssetStorageSize:      &as,
+			DatasetSchemaCount:    &p.DatasetSchemaCount,
+			DatasetCount:          &p.DatasetCount,
+		}
+		ps[i] = workspace.NewPolicy(op)
+
+	}
+	return ps
 }

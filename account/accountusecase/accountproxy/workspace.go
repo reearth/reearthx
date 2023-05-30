@@ -31,12 +31,28 @@ func (w *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList
 	return WorkspaceByIDsResponseTo(WorkspaceByIDs(ctx, w.gql, ids.Strings()))
 }
 
-func (w *Workspace) FindByUser(context.Context, accountdomain.UserID, *accountusecase.Operator) ([]*workspace.Workspace, error) {
-	panic("not implemented")
+func (w *Workspace) FindByUser(ctx context.Context, userID accountdomain.UserID, op *accountusecase.Operator) ([]*workspace.Workspace, error) {
+	res, err := FindByUser(ctx, w.gql, userID.String())
+	if err != nil {
+		return nil, err
+	}
+	ws := make([]FragmentWorkspace, len(res.FindByUser))
+	for i, w := range res.FindByUser {
+		ws[i] = w.FragmentWorkspace
+	}
+	return ToWorkspaces(ws)
 }
 
-func (w *Workspace) FetchPolicy(context.Context, []workspace.PolicyID, *accountusecase.Operator) ([]*workspace.Policy, error) {
-	panic("not implemented")
+func (w *Workspace) FetchPolicy(ctx context.Context, policyID []workspace.PolicyID, op *accountusecase.Operator) ([]*workspace.Policy, error) {
+	policyIDs := make([]string, len(policyID))
+	for i, id := range policyID {
+		policyIDs[i] = id.String()
+	}
+	res, err := FetchPolicy(ctx, w.gql, policyIDs)
+	if err != nil {
+		return nil, err
+	}
+	return ToPolicies(res), nil
 }
 
 func (w *Workspace) Create(ctx context.Context, name string, userID accountdomain.UserID, op *accountusecase.Operator) (*workspace.Workspace, error) {
