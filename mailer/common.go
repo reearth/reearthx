@@ -2,6 +2,7 @@ package mailer
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -47,7 +48,7 @@ type SESConfig struct {
 	Name  string
 }
 
-func New(conf *Config) Mailer {
+func New(ctx context.Context, conf *Config) Mailer {
 	if conf.Mailer == "sendgrid" {
 		log.Infoln("mailer: sendgrid is used")
 		return NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
@@ -55,6 +56,10 @@ func New(conf *Config) Mailer {
 	if conf.Mailer == "smtp" {
 		log.Infoln("mailer: smtp is used")
 		return NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
+	}
+	if conf.Mailer == "ses" {
+		log.Infoln("mailer: aws ses is used")
+		return NewSES(ctx, conf.SES.Name, conf.SES.Email)
 	}
 	log.Infoln("mailer: logger is used")
 	return NewLogger()
