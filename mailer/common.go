@@ -25,6 +25,7 @@ type Config struct {
 	Mailer   string
 	SMTP     SMTPConfig
 	SendGrid SendGridConfig
+	SES      SESConfig
 }
 
 type SendGridConfig struct {
@@ -39,6 +40,11 @@ type SMTPConfig struct {
 	SMTPUsername string
 	Email        string
 	Password     string
+}
+
+type SESConfig struct {
+	Email string
+	Name  string
 }
 
 func New(conf *Config) Mailer {
