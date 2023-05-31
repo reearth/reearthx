@@ -172,3 +172,10 @@ func (l List[T]) Less(i, j int) bool {
 func (l List[T]) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
+
+func (l List[T]) Set() *Set[T] {
+	if l == nil {
+		return nil
+	}
+	return NewSet[T](l...)
+}

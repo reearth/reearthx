@@ -247,3 +247,13 @@ func TestList_Deref(t *testing.T) {
 	assert.Nil(t, RefList[T](nil).Deref())
 	assert.Equal(t, List[T]{b, a, c}, l.Deref())
 }
+
+func TestList_Set(t *testing.T) {
+	a := New[T]()
+	b := New[T]()
+	c := New[T]()
+	l := List[T]{a, b, c}
+
+	assert.Nil(t, List[T](nil).Set())
+	assert.Equal(t, NewSet[T](a, b, c), l.Set())
+}
