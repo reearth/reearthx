@@ -73,33 +73,6 @@ func FragmentToUser(me FragmentUser) (*user.User, error) {
 	return u, nil
 }
 
-
-func SimpleUserByIDsNodesNodeTo(r UserByIDsNodesNode) (*user.Simple, error) {
-	if r == nil {
-		return nil, nil
-	}
-	u, ok := r.(*UserByIDsNodesUser)
-	if !ok || u == nil {
-		return nil, nil
-	}
-	return SimpleUserByIDsNodesUserTo(u)
-}
-
-func SimpleUserByIDsNodesUserTo(r *UserByIDsNodesUser) (*user.Simple, error) {
-	if r == nil {
-		return nil, nil
-	}
-	id, err := user.IDFrom(r.Id)
-	if err != nil {
-		return nil, err
-	}
-	return &user.Simple{
-		ID:    id,
-		Name:  r.Name,
-		Email: r.Email,
-	}, nil
-}
-
 func UserByIDsNodesNodeTo(r UserByIDsNodesNode) (*user.User, error) {
 	if r == nil {
 		return nil, nil
@@ -133,4 +106,30 @@ func UserByIDsNodesUserTo(r *UserByIDsNodesUser) (*user.User, error) {
 		Theme(user.ThemeFrom(r.Theme)).
 		Auths(auths).
 		Workspace(wid).Build()
+}
+
+func SimpleUserByIDsNodesNodeTo(r UserByIDsNodesNode) (*user.Simple, error) {
+	if r == nil {
+		return nil, nil
+	}
+	u, ok := r.(*UserByIDsNodesUser)
+	if !ok || u == nil {
+		return nil, nil
+	}
+	return SimpleUserByIDsNodesUserTo(u)
+}
+
+func SimpleUserByIDsNodesUserTo(r *UserByIDsNodesUser) (*user.Simple, error) {
+	if r == nil {
+		return nil, nil
+	}
+	id, err := user.IDFrom(r.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &user.Simple{
+		ID:    id,
+		Name:  r.Name,
+		Email: r.Email,
+	}, nil
 }
