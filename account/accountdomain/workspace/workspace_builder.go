@@ -2,6 +2,8 @@ package workspace
 
 import (
 	"errors"
+
+	"github.com/reearth/reearthx/util"
 )
 
 var ErrMembersRequired = errors.New("members required")
@@ -75,5 +77,10 @@ func (b *Builder) Integrations(integrations map[IntegrationID]Member) *Builder {
 
 func (b *Builder) Personal(p bool) *Builder {
 	b.personal = p
+	return b
+}
+
+func (b *Builder) Policy(p *PolicyID) *Builder {
+	b.w.policy = util.CloneRef(p)
 	return b
 }

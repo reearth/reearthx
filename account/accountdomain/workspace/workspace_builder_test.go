@@ -98,3 +98,12 @@ func TestBuilder_Personal(t *testing.T) {
 		personal: true,
 	}, New().Personal(true))
 }
+
+func TestBuilder_Policy(t *testing.T) {
+	pid := PolicyID("id")
+	assert.Equal(t, &Builder{
+		w: &Workspace{
+			policy: &pid,
+		},
+	}, New().Policy(&pid))
+}
