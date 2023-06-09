@@ -15,10 +15,18 @@ type User struct {
 	err  error
 }
 
-func NewUser() accountrepo.User {
+func NewUser() *User {
 	return &User{
 		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
 	}
+}
+
+func NewUserWith(users ...*user.User) *User {
+	r := NewUser()
+	for _, u := range users {
+		r.data.Store(u.ID(), u)
+	}
+	return r
 }
 
 func (r *User) FindByIDs(ctx context.Context, ids accountdomain.UserIDList) ([]*user.User, error) {

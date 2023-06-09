@@ -16,10 +16,18 @@ type Workspace struct {
 	err  error
 }
 
-func NewWorkspace() accountrepo.Workspace {
+func NewWorkspace() *Workspace {
 	return &Workspace{
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}
+}
+
+func NewWorkspaceWith(workspaces ...*workspace.Workspace) *Workspace {
+	r := NewWorkspace()
+	for _, ws := range workspaces {
+		r.data.Store(ws.ID(), ws)
+	}
+	return r
 }
 
 func (r *Workspace) FindByUser(ctx context.Context, i accountdomain.UserID) (workspace.WorkspaceList, error) {
