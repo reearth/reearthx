@@ -23,6 +23,16 @@ func TestNewUser(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
+func TestNewUserWith(t *testing.T) {
+	u := user.New().NewID().Name("hoge").Email("aa@bb.cc").Auths([]user.Auth{{
+		Sub: "xxx",
+	}}).MustBuild()
+
+	got, err := NewUserWith(u).FindByID(context.Background(), u.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, u, got)
+}
+
 func TestUser_FindBySub(t *testing.T) {
 	ctx := context.Background()
 	u := user.New().NewID().Name("hoge").Email("aa@bb.cc").Auths([]user.Auth{{

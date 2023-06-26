@@ -21,6 +21,14 @@ func TestNewWorkspace(t *testing.T) {
 	assert.Equal(t, expected, got)
 }
 
+func TestNewWorkspaceWith(t *testing.T) {
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+
+	got, err := NewWorkspaceWith(ws).FindByID(context.Background(), ws.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, ws, got)
+}
+
 func TestWorkspace_FindByID(t *testing.T) {
 	ctx := context.Background()
 	ws := workspace.New().NewID().Name("hoge").MustBuild()
