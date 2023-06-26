@@ -22,12 +22,23 @@ var (
 	ErrUserAlreadyExists               = rerror.NewE(i18n.T("user already exists"))
 )
 
-type SignupOIDC struct {
-	Email  string
-	Name   string
-	Secret *string
-	Sub    string
+type SignupOIDCParam struct {
+	AccessToken string
+	Issuer      string
+	Sub         string
+	Email       string
+	Name        string
+	Secret      *string
+	User        SignupUserParam
 }
+
+type SignupUserParam struct {
+	UserID      *accountdomain.UserID
+	Lang        *language.Tag
+	Theme       *user.Theme
+	WorkspaceID *accountdomain.WorkspaceID
+}
+
 type SignupParam struct {
 	Email       string
 	Name        string
@@ -63,7 +74,7 @@ type User interface {
 	Fetch(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.User, error)
 	FetchSimple(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.Simple, error)
 	Signup(context.Context, SignupParam) (*user.User, error)
-	SignupOIDC(context.Context, SignupOIDC) (*user.User, error)
+	SignupOIDC(context.Context, SignupOIDCParam) (*user.User, error)
 	FindOrCreate(context.Context, UserFindOrCreateParam) (*user.User, error)
 	UpdateMe(context.Context, UpdateMeParam, *accountusecase.Operator) (*user.User, error)
 	RemoveMyAuth(context.Context, string, *accountusecase.Operator) (*user.User, error)

@@ -104,12 +104,30 @@ func (i *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) 
 	return u, nil
 }
 
-func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOIDC) (*user.User, error) {
+func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOIDCParam) (*user.User, error) {
 	if err := i.verifySignupSecret(param.Secret); err != nil {
 		return nil, err
 	}
-	if param.Sub == "" || param.Name == "" || param.Email == "" {
-		return nil, rerror.NewE(i18n.T("invalid parameters"))
+
+	sub := param.Sub
+	name := param.Name
+	email := param.Email
+	if sub == "" || email == "" {
+		ui, err := getUserInfoFromISS(ctx, param.Issuer, param.AccessToken)
+		if err != nil {
+			return nil, err
+		}
+		sub = ui.Sub
+		email = ui.Email
+		if name == "" {
+			name = ui.Nickname
+		}
+		if name == "" {
+			name = ui.Name
+		}
+		if name == "" {
+			name = ui.Email
+		}
 	}
 
 	eu, err := i.repos.User.FindByEmail(ctx, param.Email)
@@ -128,10 +146,15 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 		return nil, accountrepo.ErrDuplicatedUser
 	}
 
-	u, workspace, err := user.Init(user.InitParams{
-		Email: param.Email,
-		Name:  param.Name,
-		Sub:   user.AuthFrom(param.Sub).Ref(),
+	// Initialize user and ws
+	u, ws, err := user.Init(user.InitParams{
+		Email:       email,
+		Name:        name,
+		Sub:         user.AuthFrom(sub).Ref(),
+		Lang:        param.User.Lang,
+		Theme:       param.User.Theme,
+		UserID:      param.User.UserID,
+		WorkspaceID: param.User.WorkspaceID,
 	})
 	if err != nil {
 		return nil, err
@@ -141,7 +164,7 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 		return nil, err
 	}
 
-	if err := i.repos.Workspace.Save(ctx, workspace); err != nil {
+	if err := i.repos.Workspace.Save(ctx, ws); err != nil {
 		return nil, err
 	}
 

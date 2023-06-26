@@ -40,7 +40,7 @@ func (*User) Signup(context.Context, accountinterfaces.SignupParam) (*user.User,
 	panic("not implemented")
 }
 
-func (*User) SignupOIDC(context.Context, accountinterfaces.SignupOIDC) (*user.User, error) {
+func (*User) SignupOIDC(context.Context, accountinterfaces.SignupOIDCParam) (*user.User, error) {
 	panic("not implemented")
 }
 
