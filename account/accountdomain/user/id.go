@@ -10,6 +10,7 @@ type WorkspaceID = accountdomain.WorkspaceID
 type WorkspaceIDList = accountdomain.WorkspaceIDList
 
 var NewID = accountdomain.NewUserID
+var MustID = accountdomain.MustUserID
 var NewWorkspaceID = accountdomain.NewWorkspaceID
 
 var IDFrom = accountdomain.UserIDFrom

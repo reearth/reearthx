@@ -19,6 +19,7 @@ type UserDocument struct {
 	Email         string
 	Subs          []string
 	Workspace     string
+	Team          string
 	Lang          string
 	Theme         string
 	Password      []byte
@@ -76,10 +77,17 @@ func (d *UserDocument) Model() (*user.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	tid, err := accountdomain.WorkspaceIDFrom(d.Workspace)
+
+	wid := d.Workspace
+	if wid == "" {
+		wid = d.Team
+	}
+
+	tid, err := accountdomain.WorkspaceIDFrom(wid)
 	if err != nil {
 		return nil, err
 	}
+
 	auths := make([]user.Auth, 0, len(d.Subs))
 	for _, s := range d.Subs {
 		auths = append(auths, user.AuthFrom(s))
