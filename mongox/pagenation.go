@@ -41,7 +41,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex
 		if i < limit-1 {
 			cur, err := getCursor(cursor.Current)
 			if err != nil {
-				return nil, rerror.ErrInternalBy(fmt.Errorf("failed to get cursor: %w", err))
+				return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to get cursor: %w", err))
 			}
 
 			if startCursor == nil {
@@ -58,7 +58,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to read cursor: %w", err))
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
 
 	// ref: https://facebook.github.io/relay/graphql/connections.htm#sec-undefined.PageInfo.Fields

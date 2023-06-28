@@ -113,7 +113,7 @@ func (r *User) FindBySubOrCreate(ctx context.Context, u *user.User, sub string) 
 		if mongo.IsDuplicateKeyError(err) {
 			return nil, accountrepo.ErrDuplicatedUser
 		}
-		return nil, rerror.ErrInternalBy(err)
+		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 	return userDoc.Model()
 }
@@ -127,7 +127,7 @@ func (r *User) Create(ctx context.Context, user *user.User) error {
 		if mongo.IsDuplicateKeyError(err) {
 			return accountrepo.ErrDuplicatedUser
 		}
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	return nil
 }

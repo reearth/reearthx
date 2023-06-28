@@ -37,7 +37,7 @@ func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer, op
 		return rerror.ErrNotFound
 	}
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	defer func() {
 		_ = cursor.Close(ctx)
@@ -46,7 +46,7 @@ func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer, op
 	for {
 		c := cursor.Next(ctx)
 		if err := cursor.Err(); err != nil && !errors.Is(err, io.EOF) {
-			return wrapError(err)
+			return wrapError(ctx, err)
 		}
 
 		if !c {
@@ -69,7 +69,7 @@ func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer,
 		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 			return rerror.ErrNotFound
 		}
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	if err := consumer.Consume(raw); err != nil && !errors.Is(err, io.EOF) {
 		return err
@@ -80,7 +80,7 @@ func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer,
 func (c *Collection) Count(ctx context.Context, filter any) (int64, error) {
 	count, err := c.client.CountDocuments(ctx, filter)
 	if err != nil {
-		return 0, wrapError(err)
+		return 0, wrapError(ctx, err)
 	}
 	return count, nil
 }
@@ -88,7 +88,7 @@ func (c *Collection) Count(ctx context.Context, filter any) (int64, error) {
 func (c *Collection) RemoveAll(ctx context.Context, f any) error {
 	_, err := c.client.DeleteMany(ctx, f)
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	return nil
 }
@@ -96,7 +96,7 @@ func (c *Collection) RemoveAll(ctx context.Context, f any) error {
 func (c *Collection) RemoveOne(ctx context.Context, f any) error {
 	res, err := c.client.DeleteOne(ctx, f)
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	if res != nil && res.DeletedCount == 0 {
 		return rerror.ErrNotFound
@@ -116,7 +116,7 @@ func (c *Collection) ReplaceOne(ctx context.Context, filter any, replacement any
 		options.Replace().SetUpsert(true),
 	)
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	return nil
 }
@@ -129,7 +129,7 @@ func (c *Collection) SetOne(ctx context.Context, id string, replacement any) err
 		options.Update().SetUpsert(true),
 	)
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	return nil
 }
@@ -139,7 +139,7 @@ func (c *Collection) SaveAll(ctx context.Context, ids []string, updates []any) e
 		return nil
 	}
 	if len(ids) != len(updates) {
-		return wrapError(errors.New("invalid save args"))
+		return wrapError(ctx, errors.New("invalid save args"))
 	}
 
 	writeModels := make([]mongo.WriteModel, 0, len(updates))
@@ -153,7 +153,7 @@ func (c *Collection) SaveAll(ctx context.Context, ids []string, updates []any) e
 
 	_, err := c.client.BulkWrite(ctx, writeModels)
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	return nil
 }
@@ -163,7 +163,7 @@ func (c *Collection) UpdateMany(ctx context.Context, filter, update any) error {
 		"$set": update,
 	})
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	return nil
 }
@@ -190,7 +190,7 @@ func (c *Collection) UpdateManyMany(ctx context.Context, updates []Update) error
 
 	_, err := c.client.BulkWrite(ctx, writeModels)
 	if err != nil {
-		return wrapError(err)
+		return wrapError(ctx, err)
 	}
 	return nil
 }
@@ -208,9 +208,9 @@ func getCursor(raw bson.Raw) (*usecasex.Cursor, error) {
 	return &c, nil
 }
 
-func wrapError(err error) error {
+func wrapError(ctx context.Context, err error) error {
 	if IsTransactionError(err) {
 		return usecasex.ErrTransaction
 	}
-	return rerror.ErrInternalBy(err)
+	return rerror.ErrInternalByWithContext(ctx, err)
 }

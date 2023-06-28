@@ -39,14 +39,14 @@ func (m *direct) SendMail(ctx context.Context, to []Contact, subject, plainConte
 		return err
 	}
 
-	msg, err := m.message(emails, subject, plainContent, htmlContent)
+	msg, err := m.message(ctx, emails, subject, plainContent, htmlContent)
 	if err != nil {
 		return err
 	}
 
 	for i, to := range emails {
 		host := mxHosts[i]
-		if err := m.send(to, host, msg); err != nil {
+		if err := m.send(ctx, to, host, msg); err != nil {
 			return err
 		}
 	}
@@ -55,7 +55,7 @@ func (m *direct) SendMail(ctx context.Context, to []Contact, subject, plainConte
 	return nil
 }
 
-func (m *direct) message(emails []string, subject, plainContent, htmlContent string) ([]byte, error) {
+func (m *direct) message(ctx context.Context, emails []string, subject, plainContent, htmlContent string) ([]byte, error) {
 	msg := &message{
 		to:           emails,
 		from:         m.from,
@@ -65,7 +65,7 @@ func (m *direct) message(emails []string, subject, plainContent, htmlContent str
 	}
 	encodedMsg, err := msg.encodeMessage()
 	if err != nil {
-		return nil, rerror.ErrInternalBy(err)
+		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 	return encodedMsg, nil
 }
@@ -97,29 +97,29 @@ func (*direct) lookupHosts(hosts []string) ([]string, error) {
 	return res, nil
 }
 
-func (m *direct) send(to string, host string, msg []byte) error {
+func (m *direct) send(ctx context.Context, to string, host string, msg []byte) error {
 	c, err := smtp.Dial(fmt.Sprintf("%s:25", host))
 	if err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	if err := c.Mail(m.from); err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	if err := c.Rcpt(to); err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	wc, err := c.Data()
 	if err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	if _, err = wc.Write(msg); err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	if err := wc.Close(); err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	if err := c.Quit(); err != nil {
-		return rerror.ErrInternalBy(err)
+		return rerror.ErrInternalByWithContext(ctx, err)
 	}
 	return nil
 }
