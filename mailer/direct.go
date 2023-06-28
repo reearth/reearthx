@@ -1,6 +1,7 @@
 package mailer
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/smtp"
@@ -22,7 +23,7 @@ func NewDirect(from string) Mailer {
 	return &direct{from: from}
 }
 
-func (m *direct) SendMail(to []Contact, subject, plainContent, htmlContent string) error {
+func (m *direct) SendMail(ctx context.Context, to []Contact, subject, plainContent, htmlContent string) error {
 	emails, err := verifyEmails(to)
 	if err != nil {
 		return err
@@ -50,7 +51,7 @@ func (m *direct) SendMail(to []Contact, subject, plainContent, htmlContent strin
 		}
 	}
 
-	logMail(to, subject)
+	logMail(ctx, to, subject)
 	return nil
 }
 

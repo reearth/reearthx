@@ -1,8 +1,11 @@
 package mailer
 
 import (
+	"context"
 	"sync"
 )
+
+var _ Mailer = (*Mock)(nil)
 
 type Mock struct {
 	lock  sync.Mutex
@@ -20,7 +23,7 @@ func NewMock() *Mock {
 	return &Mock{}
 }
 
-func (m *Mock) SendMail(to []Contact, subject, text, html string) error {
+func (m *Mock) SendMail(ctx context.Context, to []Contact, subject, text, html string) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	m.mails = append(m.mails, Mail{

@@ -70,7 +70,7 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 
 	storage, err := NewStorage(ctx, cfg.storageConfig())
 	if err != nil {
-		log.Fatalf("auth: storage init failed: %s\n", err)
+		log.Fatalfc(ctx, "auth: storage init failed: %s\n", err)
 	}
 
 	router, err := Server(ctx, ServerConfig{
@@ -79,11 +79,11 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 		Storage: storage,
 	})
 	if err != nil {
-		log.Fatalf("auth: server init failed: %s\n", err)
+		log.Fatalfc(ctx, "auth: server init failed: %s\n", err)
 	}
 
 	if err := router.Walk(muxToEchoMapper(g)); err != nil {
-		log.Fatalf("auth: walk failed: %s\n", err)
+		log.Fatalfc(ctx, "auth: walk failed: %s\n", err)
 	}
 
 	g.POST(loginEndpoint, LoginHandler(ctx, LoginHandlerConfig{
@@ -104,7 +104,7 @@ func Endpoint(ctx context.Context, cfg EndpointConfig, g *echo.Group) {
 		debugMsg = " with dev mode"
 	}
 
-	log.Infof("auth: oidc server started%s", debugMsg)
+	log.Infofc(ctx, "auth: oidc server started%s", debugMsg)
 }
 
 func muxToEchoMapper(r *echo.Group) func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {

@@ -88,7 +88,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 	}
 	defer func() {
 		if err := cfg.ConfigRepo.Unlock(ctx); err != nil {
-			log.Errorf("auth: could not release config lock: %s\n", err)
+			log.Errorfc(ctx, "auth: could not release config lock: %s\n", err)
 		}
 	}()
 
@@ -109,7 +109,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 		if err := cfg.ConfigRepo.Save(ctx, c); err != nil {
 			return nil, fmt.Errorf("could not save raw cert: %w\n", err)
 		}
-		log.Info("auth: init a new private key and certificate")
+		log.Infoc(ctx, "auth: init a new private key and certificate")
 	}
 
 	key, sigKey, keySet, err := initKeys(keyBytes, certBytes)

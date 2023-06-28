@@ -37,7 +37,7 @@ func InitTracer(ctx context.Context, conf TracerConfig) io.Closer {
 func initGCPTracer(ctx context.Context, conf TracerConfig) {
 	exporter, err := texporter.New()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalc(ctx, err)
 	}
 
 	tp := sdktrace.NewTracerProvider(sdktrace.WithSyncer(exporter), sdktrace.WithSampler(sdktrace.TraceIDRatioBased(conf.TracerSample)))
@@ -47,7 +47,7 @@ func initGCPTracer(ctx context.Context, conf TracerConfig) {
 
 	otel.SetTracerProvider(tp)
 
-	log.Infof("tracer: initialized cloud trace with sample fraction: %g", conf.TracerSample)
+	log.Infofc(ctx, "tracer: initialized cloud trace with sample fraction: %g", conf.TracerSample)
 }
 
 func initJaegerTracer(conf TracerConfig) io.Closer {

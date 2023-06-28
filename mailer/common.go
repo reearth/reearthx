@@ -14,7 +14,7 @@ import (
 )
 
 type Mailer interface {
-	SendMail(toContacts []Contact, subject, plainContent, htmlContent string) error
+	SendMail(ctx context.Context, toContacts []Contact, subject, plainContent, htmlContent string) error
 }
 
 type Contact struct {
@@ -50,18 +50,18 @@ type SESConfig struct {
 
 func New(ctx context.Context, conf *Config) Mailer {
 	if conf.Mailer == "sendgrid" {
-		log.Infoln("mailer: sendgrid is used")
+		log.Infoc(ctx, "mailer: sendgrid is used")
 		return NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
 	}
 	if conf.Mailer == "smtp" {
-		log.Infoln("mailer: smtp is used")
+		log.Infoc(ctx, "mailer: smtp is used")
 		return NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
 	}
 	if conf.Mailer == "ses" {
-		log.Infoln("mailer: aws ses is used")
+		log.Infoc(ctx, "mailer: aws ses is used")
 		return NewSES(ctx, conf.SES.Name, conf.SES.Email)
 	}
-	log.Infoln("mailer: logger is used")
+	log.Infoc(ctx, "mailer: logger is used")
 	return NewLogger()
 }
 
@@ -159,6 +159,6 @@ func (l ToList) String() string {
 	return tos.String()
 }
 
-func logMail(to ToList, subject string) {
-	log.Infof("mailer: mail sent: To: %s, Subject: %s", to, subject)
+func logMail(ctx context.Context, to ToList, subject string) {
+	log.Infofc(ctx, "mailer: mail sent: To: %s, Subject: %s", to, subject)
 }

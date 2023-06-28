@@ -1,6 +1,8 @@
 package mailer
 
 import (
+	"context"
+
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
@@ -19,7 +21,7 @@ func NewSendGrid(senderName, senderEmail, api string) Mailer {
 	}
 }
 
-func (m *sendgridMailer) SendMail(to []Contact, subject, plainContent, htmlContent string) error {
+func (m *sendgridMailer) SendMail(ctx context.Context, to []Contact, subject, plainContent, htmlContent string) error {
 	for _, t := range to {
 		sender := mail.NewEmail(m.name, m.email)
 		receiver := mail.NewEmail(t.Name, t.Email)
@@ -30,6 +32,6 @@ func (m *sendgridMailer) SendMail(to []Contact, subject, plainContent, htmlConte
 		}
 	}
 
-	logMail(to, subject)
+	logMail(ctx, to, subject)
 	return nil
 }

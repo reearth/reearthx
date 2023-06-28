@@ -21,13 +21,13 @@ func NewMongo(client *mongox.Collection) *Mongo {
 	return r
 }
 
-func (r *Mongo) Init() error {
-	added, deleted, err := r.client.Indexes(context.Background(), []string{"code", "subject"}, []string{"id"})
+func (r *Mongo) Init(ctx context.Context) error {
+	added, deleted, err := r.client.Indexes(ctx, []string{"code", "subject"}, []string{"id"})
 	if err != nil {
 		return err
 	}
 	if len(added) > 0 || len(deleted) > 0 {
-		log.Infof("mongo: authRequest: index: deleted: %v, created: %v", deleted, added)
+		log.Infofc(ctx, "mongo: authRequest: index: deleted: %v, created: %v", deleted, added)
 	}
 	return nil
 }

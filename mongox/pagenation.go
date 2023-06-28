@@ -18,18 +18,18 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, sort *usecasex
 
 	filter, findOptions, err := c.paginationFilter(ctx, *p, sort, rawFilter)
 	if err != nil {
-		return nil, rerror.ErrInternalBy(err)
+		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 
 	limit := int(*findOptions.Limit)
 	count, err := c.client.CountDocuments(ctx, rawFilter)
 	if err != nil {
-		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to count: %w", err))
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
 	}
 
 	cursor, err := c.client.Find(ctx, filter, append([]*options.FindOptions{findOptions}, opts...)...)
 	if err != nil {
-		return nil, rerror.ErrInternalBy(fmt.Errorf("failed to find: %w", err))
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
 	}
 	defer func() {
 		_ = cursor.Close(ctx)
