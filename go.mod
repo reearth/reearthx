@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.12
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.8.3
 	github.com/Khan/genqlient v0.5.0
+	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/auth0/go-jwt-middleware/v2 v2.0.1
 	github.com/aws/aws-sdk-go-v2 v1.18.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.25

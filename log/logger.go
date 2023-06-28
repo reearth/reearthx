@@ -172,6 +172,38 @@ func (l *Logger) Panicf(format string, args ...any) {
 	l.logger.Panicf(f.Format, f.Args...)
 }
 
+func (l *Logger) Tracew(msg string, keyAndValues ...any) {
+	l.logger.Debugf(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Debugw(msg string, keyAndValues ...any) {
+	l.logger.Debugf(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Infow(msg string, keyAndValues ...any) {
+	l.logger.Infof(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Printw(msg string, keyAndValues ...any) {
+	l.logger.Infof(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Warnw(msg string, keyAndValues ...any) {
+	l.logger.Warnf(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Errorw(msg string, keyAndValues ...any) {
+	l.logger.Errorf(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Fatalw(msg string, keyAndValues ...any) {
+	l.logger.Fatalf(l.msg(msg), keyAndValues...)
+}
+
+func (l *Logger) Panicw(msg string, keyAndValues ...any) {
+	l.logger.Panicw(l.msg(msg), keyAndValues...)
+}
+
 func (l *Logger) Trace(args ...any) {
 	l.logger.Debug(l.args(args)...)
 }
@@ -239,4 +271,15 @@ func (l *Logger) args(args ...any) []any {
 		return append(args, s)
 	}
 	return args
+}
+
+func (l *Logger) msg(msg string) string {
+	p, s := "", ""
+	if l.dynPrefix != nil {
+		p = l.dynPrefix().String()
+	}
+	if l.dynSuffix != nil {
+		s = l.dynSuffix().String()
+	}
+	return p + msg + s
 }

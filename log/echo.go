@@ -7,35 +7,25 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/reearth/reearthx/util"
-	"github.com/samber/lo"
 	"go.uber.org/zap/zapcore"
 )
 
-type KeyValue struct {
-	Key   string
-	Value any
-}
-
-func (k KeyValue) interfaces() []any {
-	return []any{k.Key, k.Value}
-}
-
 type Echo struct {
-	logger                 *Logger
-	accessLogExtraMessages func(c echo.Context) []KeyValue
+	logger *Logger
 }
 
 var _ echo.Logger = (*Echo)(nil)
 
-// NewEcho returns a logger for echo
 func NewEcho() *Echo {
 	return &Echo{
-		logger: New(),
+		logger: globalLogger,
 	}
 }
 
-func (l *Echo) SetAccessLogExtraMessages(e func(c echo.Context) []KeyValue) {
-	l.accessLogExtraMessages = e
+func NewEchoWith(logger *Logger) *Echo {
+	return &Echo{
+		logger: logger,
+	}
 }
 
 func (l *Echo) SetDynamicPrefix(prefix func() Format) {
@@ -218,29 +208,20 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			}
 			stop := time.Now()
 
-			var ex []any
-			if l.accessLogExtraMessages != nil {
-				ex = lo.FlatMap(l.accessLogExtraMessages(c), func(k KeyValue, _ int) []any { return k.interfaces() })
-			}
-
-			globalLogger.logger.Infow(
+			l.logger.Infow(
 				"Handled request",
-				append(
-					[]any{
-						"remote_ip", c.RealIP(),
-						"host", req.Host,
-						"uri", req.RequestURI,
-						"method", req.Method,
-						"path", req.URL.Path,
-						"referer", req.Referer(),
-						"user_agent", req.UserAgent(),
-						"status", res.Status,
-						"latency", stop.Sub(start).Microseconds(),
-						"latency_human", stop.Sub(start).String(),
-						"bytes_in", req.ContentLength,
-						"bytes_out", res.Size,
-					},
-					ex...),
+				"remote_ip", c.RealIP(),
+				"host", req.Host,
+				"uri", req.RequestURI,
+				"method", req.Method,
+				"path", req.URL.Path,
+				"referer", req.Referer(),
+				"user_agent", req.UserAgent(),
+				"status", res.Status,
+				"latency", stop.Sub(start).Microseconds(),
+				"latency_human", stop.Sub(start).String(),
+				"bytes_in", req.ContentLength,
+				"bytes_out", res.Size,
 			)
 			return nil
 		}

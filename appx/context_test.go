@@ -46,3 +46,22 @@ func TestContextMiddlewareBy(t *testing.T) {
 	body = string(lo.Must(io.ReadAll(res.Body)))
 	assert.Equal(t, "aaa", body)
 }
+
+func TestRequestIDMiddleware(t *testing.T) {
+	ts := httptest.NewServer(RequestIDMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(GetRequestID(r.Context())))
+	})))
+	defer ts.Close()
+
+	req := lo.Must(http.NewRequest(http.MethodGet, ts.URL, nil))
+	req.Header.Set("X-Request-ID", "aaa")
+	res := lo.Must(http.DefaultClient.Do(req))
+	body := string(lo.Must(io.ReadAll(res.Body)))
+	assert.Equal(t, "aaa", body)
+
+	req = lo.Must(http.NewRequest(http.MethodGet, ts.URL, nil))
+	req.Header.Set("x-cloud-trace-context", "xxx")
+	res = lo.Must(http.DefaultClient.Do(req))
+	body = string(lo.Must(io.ReadAll(res.Body)))
+	assert.Equal(t, "xxx", body)
+}
