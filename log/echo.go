@@ -208,7 +208,11 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			}
 			stop := time.Now()
 
-			l.logger.Infow(
+			logger := GetLoggerFromContext(c.Request().Context())
+			if logger == nil {
+				logger = l.logger
+			}
+			logger.Infow(
 				"Handled request",
 				"remote_ip", c.RealIP(),
 				"host", req.Host,
