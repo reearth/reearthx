@@ -31,7 +31,7 @@ func LoginHandler(ctx context.Context, cfg LoginHandlerConfig) func(ctx echo.Con
 	return func(ec echo.Context) error {
 		request := new(loginForm)
 		if err := ec.Bind(request); err != nil {
-			log.Errorln("auth: filed to parse login request")
+			log.Errorc(ctx, "auth: filed to parse login request")
 			return ec.Redirect(
 				http.StatusFound,
 				redirectURL(cfg.WebURL, "/login", "", "Bad request!"),
@@ -39,7 +39,7 @@ func LoginHandler(ctx context.Context, cfg LoginHandlerConfig) func(ctx echo.Con
 		}
 
 		if _, err := cfg.Storage.AuthRequestByID(ctx, request.AuthRequestID); err != nil {
-			log.Errorf("auth: filed to parse login request: %s\n", err)
+			log.Errorfc(ctx, "auth: filed to parse login request: %s\n", err)
 			return ec.Redirect(
 				http.StatusFound,
 				redirectURL(cfg.WebURL, "/login", "", "Bad request!"),
@@ -47,7 +47,7 @@ func LoginHandler(ctx context.Context, cfg LoginHandlerConfig) func(ctx echo.Con
 		}
 
 		if len(request.Email) == 0 || len(request.Password) == 0 {
-			log.Errorln("auth: one of credentials are not provided")
+			log.Errorc(ctx, "auth: one of credentials are not provided")
 			return ec.Redirect(
 				http.StatusFound,
 				redirectURL(cfg.WebURL, "/login", request.AuthRequestID, "Bad request!"),
@@ -60,7 +60,7 @@ func LoginHandler(ctx context.Context, cfg LoginHandlerConfig) func(ctx echo.Con
 			if err == nil && sub == "" {
 				err = errors.New("empty sub")
 			}
-			log.Errorf("auth: wrong credentials: %s\n", err)
+			log.Errorfc(ctx, "auth: wrong credentials: %s\n", err)
 			return ec.Redirect(
 				http.StatusFound,
 				redirectURL(cfg.WebURL, "/login", request.AuthRequestID, "Login failed; Invalid s ID or password."),
@@ -69,7 +69,7 @@ func LoginHandler(ctx context.Context, cfg LoginHandlerConfig) func(ctx echo.Con
 
 		// Complete the auth request && set the subject
 		if err := cfg.Storage.(*Storage).CompleteAuthRequest(ctx, request.AuthRequestID, sub); err != nil {
-			log.Errorf("auth: failed to complete the auth request: %s\n", err)
+			log.Errorfc(ctx, "auth: failed to complete the auth request: %s\n", err)
 			return ec.Redirect(
 				http.StatusFound,
 				redirectURL(cfg.WebURL, "/login", request.AuthRequestID, "Bad request!"),

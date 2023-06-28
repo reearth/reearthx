@@ -24,7 +24,7 @@ type awsMailer struct {
 func NewSES(ctx context.Context, senderName, senderEmail string) Mailer {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Errorf("mail: filed to load ses config: %+v\n", err)
+		log.Errorfc(ctx, "mail: filed to load ses config: %+v\n", err)
 		return nil
 	}
 
@@ -37,7 +37,7 @@ func NewSES(ctx context.Context, senderName, senderEmail string) Mailer {
 	}
 }
 
-func (m *awsMailer) SendMail(tos []Contact, subject, plainContent, htmlContent string) error {
+func (m *awsMailer) SendMail(ctx context.Context, tos []Contact, subject, plainContent, htmlContent string) error {
 	mail := &ses.SendEmailInput{
 		Destination: &types.Destination{
 			CcAddresses: []string{},
@@ -64,13 +64,13 @@ func (m *awsMailer) SendMail(tos []Contact, subject, plainContent, htmlContent s
 		Source: aws.String(formatContact(m.sender)),
 	}
 
-	_, err := m.client.SendEmail(context.TODO(), mail)
+	_, err := m.client.SendEmail(ctx, mail)
 
 	if err != nil {
 		return err
 	}
 
-	logMail(tos, subject)
+	logMail(ctx, tos, subject)
 	return nil
 }
 

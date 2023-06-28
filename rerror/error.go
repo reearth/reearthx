@@ -1,6 +1,7 @@
 package rerror
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -37,28 +38,48 @@ func IsInternal(err error) bool {
 }
 
 func OrInternal[T comparable](v T, err error) (r T, _ error) {
-	return util.OrError(v, errInternalBy(errInternal, err))
+	//nolint:staticcheck // nil context is ok
+	return OrInternalWith[T](nil, v, err)
+}
+
+func OrInternalWith[T comparable](ctx context.Context, v T, err error) (r T, _ error) {
+	return util.OrError(v, errInternalBy(ctx, errInternal, err))
 }
 
 func ErrInternalBy(err error) error {
-	return errInternalBy(errInternal, err)
+	//nolint:staticcheck // nil context is ok
+	return ErrInternalByWithContext(nil, err)
+}
+
+func ErrInternalByWithContext(ctx context.Context, err error) error {
+	return errInternalBy(ctx, errInternal, err)
 }
 
 func ErrInternalByWith(label string, err error) error {
-	return errInternalBy(errors.New(label), err)
+	//nolint:staticcheck // nil context is ok
+	return ErrInternalByWithContextAndLabel(nil, label, err)
+}
+
+func ErrInternalByWithContextAndLabel(ctx context.Context, label string, err error) error {
+	return errInternalBy(ctx, errors.New(label), err)
 }
 
 func ErrInternalByWithError(label, err error) error {
-	return errInternalBy(label, err)
+	//nolint:staticcheck // nil context is ok
+	return ErrInternalByWithContextAndError(nil, label, err)
 }
 
-func errInternalBy(label, err error) *Error {
+func ErrInternalByWithContextAndError(ctx context.Context, label, err error) error {
+	return errInternalBy(ctx, label, err)
+}
+
+func errInternalBy(ctx context.Context, label, err error) *Error {
 	if err == nil {
 		return nil
 	}
 
-	log.Errorf("%s: %s", label.Error(), err.Error())
-	log.Errorf("STACK: \n%s", Stack())
+	log.Errorfc(ctx, "%s: %s", label.Error(), err.Error())
+	log.Errorfc(ctx, "STACK: \n%s", Stack())
 
 	return &Error{
 		Label:  label,

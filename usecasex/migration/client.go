@@ -66,7 +66,7 @@ func (c Client[C]) Migrate(ctx context.Context) (err error) {
 
 	tr := c.client.Transaction()
 	for _, m := range nextMigrations {
-		log.Infof("DB migration: %d\n", m)
+		log.Infofc(ctx, "DB migration: %d\n", m)
 		if err := usecasex.DoTransaction(ctx, tr, c.retry, func(ctx context.Context) error {
 			if err := c.migrations[m](ctx, c.client); err != nil {
 				return err

@@ -1,6 +1,7 @@
 package mailer
 
 import (
+	"context"
 	"net/smtp"
 
 	"github.com/reearth/reearthx/i18n"
@@ -25,7 +26,7 @@ func NewSMTP(host, port, username, email, password string) Mailer {
 	}
 }
 
-func (m *smtpMailer) SendMail(to []Contact, subject, plainContent, htmlContent string) error {
+func (m *smtpMailer) SendMail(ctx context.Context, to []Contact, subject, plainContent, htmlContent string) error {
 	emails, err := verifyEmails(to)
 	if err != nil {
 		return err
@@ -53,6 +54,6 @@ func (m *smtpMailer) SendMail(to []Contact, subject, plainContent, htmlContent s
 		return err
 	}
 
-	logMail(to, subject)
+	logMail(ctx, to, subject)
 	return nil
 }

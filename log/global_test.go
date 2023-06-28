@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLog(t *testing.T) {
+func TestGlobalLogger(t *testing.T) {
 	w := &bytes.Buffer{}
 	SetOutput(w)
 	t.Cleanup(func() {

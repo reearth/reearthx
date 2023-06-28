@@ -230,6 +230,7 @@ func (i *User) sendVerificationMail(ctx context.Context, u *user.User, vr *user.
 	}
 
 	if err := i.gateways.Mailer.SendMail(
+		ctx,
 		[]mailer.Contact{
 			{
 				Email: u.Email(),
