@@ -132,11 +132,6 @@ func (l *Logger) ClearPrefix() *Logger {
 	}
 }
 
-func (l *Logger) Tracef(format string, args ...any) {
-	f := l.format(format, args...)
-	l.logger.Debugf(f.Format, f.Args...)
-}
-
 func (l *Logger) Debugf(format string, args ...any) {
 	f := l.format(format, args...)
 	l.logger.Debugf(f.Format, f.Args...)
@@ -172,40 +167,32 @@ func (l *Logger) Panicf(format string, args ...any) {
 	l.logger.Panicf(f.Format, f.Args...)
 }
 
-func (l *Logger) Tracew(msg string, keyAndValues ...any) {
-	l.logger.Debugf(l.msg(msg), keyAndValues...)
-}
-
 func (l *Logger) Debugw(msg string, keyAndValues ...any) {
-	l.logger.Debugf(l.msg(msg), keyAndValues...)
+	l.logger.Debugw(l.msg(msg), keyAndValues...)
 }
 
 func (l *Logger) Infow(msg string, keyAndValues ...any) {
-	l.logger.Infof(l.msg(msg), keyAndValues...)
+	l.logger.Infow(l.msg(msg), keyAndValues...)
 }
 
 func (l *Logger) Printw(msg string, keyAndValues ...any) {
-	l.logger.Infof(l.msg(msg), keyAndValues...)
+	l.logger.Infow(l.msg(msg), keyAndValues...)
 }
 
 func (l *Logger) Warnw(msg string, keyAndValues ...any) {
-	l.logger.Warnf(l.msg(msg), keyAndValues...)
+	l.logger.Warnw(l.msg(msg), keyAndValues...)
 }
 
 func (l *Logger) Errorw(msg string, keyAndValues ...any) {
-	l.logger.Errorf(l.msg(msg), keyAndValues...)
+	l.logger.Errorw(l.msg(msg), keyAndValues...)
 }
 
 func (l *Logger) Fatalw(msg string, keyAndValues ...any) {
-	l.logger.Fatalf(l.msg(msg), keyAndValues...)
+	l.logger.Fatalw(l.msg(msg), keyAndValues...)
 }
 
 func (l *Logger) Panicw(msg string, keyAndValues ...any) {
 	l.logger.Panicw(l.msg(msg), keyAndValues...)
-}
-
-func (l *Logger) Trace(args ...any) {
-	l.logger.Debug(l.args(args)...)
 }
 
 func (l *Logger) Debug(args ...any) {

@@ -48,21 +48,20 @@ type SESConfig struct {
 	Name  string
 }
 
-func New(ctx context.Context, conf *Config) Mailer {
-	if conf.Mailer == "sendgrid" {
-		log.Infoc(ctx, "mailer: sendgrid is used")
-		return NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
+func New(ctx context.Context, conf *Config) (m Mailer) {
+	mt := conf.Mailer
+	if mt == "sendgrid" {
+		m = NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
+	} else if mt == "smtp" {
+		m = NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
+	} else if mt == "ses" {
+		m = NewSES(ctx, conf.SES.Name, conf.SES.Email)
+	} else {
+		mt = "logger"
+		m = NewLogger()
 	}
-	if conf.Mailer == "smtp" {
-		log.Infoc(ctx, "mailer: smtp is used")
-		return NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
-	}
-	if conf.Mailer == "ses" {
-		log.Infoc(ctx, "mailer: aws ses is used")
-		return NewSES(ctx, conf.SES.Name, conf.SES.Email)
-	}
-	log.Infoc(ctx, "mailer: logger is used")
-	return NewLogger()
+	log.Infofc(ctx, "mailer: %s is used", mt)
+	return
 }
 
 func verifyEmails(contacts []Contact) ([]string, error) {
