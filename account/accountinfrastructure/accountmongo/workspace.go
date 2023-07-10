@@ -24,6 +24,10 @@ func NewWorkspace(client *mongox.Client) accountrepo.Workspace {
 	return &Workspace{client: client.WithCollection("workspace")}
 }
 
+func NewWorkspaceCompat(client *mongox.Client) accountrepo.Workspace {
+	return &Workspace{client: client.WithCollection("team")}
+}
+
 func (r *Workspace) Init() error {
 	return createIndexes(context.Background(), r.client, nil, workspaceUniqueIndexes)
 }
