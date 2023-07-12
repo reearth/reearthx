@@ -162,7 +162,7 @@ func (i *User) UpdateMe(ctx context.Context, p accountinterfaces.UpdateMeParam, 
 				if a.Provider != "auth0" {
 					continue
 				}
-				if _, err := i.gateways.Authenticator.UpdateUser(accountgateway.AuthenticatorUpdateUserParam{
+				if _, err := i.gateways.Authenticator.UpdateUser(ctx, accountgateway.AuthenticatorUpdateUserParam{
 					ID:       a.Sub,
 					Name:     p.Name,
 					Email:    p.Email,
