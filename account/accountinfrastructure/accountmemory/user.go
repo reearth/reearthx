@@ -65,6 +65,20 @@ func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, erro
 	}), rerror.ErrNotFound)
 }
 
+func (r *User) FindByAuth0Sub(ctx context.Context, auth0sub string) (*user.User, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	if auth0sub == "" {
+		return nil, rerror.ErrInvalidParams
+	}
+
+	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+		return value.ContainAuth(user.AuthFrom(auth0sub))
+	}), rerror.ErrNotFound)
+}
+
 func (r *User) FindByPasswordResetRequest(ctx context.Context, token string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
