@@ -51,13 +51,9 @@ func (r *User) FindByID(ctx context.Context, id2 accountdomain.UserID) (*user.Us
 
 func (r *User) FindBySub(ctx context.Context, sub string) (*user.User, error) {
 	return r.findOne(ctx, bson.M{
-		"$or": []bson.M{
-			{
-				"subs": bson.M{
-					"$elemMatch": bson.M{
-						"$eq": sub,
-					},
-				},
+		"subs": bson.M{
+			"$elemMatch": bson.M{
+				"$eq": sub,
 			},
 		},
 	})
