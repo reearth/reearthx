@@ -61,7 +61,7 @@ func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, erro
 			},
 			{"auth0sub": auth0sub},
 			{
-				"auth0sublist": bson.M{
+				"auth0sublist": bson.M{ //compat
 					"$elemMatch": bson.M{
 						"$eq": auth0sub,
 					},
