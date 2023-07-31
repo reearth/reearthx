@@ -54,7 +54,7 @@ func (u *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) 
 	return FragmentToUser(res.SignUp.User.FragmentUser)
 }
 
-func (u *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOIDC) (*user.User, error) {
+func (u *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOIDCParam) (*user.User, error) {
 	input := SignupOIDCInput{
 		Name:   param.Name,
 		Email:  param.Email,
