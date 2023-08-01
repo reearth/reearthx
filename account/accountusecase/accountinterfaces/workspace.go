@@ -8,6 +8,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/samber/lo"
 )
 
 var (
@@ -30,4 +31,27 @@ type Workspace interface {
 	RemoveUserMember(context.Context, accountdomain.WorkspaceID, accountdomain.UserID, *accountusecase.Operator) (*workspace.Workspace, error)
 	RemoveIntegration(context.Context, accountdomain.WorkspaceID, accountdomain.IntegrationID, *accountusecase.Operator) (*workspace.Workspace, error)
 	Remove(context.Context, accountdomain.WorkspaceID, *accountusecase.Operator) error
+}
+
+func FilterWorkspaces(workspaces []*workspace.Workspace, operator *accountusecase.Operator, err error, omitNil bool) ([]*workspace.Workspace, error) {
+	if err != nil {
+		return nil, err
+	}
+	if operator == nil {
+		return make([]*workspace.Workspace, len(workspaces)), nil
+	}
+
+	for i, t := range workspaces {
+		if t == nil || !operator.IsReadableWorkspace(t.ID()) {
+			workspaces[i] = nil
+		}
+	}
+
+	if omitNil {
+		workspaces = lo.Filter(workspaces, func(t *workspace.Workspace, _ int) bool {
+			return t != nil
+		})
+	}
+
+	return workspaces, nil
 }

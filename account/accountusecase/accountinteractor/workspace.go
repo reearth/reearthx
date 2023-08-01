@@ -26,7 +26,7 @@ func NewWorkspace(r *accountrepo.Container) accountinterfaces.Workspace {
 func (i *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
 		res, err := i.repos.Workspace.FindByIDs(ctx, ids)
-		res2, err := i.filterWorkspaces(res, operator, err)
+		res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, false)
 		return res2, err
 	})
 }
@@ -34,7 +34,7 @@ func (i *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList
 func (i *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
 		res, err := i.repos.Workspace.FindByUser(ctx, id)
-		res2, err := i.filterWorkspaces(res, operator, err)
+		res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, true)
 		return res2, err
 	})
 }
@@ -301,19 +301,4 @@ func (i *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, op
 
 		return nil
 	})
-}
-
-func (i *Workspace) filterWorkspaces(workspaces []*workspace.Workspace, operator *accountusecase.Operator, err error) ([]*workspace.Workspace, error) {
-	if err != nil {
-		return nil, err
-	}
-	if operator == nil {
-		return make([]*workspace.Workspace, len(workspaces)), nil
-	}
-	for i, t := range workspaces {
-		if t == nil || !operator.IsReadableWorkspace(t.ID()) {
-			workspaces[i] = nil
-		}
-	}
-	return workspaces, nil
 }
