@@ -36,7 +36,11 @@ func (o *Operator) AllReadableWorkspaces() accountdomain.WorkspaceIDList {
 }
 
 func (o *Operator) AllWritableWorkspaces() accountdomain.WorkspaceIDList {
-	return append(o.WritableWorkspaces, o.AllOwningWorkspaces()...)
+	return append(o.WritableWorkspaces, o.AllMaintainingWorkspaces()...)
+}
+
+func (o *Operator) AllMaintainingWorkspaces() accountdomain.WorkspaceIDList {
+	return append(o.MaintainableWorkspaces, o.AllOwningWorkspaces()...)
 }
 
 func (o *Operator) AllOwningWorkspaces() accountdomain.WorkspaceIDList {
@@ -51,14 +55,12 @@ func (o *Operator) IsWritableWorkspace(ws ...accountdomain.WorkspaceID) bool {
 	return o.AllWritableWorkspaces().Intersect(ws).Len() > 0
 }
 
-func (o *Operator) IsOwningWorkspace(ws ...accountdomain.WorkspaceID) bool {
-	return o.AllOwningWorkspaces().Intersect(ws).Len() > 0
-}
 func (o *Operator) IsMaintainingWorkspace(workspace ...accountdomain.WorkspaceID) bool {
 	return o.AllMaintainingWorkspaces().Intersect(workspace).Len() > 0
 }
-func (o *Operator) AllMaintainingWorkspaces() accountdomain.WorkspaceIDList {
-	return append(o.MaintainableWorkspaces, o.AllOwningWorkspaces()...)
+
+func (o *Operator) IsOwningWorkspace(ws ...accountdomain.WorkspaceID) bool {
+	return o.AllOwningWorkspaces().Intersect(ws).Len() > 0
 }
 
 func (o *Operator) AddNewWorkspace(ws accountdomain.WorkspaceID) {
