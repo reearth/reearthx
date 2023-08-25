@@ -12,8 +12,6 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/golang-jwt/jwt"
-	"github.com/reearth/reearthx/log"
-	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 )
 
@@ -36,7 +34,7 @@ type JWTProvider struct {
 	TTL     *int
 }
 
-func (p JWTProvider) validator() (*validator.Validator, error) {
+func (p JWTProvider) validator() (JWTValidator, error) {
 	issuerURL, err := url.Parse(p.ISS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse the issuer url: %w", err)
@@ -64,7 +62,7 @@ func (p JWTProvider) validator() (*validator.Validator, error) {
 		aud = []string{}
 	}
 
-	return validator.New(
+	return NewJWTValidatorWithError(
 		provider.KeyFunc,
 		algorithm,
 		issuerURL.String(),
@@ -84,29 +82,6 @@ type customClaims struct {
 
 func (c *customClaims) Validate(_ context.Context) error {
 	return nil
-}
-
-type MultiValidator []*validator.Validator
-
-func NewMultiValidator(providers []JWTProvider) (MultiValidator, error) {
-	return util.TryMap(providers, func(p JWTProvider) (*validator.Validator, error) {
-		return p.validator()
-	})
-}
-
-// ValidateToken Trys to validate the token with each validator
-// NOTE: the last validation error only is returned
-func (mv MultiValidator) ValidateToken(ctx context.Context, tokenString string) (res interface{}, err error) {
-	for _, v := range mv {
-		res, err = v.ValidateToken(ctx, tokenString)
-		if err == nil {
-			return
-		}
-	}
-
-	log.Errorfc(ctx, "auth: invalid JWT: %v", err)
-	log.Debugfc(ctx, "auth: JWT: %s", tokenString)
-	return
 }
 
 // AuthInfoMiddleware loads claim from context and attach the user info.
@@ -139,7 +114,7 @@ func AuthInfoMiddleware(key any) func(http.Handler) http.Handler {
 }
 
 func AuthMiddleware(providers []JWTProvider, key any, optional bool) (func(http.Handler) http.Handler, error) {
-	v, err := NewMultiValidator(providers)
+	v, err := NewJWTMultipleValidator(providers)
 	if err != nil {
 		return nil, err
 	}
