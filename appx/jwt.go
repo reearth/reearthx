@@ -12,6 +12,7 @@ import (
 	"github.com/auth0/go-jwt-middleware/v2/jwks"
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/golang-jwt/jwt"
+	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 )
@@ -102,6 +103,9 @@ func (mv MultiValidator) ValidateToken(ctx context.Context, tokenString string) 
 			return
 		}
 	}
+
+	log.Errorfc(ctx, "auth: invalid JWT: %v", err)
+	log.Debugfc(ctx, "auth: JWT: %s", tokenString)
 	return
 }
 
