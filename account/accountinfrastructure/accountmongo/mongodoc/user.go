@@ -19,7 +19,7 @@ type UserDocument struct {
 	Email         string
 	Subs          []string
 	Workspace     string
-	Team          string
+	Team          string `bson:",omitempty"`
 	Lang          string
 	Theme         string
 	Password      []byte
