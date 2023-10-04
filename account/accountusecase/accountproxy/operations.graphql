@@ -131,20 +131,6 @@ query FindByUser($userId: ID!) {
     }
 }
 
-query FetchPolicy($policyId: [ID!]!) {
-    fetchPolicy(policyId: $policyId) {
-        id
-        name
-        projectCount
-        memberCount
-        publishedProjectCount
-        layerCount
-        assetStorageSize
-        datasetSchemaCount
-        datasetCount
-    }
-}
-
 mutation CreateWorkspace($input: CreateWorkspaceInput!) {
     createWorkspace(input: $input) {
         workspace{...FragmentWorkspace}
@@ -198,5 +184,3 @@ mutation UpdateIntegrationOfWorkspace($input: UpdateIntegrationOfWorkspaceInput!
         workspace{...FragmentWorkspace}
     }
 }
-
-

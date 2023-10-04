@@ -32,18 +32,6 @@ enum Role {
     MAINTAINER
 }
 
-type Policy {
-    id: ID!
-    name: String!
-    projectCount: Int
-    memberCount: Int
-    publishedProjectCount: Int
-    layerCount: Int
-    assetStorageSize: Int
-    datasetSchemaCount: Int
-    datasetCount: Int
-}
-
 input CreateWorkspaceInput {
     name: String!
 }
@@ -123,9 +111,7 @@ type DeleteWorkspacePayload {
 
 extend type Query {
   findByUser(userId: ID!): [Workspace]
-  fetchPolicy(policyId: [ID!]!): [Policy]
 }
-
 
 extend type Mutation {
     createWorkspace(input: CreateWorkspaceInput!): CreateWorkspacePayload

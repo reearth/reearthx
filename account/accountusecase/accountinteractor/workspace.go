@@ -39,13 +39,6 @@ func (i *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID, ope
 	})
 }
 
-func (i *Workspace) FetchPolicy(ctx context.Context, ids []workspace.PolicyID, operator *accountusecase.Operator) ([]*workspace.Policy, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Policy, error) {
-		res, err := i.repos.Policy.FindByIDs(ctx, ids)
-		return res, err
-	})
-}
-
 func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdomain.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator

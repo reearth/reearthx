@@ -453,54 +453,6 @@ func (v *DeleteWorkspaceResponse) GetDeleteWorkspace() DeleteWorkspaceDeleteWork
 	return v.DeleteWorkspace
 }
 
-// FetchPolicyFetchPolicy includes the requested fields of the GraphQL type Policy.
-type FetchPolicyFetchPolicy struct {
-	Id                    string `json:"id"`
-	Name                  string `json:"name"`
-	ProjectCount          int    `json:"projectCount"`
-	MemberCount           int    `json:"memberCount"`
-	PublishedProjectCount int    `json:"publishedProjectCount"`
-	LayerCount            int    `json:"layerCount"`
-	AssetStorageSize      int    `json:"assetStorageSize"`
-	DatasetSchemaCount    int    `json:"datasetSchemaCount"`
-	DatasetCount          int    `json:"datasetCount"`
-}
-
-// GetId returns FetchPolicyFetchPolicy.Id, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetId() string { return v.Id }
-
-// GetName returns FetchPolicyFetchPolicy.Name, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetName() string { return v.Name }
-
-// GetProjectCount returns FetchPolicyFetchPolicy.ProjectCount, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetProjectCount() int { return v.ProjectCount }
-
-// GetMemberCount returns FetchPolicyFetchPolicy.MemberCount, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetMemberCount() int { return v.MemberCount }
-
-// GetPublishedProjectCount returns FetchPolicyFetchPolicy.PublishedProjectCount, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetPublishedProjectCount() int { return v.PublishedProjectCount }
-
-// GetLayerCount returns FetchPolicyFetchPolicy.LayerCount, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetLayerCount() int { return v.LayerCount }
-
-// GetAssetStorageSize returns FetchPolicyFetchPolicy.AssetStorageSize, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetAssetStorageSize() int { return v.AssetStorageSize }
-
-// GetDatasetSchemaCount returns FetchPolicyFetchPolicy.DatasetSchemaCount, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetDatasetSchemaCount() int { return v.DatasetSchemaCount }
-
-// GetDatasetCount returns FetchPolicyFetchPolicy.DatasetCount, and is useful for accessing the field via an interface.
-func (v *FetchPolicyFetchPolicy) GetDatasetCount() int { return v.DatasetCount }
-
-// FetchPolicyResponse is returned by FetchPolicy on success.
-type FetchPolicyResponse struct {
-	FetchPolicy []FetchPolicyFetchPolicy `json:"fetchPolicy"`
-}
-
-// GetFetchPolicy returns FetchPolicyResponse.FetchPolicy, and is useful for accessing the field via an interface.
-func (v *FetchPolicyResponse) GetFetchPolicy() []FetchPolicyFetchPolicy { return v.FetchPolicy }
-
 // FindByUserFindByUserWorkspace includes the requested fields of the GraphQL type Workspace.
 type FindByUserFindByUserWorkspace struct {
 	FragmentWorkspace `json:"-"`
@@ -2329,16 +2281,16 @@ func (v *UpdateWorkspaceUpdateWorkspaceUpdateWorkspacePayloadWorkspace) __premar
 // UserByIDsNodesNode includes the requested fields of the GraphQL interface Node.
 //
 // UserByIDsNodesNode is implemented by the following types:
-// UserByIDsNodesUser
 // UserByIDsNodesWorkspace
+// UserByIDsNodesUser
 type UserByIDsNodesNode interface {
 	implementsGraphQLInterfaceUserByIDsNodesNode()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() string
 }
 
-func (v *UserByIDsNodesUser) implementsGraphQLInterfaceUserByIDsNodesNode()      {}
 func (v *UserByIDsNodesWorkspace) implementsGraphQLInterfaceUserByIDsNodesNode() {}
+func (v *UserByIDsNodesUser) implementsGraphQLInterfaceUserByIDsNodesNode()      {}
 
 func __unmarshalUserByIDsNodesNode(b []byte, v *UserByIDsNodesNode) error {
 	if string(b) == "null" {
@@ -2354,11 +2306,11 @@ func __unmarshalUserByIDsNodesNode(b []byte, v *UserByIDsNodesNode) error {
 	}
 
 	switch tn.TypeName {
-	case "User":
-		*v = new(UserByIDsNodesUser)
-		return json.Unmarshal(b, *v)
 	case "Workspace":
 		*v = new(UserByIDsNodesWorkspace)
+		return json.Unmarshal(b, *v)
+	case "User":
+		*v = new(UserByIDsNodesUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -2373,20 +2325,20 @@ func __marshalUserByIDsNodesNode(v *UserByIDsNodesNode) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *UserByIDsNodesUser:
-		typename = "User"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*UserByIDsNodesUser
-		}{typename, v}
-		return json.Marshal(result)
 	case *UserByIDsNodesWorkspace:
 		typename = "Workspace"
 
 		result := struct {
 			TypeName string `json:"__typename"`
 			*UserByIDsNodesWorkspace
+		}{typename, v}
+		return json.Marshal(result)
+	case *UserByIDsNodesUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*UserByIDsNodesUser
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -2640,16 +2592,16 @@ func (v *VerifyUserVerifyUserUserPayloadUser) __premarshalJSON() (*__premarshalV
 // WorkspaceByIDsNodesNode includes the requested fields of the GraphQL interface Node.
 //
 // WorkspaceByIDsNodesNode is implemented by the following types:
-// WorkspaceByIDsNodesUser
 // WorkspaceByIDsNodesWorkspace
+// WorkspaceByIDsNodesUser
 type WorkspaceByIDsNodesNode interface {
 	implementsGraphQLInterfaceWorkspaceByIDsNodesNode()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() string
 }
 
-func (v *WorkspaceByIDsNodesUser) implementsGraphQLInterfaceWorkspaceByIDsNodesNode()      {}
 func (v *WorkspaceByIDsNodesWorkspace) implementsGraphQLInterfaceWorkspaceByIDsNodesNode() {}
+func (v *WorkspaceByIDsNodesUser) implementsGraphQLInterfaceWorkspaceByIDsNodesNode()      {}
 
 func __unmarshalWorkspaceByIDsNodesNode(b []byte, v *WorkspaceByIDsNodesNode) error {
 	if string(b) == "null" {
@@ -2665,11 +2617,11 @@ func __unmarshalWorkspaceByIDsNodesNode(b []byte, v *WorkspaceByIDsNodesNode) er
 	}
 
 	switch tn.TypeName {
-	case "User":
-		*v = new(WorkspaceByIDsNodesUser)
-		return json.Unmarshal(b, *v)
 	case "Workspace":
 		*v = new(WorkspaceByIDsNodesWorkspace)
+		return json.Unmarshal(b, *v)
+	case "User":
+		*v = new(WorkspaceByIDsNodesUser)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -2684,14 +2636,6 @@ func __marshalWorkspaceByIDsNodesNode(v *WorkspaceByIDsNodesNode) ([]byte, error
 
 	var typename string
 	switch v := (*v).(type) {
-	case *WorkspaceByIDsNodesUser:
-		typename = "User"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*WorkspaceByIDsNodesUser
-		}{typename, v}
-		return json.Marshal(result)
 	case *WorkspaceByIDsNodesWorkspace:
 		typename = "Workspace"
 
@@ -2703,6 +2647,14 @@ func __marshalWorkspaceByIDsNodesNode(v *WorkspaceByIDsNodesNode) ([]byte, error
 			TypeName string `json:"__typename"`
 			*__premarshalWorkspaceByIDsNodesWorkspace
 		}{typename, premarshaled}
+		return json.Marshal(result)
+	case *WorkspaceByIDsNodesUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*WorkspaceByIDsNodesUser
+		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
@@ -2946,14 +2898,6 @@ type __DeleteWorkspaceInput struct {
 
 // GetInput returns __DeleteWorkspaceInput.Input, and is useful for accessing the field via an interface.
 func (v *__DeleteWorkspaceInput) GetInput() DeleteWorkspaceInput { return v.Input }
-
-// __FetchPolicyInput is used internally by genqlient
-type __FetchPolicyInput struct {
-	PolicyId []string `json:"policyId"`
-}
-
-// GetPolicyId returns __FetchPolicyInput.PolicyId, and is useful for accessing the field via an interface.
-func (v *__FetchPolicyInput) GetPolicyId() []string { return v.PolicyId }
 
 // __FindByUserInput is used internally by genqlient
 type __FindByUserInput struct {
@@ -3334,46 +3278,6 @@ mutation DeleteWorkspace ($input: DeleteWorkspaceInput!) {
 	var err error
 
 	var data DeleteWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
-
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
-	)
-
-	return &data, err
-}
-
-func FetchPolicy(
-	ctx context.Context,
-	client graphql.Client,
-	policyId []string,
-) (*FetchPolicyResponse, error) {
-	req := &graphql.Request{
-		OpName: "FetchPolicy",
-		Query: `
-query FetchPolicy ($policyId: [ID!]!) {
-	fetchPolicy(policyId: $policyId) {
-		id
-		name
-		projectCount
-		memberCount
-		publishedProjectCount
-		layerCount
-		assetStorageSize
-		datasetSchemaCount
-		datasetCount
-	}
-}
-`,
-		Variables: &__FetchPolicyInput{
-			PolicyId: policyId,
-		},
-	}
-	var err error
-
-	var data FetchPolicyResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

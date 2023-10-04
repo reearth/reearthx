@@ -4,6 +4,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/mongox"
+	"github.com/samber/lo"
 )
 
 type WorkspaceMemberDocument struct {
@@ -18,6 +19,7 @@ type WorkspaceDocument struct {
 	Members      map[string]WorkspaceMemberDocument
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
+	Policy       string `bson:",omitempty"`
 }
 
 func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
@@ -29,6 +31,7 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 			InvitedBy: m.InvitedBy.String(),
 		}
 	}
+
 	integrationsDoc := map[string]WorkspaceMemberDocument{}
 	for iId, m := range ws.Members().Integrations() {
 		integrationsDoc[iId.String()] = WorkspaceMemberDocument{
@@ -37,6 +40,7 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 			InvitedBy: m.InvitedBy.String(),
 		}
 	}
+
 	wId := ws.ID().String()
 	return &WorkspaceDocument{
 		ID:           wId,
@@ -44,6 +48,7 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		Members:      membersDoc,
 		Integrations: integrationsDoc,
 		Personal:     ws.IsPersonal(),
+		Policy:       lo.FromPtr(ws.Policy()).String(),
 	}, wId
 }
 
@@ -71,6 +76,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 			}
 		}
 	}
+
 	integrations := map[accountdomain.IntegrationID]workspace.Member{}
 	if d.Integrations != nil {
 		for iId, integrationDoc := range d.Integrations {
@@ -85,12 +91,19 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 			}
 		}
 	}
+
+	var policy *workspace.PolicyID
+	if d.Policy != "" {
+		policy = workspace.PolicyID(d.Policy).Ref()
+	}
+
 	return workspace.New().
 		ID(tid).
 		Name(d.Name).
 		Members(members).
 		Integrations(integrations).
 		Personal(d.Personal).
+		Policy(policy).
 		Build()
 }
 

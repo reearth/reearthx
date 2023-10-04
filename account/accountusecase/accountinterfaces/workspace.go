@@ -21,7 +21,6 @@ var (
 type Workspace interface {
 	Fetch(context.Context, accountdomain.WorkspaceIDList, *accountusecase.Operator) ([]*workspace.Workspace, error)
 	FindByUser(context.Context, accountdomain.UserID, *accountusecase.Operator) ([]*workspace.Workspace, error)
-	FetchPolicy(context.Context, []workspace.PolicyID, *accountusecase.Operator) ([]*workspace.Policy, error)
 	Create(context.Context, string, accountdomain.UserID, *accountusecase.Operator) (*workspace.Workspace, error)
 	Update(context.Context, accountdomain.WorkspaceID, string, *accountusecase.Operator) (*workspace.Workspace, error)
 	AddUserMember(context.Context, accountdomain.WorkspaceID, map[accountdomain.UserID]workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)

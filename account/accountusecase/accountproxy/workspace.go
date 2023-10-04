@@ -43,18 +43,6 @@ func (w *Workspace) FindByUser(ctx context.Context, userID accountdomain.UserID,
 	return ToWorkspaces(ws)
 }
 
-func (w *Workspace) FetchPolicy(ctx context.Context, policyID []workspace.PolicyID, op *accountusecase.Operator) ([]*workspace.Policy, error) {
-	policyIDs := make([]string, len(policyID))
-	for i, id := range policyID {
-		policyIDs[i] = id.String()
-	}
-	res, err := FetchPolicy(ctx, w.gql, policyIDs)
-	if err != nil {
-		return nil, err
-	}
-	return ToPolicies(res), nil
-}
-
 func (w *Workspace) Create(ctx context.Context, name string, userID accountdomain.UserID, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := CreateWorkspace(ctx, w.gql, CreateWorkspaceInput{Name: name})
 	if err != nil {

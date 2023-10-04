@@ -96,24 +96,3 @@ func ToRole(r Role) workspace.Role {
 		return workspace.RoleOwner
 	}
 }
-
-func ToPolicies(r *FetchPolicyResponse) []*workspace.Policy {
-	ps := make([]*workspace.Policy, len(r.FetchPolicy))
-	for i, p := range r.FetchPolicy {
-		as := int64(p.AssetStorageSize)
-		op := workspace.PolicyOption{
-			ID:                    workspace.PolicyID(p.Id),
-			Name:                  p.Name,
-			ProjectCount:          &p.ProjectCount,
-			MemberCount:           &p.MemberCount,
-			PublishedProjectCount: &p.PublishedProjectCount,
-			LayerCount:            &p.LayerCount,
-			AssetStorageSize:      &as,
-			DatasetSchemaCount:    &p.DatasetSchemaCount,
-			DatasetCount:          &p.DatasetCount,
-		}
-		ps[i] = workspace.NewPolicy(op)
-
-	}
-	return ps
-}

@@ -11,7 +11,6 @@ import (
 type Container struct {
 	User        User
 	Workspace   Workspace
-	Policy      Policy
 	Transaction usecasex.Transaction
 }
 
