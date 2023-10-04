@@ -12,3 +12,5 @@ func SimpleFrom(u *User) *Simple {
 	}
 	return &Simple{u.ID(), u.Name(), u.Email()}
 }
+
+type SimpleList []*Simple

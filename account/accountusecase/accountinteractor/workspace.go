@@ -4,12 +4,12 @@ import (
 	"context"
 	"strings"
 
-	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
+	"github.com/samber/lo"
 	"golang.org/x/exp/maps"
 )
 
@@ -27,19 +27,17 @@ func NewWorkspace(r *accountrepo.Container, enforceMemberCount WorkspaceMemberCo
 	}
 }
 
-func (i *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
+func (i *Workspace) Fetch(ctx context.Context, ids workspace.IDList, operator *accountusecase.Operator) (workspace.List, error) {
 	res, err := i.repos.Workspace.FindByIDs(ctx, ids)
-	res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, false)
-	return res2, err
+	return filterWorkspaces(res, operator, err, false, true)
 }
 
-func (i *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
+func (i *Workspace) FindByUser(ctx context.Context, id workspace.UserID, operator *accountusecase.Operator) (workspace.List, error) {
 	res, err := i.repos.Workspace.FindByUser(ctx, id)
-	res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, true)
-	return res2, err
+	return filterWorkspaces(res, operator, err, true, true)
 }
 
-func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdomain.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -71,7 +69,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdo
 	})
 }
 
-func (i *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, name string, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) Update(ctx context.Context, id workspace.ID, name string, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -105,7 +103,7 @@ func (i *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, na
 	})
 }
 
-func (i *Workspace) AddUserMember(ctx context.Context, workspaceID accountdomain.WorkspaceID, users map[accountdomain.UserID]workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID, users map[workspace.UserID]workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -148,7 +146,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID accountdomain
 	})
 }
 
-func (i *Workspace) AddIntegrationMember(ctx context.Context, wId accountdomain.WorkspaceID, iId accountdomain.IntegrationID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) AddIntegrationMember(ctx context.Context, wId workspace.ID, iId workspace.IntegrationID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -174,7 +172,7 @@ func (i *Workspace) AddIntegrationMember(ctx context.Context, wId accountdomain.
 	})
 }
 
-func (i *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.WorkspaceID, u accountdomain.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) RemoveUserMember(ctx context.Context, id workspace.ID, u workspace.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -214,7 +212,7 @@ func (i *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.Works
 	})
 }
 
-func (i *Workspace) RemoveIntegration(ctx context.Context, wId accountdomain.WorkspaceID, iId accountdomain.IntegrationID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) RemoveIntegration(ctx context.Context, wId workspace.ID, iId workspace.IntegrationID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -240,7 +238,7 @@ func (i *Workspace) RemoveIntegration(ctx context.Context, wId accountdomain.Wor
 	})
 }
 
-func (i *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.WorkspaceID, u accountdomain.UserID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) UpdateUserMember(ctx context.Context, id workspace.ID, u workspace.UserID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -274,7 +272,7 @@ func (i *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.Works
 	})
 }
 
-func (i *Workspace) UpdateIntegration(ctx context.Context, wId accountdomain.WorkspaceID, iId accountdomain.IntegrationID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) UpdateIntegration(ctx context.Context, wId workspace.ID, iId workspace.IntegrationID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -300,7 +298,7 @@ func (i *Workspace) UpdateIntegration(ctx context.Context, wId accountdomain.Wor
 	})
 }
 
-func (i *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, operator *accountusecase.Operator) error {
+func (i *Workspace) Remove(ctx context.Context, id workspace.ID, operator *accountusecase.Operator) error {
 	if operator.User == nil {
 		return accountinterfaces.ErrInvalidOperator
 	}
@@ -328,4 +326,47 @@ func (i *Workspace) applyDefaultPolicy(ws *workspace.Workspace, o *accountusecas
 	if ws.Policy() == nil && o.DefaultPolicy != nil {
 		ws.SetPolicy(o.DefaultPolicy)
 	}
+}
+
+func filterWorkspaces(
+	workspaces workspace.List,
+	operator *accountusecase.Operator,
+	err error,
+	omitNil, applyDefaultPolicy bool,
+) (workspace.List, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	if operator == nil {
+		if omitNil {
+			return nil, nil
+		}
+		return make([]*workspace.Workspace, len(workspaces)), nil
+	}
+
+	for i, ws := range workspaces {
+		if ws == nil || !operator.IsReadableWorkspace(ws.ID()) {
+			workspaces[i] = nil
+		}
+	}
+
+	if omitNil {
+		workspaces = lo.Filter(workspaces, func(t *workspace.Workspace, _ int) bool {
+			return t != nil
+		})
+	}
+
+	if applyDefaultPolicy && operator.DefaultPolicy != nil {
+		for _, ws := range workspaces {
+			if ws == nil {
+				continue
+			}
+			if ws.Policy() == nil {
+				ws.SetPolicy(operator.DefaultPolicy)
+			}
+		}
+	}
+
+	return workspaces, nil
 }

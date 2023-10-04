@@ -3,8 +3,8 @@ package accountinterfaces
 import (
 	"context"
 
-	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
@@ -33,10 +33,10 @@ type SignupOIDCParam struct {
 }
 
 type SignupUserParam struct {
-	UserID      *accountdomain.UserID
+	UserID      *user.ID
 	Lang        *language.Tag
 	Theme       *user.Theme
-	WorkspaceID *accountdomain.WorkspaceID
+	WorkspaceID *workspace.ID
 }
 
 type SignupParam struct {
@@ -46,8 +46,8 @@ type SignupParam struct {
 	Secret      *string
 	Lang        *language.Tag
 	Theme       *user.Theme
-	UserID      *accountdomain.UserID
-	WorkspaceID *accountdomain.WorkspaceID
+	UserID      *user.ID
+	WorkspaceID *workspace.ID
 }
 
 type UserFindOrCreateParam struct {
@@ -71,28 +71,19 @@ type UpdateMeParam struct {
 }
 
 type User interface {
-	Fetch(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.User, error)
-	FetchSimple(context.Context, accountdomain.UserIDList, *accountusecase.Operator) ([]*user.Simple, error)
+	Fetch(context.Context, user.IDList, *accountusecase.Operator) (user.List, error)
+	FetchSimple(context.Context, user.IDList, *accountusecase.Operator) (user.SimpleList, error)
 	Signup(context.Context, SignupParam) (*user.User, error)
 	SignupOIDC(context.Context, SignupOIDCParam) (*user.User, error)
 	FindOrCreate(context.Context, UserFindOrCreateParam) (*user.User, error)
 	UpdateMe(context.Context, UpdateMeParam, *accountusecase.Operator) (*user.User, error)
 	RemoveMyAuth(context.Context, string, *accountusecase.Operator) (*user.User, error)
 	SearchUser(context.Context, string, *accountusecase.Operator) (*user.User, error)
-	DeleteMe(context.Context, accountdomain.UserID, *accountusecase.Operator) error
+	DeleteMe(context.Context, user.ID, *accountusecase.Operator) error
 
 	// from reearth/server
 	CreateVerification(context.Context, string) error
 	VerifyUser(context.Context, string) (*user.User, error)
 	StartPasswordReset(context.Context, string) error
 	PasswordReset(context.Context, string, string) error
-}
-
-func FilterUsers(res []*user.User, workspaces accountdomain.WorkspaceIDList, operator *accountusecase.Operator) []*user.User {
-	for k := range res {
-		if !operator.IsReadableWorkspace(workspaces...) {
-			res[k] = nil
-		}
-	}
-	return res
 }

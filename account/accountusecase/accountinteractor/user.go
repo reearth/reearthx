@@ -7,7 +7,6 @@ import (
 	"errors"
 	htmlTmpl "html/template"
 
-	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
@@ -44,14 +43,14 @@ func NewUser(r *accountrepo.Container, g *accountgateway.Container, signupSecret
 	}
 }
 
-func (i *User) Fetch(ctx context.Context, ids accountdomain.UserIDList, operator *accountusecase.Operator) ([]*user.User, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*user.User, error) {
+func (i *User) Fetch(ctx context.Context, ids user.IDList, operator *accountusecase.Operator) (user.List, error) {
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (user.List, error) {
 		res, err := i.repos.User.FindByIDs(ctx, ids)
 		if err != nil {
 			return res, err
 		}
 
-		workspaces := []accountdomain.WorkspaceID{}
+		workspaces := []workspace.ID{}
 		for _, u := range res {
 			w, err := i.repos.Workspace.FindByUser(ctx, u.ID())
 			if err != nil {
@@ -60,12 +59,11 @@ func (i *User) Fetch(ctx context.Context, ids accountdomain.UserIDList, operator
 			workspaces = append(workspaces, w.IDs()...)
 		}
 
-		// filter
-		return accountinterfaces.FilterUsers(res, workspaces, operator), nil
+		return filterUsers(res, workspaces, operator), nil
 	})
 }
 
-func (i *User) FetchSimple(ctx context.Context, ids accountdomain.UserIDList, operator *accountusecase.Operator) ([]*user.Simple, error) {
+func (i *User) FetchSimple(ctx context.Context, ids user.IDList, operator *accountusecase.Operator) (user.SimpleList, error) {
 	users, err := i.Fetch(ctx, ids, operator)
 	return lo.Map(users, func(u *user.User, _ int) *user.Simple {
 		return user.SimpleFrom(u)
@@ -371,4 +369,13 @@ func (i *User) PasswordReset(ctx context.Context, password string, token string)
 
 		return nil
 	})
+}
+
+func filterUsers(res user.List, workspaces workspace.IDList, operator *accountusecase.Operator) []*user.User {
+	for k := range res {
+		if !operator.IsReadableWorkspace(workspaces...) {
+			res[k] = nil
+		}
+	}
+	return res
 }

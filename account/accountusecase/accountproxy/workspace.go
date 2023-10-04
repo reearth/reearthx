@@ -27,11 +27,11 @@ func NewWorkspace(endpoint string, h HTTPClient) accountinterfaces.Workspace {
 	}
 }
 
-func (w *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList, op *accountusecase.Operator) ([]*workspace.Workspace, error) {
+func (w *Workspace) Fetch(ctx context.Context, ids workspace.IDList, op *accountusecase.Operator) (workspace.List, error) {
 	return WorkspaceByIDsResponseTo(WorkspaceByIDs(ctx, w.gql, ids.Strings()))
 }
 
-func (w *Workspace) FindByUser(ctx context.Context, userID accountdomain.UserID, op *accountusecase.Operator) ([]*workspace.Workspace, error) {
+func (w *Workspace) FindByUser(ctx context.Context, userID accountdomain.UserID, op *accountusecase.Operator) (workspace.List, error) {
 	res, err := FindByUser(ctx, w.gql, userID.String())
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (w *Workspace) Create(ctx context.Context, name string, userID accountdomai
 	return ToWorkspace(res.CreateWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, name string, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) Update(ctx context.Context, id workspace.ID, name string, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := UpdateWorkspace(ctx, w.gql, UpdateWorkspaceInput{WorkspaceId: id.String(), Name: name})
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (w *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, na
 	return ToWorkspace(res.UpdateWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) AddUserMember(ctx context.Context, id accountdomain.WorkspaceID, users map[accountdomain.UserID]workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) AddUserMember(ctx context.Context, id workspace.ID, users map[accountdomain.UserID]workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	members := []MemberInput{}
 	for id, role := range users {
 		members = append(members, MemberInput{UserId: id.String(), Role: Role(string(role))})
@@ -71,7 +71,7 @@ func (w *Workspace) AddUserMember(ctx context.Context, id accountdomain.Workspac
 	return ToWorkspace(res.AddUsersToWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) AddIntegrationMember(ctx context.Context, id accountdomain.WorkspaceID, integrationId accountdomain.IntegrationID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) AddIntegrationMember(ctx context.Context, id workspace.ID, integrationId workspace.IntegrationID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := AddIntegrationToWorkspace(ctx, w.gql, AddIntegrationToWorkspaceInput{WorkspaceId: id.String(), IntegrationId: integrationId.String(), Role: Role(string(role))})
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (w *Workspace) AddIntegrationMember(ctx context.Context, id accountdomain.W
 	return ToWorkspace(res.AddIntegrationToWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.WorkspaceID, userID accountdomain.UserID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) UpdateUserMember(ctx context.Context, id workspace.ID, userID accountdomain.UserID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := UpdateUserOfWorkspace(ctx, w.gql, UpdateUserOfWorkspaceInput{WorkspaceId: id.String(), UserId: userID.String(), Role: Role(string(role))})
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (w *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.Works
 	return ToWorkspace(res.UpdateUserOfWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) UpdateIntegration(ctx context.Context, id accountdomain.WorkspaceID, integrationID accountdomain.IntegrationID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) UpdateIntegration(ctx context.Context, id workspace.ID, integrationID workspace.IntegrationID, role workspace.Role, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := UpdateIntegrationOfWorkspace(ctx, w.gql, UpdateIntegrationOfWorkspaceInput{WorkspaceId: id.String(), IntegrationId: integrationID.String(), Role: Role(string(role))})
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (w *Workspace) UpdateIntegration(ctx context.Context, id accountdomain.Work
 	return ToWorkspace(res.UpdateIntegrationOfWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.WorkspaceID, userID accountdomain.UserID, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) RemoveUserMember(ctx context.Context, id workspace.ID, userID accountdomain.UserID, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := RemoveUserFromWorkspace(ctx, w.gql, RemoveUserFromWorkspaceInput{WorkspaceId: id.String(), UserId: userID.String()})
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func (w *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.Works
 	return ToWorkspace(res.RemoveUserFromWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) RemoveIntegration(ctx context.Context, id accountdomain.WorkspaceID, integrationID accountdomain.IntegrationID, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) RemoveIntegration(ctx context.Context, id workspace.ID, integrationID workspace.IntegrationID, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := RemoveIntegrationFromWorkspace(ctx, w.gql, RemoveIntegrationFromWorkspaceInput{WorkspaceId: id.String(), IntegrationId: integrationID.String()})
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (w *Workspace) RemoveIntegration(ctx context.Context, id accountdomain.Work
 	return ToWorkspace(res.RemoveIntegrationFromWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, op *accountusecase.Operator) error {
+func (w *Workspace) Remove(ctx context.Context, id workspace.ID, op *accountusecase.Operator) error {
 	_, err := DeleteWorkspace(ctx, w.gql, DeleteWorkspaceInput{WorkspaceId: id.String()})
 	if err != nil {
 		return err

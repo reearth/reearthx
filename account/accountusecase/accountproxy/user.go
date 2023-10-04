@@ -9,7 +9,6 @@ import (
 
 	_ "github.com/Khan/genqlient/generate"
 	"github.com/Khan/genqlient/graphql"
-	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 )
@@ -28,11 +27,11 @@ func NewUser(endpoint string, h HTTPClient) accountinterfaces.User {
 	}
 }
 
-func (u *User) Fetch(ctx context.Context, ids accountdomain.UserIDList, op *accountusecase.Operator) ([]*user.User, error) {
+func (u *User) Fetch(ctx context.Context, ids user.IDList, op *accountusecase.Operator) (user.List, error) {
 	return UserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
 }
 
-func (u *User) FetchSimple(ctx context.Context, ids accountdomain.UserIDList, op *accountusecase.Operator) ([]*user.Simple, error) {
+func (u *User) FetchSimple(ctx context.Context, ids user.IDList, op *accountusecase.Operator) (user.SimpleList, error) {
 	return SimpleUserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
 }
 
@@ -113,7 +112,7 @@ func (u *User) SearchUser(ctx context.Context, nameOrEmail string, _ *accountuse
 	return FragmentToUser(res.SearchUser.FragmentUser)
 }
 
-func (u *User) DeleteMe(ctx context.Context, id accountdomain.UserID, op *accountusecase.Operator) error {
+func (u *User) DeleteMe(ctx context.Context, id user.ID, op *accountusecase.Operator) error {
 	_, err := DeleteMe(ctx, u.gql, DeleteMeInput{UserId: id.String()})
 	if err != nil {
 		return err
