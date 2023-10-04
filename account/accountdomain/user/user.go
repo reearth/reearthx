@@ -208,3 +208,5 @@ func (u *User) Clone() *User {
 		passwordReset: util.CloneRef(u.passwordReset),
 	}
 }
+
+type List []*User

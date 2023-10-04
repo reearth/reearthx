@@ -13,36 +13,37 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+type WorkspaceMemberCountEnforcer func(context.Context, *workspace.Workspace, user.List, *accountusecase.Operator) error
+
 type Workspace struct {
-	repos *accountrepo.Container
+	repos              *accountrepo.Container
+	enforceMemberCount WorkspaceMemberCountEnforcer
 }
 
-func NewWorkspace(r *accountrepo.Container) accountinterfaces.Workspace {
+func NewWorkspace(r *accountrepo.Container, enforceMemberCount WorkspaceMemberCountEnforcer) accountinterfaces.Workspace {
 	return &Workspace{
-		repos: r,
+		repos:              r,
+		enforceMemberCount: enforceMemberCount,
 	}
 }
 
 func (i *Workspace) Fetch(ctx context.Context, ids accountdomain.WorkspaceIDList, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
-		res, err := i.repos.Workspace.FindByIDs(ctx, ids)
-		res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, false)
-		return res2, err
-	})
+	res, err := i.repos.Workspace.FindByIDs(ctx, ids)
+	res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, false)
+	return res2, err
 }
 
 func (i *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID, operator *accountusecase.Operator) ([]*workspace.Workspace, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) ([]*workspace.Workspace, error) {
-		res, err := i.repos.Workspace.FindByUser(ctx, id)
-		res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, true)
-		return res2, err
-	})
+	res, err := i.repos.Workspace.FindByUser(ctx, id)
+	res2, err := accountinterfaces.FilterWorkspaces(res, operator, err, true)
+	return res2, err
 }
 
 func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdomain.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		if len(strings.TrimSpace(name)) == 0 {
 			return nil, user.ErrInvalidName
@@ -65,6 +66,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser accountdo
 		}
 
 		operator.AddNewWorkspace(ws.ID())
+		i.applyDefaultPolicy(ws, operator)
 		return ws, nil
 	})
 }
@@ -73,11 +75,13 @@ func (i *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, na
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
+
 		if ws.IsPersonal() {
 			return nil, workspace.ErrCannotModifyPersonalWorkspace
 		}
@@ -96,6 +100,7 @@ func (i *Workspace) Update(ctx context.Context, id accountdomain.WorkspaceID, na
 			return nil, err
 		}
 
+		i.applyDefaultPolicy(ws, operator)
 		return ws, nil
 	})
 }
@@ -104,11 +109,13 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID accountdomain
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(workspaceID), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, workspaceID)
 		if err != nil {
 			return nil, err
 		}
+
 		if ws.IsPersonal() {
 			return nil, workspace.ErrCannotModifyPersonalWorkspace
 		}
@@ -116,6 +123,12 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID accountdomain
 		ul, err := i.repos.User.FindByIDs(ctx, maps.Keys(users))
 		if err != nil {
 			return nil, err
+		}
+
+		if i.enforceMemberCount != nil {
+			if err := i.enforceMemberCount(ctx, ws, ul, operator); err != nil {
+				return nil, err
+			}
 		}
 
 		for _, m := range ul {
@@ -130,6 +143,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID accountdomain
 			return nil, err
 		}
 
+		i.applyDefaultPolicy(ws, operator)
 		return ws, nil
 	})
 }
@@ -138,23 +152,25 @@ func (i *Workspace) AddIntegrationMember(ctx context.Context, wId accountdomain.
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(wId), func(ctx context.Context) (*workspace.Workspace, error) {
-		workspace, err := i.repos.Workspace.FindByID(ctx, wId)
+		ws, err := i.repos.Workspace.FindByID(ctx, wId)
 		if err != nil {
 			return nil, err
 		}
 
-		err = workspace.Members().AddIntegration(iId, role, *operator.User)
+		err = ws.Members().AddIntegration(iId, role, *operator.User)
 		if err != nil {
 			return nil, err
 		}
 
-		err = i.repos.Workspace.Save(ctx, workspace)
+		err = i.repos.Workspace.Save(ctx, ws)
 		if err != nil {
 			return nil, err
 		}
 
-		return workspace, nil
+		i.applyDefaultPolicy(ws, operator)
+		return ws, nil
 	})
 }
 
@@ -162,11 +178,13 @@ func (i *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.Works
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
+
 		if ws.IsPersonal() {
 			return nil, workspace.ErrCannotModifyPersonalWorkspace
 		}
@@ -191,6 +209,7 @@ func (i *Workspace) RemoveUserMember(ctx context.Context, id accountdomain.Works
 			return nil, err
 		}
 
+		i.applyDefaultPolicy(ws, operator)
 		return ws, nil
 	})
 }
@@ -199,23 +218,25 @@ func (i *Workspace) RemoveIntegration(ctx context.Context, wId accountdomain.Wor
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
-		workspace, err := i.repos.Workspace.FindByID(ctx, wId)
+		ws, err := i.repos.Workspace.FindByID(ctx, wId)
 		if err != nil {
 			return nil, err
 		}
 
-		err = workspace.Members().DeleteIntegration(iId)
+		err = ws.Members().DeleteIntegration(iId)
 		if err != nil {
 			return nil, err
 		}
 
-		err = i.repos.Workspace.Save(ctx, workspace)
+		err = i.repos.Workspace.Save(ctx, ws)
 		if err != nil {
 			return nil, err
 		}
 
-		return workspace, nil
+		i.applyDefaultPolicy(ws, operator)
+		return ws, nil
 	})
 }
 
@@ -223,11 +244,13 @@ func (i *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.Works
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(id), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
+
 		if ws.IsPersonal() {
 			return nil, workspace.ErrCannotModifyPersonalWorkspace
 		}
@@ -246,6 +269,7 @@ func (i *Workspace) UpdateUserMember(ctx context.Context, id accountdomain.Works
 			return nil, err
 		}
 
+		i.applyDefaultPolicy(ws, operator)
 		return ws, nil
 	})
 }
@@ -254,23 +278,25 @@ func (i *Workspace) UpdateIntegration(ctx context.Context, wId accountdomain.Wor
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
-		workspace, err := i.repos.Workspace.FindByID(ctx, wId)
+		ws, err := i.repos.Workspace.FindByID(ctx, wId)
 		if err != nil {
 			return nil, err
 		}
 
-		err = workspace.Members().UpdateIntegrationRole(iId, role)
+		err = ws.Members().UpdateIntegrationRole(iId, role)
 		if err != nil {
 			return nil, err
 		}
 
-		err = i.repos.Workspace.Save(ctx, workspace)
+		err = i.repos.Workspace.Save(ctx, ws)
 		if err != nil {
 			return nil, err
 		}
 
-		return workspace, nil
+		i.applyDefaultPolicy(ws, operator)
+		return ws, nil
 	})
 }
 
@@ -278,11 +304,13 @@ func (i *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, op
 	if operator.User == nil {
 		return accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run0(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(id), func(ctx context.Context) error {
 		ws, err := i.repos.Workspace.FindByID(ctx, id)
 		if err != nil {
 			return err
 		}
+
 		if ws.IsPersonal() {
 			return workspace.ErrCannotModifyPersonalWorkspace
 		}
@@ -294,4 +322,10 @@ func (i *Workspace) Remove(ctx context.Context, id accountdomain.WorkspaceID, op
 
 		return nil
 	})
+}
+
+func (i *Workspace) applyDefaultPolicy(ws *workspace.Workspace, o *accountusecase.Operator) {
+	if ws.Policy() == nil && o.DefaultPolicy != nil {
+		ws.SetPolicy(o.DefaultPolicy)
+	}
 }

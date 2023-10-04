@@ -1,13 +1,13 @@
 package workspace
 
-type WorkspaceList []*Workspace
+type List []*Workspace
 
-func (l WorkspaceList) FilterByID(ids ...ID) WorkspaceList {
+func (l List) FilterByID(ids ...ID) List {
 	if l == nil {
 		return nil
 	}
 
-	res := make(WorkspaceList, 0, len(l))
+	res := make(List, 0, len(l))
 	for _, id := range ids {
 		var t2 *Workspace
 		for _, t := range l {
@@ -23,12 +23,12 @@ func (l WorkspaceList) FilterByID(ids ...ID) WorkspaceList {
 	return res
 }
 
-func (l WorkspaceList) FilterByUserRole(u UserID, r Role) WorkspaceList {
+func (l List) FilterByUserRole(u UserID, r Role) List {
 	if l == nil || u.IsEmpty() || r == "" {
 		return nil
 	}
 
-	res := make(WorkspaceList, 0, len(l))
+	res := make(List, 0, len(l))
 	for _, t := range l {
 		if m := t.Members().User(u); m != nil && m.Role == r {
 			res = append(res, t)
@@ -37,12 +37,12 @@ func (l WorkspaceList) FilterByUserRole(u UserID, r Role) WorkspaceList {
 	return res
 }
 
-func (l WorkspaceList) FilterByIntegrationRole(i IntegrationID, r Role) WorkspaceList {
+func (l List) FilterByIntegrationRole(i IntegrationID, r Role) List {
 	if l == nil || i.IsEmpty() || r == "" {
 		return nil
 	}
 
-	res := make(WorkspaceList, 0, len(l))
+	res := make(List, 0, len(l))
 	for _, t := range l {
 		if m := t.Members().Integration(i); m != nil && m.Role == r {
 			res = append(res, t)
@@ -51,12 +51,12 @@ func (l WorkspaceList) FilterByIntegrationRole(i IntegrationID, r Role) Workspac
 	return res
 }
 
-func (l WorkspaceList) FilterByUserRoleIncluding(u UserID, r Role) WorkspaceList {
+func (l List) FilterByUserRoleIncluding(u UserID, r Role) List {
 	if l == nil || u.IsEmpty() || r == "" {
 		return nil
 	}
 
-	res := make(WorkspaceList, 0, len(l))
+	res := make(List, 0, len(l))
 	for _, t := range l {
 		if m := t.Members().User(u); m != nil && m.Role.Includes(r) {
 			res = append(res, t)
@@ -65,12 +65,12 @@ func (l WorkspaceList) FilterByUserRoleIncluding(u UserID, r Role) WorkspaceList
 	return res
 }
 
-func (l WorkspaceList) FilterByIntegrationRoleIncluding(i IntegrationID, r Role) WorkspaceList {
+func (l List) FilterByIntegrationRoleIncluding(i IntegrationID, r Role) List {
 	if l == nil || i.IsEmpty() || r == "" {
 		return nil
 	}
 
-	res := make(WorkspaceList, 0, len(l))
+	res := make(List, 0, len(l))
 	for _, t := range l {
 		if m := t.Members().Integration(i); m != nil && m.Role.Includes(r) {
 			res = append(res, t)
@@ -79,7 +79,7 @@ func (l WorkspaceList) FilterByIntegrationRoleIncluding(i IntegrationID, r Role)
 	return res
 }
 
-func (l WorkspaceList) IDs() []ID {
+func (l List) IDs() []ID {
 	if l == nil {
 		return nil
 	}

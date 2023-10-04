@@ -12,13 +12,13 @@ import (
 )
 
 type Workspace struct {
-	data *util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]
+	data *util.SyncMap[workspace.ID, *workspace.Workspace]
 	err  error
 }
 
 func NewWorkspace() *Workspace {
 	return &Workspace{
-		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
+		data: &util.SyncMap[workspace.ID, *workspace.Workspace]{},
 	}
 }
 
@@ -30,44 +30,44 @@ func NewWorkspaceWith(workspaces ...*workspace.Workspace) *Workspace {
 	return r
 }
 
-func (r *Workspace) FindByUser(ctx context.Context, i accountdomain.UserID) (workspace.WorkspaceList, error) {
+func (r *Workspace) FindByUser(ctx context.Context, i accountdomain.UserID) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	return rerror.ErrIfNil(r.data.FindAll(func(key accountdomain.WorkspaceID, value *workspace.Workspace) bool {
+	return rerror.ErrIfNil(r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
 		return value.Members().HasUser(i)
 	}), rerror.ErrNotFound)
 }
 
-func (r *Workspace) FindByIntegration(_ context.Context, i accountdomain.IntegrationID) (workspace.WorkspaceList, error) {
+func (r *Workspace) FindByIntegration(_ context.Context, i workspace.IntegrationID) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	return rerror.ErrIfNil(r.data.FindAll(func(key accountdomain.WorkspaceID, value *workspace.Workspace) bool {
+	return rerror.ErrIfNil(r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
 		return value.Members().HasIntegration(i)
 	}), rerror.ErrNotFound)
 }
 
-func (r *Workspace) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspace.WorkspaceList, error) {
+func (r *Workspace) FindByIDs(ctx context.Context, ids workspace.IDList) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	res := r.data.FindAll(func(key accountdomain.WorkspaceID, value *workspace.Workspace) bool {
+	res := r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
 		return ids.Has(key)
 	})
 	slices.SortFunc(res, func(a, b *workspace.Workspace) bool { return a.ID().Compare(b.ID()) < 0 })
 	return res, nil
 }
 
-func (r *Workspace) FindByID(ctx context.Context, v accountdomain.WorkspaceID) (*workspace.Workspace, error) {
+func (r *Workspace) FindByID(ctx context.Context, v workspace.ID) (*workspace.Workspace, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.WorkspaceID, value *workspace.Workspace) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key workspace.ID, value *workspace.Workspace) bool {
 		return key == v
 	}), rerror.ErrNotFound)
 }
@@ -81,7 +81,7 @@ func (r *Workspace) Save(ctx context.Context, t *workspace.Workspace) error {
 	return nil
 }
 
-func (r *Workspace) SaveAll(ctx context.Context, workspaces []*workspace.Workspace) error {
+func (r *Workspace) SaveAll(ctx context.Context, workspaces workspace.List) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -92,7 +92,7 @@ func (r *Workspace) SaveAll(ctx context.Context, workspaces []*workspace.Workspa
 	return nil
 }
 
-func (r *Workspace) Remove(ctx context.Context, wid accountdomain.WorkspaceID) error {
+func (r *Workspace) Remove(ctx context.Context, wid workspace.ID) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -101,7 +101,7 @@ func (r *Workspace) Remove(ctx context.Context, wid accountdomain.WorkspaceID) e
 	return nil
 }
 
-func (r *Workspace) RemoveAll(ctx context.Context, ids accountdomain.WorkspaceIDList) error {
+func (r *Workspace) RemoveAll(ctx context.Context, ids workspace.IDList) error {
 	if r.err != nil {
 		return r.err
 	}

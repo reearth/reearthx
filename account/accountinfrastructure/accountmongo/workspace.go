@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
@@ -32,7 +33,7 @@ func (r *Workspace) Init() error {
 	return createIndexes(context.Background(), r.client, nil, workspaceUniqueIndexes)
 }
 
-func (r *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID) (workspace.WorkspaceList, error) {
+func (r *Workspace) FindByUser(ctx context.Context, id user.ID) (workspace.List, error) {
 	return r.find(ctx, bson.M{
 		"members." + strings.Replace(id.String(), ".", "", -1): bson.M{
 			"$exists": true,
@@ -40,7 +41,7 @@ func (r *Workspace) FindByUser(ctx context.Context, id accountdomain.UserID) (wo
 	})
 }
 
-func (r *Workspace) FindByIntegration(ctx context.Context, id accountdomain.IntegrationID) (workspace.WorkspaceList, error) {
+func (r *Workspace) FindByIntegration(ctx context.Context, id workspace.IntegrationID) (workspace.List, error) {
 	return r.find(ctx, bson.M{
 		"integrations." + strings.Replace(id.String(), ".", "", -1): bson.M{
 			"$exists": true,
@@ -48,7 +49,7 @@ func (r *Workspace) FindByIntegration(ctx context.Context, id accountdomain.Inte
 	})
 }
 
-func (r *Workspace) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspace.WorkspaceList, error) {
+func (r *Workspace) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspace.List, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -70,7 +71,7 @@ func (r *Workspace) Save(ctx context.Context, workspace *workspace.Workspace) er
 	return r.client.SaveOne(ctx, id, doc)
 }
 
-func (r *Workspace) SaveAll(ctx context.Context, workspaces []*workspace.Workspace) error {
+func (r *Workspace) SaveAll(ctx context.Context, workspaces workspace.List) error {
 	if len(workspaces) == 0 {
 		return nil
 	}
@@ -95,7 +96,7 @@ func (r *Workspace) RemoveAll(ctx context.Context, ids accountdomain.WorkspaceID
 	})
 }
 
-func (r *Workspace) find(ctx context.Context, filter any) (workspace.WorkspaceList, error) {
+func (r *Workspace) find(ctx context.Context, filter any) (workspace.List, error) {
 	c := mongodoc.NewWorkspaceConsumer()
 	if err := r.client.Find(ctx, filter, c); err != nil {
 		return nil, err
@@ -111,6 +112,6 @@ func (r *Workspace) findOne(ctx context.Context, filter any) (*workspace.Workspa
 	return c.Result[0], nil
 }
 
-func filterWorkspaces(ids []accountdomain.WorkspaceID, rows workspace.WorkspaceList) workspace.WorkspaceList {
+func filterWorkspaces(ids []accountdomain.WorkspaceID, rows workspace.List) workspace.List {
 	return rows.FilterByID(ids...)
 }

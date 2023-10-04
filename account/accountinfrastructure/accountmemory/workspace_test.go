@@ -60,7 +60,7 @@ func TestWorkspace_FindByIDs(t *testing.T) {
 	r.data.Store(ws2.ID(), ws2)
 
 	ids := accountdomain.WorkspaceIDList{ws.ID()}
-	wsl := workspace.WorkspaceList{ws}
+	wsl := workspace.List{ws}
 	out, err := r.FindByIDs(ctx, ids)
 	assert.NoError(t, err)
 	assert.Equal(t, wsl, out)
@@ -78,7 +78,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
 	}
 	r.data.Store(ws.ID(), ws)
-	wsl := workspace.WorkspaceList{ws}
+	wsl := workspace.List{ws}
 	out, err := r.FindByUser(ctx, u.ID())
 	assert.NoError(t, err)
 	assert.Equal(t, wsl, out)

@@ -22,22 +22,22 @@ func TestWorkspace_Create(t *testing.T) {
 	db := accountmemory.New()
 
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(accountdomain.NewWorkspaceID()).MustBuild()
-	workspaceUC := NewWorkspace(db)
+	workspaceUC := NewWorkspace(db, nil)
 	op := &accountusecase.Operator{User: lo.ToPtr(u.ID())}
-	workspace, err := workspaceUC.Create(ctx, "workspace name", u.ID(), op)
+	ws, err := workspaceUC.Create(ctx, "workspace name", u.ID(), op)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, workspace)
+	assert.NotNil(t, ws)
 
-	resultWorkspaces, _ := workspaceUC.Fetch(ctx, []accountdomain.WorkspaceID{workspace.ID()}, &accountusecase.Operator{
-		ReadableWorkspaces: []accountdomain.WorkspaceID{workspace.ID()},
+	resultWorkspaces, _ := workspaceUC.Fetch(ctx, []workspace.ID{ws.ID()}, &accountusecase.Operator{
+		ReadableWorkspaces: []workspace.ID{ws.ID()},
 	})
 
 	assert.NotNil(t, resultWorkspaces)
 	assert.NotEmpty(t, resultWorkspaces)
-	assert.Equal(t, resultWorkspaces[0].ID(), workspace.ID())
+	assert.Equal(t, resultWorkspaces[0].ID(), ws.ID())
 	assert.Equal(t, resultWorkspaces[0].Name(), "workspace name")
-	assert.Equal(t, accountdomain.WorkspaceIDList{resultWorkspaces[0].ID()}, op.OwningWorkspaces)
+	assert.Equal(t, workspace.IDList{resultWorkspaces[0].ID()}, op.OwningWorkspaces)
 
 	// mock workspace error
 	wantErr := errors.New("test")
@@ -56,14 +56,14 @@ func TestWorkspace_Fetch(t *testing.T) {
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(id1).MustBuild()
 	op := &accountusecase.Operator{
 		User:               lo.ToPtr(u.ID()),
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
+		ReadableWorkspaces: []workspace.ID{id1, id2},
 	}
 
 	tests := []struct {
 		name  string
 		seeds []*workspace.Workspace
 		args  struct {
-			ids      []accountdomain.WorkspaceID
+			ids      []workspace.ID
 			operator *accountusecase.Operator
 		}
 		want             []*workspace.Workspace
@@ -74,10 +74,10 @@ func TestWorkspace_Fetch(t *testing.T) {
 			name:  "Fetch 1 of 2",
 			seeds: []*workspace.Workspace{w1, w2},
 			args: struct {
-				ids      []accountdomain.WorkspaceID
+				ids      []workspace.ID
 				operator *accountusecase.Operator
 			}{
-				ids:      []accountdomain.WorkspaceID{id1},
+				ids:      []workspace.ID{id1},
 				operator: op,
 			},
 			want:    []*workspace.Workspace{w1},
@@ -87,10 +87,10 @@ func TestWorkspace_Fetch(t *testing.T) {
 			name:  "Fetch 2 of 2",
 			seeds: []*workspace.Workspace{w1, w2},
 			args: struct {
-				ids      []accountdomain.WorkspaceID
+				ids      []workspace.ID
 				operator *accountusecase.Operator
 			}{
-				ids:      []accountdomain.WorkspaceID{id1, id2},
+				ids:      []workspace.ID{id1, id2},
 				operator: op,
 			},
 			want:    []*workspace.Workspace{w1, w2},
@@ -100,10 +100,10 @@ func TestWorkspace_Fetch(t *testing.T) {
 			name:  "Fetch 1 of 0",
 			seeds: []*workspace.Workspace{},
 			args: struct {
-				ids      []accountdomain.WorkspaceID
+				ids      []workspace.ID
 				operator *accountusecase.Operator
 			}{
-				ids:      []accountdomain.WorkspaceID{id1},
+				ids:      []workspace.ID{id1},
 				operator: op,
 			},
 			want:    nil,
@@ -113,10 +113,10 @@ func TestWorkspace_Fetch(t *testing.T) {
 			name:  "Fetch 2 of 0",
 			seeds: []*workspace.Workspace{},
 			args: struct {
-				ids      []accountdomain.WorkspaceID
+				ids      []workspace.ID
 				operator *accountusecase.Operator
 			}{
-				ids:      []accountdomain.WorkspaceID{id1, id2},
+				ids:      []workspace.ID{id1, id2},
 				operator: op,
 			},
 			want:    nil,
@@ -143,7 +143,7 @@ func TestWorkspace_Fetch(t *testing.T) {
 				err := db.Workspace.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 
 			got, err := workspaceUC.Fetch(ctx, tc.args.ids, tc.args.operator)
 			if tc.wantErr != nil {
@@ -166,14 +166,14 @@ func TestWorkspace_FindByUser(t *testing.T) {
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(id1).MustBuild()
 	op := &accountusecase.Operator{
 		User:               lo.ToPtr(u.ID()),
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
+		ReadableWorkspaces: []workspace.ID{id1, id2},
 	}
 
 	tests := []struct {
 		name  string
 		seeds []*workspace.Workspace
 		args  struct {
-			userID   accountdomain.UserID
+			userID   user.ID
 			operator *accountusecase.Operator
 		}
 		want             []*workspace.Workspace
@@ -184,7 +184,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 			name:  "Fetch 1 of 2",
 			seeds: []*workspace.Workspace{w1, w2},
 			args: struct {
-				userID   accountdomain.UserID
+				userID   user.ID
 				operator *accountusecase.Operator
 			}{
 				userID:   userID,
@@ -197,7 +197,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 			name:  "Fetch 1 of 0",
 			seeds: []*workspace.Workspace{},
 			args: struct {
-				userID   accountdomain.UserID
+				userID   user.ID
 				operator *accountusecase.Operator
 			}{
 				userID:   userID,
@@ -210,7 +210,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 			name:  "Fetch 0 of 1",
 			seeds: []*workspace.Workspace{w2},
 			args: struct {
-				userID   accountdomain.UserID
+				userID   user.ID
 				operator *accountusecase.Operator
 			}{
 				userID:   userID,
@@ -240,7 +240,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 				err := db.Workspace.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 
 			got, err := workspaceUC.FindByUser(ctx, tc.args.userID, tc.args.operator)
 			if tc.wantErr != nil {
@@ -265,15 +265,15 @@ func TestWorkspace_Update(t *testing.T) {
 
 	op := &accountusecase.Operator{
 		User:               &userID,
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2, id3},
-		OwningWorkspaces:   []accountdomain.WorkspaceID{id1},
+		ReadableWorkspaces: []workspace.ID{id1, id2, id3},
+		OwningWorkspaces:   []workspace.ID{id1},
 	}
 
 	tests := []struct {
 		name  string
 		seeds []*workspace.Workspace
 		args  struct {
-			wId      accountdomain.WorkspaceID
+			wId      workspace.ID
 			newName  string
 			operator *accountusecase.Operator
 		}
@@ -285,7 +285,7 @@ func TestWorkspace_Update(t *testing.T) {
 			name:  "Update 1",
 			seeds: []*workspace.Workspace{w1, w2},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				newName  string
 				operator *accountusecase.Operator
 			}{
@@ -300,7 +300,7 @@ func TestWorkspace_Update(t *testing.T) {
 			name:  "Update 2",
 			seeds: []*workspace.Workspace{},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				newName  string
 				operator *accountusecase.Operator
 			}{
@@ -315,7 +315,7 @@ func TestWorkspace_Update(t *testing.T) {
 			name:  "Update 3",
 			seeds: []*workspace.Workspace{w3},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				newName  string
 				operator *accountusecase.Operator
 			}{
@@ -329,7 +329,7 @@ func TestWorkspace_Update(t *testing.T) {
 		{
 			name: "mock error",
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				newName  string
 				operator *accountusecase.Operator
 			}{
@@ -354,7 +354,7 @@ func TestWorkspace_Update(t *testing.T) {
 				err := db.Workspace.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 
 			got, err := workspaceUC.Update(ctx, tc.args.wId, tc.args.newName, tc.args.operator)
 			if tc.wantErr != nil {
@@ -387,15 +387,15 @@ func TestWorkspace_Remove(t *testing.T) {
 
 	op := &accountusecase.Operator{
 		User:               &userID,
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2, id3},
-		OwningWorkspaces:   []accountdomain.WorkspaceID{id1, id4, id5, id6},
+		ReadableWorkspaces: []workspace.ID{id1, id2, id3},
+		OwningWorkspaces:   []workspace.ID{id1, id4, id5, id6},
 	}
 
 	tests := []struct {
 		name  string
 		seeds []*workspace.Workspace
 		args  struct {
-			wId      accountdomain.WorkspaceID
+			wId      workspace.ID
 			operator *accountusecase.Operator
 		}
 		wantErr          error
@@ -406,7 +406,7 @@ func TestWorkspace_Remove(t *testing.T) {
 			name:  "Remove 1",
 			seeds: []*workspace.Workspace{w1, w2},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id1,
@@ -419,7 +419,7 @@ func TestWorkspace_Remove(t *testing.T) {
 			name:  "Update 2",
 			seeds: []*workspace.Workspace{w1, w2},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id2,
@@ -432,7 +432,7 @@ func TestWorkspace_Remove(t *testing.T) {
 			name:  "Update 3",
 			seeds: []*workspace.Workspace{w3},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id3,
@@ -445,7 +445,7 @@ func TestWorkspace_Remove(t *testing.T) {
 			name:  "Remove 4",
 			seeds: []*workspace.Workspace{w4},
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id4,
@@ -457,7 +457,7 @@ func TestWorkspace_Remove(t *testing.T) {
 		{
 			name: "mock workspace error",
 			args: struct {
-				wId      accountdomain.WorkspaceID
+				wId      workspace.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id5,
@@ -482,7 +482,7 @@ func TestWorkspace_Remove(t *testing.T) {
 				err := db.Workspace.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 			err := workspaceUC.Remove(ctx, tc.args.wId, tc.args.operator)
 			if tc.wantErr != nil {
 				assert.Equal(t, tc.wantErr, err)
@@ -516,17 +516,18 @@ func TestWorkspace_AddMember(t *testing.T) {
 
 	op := &accountusecase.Operator{
 		User:               &userID,
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
-		OwningWorkspaces:   []accountdomain.WorkspaceID{id1, id2, id3},
+		ReadableWorkspaces: []workspace.ID{id1, id2},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3},
 	}
 
 	tests := []struct {
 		name       string
 		seeds      []*workspace.Workspace
 		usersSeeds []*user.User
+		enforcer   WorkspaceMemberCountEnforcer
 		args       struct {
-			wId      accountdomain.WorkspaceID
-			users    map[accountdomain.UserID]workspace.Role
+			wId      workspace.ID
+			users    map[user.ID]workspace.Role
 			operator *accountusecase.Operator
 		}
 		wantErr          error
@@ -534,62 +535,97 @@ func TestWorkspace_AddMember(t *testing.T) {
 		want             *workspace.Members
 	}{
 		{
-			name:       "Add non existing",
-			seeds:      []*workspace.Workspace{w1},
-			usersSeeds: []*user.User{u},
-			args: struct {
-				wId      accountdomain.WorkspaceID
-				users    map[accountdomain.UserID]workspace.Role
-				operator *accountusecase.Operator
-			}{
-				wId:      id1,
-				users:    map[accountdomain.UserID]workspace.Role{accountdomain.NewUserID(): workspace.RoleReader},
-				operator: op,
-			},
-			want: workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
-		},
-		{
-			name:       "Add",
+			name:       "add a member",
 			seeds:      []*workspace.Workspace{w2},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				users    map[accountdomain.UserID]workspace.Role
+				wId      workspace.ID
+				users    map[user.ID]workspace.Role
 				operator *accountusecase.Operator
 			}{
-				wId:      id2,
-				users:    map[accountdomain.UserID]workspace.Role{u.ID(): workspace.RoleReader},
+				wId: w2.ID(),
+				users: map[user.ID]workspace.Role{
+					u.ID(): workspace.RoleReader,
+				},
 				operator: op,
 			},
 			wantErr: nil,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleReader, InvitedBy: userID}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				u.ID(): {Role: workspace.RoleReader, InvitedBy: userID}, // added
+			}, map[accountdomain.IntegrationID]workspace.Member{}, false),
 		},
 		{
-			name:       "Add to personal workspace",
+			name:       "add a non existing member",
+			seeds:      []*workspace.Workspace{w1},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId      workspace.ID
+				users    map[user.ID]workspace.Role
+				operator *accountusecase.Operator
+			}{
+				wId: w1.ID(),
+				users: map[user.ID]workspace.Role{
+					accountdomain.NewUserID(): workspace.RoleReader,
+				},
+				operator: op,
+			},
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+			}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+		},
+		{
+			name:       "add a mamber to personal workspace",
 			seeds:      []*workspace.Workspace{w3},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				users    map[accountdomain.UserID]workspace.Role
+				wId      workspace.ID
+				users    map[user.ID]workspace.Role
 				operator *accountusecase.Operator
 			}{
-				wId:      id3,
-				users:    map[accountdomain.UserID]workspace.Role{u.ID(): workspace.RoleReader},
+				wId: w3.ID(),
+				users: map[user.ID]workspace.Role{
+					u.ID(): workspace.RoleReader,
+				},
 				operator: op,
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, true),
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+			}, map[accountdomain.IntegrationID]workspace.Member{}, true),
+		},
+		{
+			name:       "add member but enforcer rejects",
+			seeds:      []*workspace.Workspace{w2},
+			usersSeeds: []*user.User{u},
+			enforcer: func(_ context.Context, _ *workspace.Workspace, _ user.List, _ *accountusecase.Operator) error {
+				return errors.New("test")
+			},
+			args: struct {
+				wId      workspace.ID
+				users    map[user.ID]workspace.Role
+				operator *accountusecase.Operator
+			}{
+				wId: w2.ID(),
+				users: map[user.ID]workspace.Role{
+					u.ID(): workspace.RoleReader,
+				},
+				operator: op,
+			},
+			wantErr: errors.New("test"),
 		},
 		{
 			name:  "op denied",
 			seeds: []*workspace.Workspace{w4},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				users    map[accountdomain.UserID]workspace.Role
+				wId      workspace.ID
+				users    map[user.ID]workspace.Role
 				operator *accountusecase.Operator
 			}{
-				wId:      id4,
-				users:    map[accountdomain.UserID]workspace.Role{accountdomain.NewUserID(): workspace.RoleReader},
+				wId: id4,
+				users: map[user.ID]workspace.Role{
+					accountdomain.NewUserID(): workspace.RoleReader,
+				},
 				operator: op,
 			},
 			wantErr:          accountinterfaces.ErrOperationDenied,
@@ -598,18 +634,21 @@ func TestWorkspace_AddMember(t *testing.T) {
 		{
 			name: "mock error",
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				users    map[accountdomain.UserID]workspace.Role
+				wId      workspace.ID
+				users    map[user.ID]workspace.Role
 				operator *accountusecase.Operator
 			}{
-				wId:      id3,
-				users:    map[accountdomain.UserID]workspace.Role{u.ID(): workspace.RoleReader},
+				wId: id3,
+				users: map[user.ID]workspace.Role{
+					u.ID(): workspace.RoleReader,
+				},
 				operator: op,
 			},
 			wantErr:          errors.New("test"),
 			mockWorkspaceErr: true,
 		},
 	}
+
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
@@ -628,7 +667,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 				err := db.User.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, tc.enforcer)
 
 			got, err := workspaceUC.AddUserMember(ctx, tc.args.wId, tc.args.users, tc.args.operator)
 			if tc.wantErr != nil {
@@ -659,8 +698,8 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 
 	op := &accountusecase.Operator{
 		User:               &userID,
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
-		OwningWorkspaces:   []accountdomain.WorkspaceID{id1, id2, id3},
+		ReadableWorkspaces: []workspace.ID{id1, id2},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3},
 	}
 
 	iid1 := accountdomain.NewIntegrationID()
@@ -670,7 +709,7 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 		seeds      []*workspace.Workspace
 		usersSeeds []*user.User
 		args       struct {
-			wId           accountdomain.WorkspaceID
+			wId           workspace.ID
 			integrationID accountdomain.IntegrationID
 			role          workspace.Role
 			operator      *accountusecase.Operator
@@ -680,11 +719,11 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 		want             []accountdomain.IntegrationID
 	}{
 		{
-			name:       "Add non existing",
+			name:       "add non existing",
 			seeds:      []*workspace.Workspace{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId           accountdomain.WorkspaceID
+				wId           workspace.ID
 				integrationID accountdomain.IntegrationID
 				role          workspace.Role
 				operator      *accountusecase.Operator
@@ -699,7 +738,7 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 		{
 			name: "mock error",
 			args: struct {
-				wId           accountdomain.WorkspaceID
+				wId           workspace.ID
 				integrationID accountdomain.IntegrationID
 				role          workspace.Role
 				operator      *accountusecase.Operator
@@ -732,7 +771,7 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 
 			got, err := workspaceUC.AddIntegrationMember(ctx, tc.args.wId, tc.args.integrationID, tc.args.role, tc.args.operator)
 			if tc.wantErr != nil {
@@ -759,8 +798,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 
 	op := &accountusecase.Operator{
 		User:               &userID,
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
-		OwningWorkspaces:   []accountdomain.WorkspaceID{id1},
+		ReadableWorkspaces: []workspace.ID{id1, id2},
+		OwningWorkspaces:   []workspace.ID{id1},
 	}
 
 	tests := []struct {
@@ -768,8 +807,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 		seeds      []*workspace.Workspace
 		usersSeeds []*user.User
 		args       struct {
-			wId      accountdomain.WorkspaceID
-			uId      accountdomain.UserID
+			wId      workspace.ID
+			uId      user.ID
 			operator *accountusecase.Operator
 		}
 		wantErr          error
@@ -781,8 +820,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id1,
@@ -797,8 +836,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w2},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id2,
@@ -813,8 +852,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w3},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id3,
@@ -829,8 +868,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w4},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				operator *accountusecase.Operator
 			}{
 				wId:      id4,
@@ -843,8 +882,8 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 		{
 			name: "mock error",
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				operator *accountusecase.Operator
 			}{operator: op},
 			wantErr:          errors.New("test"),
@@ -870,7 +909,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 				err := db.User.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 
 			got, err := workspaceUC.RemoveUserMember(ctx, tc.args.wId, tc.args.uId, tc.args.operator)
 			if tc.wantErr != nil {
@@ -903,8 +942,8 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 
 	op := &accountusecase.Operator{
 		User:               &userID,
-		ReadableWorkspaces: []accountdomain.WorkspaceID{id1, id2},
-		OwningWorkspaces:   []accountdomain.WorkspaceID{id1, id2, id3},
+		ReadableWorkspaces: []workspace.ID{id1, id2},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3},
 	}
 
 	tests := []struct {
@@ -912,8 +951,8 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 		seeds      []*workspace.Workspace
 		usersSeeds []*user.User
 		args       struct {
-			wId      accountdomain.WorkspaceID
-			uId      accountdomain.UserID
+			wId      workspace.ID
+			uId      user.ID
 			role     workspace.Role
 			operator *accountusecase.Operator
 		}
@@ -926,8 +965,8 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				role     workspace.Role
 				operator *accountusecase.Operator
 			}{
@@ -944,8 +983,8 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w2},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				role     workspace.Role
 				operator *accountusecase.Operator
 			}{
@@ -962,8 +1001,8 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 			seeds:      []*workspace.Workspace{w3},
 			usersSeeds: []*user.User{u},
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				role     workspace.Role
 				operator *accountusecase.Operator
 			}{
@@ -978,8 +1017,8 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 		{
 			name: "mock error",
 			args: struct {
-				wId      accountdomain.WorkspaceID
-				uId      accountdomain.UserID
+				wId      workspace.ID
+				uId      user.ID
 				role     workspace.Role
 				operator *accountusecase.Operator
 			}{
@@ -1009,7 +1048,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 				err := db.User.Save(ctx, p)
 				assert.NoError(t, err)
 			}
-			workspaceUC := NewWorkspace(db)
+			workspaceUC := NewWorkspace(db, nil)
 
 			got, err := workspaceUC.UpdateUserMember(ctx, tc.args.wId, tc.args.uId, tc.args.role, tc.args.operator)
 			if tc.wantErr != nil {

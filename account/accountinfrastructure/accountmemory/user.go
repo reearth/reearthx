@@ -3,7 +3,6 @@ package accountmemory
 import (
 	"context"
 
-	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/rerror"
@@ -11,13 +10,13 @@ import (
 )
 
 type User struct {
-	data *util.SyncMap[accountdomain.UserID, *user.User]
+	data *util.SyncMap[user.ID, *user.User]
 	err  error
 }
 
 func NewUser() *User {
 	return &User{
-		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+		data: &util.SyncMap[user.ID, *user.User]{},
 	}
 }
 
@@ -29,24 +28,24 @@ func NewUserWith(users ...*user.User) *User {
 	return r
 }
 
-func (r *User) FindByIDs(ctx context.Context, ids accountdomain.UserIDList) ([]*user.User, error) {
+func (r *User) FindByIDs(ctx context.Context, ids user.IDList) (user.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	res := r.data.FindAll(func(key accountdomain.UserID, value *user.User) bool {
+	res := r.data.FindAll(func(key user.ID, value *user.User) bool {
 		return ids.Has(key)
 	})
 
 	return res, nil
 }
 
-func (r *User) FindByID(ctx context.Context, v accountdomain.UserID) (*user.User, error) {
+func (r *User) FindByID(ctx context.Context, v user.ID) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return key == v
 	}), rerror.ErrNotFound)
 }
@@ -60,7 +59,7 @@ func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, erro
 		return nil, rerror.ErrInvalidParams
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.ContainAuth(user.AuthFrom(auth0sub))
 	}), rerror.ErrNotFound)
 }
@@ -74,7 +73,7 @@ func (r *User) FindByPasswordResetRequest(ctx context.Context, token string) (*u
 		return nil, rerror.ErrInvalidParams
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.PasswordReset() != nil && value.PasswordReset().Token == token
 	}), rerror.ErrNotFound)
 }
@@ -88,7 +87,7 @@ func (r *User) FindByEmail(ctx context.Context, email string) (*user.User, error
 		return nil, rerror.ErrInvalidParams
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.Email() == email
 	}), rerror.ErrNotFound)
 }
@@ -102,7 +101,7 @@ func (r *User) FindByName(ctx context.Context, name string) (*user.User, error) 
 		return nil, rerror.ErrInvalidParams
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.Name() == name
 	}), rerror.ErrNotFound)
 }
@@ -116,7 +115,7 @@ func (r *User) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*user
 		return nil, rerror.ErrInvalidParams
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.Email() == nameOrEmail || value.Name() == nameOrEmail
 	}), rerror.ErrNotFound)
 }
@@ -130,7 +129,7 @@ func (r *User) FindByVerification(ctx context.Context, code string) (*user.User,
 		return nil, rerror.ErrInvalidParams
 	}
 
-	return rerror.ErrIfNil(r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	return rerror.ErrIfNil(r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.Verification() != nil && value.Verification().Code() == code
 
 	}), rerror.ErrNotFound)
@@ -141,7 +140,7 @@ func (r *User) FindBySubOrCreate(ctx context.Context, u *user.User, sub string) 
 		return nil, r.err
 	}
 
-	u2 := r.data.Find(func(key accountdomain.UserID, value *user.User) bool {
+	u2 := r.data.Find(func(key user.ID, value *user.User) bool {
 		return value.ContainAuth(user.AuthFrom(sub))
 	})
 	if u2 == nil {
@@ -174,7 +173,7 @@ func (r *User) Save(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (r *User) Remove(ctx context.Context, user accountdomain.UserID) error {
+func (r *User) Remove(ctx context.Context, user user.ID) error {
 	if r.err != nil {
 		return r.err
 	}

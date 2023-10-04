@@ -108,6 +108,7 @@ func (i *User) UpdateMe(ctx context.Context, p accountinterfaces.UpdateMeParam, 
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		if p.Password != nil {
 			if p.PasswordConfirmation == nil || *p.Password != *p.PasswordConfirmation {
@@ -193,6 +194,7 @@ func (i *User) RemoveMyAuth(ctx context.Context, authProvider string, operator *
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		u, err = i.repos.User.FindByID(ctx, *operator.User)
 		if err != nil {
@@ -296,7 +298,6 @@ func (i *User) VerifyUser(ctx context.Context, code string) (*user.User, error) 
 }
 func (i *User) StartPasswordReset(ctx context.Context, email string) error {
 	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
-
 		u, err := i.repos.User.FindByEmail(ctx, email)
 		if err != nil {
 			return err
@@ -339,6 +340,7 @@ func (i *User) StartPasswordReset(ctx context.Context, email string) error {
 		return nil
 	})
 }
+
 func (i *User) PasswordReset(ctx context.Context, password string, token string) error {
 	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
 		u, err := i.repos.User.FindByPasswordResetRequest(ctx, token)

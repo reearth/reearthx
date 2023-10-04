@@ -69,18 +69,18 @@ func TestWorkspace_FindByIDs(t *testing.T) {
 	tests := []struct {
 		Name               string
 		Input              accountdomain.WorkspaceIDList
-		RepoData, Expected workspace.WorkspaceList
+		RepoData, Expected workspace.List
 	}{
 		{
 			Name:     "must find users",
-			RepoData: workspace.WorkspaceList{ws1, ws2},
+			RepoData: workspace.List{ws1, ws2},
 			Input:    accountdomain.WorkspaceIDList{ws1.ID(), ws2.ID()},
-			Expected: workspace.WorkspaceList{ws1, ws2},
+			Expected: workspace.List{ws1, ws2},
 		},
 		{
 			Name:     "must not find any user",
 			Input:    accountdomain.WorkspaceIDList{ws3.ID()},
-			RepoData: workspace.WorkspaceList{ws2, ws1},
+			RepoData: workspace.List{ws2, ws1},
 		},
 	}
 
@@ -118,13 +118,13 @@ func TestWorkspace_FindByUser(t *testing.T) {
 		Name     string
 		Input    accountdomain.UserID
 		RepoData *workspace.Workspace
-		Expected workspace.WorkspaceList
+		Expected workspace.List
 	}{
 		{
 			Name:     "must find a workspace",
 			Input:    u.ID(),
 			RepoData: ws,
-			Expected: workspace.WorkspaceList{ws},
+			Expected: workspace.List{ws},
 		},
 		{
 			Name:     "must not find any workspace",
@@ -184,7 +184,7 @@ func TestWorkspace_RemoveAll(t *testing.T) {
 
 	repo := NewWorkspace(client)
 	ctx := context.Background()
-	err := repo.SaveAll(ctx, workspace.WorkspaceList{ws1, ws2})
+	err := repo.SaveAll(ctx, workspace.List{ws1, ws2})
 	assert.NoError(t, err)
 
 	err = repo.RemoveAll(ctx, accountdomain.WorkspaceIDList{ws1.ID(), ws2.ID()})

@@ -3,7 +3,6 @@ package accountmongo
 import (
 	"context"
 
-	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
@@ -31,7 +30,11 @@ func (r *User) Init() error {
 	return createIndexes(context.Background(), r.client, userIndexes, userUniqueIndexes)
 }
 
-func (r *User) FindByIDs(ctx context.Context, ids accountdomain.UserIDList) ([]*user.User, error) {
+func (r *User) FindByID(ctx context.Context, id2 user.ID) (*user.User, error) {
+	return r.findOne(ctx, bson.M{"id": id2.String()})
+}
+
+func (r *User) FindByIDs(ctx context.Context, ids user.IDList) (user.List, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -43,10 +46,6 @@ func (r *User) FindByIDs(ctx context.Context, ids accountdomain.UserIDList) ([]*
 		return nil, err
 	}
 	return filterUsers(ids, res), nil
-}
-
-func (r *User) FindByID(ctx context.Context, id2 accountdomain.UserID) (*user.User, error) {
-	return r.findOne(ctx, bson.M{"id": id2.String()})
 }
 
 func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, error) {
@@ -145,11 +144,11 @@ func (r *User) Save(ctx context.Context, user *user.User) error {
 	return r.client.SaveOne(ctx, id, doc)
 }
 
-func (r *User) Remove(ctx context.Context, user accountdomain.UserID) error {
+func (r *User) Remove(ctx context.Context, user user.ID) error {
 	return r.client.RemoveOne(ctx, bson.M{"id": user.String()})
 }
 
-func (r *User) find(ctx context.Context, filter any) ([]*user.User, error) {
+func (r *User) find(ctx context.Context, filter any) (user.List, error) {
 	c := mongodoc.NewUserConsumer()
 	if err := r.client.Find(ctx, filter, c); err != nil {
 		return nil, err
@@ -165,7 +164,7 @@ func (r *User) findOne(ctx context.Context, filter any) (*user.User, error) {
 	return c.Result[0], nil
 }
 
-func filterUsers(ids []accountdomain.UserID, rows []*user.User) []*user.User {
+func filterUsers(ids []user.ID, rows []*user.User) []*user.User {
 	res := make([]*user.User, 0, len(ids))
 	for _, id := range ids {
 		var r2 *user.User

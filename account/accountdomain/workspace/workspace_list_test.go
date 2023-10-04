@@ -12,11 +12,11 @@ func TestWorkspaceList_FilterByID(t *testing.T) {
 	t1 := &Workspace{id: tid1}
 	t2 := &Workspace{id: tid2}
 
-	assert.Equal(t, WorkspaceList{t1}, WorkspaceList{t1, t2}.FilterByID(tid1))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByID(tid2))
-	assert.Equal(t, WorkspaceList{t1, t2}, WorkspaceList{t1, t2}.FilterByID(tid1, tid2))
-	assert.Equal(t, WorkspaceList{}, WorkspaceList{t1, t2}.FilterByID(NewID()))
-	assert.Equal(t, WorkspaceList(nil), WorkspaceList(nil).FilterByID(tid1))
+	assert.Equal(t, List{t1}, List{t1, t2}.FilterByID(tid1))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByID(tid2))
+	assert.Equal(t, List{t1, t2}, List{t1, t2}.FilterByID(tid1, tid2))
+	assert.Equal(t, List{}, List{t1, t2}.FilterByID(NewID()))
+	assert.Equal(t, List(nil), List(nil).FilterByID(tid1))
 }
 
 func TestWorkspaceList_FilterByUserRole(t *testing.T) {
@@ -40,10 +40,10 @@ func TestWorkspaceList_FilterByUserRole(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, WorkspaceList{t1}, WorkspaceList{t1, t2}.FilterByUserRole(uid, RoleReader))
-	assert.Equal(t, WorkspaceList{}, WorkspaceList{t1, t2}.FilterByUserRole(uid, RoleWriter))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByUserRole(uid, RoleOwner))
-	assert.Equal(t, WorkspaceList(nil), WorkspaceList(nil).FilterByUserRole(uid, RoleOwner))
+	assert.Equal(t, List{t1}, List{t1, t2}.FilterByUserRole(uid, RoleReader))
+	assert.Equal(t, List{}, List{t1, t2}.FilterByUserRole(uid, RoleWriter))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByUserRole(uid, RoleOwner))
+	assert.Equal(t, List(nil), List(nil).FilterByUserRole(uid, RoleOwner))
 }
 
 func TestWorkspaceList_FilterByIntegrationRole(t *testing.T) {
@@ -67,10 +67,10 @@ func TestWorkspaceList_FilterByIntegrationRole(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, WorkspaceList{t1}, WorkspaceList{t1, t2}.FilterByIntegrationRole(iid, RoleReader))
-	assert.Equal(t, WorkspaceList{}, WorkspaceList{t1, t2}.FilterByIntegrationRole(iid, RoleOwner))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByIntegrationRole(iid, RoleWriter))
-	assert.Equal(t, WorkspaceList(nil), WorkspaceList(nil).FilterByIntegrationRole(iid, RoleOwner))
+	assert.Equal(t, List{t1}, List{t1, t2}.FilterByIntegrationRole(iid, RoleReader))
+	assert.Equal(t, List{}, List{t1, t2}.FilterByIntegrationRole(iid, RoleOwner))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByIntegrationRole(iid, RoleWriter))
+	assert.Equal(t, List(nil), List(nil).FilterByIntegrationRole(iid, RoleOwner))
 }
 
 func TestWorkspaceList_FilterByUserRoleIncluding(t *testing.T) {
@@ -94,10 +94,10 @@ func TestWorkspaceList_FilterByUserRoleIncluding(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, WorkspaceList{t1, t2}, WorkspaceList{t1, t2}.FilterByUserRoleIncluding(uid, RoleReader))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByUserRoleIncluding(uid, RoleWriter))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByUserRoleIncluding(uid, RoleOwner))
-	assert.Equal(t, WorkspaceList(nil), WorkspaceList(nil).FilterByUserRoleIncluding(uid, RoleOwner))
+	assert.Equal(t, List{t1, t2}, List{t1, t2}.FilterByUserRoleIncluding(uid, RoleReader))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByUserRoleIncluding(uid, RoleWriter))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByUserRoleIncluding(uid, RoleOwner))
+	assert.Equal(t, List(nil), List(nil).FilterByUserRoleIncluding(uid, RoleOwner))
 }
 
 func TestWorkspaceList_FilterByIntegrationRoleIncluding(t *testing.T) {
@@ -121,10 +121,10 @@ func TestWorkspaceList_FilterByIntegrationRoleIncluding(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, WorkspaceList{t1, t2}, WorkspaceList{t1, t2}.FilterByIntegrationRoleIncluding(uid, RoleReader))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByIntegrationRoleIncluding(uid, RoleWriter))
-	assert.Equal(t, WorkspaceList{t2}, WorkspaceList{t1, t2}.FilterByIntegrationRoleIncluding(uid, RoleOwner))
-	assert.Equal(t, WorkspaceList(nil), WorkspaceList(nil).FilterByIntegrationRoleIncluding(uid, RoleOwner))
+	assert.Equal(t, List{t1, t2}, List{t1, t2}.FilterByIntegrationRoleIncluding(uid, RoleReader))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByIntegrationRoleIncluding(uid, RoleWriter))
+	assert.Equal(t, List{t2}, List{t1, t2}.FilterByIntegrationRoleIncluding(uid, RoleOwner))
+	assert.Equal(t, List(nil), List(nil).FilterByIntegrationRoleIncluding(uid, RoleOwner))
 }
 
 func TestWorkspaceList_IDs(t *testing.T) {
@@ -133,7 +133,7 @@ func TestWorkspaceList_IDs(t *testing.T) {
 	t1 := &Workspace{id: wid1}
 	t2 := &Workspace{id: wid2}
 
-	assert.Equal(t, []ID{wid1, wid2}, WorkspaceList{t1, t2}.IDs())
-	assert.Equal(t, []ID{}, WorkspaceList{}.IDs())
-	assert.Equal(t, []ID(nil), WorkspaceList(nil).IDs())
+	assert.Equal(t, []ID{wid1, wid2}, List{t1, t2}.IDs())
+	assert.Equal(t, []ID{}, List{}.IDs())
+	assert.Equal(t, []ID(nil), List(nil).IDs())
 }
