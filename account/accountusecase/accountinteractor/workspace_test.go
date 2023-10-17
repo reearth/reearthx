@@ -61,18 +61,18 @@ func TestWorkspace_Fetch(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		seeds []*workspace.Workspace
+		seeds workspace.List
 		args  struct {
 			ids      []workspace.ID
 			operator *accountusecase.Operator
 		}
-		want             []*workspace.Workspace
+		want             workspace.List
 		mockWorkspaceErr bool
 		wantErr          error
 	}{
 		{
 			name:  "Fetch 1 of 2",
-			seeds: []*workspace.Workspace{w1, w2},
+			seeds: workspace.List{w1, w2},
 			args: struct {
 				ids      []workspace.ID
 				operator *accountusecase.Operator
@@ -80,12 +80,12 @@ func TestWorkspace_Fetch(t *testing.T) {
 				ids:      []workspace.ID{id1},
 				operator: op,
 			},
-			want:    []*workspace.Workspace{w1},
+			want:    workspace.List{w1},
 			wantErr: nil,
 		},
 		{
 			name:  "Fetch 2 of 2",
-			seeds: []*workspace.Workspace{w1, w2},
+			seeds: workspace.List{w1, w2},
 			args: struct {
 				ids      []workspace.ID
 				operator *accountusecase.Operator
@@ -93,12 +93,12 @@ func TestWorkspace_Fetch(t *testing.T) {
 				ids:      []workspace.ID{id1, id2},
 				operator: op,
 			},
-			want:    []*workspace.Workspace{w1, w2},
+			want:    workspace.List{w1, w2},
 			wantErr: nil,
 		},
 		{
 			name:  "Fetch 1 of 0",
-			seeds: []*workspace.Workspace{},
+			seeds: workspace.List{},
 			args: struct {
 				ids      []workspace.ID
 				operator *accountusecase.Operator
@@ -111,7 +111,7 @@ func TestWorkspace_Fetch(t *testing.T) {
 		},
 		{
 			name:  "Fetch 2 of 0",
-			seeds: []*workspace.Workspace{},
+			seeds: workspace.List{},
 			args: struct {
 				ids      []workspace.ID
 				operator *accountusecase.Operator
@@ -171,18 +171,18 @@ func TestWorkspace_FindByUser(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		seeds []*workspace.Workspace
+		seeds workspace.List
 		args  struct {
 			userID   user.ID
 			operator *accountusecase.Operator
 		}
-		want             []*workspace.Workspace
+		want             workspace.List
 		mockWorkspaceErr bool
 		wantErr          error
 	}{
 		{
 			name:  "Fetch 1 of 2",
-			seeds: []*workspace.Workspace{w1, w2},
+			seeds: workspace.List{w1, w2},
 			args: struct {
 				userID   user.ID
 				operator *accountusecase.Operator
@@ -190,12 +190,12 @@ func TestWorkspace_FindByUser(t *testing.T) {
 				userID:   userID,
 				operator: op,
 			},
-			want:    []*workspace.Workspace{w1},
+			want:    workspace.List{w1},
 			wantErr: nil,
 		},
 		{
 			name:  "Fetch 1 of 0",
-			seeds: []*workspace.Workspace{},
+			seeds: workspace.List{},
 			args: struct {
 				userID   user.ID
 				operator *accountusecase.Operator
@@ -208,7 +208,7 @@ func TestWorkspace_FindByUser(t *testing.T) {
 		},
 		{
 			name:  "Fetch 0 of 1",
-			seeds: []*workspace.Workspace{w2},
+			seeds: workspace.List{w2},
 			args: struct {
 				userID   user.ID
 				operator *accountusecase.Operator
@@ -271,7 +271,7 @@ func TestWorkspace_Update(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		seeds []*workspace.Workspace
+		seeds workspace.List
 		args  struct {
 			wId      workspace.ID
 			newName  string
@@ -283,7 +283,7 @@ func TestWorkspace_Update(t *testing.T) {
 	}{
 		{
 			name:  "Update 1",
-			seeds: []*workspace.Workspace{w1, w2},
+			seeds: workspace.List{w1, w2},
 			args: struct {
 				wId      workspace.ID
 				newName  string
@@ -298,7 +298,7 @@ func TestWorkspace_Update(t *testing.T) {
 		},
 		{
 			name:  "Update 2",
-			seeds: []*workspace.Workspace{},
+			seeds: workspace.List{},
 			args: struct {
 				wId      workspace.ID
 				newName  string
@@ -313,7 +313,7 @@ func TestWorkspace_Update(t *testing.T) {
 		},
 		{
 			name:  "Update 3",
-			seeds: []*workspace.Workspace{w3},
+			seeds: workspace.List{w3},
 			args: struct {
 				wId      workspace.ID
 				newName  string
@@ -393,7 +393,7 @@ func TestWorkspace_Remove(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		seeds []*workspace.Workspace
+		seeds workspace.List
 		args  struct {
 			wId      workspace.ID
 			operator *accountusecase.Operator
@@ -404,7 +404,7 @@ func TestWorkspace_Remove(t *testing.T) {
 	}{
 		{
 			name:  "Remove 1",
-			seeds: []*workspace.Workspace{w1, w2},
+			seeds: workspace.List{w1, w2},
 			args: struct {
 				wId      workspace.ID
 				operator *accountusecase.Operator
@@ -417,7 +417,7 @@ func TestWorkspace_Remove(t *testing.T) {
 		},
 		{
 			name:  "Update 2",
-			seeds: []*workspace.Workspace{w1, w2},
+			seeds: workspace.List{w1, w2},
 			args: struct {
 				wId      workspace.ID
 				operator *accountusecase.Operator
@@ -430,7 +430,7 @@ func TestWorkspace_Remove(t *testing.T) {
 		},
 		{
 			name:  "Update 3",
-			seeds: []*workspace.Workspace{w3},
+			seeds: workspace.List{w3},
 			args: struct {
 				wId      workspace.ID
 				operator *accountusecase.Operator
@@ -443,7 +443,7 @@ func TestWorkspace_Remove(t *testing.T) {
 		},
 		{
 			name:  "Remove 4",
-			seeds: []*workspace.Workspace{w4},
+			seeds: workspace.List{w4},
 			args: struct {
 				wId      workspace.ID
 				operator *accountusecase.Operator
@@ -522,7 +522,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		seeds      []*workspace.Workspace
+		seeds      workspace.List
 		usersSeeds []*user.User
 		enforcer   WorkspaceMemberCountEnforcer
 		args       struct {
@@ -536,7 +536,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 	}{
 		{
 			name:       "add a member",
-			seeds:      []*workspace.Workspace{w2},
+			seeds:      workspace.List{w2},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -557,7 +557,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 		},
 		{
 			name:       "add a non existing member",
-			seeds:      []*workspace.Workspace{w1},
+			seeds:      workspace.List{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -576,7 +576,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 		},
 		{
 			name:       "add a mamber to personal workspace",
-			seeds:      []*workspace.Workspace{w3},
+			seeds:      workspace.List{w3},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -596,7 +596,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 		},
 		{
 			name:       "add member but enforcer rejects",
-			seeds:      []*workspace.Workspace{w2},
+			seeds:      workspace.List{w2},
 			usersSeeds: []*user.User{u},
 			enforcer: func(_ context.Context, _ *workspace.Workspace, _ user.List, _ *accountusecase.Operator) error {
 				return errors.New("test")
@@ -616,7 +616,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 		},
 		{
 			name:  "op denied",
-			seeds: []*workspace.Workspace{w4},
+			seeds: workspace.List{w4},
 			args: struct {
 				wId      workspace.ID
 				users    map[user.ID]workspace.Role
@@ -706,7 +706,7 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		seeds      []*workspace.Workspace
+		seeds      workspace.List
 		usersSeeds []*user.User
 		args       struct {
 			wId           workspace.ID
@@ -720,7 +720,7 @@ func TestWorkspace_AddIntegrationMember(t *testing.T) {
 	}{
 		{
 			name:       "add non existing",
-			seeds:      []*workspace.Workspace{w1},
+			seeds:      workspace.List{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId           workspace.ID
@@ -804,7 +804,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		seeds      []*workspace.Workspace
+		seeds      workspace.List
 		usersSeeds []*user.User
 		args       struct {
 			wId      workspace.ID
@@ -817,7 +817,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 	}{
 		{
 			name:       "Remove non existing",
-			seeds:      []*workspace.Workspace{w1},
+			seeds:      workspace.List{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -833,7 +833,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 		},
 		{
 			name:       "Remove",
-			seeds:      []*workspace.Workspace{w2},
+			seeds:      workspace.List{w2},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -849,7 +849,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 		},
 		{
 			name:       "Remove personal workspace",
-			seeds:      []*workspace.Workspace{w3},
+			seeds:      workspace.List{w3},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -865,7 +865,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 		},
 		{
 			name:       "Remove single member",
-			seeds:      []*workspace.Workspace{w4},
+			seeds:      workspace.List{w4},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -948,7 +948,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		seeds      []*workspace.Workspace
+		seeds      workspace.List
 		usersSeeds []*user.User
 		args       struct {
 			wId      workspace.ID
@@ -962,7 +962,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 	}{
 		{
 			name:       "Update non existing",
-			seeds:      []*workspace.Workspace{w1},
+			seeds:      workspace.List{w1},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -980,7 +980,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 		},
 		{
 			name:       "Update",
-			seeds:      []*workspace.Workspace{w2},
+			seeds:      workspace.List{w2},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID
@@ -998,7 +998,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 		},
 		{
 			name:       "Update personal workspace",
-			seeds:      []*workspace.Workspace{w3},
+			seeds:      workspace.List{w3},
 			usersSeeds: []*user.User{u},
 			args: struct {
 				wId      workspace.ID

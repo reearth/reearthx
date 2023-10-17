@@ -63,7 +63,7 @@ func TestUser_VerifyUser(t *testing.T) {
 				Name("NAME").
 				Email("aaa@bbb.com").
 				PasswordPlainText("PAss00!!").
-				Verification(user.VerificationFrom("code", time.Now(), false)).
+				Verification(user.VerificationFrom("code", time.Now().Add(-24*time.Hour), false)).
 				MustBuild(),
 			wantError: errors.New("verification expired"),
 		},

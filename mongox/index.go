@@ -9,7 +9,7 @@ import (
 
 // Indexes creates and deletes indexes by keys declaratively
 func (c *Collection) Indexes(ctx context.Context, keys, uniqueKeys []string) ([]string, []string, error) {
-	return mongoxindexcompat.Indexes(ctx, c.client, keys, uniqueKeys)
+	return mongoxindexcompat.Indexes(ctx, c.collection, keys, uniqueKeys)
 }
 
 // Indexes creates and deletes indexes declaratively
@@ -45,7 +45,7 @@ func (c *Collection) Indexes2(ctx context.Context, inputs ...Index) (IndexResult
 }
 
 func (c *Collection) findIndexes(ctx context.Context) (IndexList, error) {
-	cur, err := c.client.Indexes().List(ctx)
+	cur, err := c.collection.Indexes().List(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *Collection) createIndexes(ctx context.Context, indexes IndexList) error
 	if len(indexes) == 0 {
 		return nil
 	}
-	_, err := c.client.Indexes().CreateMany(ctx, indexes.Models())
+	_, err := c.collection.Indexes().CreateMany(ctx, indexes.Models())
 	return err
 }
 
@@ -75,7 +75,7 @@ func (c *Collection) dropIndexes(ctx context.Context, indexes []string) error {
 		if name == "_id_" {
 			continue // cannot drop _id index
 		}
-		if _, err := c.client.Indexes().DropOne(ctx, name); err != nil {
+		if _, err := c.collection.Indexes().DropOne(ctx, name); err != nil {
 			return err
 		}
 	}
