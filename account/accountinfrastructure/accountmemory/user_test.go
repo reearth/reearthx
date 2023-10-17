@@ -38,10 +38,6 @@ func TestUser_FindBySub(t *testing.T) {
 	u := user.New().NewID().Name("hoge").Email("aa@bb.cc").Auths([]user.Auth{{
 		Sub: "xxx",
 	}}).MustBuild()
-	r := &User{
-		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
-	}
-	r.data.Store(u.ID(), u)
 
 	tests := []struct {
 		name     string
@@ -72,7 +68,10 @@ func TestUser_FindBySub(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
-			r := &User{}
+			r := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+			r.data.Store(u.ID(), u)
 			if tc.mockErr {
 				SetUserError(r, tc.wantErr)
 			}
