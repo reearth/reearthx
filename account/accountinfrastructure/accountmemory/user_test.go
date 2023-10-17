@@ -68,6 +68,7 @@ func TestUser_FindBySub(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
@@ -172,6 +173,7 @@ func TestUser_FindByName(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
@@ -257,6 +259,7 @@ func TestUser_FindByPasswordResetRequest(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
@@ -317,6 +320,7 @@ func TestUser_FindByVerification(t *testing.T) {
 	}
 
 	for _, tc := range tests {
+		tc := tc
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
