@@ -234,11 +234,10 @@ func TestUser_FindByPasswordResetRequest(t *testing.T) {
 		mockErr bool
 	}{
 		{
-			name:    "must find user by password reset",
-			seeds:   []*user.User{u},
-			token:   "123abc",
-			want:    u,
-			wantErr: rerror.ErrNotFound,
+			name:  "must find user by password reset",
+			seeds: []*user.User{u},
+			token: "123abc",
+			want:  u,
 		},
 		{
 			name:    "must return ErrInvalidParams",
@@ -261,12 +260,14 @@ func TestUser_FindByPasswordResetRequest(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
-			r := &User{}
+			r := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
 			if tc.mockErr {
 				SetUserError(r, tc.wantErr)
 			}
-			for _, u := range tc.seeds {
-				_ = r.Save(ctx, u.Clone())
+			for _, uu := range tc.seeds {
+				_ = r.Save(ctx, uu.Clone())
 			}
 			got, err := r.FindByPasswordResetRequest(ctx, tc.token)
 			if tc.wantErr != nil {
