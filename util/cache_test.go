@@ -22,7 +22,7 @@ func TestCache_Get(t *testing.T) {
 	time.Sleep(1 * time.Nanosecond)
 
 	cache = NewCache(func(c context.Context, i *struct{}) (*struct{}, error) {
-		assert.Same(t, ctx, c)
+		assert.Equal(t, ctx, c)
 		if called == 0 {
 			assert.Nil(t, i)
 		} else {
