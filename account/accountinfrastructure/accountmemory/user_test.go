@@ -136,10 +136,6 @@ func TestUser_FindByName(t *testing.T) {
 		Token: "123abc",
 	}
 	u := user.New().NewID().Name("hoge").Email("aa@bb.cc").PasswordReset(pr.Clone()).MustBuild()
-	r := &User{
-		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
-	}
-	r.data.Store(u.ID(), u)
 
 	tests := []struct {
 		name    string
@@ -176,7 +172,10 @@ func TestUser_FindByName(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
-			r := &User{}
+			r := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+			r.data.Store(u.ID(), u)
 			if tc.mockErr {
 				SetUserError(r, tc.wantErr)
 			}
@@ -283,10 +282,6 @@ func TestUser_FindByVerification(t *testing.T) {
 	ctx := context.Background()
 	vr := user.VerificationFrom("123abc", time.Now(), false)
 	u := user.New().NewID().Name("hoge").Email("aa@bb.cc").Verification(vr).MustBuild()
-	r := &User{
-		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
-	}
-	r.data.Store(u.ID(), u)
 
 	tests := []struct {
 		name    string
@@ -323,7 +318,10 @@ func TestUser_FindByVerification(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			tt.Parallel()
 
-			r := &User{}
+			r := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+			r.data.Store(u.ID(), u)
 			if tc.mockErr {
 				SetUserError(r, tc.wantErr)
 			}
