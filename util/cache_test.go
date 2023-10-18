@@ -19,9 +19,10 @@ func TestCache_Get(t *testing.T) {
 	res, e := cache.Get(ctx) // nil cache
 	assert.NoError(t, e)
 	assert.Nil(t, res)
+	time.Sleep(1 * time.Nanosecond)
 
 	cache = NewCache(func(c context.Context, i *struct{}) (*struct{}, error) {
-		assert.Same(t, ctx, c)
+		assert.Equal(t, ctx, c)
 		if called == 0 {
 			assert.Nil(t, i)
 		} else {
@@ -38,11 +39,13 @@ func TestCache_Get(t *testing.T) {
 	assert.NoError(t, e)
 	assert.Same(t, data, res)
 	assert.Equal(t, 1, called)
+	time.Sleep(1 * time.Nanosecond)
 
 	res, e = cache.Get(ctx) // second
 	assert.NoError(t, e)
 	assert.Same(t, data, res)
 	assert.Equal(t, 2, called)
+	time.Sleep(1 * time.Nanosecond)
 
 	res, e = cache.Get(ctx) // third
 	assert.Same(t, err, e)

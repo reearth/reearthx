@@ -20,19 +20,19 @@ var findOptions = []*options.FindOptions{
 }
 
 type Collection struct {
-	client *mongo.Collection
+	collection *mongo.Collection
 }
 
 func NewCollection(c *mongo.Collection) *Collection {
-	return &Collection{client: c}
+	return &Collection{collection: c}
 }
 
 func (c *Collection) Client() *mongo.Collection {
-	return c.client
+	return c.collection
 }
 
 func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer, options ...*options.FindOptions) error {
-	cursor, err := c.client.Find(ctx, filter, append(findOptions, options...)...)
+	cursor, err := c.collection.Find(ctx, filter, append(findOptions, options...)...)
 	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 		return rerror.ErrNotFound
 	}
@@ -64,7 +64,7 @@ func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer, op
 }
 
 func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer, options ...*options.FindOneOptions) error {
-	raw, err := c.client.FindOne(ctx, filter, options...).DecodeBytes()
+	raw, err := c.collection.FindOne(ctx, filter, options...).DecodeBytes()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 			return rerror.ErrNotFound
@@ -78,15 +78,36 @@ func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer,
 }
 
 func (c *Collection) Count(ctx context.Context, filter any) (int64, error) {
-	count, err := c.client.CountDocuments(ctx, filter)
+	count, err := c.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return 0, wrapError(ctx, err)
 	}
 	return count, nil
 }
 
+func (c *Collection) CountAggregation(ctx context.Context, pipeline []any) (int64, error) {
+	var result struct {
+		Count int64 `bson:"count"`
+	}
+	p := append(pipeline, bson.M{"$count": "count"})
+	cursor, err := c.collection.Aggregate(ctx, p)
+	defer func() {
+		_ = cursor.Close(ctx)
+	}()
+	if err != nil {
+		return 0, wrapError(ctx, err)
+	}
+	if !cursor.Next(ctx) {
+		return 0, nil
+	}
+	if err := cursor.Decode(&result); err != nil {
+		return 0, wrapError(ctx, err)
+	}
+	return result.Count, nil
+}
+
 func (c *Collection) RemoveAll(ctx context.Context, f any) error {
-	_, err := c.client.DeleteMany(ctx, f)
+	_, err := c.collection.DeleteMany(ctx, f)
 	if err != nil {
 		return wrapError(ctx, err)
 	}
@@ -94,7 +115,7 @@ func (c *Collection) RemoveAll(ctx context.Context, f any) error {
 }
 
 func (c *Collection) RemoveOne(ctx context.Context, f any) error {
-	res, err := c.client.DeleteOne(ctx, f)
+	res, err := c.collection.DeleteOne(ctx, f)
 	if err != nil {
 		return wrapError(ctx, err)
 	}
@@ -109,7 +130,7 @@ func (c *Collection) SaveOne(ctx context.Context, id string, replacement any) er
 }
 
 func (c *Collection) ReplaceOne(ctx context.Context, filter any, replacement any) error {
-	_, err := c.client.ReplaceOne(
+	_, err := c.collection.ReplaceOne(
 		ctx,
 		filter,
 		replacement,
@@ -122,7 +143,7 @@ func (c *Collection) ReplaceOne(ctx context.Context, filter any, replacement any
 }
 
 func (c *Collection) SetOne(ctx context.Context, id string, replacement any) error {
-	_, err := c.client.UpdateOne(
+	_, err := c.collection.UpdateOne(
 		ctx,
 		bson.M{idKey: id},
 		bson.M{"$set": replacement},
@@ -151,7 +172,7 @@ func (c *Collection) SaveAll(ctx context.Context, ids []string, updates []any) e
 		)
 	}
 
-	_, err := c.client.BulkWrite(ctx, writeModels)
+	_, err := c.collection.BulkWrite(ctx, writeModels)
 	if err != nil {
 		return wrapError(ctx, err)
 	}
@@ -159,7 +180,7 @@ func (c *Collection) SaveAll(ctx context.Context, ids []string, updates []any) e
 }
 
 func (c *Collection) UpdateMany(ctx context.Context, filter, update any) error {
-	_, err := c.client.UpdateMany(ctx, filter, bson.M{
+	_, err := c.collection.UpdateMany(ctx, filter, bson.M{
 		"$set": update,
 	})
 	if err != nil {
@@ -188,7 +209,7 @@ func (c *Collection) UpdateManyMany(ctx context.Context, updates []Update) error
 		writeModels = append(writeModels, wm)
 	}
 
-	_, err := c.client.BulkWrite(ctx, writeModels)
+	_, err := c.collection.BulkWrite(ctx, writeModels)
 	if err != nil {
 		return wrapError(ctx, err)
 	}

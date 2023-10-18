@@ -25,7 +25,7 @@ func Connect(t *testing.T) func(*testing.T) *mongo.Database {
 		db = os.Getenv(Env)
 	}
 	if db == "" {
-		t.SkipNow()
+		t.Skip("mongotest: no db uri was provided")
 		return nil
 	}
 

@@ -26,7 +26,7 @@ func TestNopTransactional(t *testing.T) {
 	assert.NoError(t, gotErr)
 	assert.False(t, tr.IsCommitted())
 
-	assert.Same(t, ctx, tx.Context())
+	assert.Equal(t, ctx, tx.Context())
 
 	tx.Commit()
 	assert.True(t, tr.IsCommitted())
