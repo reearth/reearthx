@@ -553,7 +553,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
 				userID: {Role: workspace.RoleOwner},
 				u.ID(): {Role: workspace.RoleReader, InvitedBy: userID}, // added
-			}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			}, nil, false),
 		},
 		{
 			name:       "add a non existing member",
@@ -572,7 +572,7 @@ func TestWorkspace_AddMember(t *testing.T) {
 			},
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
 				userID: {Role: workspace.RoleOwner},
-			}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			}, nil, false),
 		},
 		{
 			name:       "add a mamber to personal workspace",
@@ -845,7 +845,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 				operator: op,
 			},
 			wantErr: nil,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, nil, false),
 		},
 		{
 			name:       "Remove personal workspace",
@@ -994,7 +994,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 				operator: op,
 			},
 			wantErr: nil,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleWriter}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleWriter}}, nil, false),
 		},
 		{
 			name:       "Update personal workspace",

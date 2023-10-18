@@ -67,8 +67,15 @@ func Try(tries ...func() error) error {
 
 func SortedEntries[K constraints.Ordered, V any](m map[K]V) []lo.Entry[K, V] {
 	entries := lo.Entries(m)
-	slices.SortStableFunc(entries, func(a, b lo.Entry[K, V]) bool {
-		return a.Key < b.Key
+	slices.SortStableFunc(entries, func(a, b lo.Entry[K, V]) int {
+		switch {
+		case a.Key < b.Key:
+			return -1
+		case a.Key > b.Key:
+			return 1
+		default:
+			return 0
+		}
 	})
 	return entries
 }

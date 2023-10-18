@@ -30,7 +30,7 @@ func NewWorkspaceWith(workspaces ...*workspace.Workspace) *Workspace {
 	return r
 }
 
-func (r *Workspace) FindByUser(ctx context.Context, i accountdomain.UserID) (workspace.List, error) {
+func (r *Workspace) FindByUser(_ context.Context, i accountdomain.UserID) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -50,7 +50,7 @@ func (r *Workspace) FindByIntegration(_ context.Context, i workspace.Integration
 	}), rerror.ErrNotFound)
 }
 
-func (r *Workspace) FindByIDs(ctx context.Context, ids workspace.IDList) (workspace.List, error) {
+func (r *Workspace) FindByIDs(_ context.Context, ids workspace.IDList) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -58,11 +58,11 @@ func (r *Workspace) FindByIDs(ctx context.Context, ids workspace.IDList) (worksp
 	res := r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
 		return ids.Has(key)
 	})
-	slices.SortFunc(res, func(a, b *workspace.Workspace) bool { return a.ID().Compare(b.ID()) < 0 })
+	slices.SortFunc(res, func(a, b *workspace.Workspace) int { return a.ID().Compare(b.ID()) })
 	return res, nil
 }
 
-func (r *Workspace) FindByID(ctx context.Context, v workspace.ID) (*workspace.Workspace, error) {
+func (r *Workspace) FindByID(_ context.Context, v workspace.ID) (*workspace.Workspace, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -72,7 +72,7 @@ func (r *Workspace) FindByID(ctx context.Context, v workspace.ID) (*workspace.Wo
 	}), rerror.ErrNotFound)
 }
 
-func (r *Workspace) Save(ctx context.Context, t *workspace.Workspace) error {
+func (r *Workspace) Save(_ context.Context, t *workspace.Workspace) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -81,7 +81,7 @@ func (r *Workspace) Save(ctx context.Context, t *workspace.Workspace) error {
 	return nil
 }
 
-func (r *Workspace) SaveAll(ctx context.Context, workspaces workspace.List) error {
+func (r *Workspace) SaveAll(_ context.Context, workspaces workspace.List) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -92,7 +92,7 @@ func (r *Workspace) SaveAll(ctx context.Context, workspaces workspace.List) erro
 	return nil
 }
 
-func (r *Workspace) Remove(ctx context.Context, wid workspace.ID) error {
+func (r *Workspace) Remove(_ context.Context, wid workspace.ID) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -101,7 +101,7 @@ func (r *Workspace) Remove(ctx context.Context, wid workspace.ID) error {
 	return nil
 }
 
-func (r *Workspace) RemoveAll(ctx context.Context, ids workspace.IDList) error {
+func (r *Workspace) RemoveAll(_ context.Context, ids workspace.IDList) error {
 	if r.err != nil {
 		return r.err
 	}
