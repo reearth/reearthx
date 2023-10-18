@@ -42,7 +42,11 @@ func DToM(i interface{}) interface{} {
 	}
 	switch i2 := i.(type) {
 	case bson.D:
-		return i2.Map()
+		m := make(bson.M, len(i2))
+		for _, e := range i2 {
+			m[e.Key] = e.Value
+		}
+		return m
 	case bson.A:
 		a := make([]interface{}, 0, len(i2))
 		for _, e := range i2 {

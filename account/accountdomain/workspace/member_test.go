@@ -19,7 +19,7 @@ func TestNewMembersWith(t *testing.T) {
 	m := NewMembersWith(map[UserID]Member{uid: {Role: RoleOwner}}, nil, true)
 	assert.Equal(t, &Members{
 		users:        map[UserID]Member{uid: {Role: RoleOwner}},
-		integrations: map[IntegrationID]Member{},
+		integrations: nil,
 		fixed:        true,
 	}, m)
 }
@@ -29,7 +29,7 @@ func TestInitMembers(t *testing.T) {
 	m := InitMembers(uid)
 	assert.Equal(t, &Members{
 		users:        map[UserID]Member{uid: {Role: RoleOwner, InvitedBy: uid}},
-		integrations: map[IntegrationID]Member{},
+		integrations: nil,
 		fixed:        true,
 	}, m)
 }
