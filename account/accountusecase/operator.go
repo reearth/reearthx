@@ -25,6 +25,9 @@ func (o *Operator) Workspaces(r workspace.Role) accountdomain.WorkspaceIDList {
 	if r == workspace.RoleWriter {
 		return o.WritableWorkspaces
 	}
+	if r == workspace.RoleMaintainer {
+		return o.MaintainableWorkspaces
+	}
 	if r == workspace.RoleOwner {
 		return o.OwningWorkspaces
 	}
