@@ -15,9 +15,15 @@ import (
 
 const idKey = "id"
 
-var findOptions = []*options.FindOptions{
-	options.Find().SetAllowDiskUse(true),
-}
+var (
+	findOptions = []*options.FindOptions{
+		options.Find().SetAllowDiskUse(true),
+	}
+
+	aggregateOptions = []*options.AggregateOptions{
+		options.Aggregate().SetAllowDiskUse(true),
+	}
+)
 
 type Collection struct {
 	collection *mongo.Collection
@@ -83,6 +89,67 @@ func (c *Collection) Count(ctx context.Context, filter any) (int64, error) {
 		return 0, wrapError(ctx, err)
 	}
 	return count, nil
+}
+
+func (c *Collection) Aggregate(ctx context.Context, pipeline []any, consumer Consumer, options ...*options.AggregateOptions) error {
+	cursor, err := c.collection.Aggregate(ctx, pipeline, append(aggregateOptions, options...)...)
+	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
+		return rerror.ErrNotFound
+	}
+	if err != nil {
+		return wrapError(ctx, err)
+	}
+	defer func() {
+		_ = cursor.Close(ctx)
+	}()
+
+	for {
+		c := cursor.Next(ctx)
+		if err := cursor.Err(); err != nil && !errors.Is(err, io.EOF) {
+			return wrapError(ctx, err)
+		}
+
+		if !c {
+			if err := consumer.Consume(nil); err != nil && !errors.Is(err, io.EOF) {
+				return err
+			}
+			break
+		}
+
+		if err := consumer.Consume(cursor.Current); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Collection) AggregateOne(ctx context.Context, pipeline []any, consumer Consumer, options ...*options.AggregateOptions) error {
+	p := append(pipeline, bson.M{"$limit": 1})
+	cursor, err := c.collection.Aggregate(ctx, p, append(aggregateOptions, options...)...)
+	if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
+		return rerror.ErrNotFound
+	}
+	if err != nil {
+		return wrapError(ctx, err)
+	}
+	defer func() {
+		_ = cursor.Close(ctx)
+	}()
+
+	ok := cursor.Next(ctx)
+	if err := cursor.Err(); err != nil && !errors.Is(err, io.EOF) {
+		return wrapError(ctx, err)
+	}
+
+	if !ok {
+		return rerror.ErrNotFound
+	}
+
+	if err := consumer.Consume(cursor.Current); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *Collection) CountAggregation(ctx context.Context, pipeline []any) (int64, error) {
