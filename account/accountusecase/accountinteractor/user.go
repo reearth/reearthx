@@ -52,6 +52,10 @@ func (i *User) Fetch(ctx context.Context, ids user.IDList, operator *accountusec
 
 		workspaces := []workspace.ID{}
 		for _, u := range res {
+			if u == nil {
+				continue
+			}
+
 			w, err := i.repos.Workspace.FindByUser(ctx, u.ID())
 			if err != nil {
 				return res, err
