@@ -70,18 +70,25 @@ type UpdateMeParam struct {
 	PasswordConfirmation *string
 }
 
+type UserQuery interface {
+	FetchByID(context.Context, user.IDList) (user.List, error)
+	FetchBySub(context.Context, string) (*user.User, error)
+	SearchUser(context.Context, string) (*user.Simple, error)
+}
+
 type User interface {
-	Fetch(context.Context, user.IDList, *accountusecase.Operator) (user.List, error)
-	FetchSimple(context.Context, user.IDList, *accountusecase.Operator) (user.SimpleList, error)
+	UserQuery
+
+	// sign up
 	Signup(context.Context, SignupParam) (*user.User, error)
 	SignupOIDC(context.Context, SignupOIDCParam) (*user.User, error)
-	FindOrCreate(context.Context, UserFindOrCreateParam) (*user.User, error)
+
+	// editing me
 	UpdateMe(context.Context, UpdateMeParam, *accountusecase.Operator) (*user.User, error)
 	RemoveMyAuth(context.Context, string, *accountusecase.Operator) (*user.User, error)
-	SearchUser(context.Context, string, *accountusecase.Operator) (*user.User, error)
 	DeleteMe(context.Context, user.ID, *accountusecase.Operator) error
 
-	// from reearth/server
+	// built-in auth server
 	CreateVerification(context.Context, string) error
 	VerifyUser(context.Context, string) (*user.User, error)
 	StartPasswordReset(context.Context, string) error

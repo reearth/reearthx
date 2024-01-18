@@ -24,6 +24,7 @@ type User struct {
 	theme         Theme
 	verification  *Verification
 	passwordReset *PasswordReset
+	host          string
 }
 
 func (u *User) ID() ID {
@@ -194,6 +195,10 @@ func (u *User) SetVerification(v *Verification) {
 	u.verification = v
 }
 
+func (u *User) Host() string {
+	return u.host
+}
+
 func (u *User) Clone() *User {
 	return &User{
 		id:            u.id,
@@ -207,6 +212,12 @@ func (u *User) Clone() *User {
 		verification:  util.CloneRef(u.verification),
 		passwordReset: util.CloneRef(u.passwordReset),
 	}
+}
+
+func (u *User) WithHost(host string) *User {
+	d := u.Clone()
+	d.host = host
+	return d
 }
 
 type List []*User

@@ -129,6 +129,12 @@ func (d *PasswordResetDocument) Model() *user.PasswordReset {
 
 type UserConsumer = mongox.SliceFuncConsumer[*UserDocument, *user.User]
 
-func NewUserConsumer() *UserConsumer {
-	return NewComsumer[*UserDocument, *user.User]()
+func NewUserConsumer(host string) *UserConsumer {
+	return mongox.NewSliceFuncConsumer(func(d *UserDocument) (*user.User, error) {
+		m, err := d.Model()
+		if err != nil {
+			return nil, err
+		}
+		return m.WithHost(host), nil
+	})
 }

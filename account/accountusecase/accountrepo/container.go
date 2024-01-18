@@ -12,6 +12,7 @@ type Container struct {
 	User        User
 	Workspace   Workspace
 	Transaction usecasex.Transaction
+	Users       []User
 }
 
 var (
