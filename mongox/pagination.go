@@ -164,11 +164,11 @@ func findOptionsFromPagination(p usecasex.Pagination, s *usecasex.Sort) *options
 		o = o.SetSkip(p.Offset.Offset)
 	}
 
-	return o.SetCollation(&options.Collation{Strength: 1, Locale: "en"}).SetSort(sortFilter(p, s))
+	return o.SetSort(sortFilter(p, s))
 }
 
 func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *options.AggregateOptions {
-	return options.Aggregate().SetAllowDiskUse(true) //.SetCollation(&options.Collation{Strength: 1, Locale: "en"})
+	return options.Aggregate().SetAllowDiskUse(true)
 }
 
 func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (any, error) {
