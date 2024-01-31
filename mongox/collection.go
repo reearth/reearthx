@@ -70,7 +70,7 @@ func (c *Collection) Find(ctx context.Context, filter any, consumer Consumer, op
 }
 
 func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer, options ...*options.FindOneOptions) error {
-	raw, err := c.collection.FindOne(ctx, filter, options...).DecodeBytes()
+	raw, err := c.collection.FindOne(ctx, filter, options...).Raw()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
 			return rerror.ErrNotFound
