@@ -2,6 +2,7 @@ package accountmongo
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
@@ -20,10 +21,15 @@ var (
 
 type User struct {
 	client *mongox.Collection
+	host   string
 }
 
 func NewUser(client *mongox.Client) accountrepo.User {
 	return &User{client: client.WithCollection("user")}
+}
+
+func NewUserWithHost(client *mongox.Client, host string) accountrepo.User {
+	return &User{client: client.WithCollection("user"), host: host}
 }
 
 func (r *User) Init() error {
@@ -140,6 +146,9 @@ func (r *User) Create(ctx context.Context, user *user.User) error {
 }
 
 func (r *User) Save(ctx context.Context, user *user.User) error {
+	if user.Host() != "" {
+		return fmt.Errorf("cannot save an user on the different tenant(host=%s)", user.Host())
+	}
 	doc, id := mongodoc.NewUser(user)
 	return r.client.SaveOne(ctx, id, doc)
 }
@@ -149,7 +158,7 @@ func (r *User) Remove(ctx context.Context, user user.ID) error {
 }
 
 func (r *User) find(ctx context.Context, filter any) (user.List, error) {
-	c := mongodoc.NewUserConsumer()
+	c := mongodoc.NewUserConsumer(r.host)
 	if err := r.client.Find(ctx, filter, c); err != nil {
 		return nil, err
 	}
@@ -157,7 +166,7 @@ func (r *User) find(ctx context.Context, filter any) (user.List, error) {
 }
 
 func (r *User) findOne(ctx context.Context, filter any) (*user.User, error) {
-	c := mongodoc.NewUserConsumer()
+	c := mongodoc.NewUserConsumer(r.host)
 	if err := r.client.FindOne(ctx, filter, c); err != nil {
 		return nil, err
 	}

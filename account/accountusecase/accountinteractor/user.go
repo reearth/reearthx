@@ -16,7 +16,6 @@ import (
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/mailer"
 	"github.com/reearth/reearthx/rerror"
-	"github.com/samber/lo"
 )
 
 type User struct {
@@ -24,6 +23,7 @@ type User struct {
 	gateways        *accountgateway.Container
 	signupSecret    string
 	authSrvUIDomain string
+	query           accountinterfaces.UserQuery
 }
 
 var (
@@ -40,38 +40,34 @@ func NewUser(r *accountrepo.Container, g *accountgateway.Container, signupSecret
 		gateways:        g,
 		signupSecret:    signupSecret,
 		authSrvUIDomain: authSrcUIDomain,
+		query: &UserQuery{
+			repos: []accountrepo.User{r.User},
+		},
 	}
 }
 
-func (i *User) Fetch(ctx context.Context, ids user.IDList, operator *accountusecase.Operator) (user.List, error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (user.List, error) {
-		res, err := i.repos.User.FindByIDs(ctx, ids)
-		if err != nil {
-			return res, err
-		}
-
-		workspaces := []workspace.ID{}
-		for _, u := range res {
-			if u == nil {
-				continue
-			}
-
-			w, err := i.repos.Workspace.FindByUser(ctx, u.ID())
-			if err != nil {
-				return res, err
-			}
-			workspaces = append(workspaces, w.IDs()...)
-		}
-
-		return filterUsers(res, workspaces, operator), nil
-	})
+func NewMultiUser(r *accountrepo.Container, g *accountgateway.Container, signupSecret, authSrcUIDomain string, users []accountrepo.User) accountinterfaces.User {
+	return &User{
+		repos:           r,
+		gateways:        g,
+		signupSecret:    signupSecret,
+		authSrvUIDomain: authSrcUIDomain,
+		query: &UserQuery{
+			repos: append([]accountrepo.User{r.User}, users...),
+		},
+	}
 }
 
-func (i *User) FetchSimple(ctx context.Context, ids user.IDList, operator *accountusecase.Operator) (user.SimpleList, error) {
-	users, err := i.Fetch(ctx, ids, operator)
-	return lo.Map(users, func(u *user.User, _ int) *user.Simple {
-		return user.SimpleFrom(u)
-	}), err
+func (i *User) FetchByID(ctx context.Context, ids user.IDList) (user.List, error) {
+	return i.query.FetchByID(ctx, ids)
+}
+
+func (i *User) FetchBySub(ctx context.Context, sub string) (*user.User, error) {
+	return i.query.FetchBySub(ctx, sub)
+}
+
+func (i *User) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
+	return i.query.SearchUser(ctx, nameOrEmail)
 }
 
 func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.GetUserByCredentials) (u *user.User, err error) {
@@ -210,16 +206,6 @@ func (i *User) RemoveMyAuth(ctx context.Context, authProvider string, operator *
 			return nil, err
 		}
 
-		return u, nil
-	})
-}
-
-func (i *User) SearchUser(ctx context.Context, nameOrEmail string, operator *accountusecase.Operator) (u *user.User, err error) {
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
-		u, err = i.repos.User.FindByNameOrEmail(ctx, nameOrEmail)
-		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
-			return nil, err
-		}
 		return u, nil
 	})
 }
@@ -375,11 +361,46 @@ func (i *User) PasswordReset(ctx context.Context, password string, token string)
 	})
 }
 
-func filterUsers(res user.List, workspaces workspace.IDList, operator *accountusecase.Operator) []*user.User {
-	for k := range res {
-		if !operator.IsReadableWorkspace(workspaces...) {
-			res[k] = nil
+type UserQuery struct {
+	repos []accountrepo.User
+}
+
+func (q *UserQuery) FetchByID(ctx context.Context, ids user.IDList) (user.List, error) {
+	var us user.List
+	for _, r := range q.repos {
+		u, err := r.FindByIDs(ctx, ids)
+		if err != nil {
+			return nil, err
 		}
+		us = append(us, u...)
 	}
-	return res
+	return us, nil
+}
+
+func (q *UserQuery) FetchBySub(ctx context.Context, sub string) (*user.User, error) {
+	for _, r := range q.repos {
+		u, err := r.FindBySub(ctx, sub)
+		if errors.Is(err, rerror.ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return u, nil
+	}
+	return nil, rerror.ErrNotFound
+}
+
+func (q *UserQuery) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
+	for _, r := range q.repos {
+		u, err := r.FindByNameOrEmail(ctx, nameOrEmail)
+		if errors.Is(err, rerror.ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return user.SimpleFrom(u), nil
+	}
+	return nil, nil
 }

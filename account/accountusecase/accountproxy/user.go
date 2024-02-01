@@ -27,12 +27,12 @@ func NewUser(endpoint string, h HTTPClient) accountinterfaces.User {
 	}
 }
 
-func (u *User) Fetch(ctx context.Context, ids user.IDList, op *accountusecase.Operator) (user.List, error) {
-	return UserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
+func (u *User) FetchBySub(ctx context.Context, sub string) (*user.User, error) {
+	panic("unsupported")
 }
 
-func (u *User) FetchSimple(ctx context.Context, ids user.IDList, op *accountusecase.Operator) (user.SimpleList, error) {
-	return SimpleUserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
+func (u *User) FetchByID(ctx context.Context, ids user.IDList) (user.List, error) {
+	return UserByIDsResponseTo(UserByIDs(ctx, u.gql, ids.Strings()))
 }
 
 func (u *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) (*user.User, error) {
@@ -104,12 +104,16 @@ func (u *User) RemoveMyAuth(ctx context.Context, auth string, op *accountusecase
 	return MeToUser(res.RemoveMyAuth.Me.FragmentMe)
 }
 
-func (u *User) SearchUser(ctx context.Context, nameOrEmail string, _ *accountusecase.Operator) (*user.User, error) {
+func (u *User) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
 	res, err := SearchUser(ctx, u.gql, nameOrEmail)
 	if err != nil {
 		return nil, err
 	}
-	return FragmentToUser(res.SearchUser.FragmentUser)
+	r, err := FragmentToUser(res.SearchUser.FragmentUser)
+	if err != nil {
+		return nil, err
+	}
+	return user.SimpleFrom(r), nil
 }
 
 func (u *User) DeleteMe(ctx context.Context, id user.ID, op *accountusecase.Operator) error {
