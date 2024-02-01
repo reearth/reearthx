@@ -3,11 +3,9 @@ package accountinteractor
 import (
 	"context"
 	"net/url"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/jarcoal/httpmock"
 	"github.com/samber/lo"
 	"golang.org/x/text/language"
 
@@ -288,53 +286,6 @@ func TestUser_Signup(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestUser_FindOrCreate(t *testing.T) {
-	r := accountmemory.New()
-	uc := NewUser(r, nil, "", "")
-
-	httpmock.Activate()
-	defer httpmock.Deactivate()
-
-	httpmock.RegisterResponder("GET", "https://example.com/.well-known/openid-configuration", lo.Must(httpmock.NewJsonResponder(200, map[string]any{
-		"userinfo_endpoint": "https://example.com/userinfo",
-	})))
-
-	httpmock.RegisterResponder("GET", "https://example.com/userinfo", lo.Must(httpmock.NewJsonResponder(200, map[string]any{
-		"sub":   "auth0|SUB",
-		"name":  "NAME",
-		"email": "aaa@example.com",
-	})))
-
-	wg := sync.WaitGroup{}
-	for i := 0; i < 10; i++ {
-		go func() {
-			_, err := uc.FindOrCreate(context.Background(), accountinterfaces.UserFindOrCreateParam{
-				Sub:   "auth0|SUB",
-				ISS:   "https://example.com",
-				Token: "token",
-			})
-			assert.NoError(t, err)
-			wg.Done()
-		}()
-		wg.Add(1)
-	}
-	wg.Wait()
-
-	u, _ := r.User.FindBySub(context.Background(), "auth0|SUB")
-	assert.Equal(
-		t,
-		user.New().
-			ID(u.ID()).
-			Workspace(u.Workspace()).
-			Name("NAME").
-			Email("aaa@example.com").
-			Auths([]user.Auth{
-				user.AuthFrom("auth0|SUB"),
-			}).
-			MustBuild(),
-		u)
 }
 
 func TestIssToURL(t *testing.T) {

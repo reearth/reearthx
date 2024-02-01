@@ -15,8 +15,8 @@ import (
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	jwt2 "gopkg.in/go-jose/go-jose.v2/jwt"
 	"gopkg.in/square/go-jose.v2"
-	jwt2 "gopkg.in/square/go-jose.v2/jwt"
 )
 
 func TestMultiValidator(t *testing.T) {
