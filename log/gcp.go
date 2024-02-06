@@ -7,7 +7,11 @@ import (
 )
 
 var GCP = false
-var GCPEnv = "GOOGLE_CLOUD_PROJECT"
+var GCPEnv = []string{
+	"CLOUD_RUN_JOB",
+	"K_SERVICE",
+	"GOOGLE_CLOUD_PROJECT",
+}
 
 type severity string
 
@@ -55,6 +59,11 @@ func isGCP() bool {
 		return true
 	}
 
-	gcp, _ := os.LookupEnv(GCPEnv)
-	return gcp != ""
+	for _, key := range GCPEnv {
+		if v, ok := os.LookupEnv(key); ok && v != "" {
+			return true
+		}
+	}
+
+	return false
 }
