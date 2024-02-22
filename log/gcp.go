@@ -11,6 +11,7 @@ var GCPEnv = []string{
 	"CLOUD_RUN_JOB",
 	"K_SERVICE",
 	"GOOGLE_CLOUD_PROJECT",
+	"GCP",
 }
 
 type severity string

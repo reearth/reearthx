@@ -65,7 +65,11 @@ func encoder() zapcore.Encoder {
 	if isGCP() {
 		return zapcore.NewJSONEncoder(gceEncoderConfig)
 	} else {
-		return zapcore.NewConsoleEncoder(consoleEncoderConfig)
+		conf := consoleEncoderConfig
+		if isColorDisabled() {
+			conf.EncodeLevel = zapcore.CapitalLevelEncoder
+		}
+		return zapcore.NewConsoleEncoder(conf)
 	}
 }
 
@@ -269,4 +273,8 @@ func (l *Logger) msg(msg string) string {
 		s = l.dynSuffix().String()
 	}
 	return p + msg + s
+}
+
+func isColorDisabled() bool {
+	return os.Getenv("NO_COLOR") != ""
 }
