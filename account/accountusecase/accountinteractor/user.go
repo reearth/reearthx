@@ -35,13 +35,17 @@ var (
 )
 
 func NewUser(r *accountrepo.Container, g *accountgateway.Container, signupSecret, authSrcUIDomain string) accountinterfaces.User {
+	var repos []accountrepo.User
+	if r != nil {
+		repos = []accountrepo.User{r.User}
+	}
 	return &User{
 		repos:           r,
 		gateways:        g,
 		signupSecret:    signupSecret,
 		authSrvUIDomain: authSrcUIDomain,
 		query: &UserQuery{
-			repos: []accountrepo.User{r.User},
+			repos: repos,
 		},
 	}
 }
