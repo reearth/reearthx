@@ -15,6 +15,7 @@ import (
 	textTmpl "text/template"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/i18n"
@@ -71,7 +72,7 @@ func (i *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) 
 		return nil, err
 	}
 
-	u, workspace, err := user.Init(user.InitParams{
+	u, workspace, err := workspace.Init(workspace.InitParams{
 		Email:       param.Email,
 		Name:        param.Name,
 		Password:    lo.ToPtr(param.Password),
@@ -147,7 +148,7 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 	}
 
 	// Initialize user and ws
-	u, ws, err := user.Init(user.InitParams{
+	u, ws, err := workspace.Init(workspace.InitParams{
 		Email:       email,
 		Name:        name,
 		Sub:         user.AuthFrom(sub).Ref(),
@@ -190,7 +191,7 @@ func (i *User) FindOrCreate(ctx context.Context, param accountinterfaces.UserFin
 			return nil, err
 		}
 
-		u, workspace, err := user.Init(user.InitParams{
+		u, workspace, err := workspace.Init(workspace.InitParams{
 			Email: ui.Email,
 			Name:  ui.Name,
 			Sub:   user.AuthFrom(param.Sub).Ref(),

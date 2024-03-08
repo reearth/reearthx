@@ -22,6 +22,7 @@ func TestWorkspace_Create(t *testing.T) {
 	db := accountmemory.New()
 
 	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(accountdomain.NewWorkspaceID()).MustBuild()
+	_ = db.User.Save(ctx, u)
 	workspaceUC := NewWorkspace(db, nil)
 	op := &accountusecase.Operator{User: lo.ToPtr(u.ID())}
 	ws, err := workspaceUC.Create(ctx, "workspace name", u.ID(), op)

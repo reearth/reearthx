@@ -1,44 +1,44 @@
-package user
+package workspace
 
 import (
-	"github.com/reearth/reearthx/account/accountdomain/workspace"
+	"github.com/reearth/reearthx/account/accountdomain/user"
 	"golang.org/x/text/language"
 )
 
 type InitParams struct {
 	Email       string
 	Name        string
-	Sub         *Auth
+	Sub         *user.Auth
 	Password    *string
 	Lang        *language.Tag
-	Theme       *Theme
-	UserID      *ID
-	WorkspaceID *WorkspaceID
+	Theme       *user.Theme
+	UserID      *user.ID
+	WorkspaceID *ID
 }
 
-func Init(p InitParams) (*User, *workspace.Workspace, error) {
+func Init(p InitParams) (*user.User, *Workspace, error) {
 	if p.UserID == nil {
-		p.UserID = NewID().Ref()
+		p.UserID = user.NewID().Ref()
 	}
 	if p.WorkspaceID == nil {
-		p.WorkspaceID = NewWorkspaceID().Ref()
+		p.WorkspaceID = NewID().Ref()
 	}
 	if p.Lang == nil {
 		p.Lang = &language.Tag{}
 	}
 	if p.Theme == nil {
-		t := ThemeDefault
+		t := user.ThemeDefault
 		p.Theme = &t
 	}
 	if p.Sub == nil {
-		p.Sub = GenReearthSub(p.UserID.String())
+		p.Sub = user.GenReearthSub(p.UserID.String())
 	}
 
-	b := New().
+	b := user.New().
 		ID(*p.UserID).
 		Name(p.Name).
 		Email(p.Email).
-		Auths([]Auth{*p.Sub}).
+		Auths([]user.Auth{*p.Sub}).
 		Lang(*p.Lang).
 		Theme(*p.Theme)
 	if p.Password != nil {
@@ -50,10 +50,10 @@ func Init(p InitParams) (*User, *workspace.Workspace, error) {
 	}
 
 	// create a user's own workspace
-	t, err := workspace.New().
+	t, err := New().
 		ID(*p.WorkspaceID).
 		Name(p.Name).
-		Members(map[ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, Disabled: false, InvitedBy: u.ID()}}).
+		Members(map[user.ID]Member{u.ID(): {Role: RoleOwner, Disabled: false, InvitedBy: u.ID()}}).
 		Personal(true).
 		Build()
 	if err != nil {

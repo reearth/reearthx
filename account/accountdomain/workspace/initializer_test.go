@@ -1,49 +1,49 @@
-package user
+package workspace
 
 import (
 	"testing"
 
-	"github.com/reearth/reearthx/account/accountdomain/workspace"
+	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestInit(t *testing.T) {
-	uid := NewID()
-	tid := NewWorkspaceID()
-	expectedSub := Auth{
+	uid := user.NewID()
+	tid := NewID()
+	expectedSub := user.Auth{
 		Provider: "###",
 		Sub:      "###",
 	}
 	tests := []struct {
 		Name, Email, Username string
-		Sub                   Auth
-		UID                   *ID
-		TID                   *WorkspaceID
-		ExpectedUser          *User
-		ExpectedWorkspace     *workspace.Workspace
+		Sub                   user.Auth
+		UID                   *user.ID
+		TID                   *ID
+		ExpectedUser          *user.User
+		ExpectedWorkspace     *Workspace
 		Err                   error
 	}{
 		{
 			Name:     "Success create user",
 			Email:    "xx@yy.zz",
 			Username: "nnn",
-			Sub: Auth{
+			Sub: user.Auth{
 				Provider: "###",
 				Sub:      "###",
 			},
 			UID: &uid,
 			TID: &tid,
-			ExpectedUser: New().
+			ExpectedUser: user.New().
 				ID(uid).
 				Email("xx@yy.zz").
 				Name("nnn").
 				Workspace(tid).
-				Auths([]Auth{expectedSub}).
+				Auths([]user.Auth{expectedSub}).
 				MustBuild(),
-			ExpectedWorkspace: workspace.New().
+			ExpectedWorkspace: New().
 				ID(tid).
 				Name("nnn").
-				Members(map[ID]workspace.Member{uid: {Role: workspace.RoleOwner}}).
+				Members(map[user.ID]Member{uid: {Role: RoleOwner}}).
 				Personal(true).
 				MustBuild(),
 			Err: nil,
@@ -52,23 +52,23 @@ func TestInit(t *testing.T) {
 			Name:     "Success nil workspace id",
 			Email:    "xx@yy.zz",
 			Username: "nnn",
-			Sub: Auth{
+			Sub: user.Auth{
 				Provider: "###",
 				Sub:      "###",
 			},
 			UID: &uid,
 			TID: nil,
-			ExpectedUser: New().
+			ExpectedUser: user.New().
 				ID(uid).
 				Email("xx@yy.zz").
 				Name("nnn").
 				Workspace(tid).
-				Auths([]Auth{expectedSub}).
+				Auths([]user.Auth{expectedSub}).
 				MustBuild(),
-			ExpectedWorkspace: workspace.New().
+			ExpectedWorkspace: New().
 				NewID().
 				Name("nnn").
-				Members(map[ID]workspace.Member{uid: {Role: workspace.RoleOwner}}).
+				Members(map[user.ID]Member{uid: {Role: RoleOwner}}).
 				Personal(true).
 				MustBuild(),
 			Err: nil,
@@ -77,23 +77,23 @@ func TestInit(t *testing.T) {
 			Name:     "Success nil id",
 			Email:    "xx@yy.zz",
 			Username: "nnn",
-			Sub: Auth{
+			Sub: user.Auth{
 				Provider: "###",
 				Sub:      "###",
 			},
 			UID: nil,
 			TID: &tid,
-			ExpectedUser: New().
+			ExpectedUser: user.New().
 				NewID().
 				Email("xx@yy.zz").
 				Name("nnn").
 				Workspace(tid).
-				Auths([]Auth{expectedSub}).
+				Auths([]user.Auth{expectedSub}).
 				MustBuild(),
-			ExpectedWorkspace: workspace.New().
+			ExpectedWorkspace: New().
 				ID(tid).
 				Name("nnn").
-				Members(map[ID]workspace.Member{uid: {Role: workspace.RoleOwner}}).
+				Members(map[user.ID]Member{uid: {Role: RoleOwner}}).
 				Personal(true).
 				MustBuild(),
 			Err: nil,

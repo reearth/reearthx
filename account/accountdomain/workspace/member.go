@@ -3,6 +3,7 @@ package workspace
 import (
 	"sort"
 
+	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
@@ -20,6 +21,7 @@ type Member struct {
 	Role      Role
 	Disabled  bool
 	InvitedBy UserID
+	Host      string
 }
 
 type Members struct {
@@ -177,11 +179,11 @@ func (m *Members) UpdateIntegrationRole(iId IntegrationID, role Role) error {
 	return nil
 }
 
-func (m *Members) Join(u UserID, role Role, i UserID) error {
+func (m *Members) Join(u *user.User, role Role, i UserID) error {
 	if m.fixed {
 		return ErrCannotModifyPersonalWorkspace
 	}
-	if _, ok := m.users[u]; ok {
+	if _, ok := m.users[u.ID()]; ok {
 		return ErrUserAlreadyJoined
 	}
 	if role == Role("") {
@@ -190,10 +192,11 @@ func (m *Members) Join(u UserID, role Role, i UserID) error {
 	if m.users == nil {
 		m.users = map[UserID]Member{}
 	}
-	m.users[u] = Member{
+	m.users[u.ID()] = Member{
 		Role:      role,
 		Disabled:  false,
 		InvitedBy: i,
+		Host:      u.Host(),
 	}
 	return nil
 }

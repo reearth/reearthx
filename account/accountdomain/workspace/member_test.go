@@ -3,6 +3,7 @@ package workspace
 import (
 	"testing"
 
+	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -143,21 +144,23 @@ func TestMembers_Join(t *testing.T) {
 	uid := NewUserID()
 	uid2 := NewUserID()
 
+	u := user.New().ID(uid).Name("test").Email("test@example.com").MustBuild().WithHost("reearth")
+
 	// ok
 	m := &Members{}
-	assert.NoError(t, m.Join(uid, RoleOwner, uid2))
+	assert.NoError(t, m.Join(u, RoleOwner, uid2))
 	assert.Equal(t, map[UserID]Member{
-		uid: {Role: RoleOwner, InvitedBy: uid2},
+		uid: {Role: RoleOwner, InvitedBy: uid2, Host: "reearth"},
 	}, m.users)
 
 	// fixed
 	m = &Members{fixed: true}
-	assert.Equal(t, ErrCannotModifyPersonalWorkspace, m.Join(uid, RoleOwner, uid2))
+	assert.Equal(t, ErrCannotModifyPersonalWorkspace, m.Join(u, RoleOwner, uid2))
 	assert.Nil(t, m.users)
 
 	// already joined
 	m = &Members{users: map[UserID]Member{uid: {Role: RoleOwner}}}
-	assert.Equal(t, ErrUserAlreadyJoined, m.Join(uid, RoleOwner, uid2))
+	assert.Equal(t, ErrUserAlreadyJoined, m.Join(u, RoleOwner, uid2))
 	assert.Equal(t, map[UserID]Member{uid: {Role: RoleOwner}}, m.users)
 }
 

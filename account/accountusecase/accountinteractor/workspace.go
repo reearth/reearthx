@@ -9,6 +9,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
+	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
 	"golang.org/x/exp/maps"
 )
@@ -49,6 +50,14 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace
 			return nil, user.ErrInvalidName
 		}
 
+		firstUsers, err := i.userquery.FetchByID(ctx, []user.ID{firstUser})
+		if err != nil || len(firstUsers) == 0 {
+			if err == nil {
+				return nil, rerror.ErrNotFound
+			}
+			return nil, err
+		}
+
 		ws, err := workspace.New().
 			NewID().
 			Name(name).
@@ -57,7 +66,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace
 			return nil, err
 		}
 
-		if err := ws.Members().Join(firstUser, workspace.RoleOwner, *operator.User); err != nil {
+		if err := ws.Members().Join(firstUsers[0], workspace.RoleOwner, *operator.User); err != nil {
 			return nil, err
 		}
 
@@ -136,7 +145,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 				continue
 			}
 
-			err = ws.Members().Join(m.ID(), users[m.ID()], *operator.User)
+			err = ws.Members().Join(m, users[m.ID()], *operator.User)
 			if err != nil {
 				return nil, err
 			}
