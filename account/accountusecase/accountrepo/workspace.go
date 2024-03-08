@@ -13,7 +13,7 @@ type Workspace interface {
 	FindByIDs(context.Context, workspace.IDList) (workspace.List, error)
 	FindByUser(context.Context, user.ID) (workspace.List, error)
 	FindByIntegration(context.Context, workspace.IntegrationID) (workspace.List, error)
-	NewOne(context.Context, *workspace.Workspace) error
+	Create(context.Context, *workspace.Workspace) error
 	Save(context.Context, *workspace.Workspace) error
 	SaveAll(context.Context, workspace.List) error
 	Remove(context.Context, workspace.ID) error

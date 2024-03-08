@@ -88,16 +88,7 @@ func (r *Workspace) FindByID(ctx context.Context, id accountdomain.WorkspaceID) 
 
 func (r *Workspace) Create(ctx context.Context, workspace *workspace.Workspace) error {
 	doc, id := mongodoc.NewWorkspace(workspace)
-	return r.client.NewOne(ctx, id, doc)
-}
-
-func (r *Workspace) NewOne(ctx context.Context, workspace *workspace.Workspace) error {
-	if !r.f.CanWrite(workspace.ID()) {
-		return accountrepo.ErrOperationDenied
-	}
-
-	doc, id := mongodoc.NewWorkspace(workspace)
-	return r.client.NewOne(ctx, id, doc)
+	return r.client.CreateOne(ctx, id, doc)
 }
 
 func (r *Workspace) Save(ctx context.Context, workspace *workspace.Workspace) error {

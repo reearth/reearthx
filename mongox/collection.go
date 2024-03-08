@@ -192,7 +192,11 @@ func (c *Collection) RemoveOne(ctx context.Context, f any) error {
 	return nil
 }
 
-func (c *Collection) NewOne(ctx context.Context, id string, doc any) error {
+func (c *Collection) CreateOne(ctx context.Context, id string, doc any) error {
+	if id == "" {
+		return errors.New("id is empty")
+	}
+
 	count, err := c.collection.CountDocuments(ctx, bson.M{idKey: id})
 	if err != nil {
 		return wrapError(ctx, err)
