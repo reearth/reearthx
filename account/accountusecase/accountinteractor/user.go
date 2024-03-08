@@ -376,14 +376,20 @@ func NewUserQuery(primary accountrepo.User, repos ...accountrepo.User) *UserQuer
 }
 
 func (q *UserQuery) FetchByID(ctx context.Context, ids user.IDList) (user.List, error) {
-	var us user.List
+	us := make(user.List, len(ids))
 	for _, r := range q.repos {
 		u, err := r.FindByIDs(ctx, ids)
 		if err != nil {
 			return nil, err
 		}
-		us = append(us, u...)
+
+		for i, uu := range u {
+			if uu != nil && us[i] == nil {
+				us[i] = uu
+			}
+		}
 	}
+
 	return us, nil
 }
 
