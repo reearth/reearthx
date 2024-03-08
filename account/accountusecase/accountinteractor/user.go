@@ -369,6 +369,12 @@ type UserQuery struct {
 	repos []accountrepo.User
 }
 
+func NewUserQuery(primary accountrepo.User, repos ...accountrepo.User) *UserQuery {
+	return &UserQuery{
+		repos: append([]accountrepo.User{primary}, repos...),
+	}
+}
+
 func (q *UserQuery) FetchByID(ctx context.Context, ids user.IDList) (user.List, error) {
 	var us user.List
 	for _, r := range q.repos {

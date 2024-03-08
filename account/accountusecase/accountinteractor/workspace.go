@@ -18,12 +18,14 @@ type WorkspaceMemberCountEnforcer func(context.Context, *workspace.Workspace, us
 type Workspace struct {
 	repos              *accountrepo.Container
 	enforceMemberCount WorkspaceMemberCountEnforcer
+	userquery          accountinterfaces.UserQuery
 }
 
 func NewWorkspace(r *accountrepo.Container, enforceMemberCount WorkspaceMemberCountEnforcer) accountinterfaces.Workspace {
 	return &Workspace{
 		repos:              r,
 		enforceMemberCount: enforceMemberCount,
+		userquery:          NewUserQuery(r.User, r.Users...),
 	}
 }
 
@@ -118,7 +120,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 			return nil, workspace.ErrCannotModifyPersonalWorkspace
 		}
 
-		ul, err := i.repos.User.FindByIDs(ctx, maps.Keys(users))
+		ul, err := i.userquery.FetchByID(ctx, maps.Keys(users))
 		if err != nil {
 			return nil, err
 		}
