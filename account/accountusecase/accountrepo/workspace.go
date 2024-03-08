@@ -8,6 +8,7 @@ import (
 )
 
 type Workspace interface {
+	Filtered(WorkspaceFilter) Workspace
 	FindByID(context.Context, workspace.ID) (*workspace.Workspace, error)
 	FindByIDs(context.Context, workspace.IDList) (workspace.List, error)
 	FindByUser(context.Context, user.ID) (workspace.List, error)

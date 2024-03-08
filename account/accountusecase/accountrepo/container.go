@@ -6,6 +6,7 @@ import (
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Container struct {
@@ -24,8 +25,9 @@ func (c *Container) Filtered(workspace WorkspaceFilter) *Container {
 		return c
 	}
 	return &Container{
-		Workspace: c.Workspace,
+		Workspace: c.Workspace.Filtered(workspace),
 		User:      c.User,
+		Users:     c.Users,
 	}
 }
 
@@ -76,4 +78,17 @@ func (f WorkspaceFilter) CanRead(id accountdomain.WorkspaceID) bool {
 
 func (f WorkspaceFilter) CanWrite(id accountdomain.WorkspaceID) bool {
 	return f.Writable == nil || f.Writable.Has(id)
+}
+
+func (f WorkspaceFilter) Filter(q any) any {
+	if f.Readable == nil {
+		return q
+	}
+
+	return bson.M{
+		"$and": bson.A{
+			bson.M{"id": bson.M{"$in": f.Readable.Strings()}},
+			q,
+		},
+	}
 }

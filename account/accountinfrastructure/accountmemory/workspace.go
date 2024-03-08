@@ -30,6 +30,10 @@ func NewWorkspaceWith(workspaces ...*workspace.Workspace) *Workspace {
 	return r
 }
 
+func (r *Workspace) Filtered(f accountrepo.WorkspaceFilter) accountrepo.Workspace {
+	return r // TODO
+}
+
 func (r *Workspace) FindByUser(_ context.Context, i accountdomain.UserID) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
