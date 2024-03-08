@@ -70,7 +70,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace
 			return nil, err
 		}
 
-		if err := i.repos.Workspace.Save(ctx, ws); err != nil {
+		if err := i.repos.Workspace.NewOne(ctx, ws); err != nil {
 			return nil, err
 		}
 

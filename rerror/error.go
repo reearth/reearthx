@@ -14,6 +14,7 @@ import (
 const (
 	IDErrInternal       = "internal"
 	IDErrNotFound       = "not found"
+	IDErrAlreadyExists  = "already exists"
 	IDErrInvalidParams  = "invalid params"
 	IDErrNotImplemented = "not implemented"
 )
@@ -22,6 +23,8 @@ var (
 	errInternal = WrapE(&i18n.Message{ID: IDErrInternal}, errInternalRaw)
 	// ErrNotFound indicates something was not found.
 	ErrNotFound = WrapE(&i18n.Message{ID: IDErrNotFound}, ErrNotFoundRaw)
+	// ErrAlreadyExists indicates something was already exists.
+	ErrAlreadyExists = WrapE(&i18n.Message{ID: IDErrAlreadyExists}, ErrAlreadyExistsRaw)
 	// ErrInvalidParams represents the params are invalid, such as empty string.
 	ErrInvalidParams = WrapE(&i18n.Message{ID: IDErrInvalidParams}, ErrInvalidParamsRaw)
 	// ErrNotImplemented indicates unimplemented.
@@ -29,6 +32,7 @@ var (
 
 	errInternalRaw       = errors.New("internal")
 	ErrNotFoundRaw       = errors.New("not found")
+	ErrAlreadyExistsRaw  = errors.New("already exists")
 	ErrInvalidParamsRaw  = errors.New("invalid params")
 	ErrNotImplementedRaw = errors.New("not implemented")
 )

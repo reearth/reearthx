@@ -192,14 +192,32 @@ func (c *Collection) RemoveOne(ctx context.Context, f any) error {
 	return nil
 }
 
-func (c *Collection) SaveOne(ctx context.Context, id string, replacement any) error {
-	return c.ReplaceOne(ctx, bson.M{idKey: id}, replacement)
+func (c *Collection) NewOne(ctx context.Context, id string, doc any) error {
+	count, err := c.collection.CountDocuments(ctx, bson.M{idKey: id})
+	if err != nil {
+		return wrapError(ctx, err)
+	}
+
+	if count > 0 {
+		return rerror.ErrAlreadyExists
+	}
+
+	_, err = c.collection.UpdateOne(
+		ctx,
+		bson.M{idKey: id},
+		bson.M{"$setOnInsert": doc},
+		options.Update().SetUpsert(true),
+	)
+	if err != nil {
+		return wrapError(ctx, err)
+	}
+	return nil
 }
 
-func (c *Collection) ReplaceOne(ctx context.Context, filter any, replacement any) error {
+func (c *Collection) SaveOne(ctx context.Context, id string, replacement any) error {
 	_, err := c.collection.ReplaceOne(
 		ctx,
-		filter,
+		bson.M{idKey: id},
 		replacement,
 		options.Replace().SetUpsert(true),
 	)

@@ -76,6 +76,19 @@ func (r *Workspace) FindByID(_ context.Context, v workspace.ID) (*workspace.Work
 	}), rerror.ErrNotFound)
 }
 
+func (r *Workspace) NewOne(_ context.Context, t *workspace.Workspace) error {
+	if r.err != nil {
+		return r.err
+	}
+
+	if _, ok := r.data.Load(t.ID()); ok {
+		return rerror.ErrAlreadyExists
+	}
+
+	r.data.Store(t.ID(), t)
+	return nil
+}
+
 func (r *Workspace) Save(_ context.Context, t *workspace.Workspace) error {
 	if r.err != nil {
 		return r.err
