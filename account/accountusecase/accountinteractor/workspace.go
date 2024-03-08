@@ -132,6 +132,10 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 		}
 
 		for _, m := range ul {
+			if m == nil {
+				continue
+			}
+
 			err = ws.Members().Join(m.ID(), users[m.ID()], *operator.User)
 			if err != nil {
 				return nil, err
