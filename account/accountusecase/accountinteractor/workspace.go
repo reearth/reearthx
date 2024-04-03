@@ -45,19 +45,19 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
 
+	if len(strings.TrimSpace(name)) == 0 {
+		return nil, user.ErrInvalidName
+	}
+
+	firstUsers, err := i.userquery.FetchByID(ctx, []user.ID{firstUser})
+	if err != nil || len(firstUsers) == 0 {
+		if err == nil {
+			return nil, rerror.ErrNotFound
+		}
+		return nil, err
+	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
-		if len(strings.TrimSpace(name)) == 0 {
-			return nil, user.ErrInvalidName
-		}
-
-		firstUsers, err := i.userquery.FetchByID(ctx, []user.ID{firstUser})
-		if err != nil || len(firstUsers) == 0 {
-			if err == nil {
-				return nil, rerror.ErrNotFound
-			}
-			return nil, err
-		}
-
 		ws, err := workspace.New().
 			NewID().
 			Name(name).
@@ -119,6 +119,11 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
 
+	ul, err := i.userquery.FetchByID(ctx, maps.Keys(users))
+	if err != nil {
+		return nil, err
+	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction().WithOwnableWorkspaces(workspaceID), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := i.repos.Workspace.FindByID(ctx, workspaceID)
 		if err != nil {
@@ -127,11 +132,6 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 
 		if ws.IsPersonal() {
 			return nil, workspace.ErrCannotModifyPersonalWorkspace
-		}
-
-		ul, err := i.userquery.FetchByID(ctx, maps.Keys(users))
-		if err != nil {
-			return nil, err
 		}
 
 		if i.enforceMemberCount != nil {
