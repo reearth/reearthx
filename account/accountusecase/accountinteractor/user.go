@@ -70,8 +70,8 @@ func (i *User) FetchBySub(ctx context.Context, sub string) (*user.User, error) {
 	return i.query.FetchBySub(ctx, sub)
 }
 
-func (i *User) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
-	return i.query.SearchUser(ctx, nameOrEmail)
+func (i *User) SearchUser(ctx context.Context, email string) (*user.Simple, error) {
+	return i.query.SearchUser(ctx, email)
 }
 
 func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.GetUserByCredentials) (u *user.User, err error) {
@@ -407,9 +407,9 @@ func (q *UserQuery) FetchBySub(ctx context.Context, sub string) (*user.User, err
 	return nil, rerror.ErrNotFound
 }
 
-func (q *UserQuery) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
+func (q *UserQuery) SearchUser(ctx context.Context, email string) (*user.Simple, error) {
 	for _, r := range q.repos {
-		u, err := r.FindByNameOrEmail(ctx, nameOrEmail)
+		u, err := r.FindByEmail(ctx, email)
 		if errors.Is(err, rerror.ErrNotFound) {
 			continue
 		}

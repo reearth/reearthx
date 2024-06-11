@@ -104,8 +104,8 @@ func (u *User) RemoveMyAuth(ctx context.Context, auth string, op *accountusecase
 	return MeToUser(res.RemoveMyAuth.Me.FragmentMe)
 }
 
-func (u *User) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
-	res, err := SearchUser(ctx, u.gql, nameOrEmail)
+func (u *User) SearchUser(ctx context.Context, email string) (*user.Simple, error) {
+	res, err := SearchUser(ctx, u.gql, email)
 	if err != nil {
 		return nil, err
 	}
