@@ -6,6 +6,8 @@ import (
 
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/x/mongo/driver/connstring"
 )
 
@@ -15,8 +17,12 @@ type Client struct {
 }
 
 func NewClient(database string, c *mongo.Client) *Client {
+	rp := readpref.Nearest()
+	
+	sessionOpts := options.Database().SetReadPreference(rp)
+
 	return &Client{
-		db:          c.Database(database),
+		db:          c.Database(database, sessionOpts),
 		transaction: &usecasex.NopTransaction{},
 	}
 }
