@@ -7,7 +7,6 @@ import (
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/x/mongo/driver"
 )
 
@@ -24,13 +23,7 @@ func NewTransaction(client *mongo.Client) *Transaction {
 }
 
 func (t *Transaction) Begin(ctx context.Context) (usecasex.Tx, error) {
-	// Set the read preference to Nearest
-	rp := readpref.Nearest()
-	
-	// Create session options with the Nearest read preference
-	sessionOpts := options.Session().SetDefaultReadPreference(rp)
-
-	s, err := t.client.StartSession(sessionOpts)
+	s, err := t.client.StartSession(options.Session())
 	if err != nil {
 		return nil, err
 	}
