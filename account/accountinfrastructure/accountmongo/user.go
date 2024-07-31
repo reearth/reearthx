@@ -39,7 +39,7 @@ func (r *User) Init() error {
 }
 
 func (r *User) FindAll(ctx context.Context) (user.List, error) {
-	res, err := r.find(ctx, nil)
+	res, err := r.find(ctx, bson.M{})
 	if err != nil {
 		return nil, err
 	}
