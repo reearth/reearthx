@@ -21,6 +21,7 @@ type User interface {
 }
 
 type UserQuery interface {
+	FindAll(context.Context) (user.List, error)
 	FindByID(context.Context, user.ID) (*user.User, error)
 	FindByIDs(context.Context, user.IDList) (user.List, error)
 	FindBySub(context.Context, string) (*user.User, error)
