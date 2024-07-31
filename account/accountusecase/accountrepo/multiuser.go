@@ -16,6 +16,18 @@ func NewMultiUser(users ...User) MultiUser {
 
 var _ User = MultiUser{}
 
+func (u MultiUser) FindAll(ctx context.Context) (user.List, error) {
+	res := user.List{}
+	for _, r := range u {
+		if r, err := r.FindAll(ctx); err != nil {
+			return nil, err
+		} else {
+			res = append(res, r...)
+		}
+	}
+	return res, nil
+}
+
 func (u MultiUser) FindByID(ctx context.Context, id user.ID) (*user.User, error) {
 	return u.findOne(func(r User) (*user.User, error) {
 		return r.FindByID(ctx, id)
