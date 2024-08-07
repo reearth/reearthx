@@ -164,7 +164,12 @@ func findOptionsFromPagination(p usecasex.Pagination, s *usecasex.Sort) *options
 		o = o.SetSkip(p.Offset.Offset)
 	}
 
-	return o.SetCollation(&options.Collation{Strength: 1, Locale: "simple"}).SetSort(sortFilter(p, s))
+	sortFilter := sortFilter(p, s)
+	if sortFilter != nil {
+		o = o.SetSort(sortFilter)
+	}
+
+	return o.SetCollation(&options.Collation{Strength: 1, Locale: "simple"})
 }
 
 func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *options.AggregateOptions {
@@ -206,7 +211,7 @@ func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *u
 		}
 
 		if cursorDoc[*sortKey] == nil {
-			return nil, fmt.Errorf("invalied sort key")
+			return nil, fmt.Errorf("invalid sort key")
 		}
 
 		paginationFilter = bson.M{
@@ -224,11 +229,18 @@ func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *u
 }
 
 func sortFilter(p usecasex.Pagination, s *usecasex.Sort) bson.D {
-	var sortOptions bson.D
-	if s != nil && s.Key != "" && s.Key != idKey {
-		sortOptions = append(sortOptions, bson.E{Key: s.Key, Value: sortDirection(p, s)})
+	var sortOrder int
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		sortOrder = -1
+	} else {
+		sortOrder = 1
 	}
-	return append(sortOptions, bson.E{Key: idKey, Value: sortDirection(p, s)})
+
+	if s != nil && s.Key != "" {
+		return bson.D{{Key: s.Key, Value: sortOrder}, {Key: idKey, Value: sortOrder}}
+	}
+
+	return bson.D{{Key: idKey, Value: sortOrder}}
 }
 
 func limit(p usecasex.Pagination) int64 {
@@ -251,18 +263,4 @@ func limit(p usecasex.Pagination) int64 {
 	}
 
 	return defaultLimit + 1
-}
-
-func sortDirection(p usecasex.Pagination, s *usecasex.Sort) int {
-	reverted := false
-	if s != nil {
-		reverted = s.Reverted
-	}
-
-	reverted = reverted || (p.Cursor != nil && p.Cursor.Last != nil)
-
-	if reverted {
-		return -1
-	}
-	return 1
 }
