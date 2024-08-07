@@ -105,26 +105,6 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
 
-// func pageInfo(p *usecasex.Pagination, hasMore bool, itemCount int) (bool, bool) {
-// 	hasNextPage := false
-// 	hasPreviousPage := false
-
-// 	if p.Cursor != nil {
-// 		if p.Cursor.First != nil {
-// 			hasNextPage = hasMore
-// 			hasPreviousPage = p.Cursor.After != nil
-// 		} else if p.Cursor.Last != nil {
-// 			hasNextPage = p.Cursor.Before != nil
-// 			hasPreviousPage = hasMore
-// 		}
-// 	} else if p.Offset != nil {
-// 		hasNextPage = itemCount == int(limit(*p)) - 1
-// 		hasPreviousPage = p.Offset.Offset > 0
-// 	}
-
-// 	return hasNextPage, hasPreviousPage
-// }
-
 func pageInfo(p *usecasex.Pagination, hasMore bool) (bool, bool) {
 	// ref: https://facebook.github.io/relay/graphql/connections.htm#sec-undefined.PageInfo.Fields
 	// If first is set, false can be returned unless it can be efficiently determined whether or not a previous page exists.
