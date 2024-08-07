@@ -13,7 +13,7 @@ import (
 )
 
 func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.FindOptions) (*usecasex.PageInfo, error) {
-	if p == nil || p.Cursor == nil && p.Offset == nil {
+	if p == nil || (p.Cursor == nil && p.Offset == nil) {
 		return nil, nil
 	}
 
@@ -39,15 +39,26 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
 	}
 
-	startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p), consumer)
+	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
 	if err != nil {
 		return nil, err
+	}
+
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		reverse(items)
+	}
+
+	for _, item := range items {
+		if err := consumer.Consume(item); err != nil {
+			return nil, err
+		}
 	}
 
 	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
 
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
+
 
 func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.AggregateOptions) (*usecasex.PageInfo, error) {
 	if p == nil || p.Cursor == nil && p.Offset == nil {
@@ -74,9 +85,19 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
 	}
 
-	startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p), consumer)
+	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
 	if err != nil {
 		return nil, err
+	}
+
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		reverse(items)
+	}
+
+	for _, item := range items {
+		if err := consumer.Consume(item); err != nil {
+			return nil, err
+		}
 	}
 
 	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
@@ -94,14 +115,21 @@ func pageInfo(p *usecasex.Pagination, hasMore bool) (bool, bool) {
 	return hasNextPage, hasPreviousPage
 }
 
-func consume(ctx context.Context, cursor *mongo.Cursor, limit int64, consumer Consumer) (*usecasex.Cursor, *usecasex.Cursor, bool, error) {
+func consume(ctx context.Context, cursor *mongo.Cursor, limit int64) ([]bson.Raw, *usecasex.Cursor, *usecasex.Cursor, bool, error) {
 	i := int64(0)
 	var startCursor, endCursor *usecasex.Cursor
+	var items []bson.Raw
+
 	for cursor.Next(ctx) {
 		if i < limit-1 {
-			cur, err := getCursor(cursor.Current)
+			var item bson.Raw
+			if err := cursor.Decode(&item); err != nil {
+				return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode item: %w", err))
+			}
+
+			cur, err := getCursor(item)
 			if err != nil {
-				return nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to get cursor: %w", err))
+				return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to get cursor: %w", err))
 			}
 
 			if startCursor == nil {
@@ -109,18 +137,22 @@ func consume(ctx context.Context, cursor *mongo.Cursor, limit int64, consumer Co
 			}
 			endCursor = cur
 
-			if err := consumer.Consume(cursor.Current); err != nil {
-				return nil, nil, false, err
-			}
+			items = append(items, item)
 		}
 
 		i++
 	}
 
 	if err := cursor.Err(); err != nil {
-		return nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
+		return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
-	return startCursor, endCursor, i == limit, nil
+	return items, startCursor, endCursor, i == limit, nil
+}
+
+func reverse(items []bson.Raw) {
+	for i, j := 0, len(items)-1; i < j; i, j = i+1, j-1 {
+		items[i], items[j] = items[j], items[i]
+	}
 }
 
 func (c *Collection) findFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (any, *options.FindOptions, error) {
