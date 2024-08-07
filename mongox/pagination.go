@@ -54,7 +54,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		}
 	}
 
-	hasNextPage, hasPreviousPage := pageInfo(p, hasMore, len(items))
+	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
 
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
@@ -100,28 +100,38 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		}
 	}
 
-	hasNextPage, hasPreviousPage := pageInfo(p, hasMore, len(items))
+	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
 
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
 
-func pageInfo(p *usecasex.Pagination, hasMore bool, itemCount int) (bool, bool) {
-	hasNextPage := false
-	hasPreviousPage := false
+// func pageInfo(p *usecasex.Pagination, hasMore bool, itemCount int) (bool, bool) {
+// 	hasNextPage := false
+// 	hasPreviousPage := false
 
-	if p.Cursor != nil {
-		if p.Cursor.First != nil {
-			hasNextPage = hasMore
-			hasPreviousPage = p.Cursor.After != nil
-		} else if p.Cursor.Last != nil {
-			hasNextPage = p.Cursor.Before != nil
-			hasPreviousPage = hasMore
-		}
-	} else if p.Offset != nil {
-		hasNextPage = itemCount == int(limit(*p)) - 1
-		hasPreviousPage = p.Offset.Offset > 0
-	}
+// 	if p.Cursor != nil {
+// 		if p.Cursor.First != nil {
+// 			hasNextPage = hasMore
+// 			hasPreviousPage = p.Cursor.After != nil
+// 		} else if p.Cursor.Last != nil {
+// 			hasNextPage = p.Cursor.Before != nil
+// 			hasPreviousPage = hasMore
+// 		}
+// 	} else if p.Offset != nil {
+// 		hasNextPage = itemCount == int(limit(*p)) - 1
+// 		hasPreviousPage = p.Offset.Offset > 0
+// 	}
 
+// 	return hasNextPage, hasPreviousPage
+// }
+
+func pageInfo(p *usecasex.Pagination, hasMore bool) (bool, bool) {
+	// ref: https://facebook.github.io/relay/graphql/connections.htm#sec-undefined.PageInfo.Fields
+	// If first is set, false can be returned unless it can be efficiently determined whether or not a previous page exists.
+	// If last is set, false can be returned unless it can be efficiently determined whether or not a next page exists.
+	// Returning absolutely false because the existing implementation cannot determine it efficiently.
+	hasNextPage := (p.Cursor != nil && p.Cursor.First != nil || p.Offset != nil) && hasMore
+	hasPreviousPage := (p.Cursor != nil && p.Cursor.Last != nil) && hasMore
 	return hasNextPage, hasPreviousPage
 }
 

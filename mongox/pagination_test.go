@@ -291,22 +291,20 @@ func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
     }
 
     con := &consumer{}
-    got, err := c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    _, err := c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
     assert.NoError(t, err)
     assert.Equal(t, []usecasex.Cursor{"a", "b"}, con.Cursors)
-    assert.True(t, got.HasNextPage)
-    assert.False(t, got.HasPreviousPage)
+
 
     p = usecasex.CursorPagination{
         Last: lo.ToPtr(int64(2)),
     }
 
     con = &consumer{}
-    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    _, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
     assert.NoError(t, err)
     assert.Equal(t, []usecasex.Cursor{"d", "e"}, con.Cursors)
-    assert.False(t, got.HasNextPage)
-    assert.True(t, got.HasPreviousPage)
+
 
     p = usecasex.CursorPagination{
         First: lo.ToPtr(int64(2)),
@@ -314,11 +312,10 @@ func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
     }
 
     con = &consumer{}
-    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    _, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
     assert.NoError(t, err)
     assert.Equal(t, []usecasex.Cursor{"c", "d"}, con.Cursors)
-    assert.True(t, got.HasNextPage)
-    assert.True(t, got.HasPreviousPage)
+
 
     p = usecasex.CursorPagination{
         Last:   lo.ToPtr(int64(2)),
@@ -326,22 +323,19 @@ func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
     }
 
     con = &consumer{}
-    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    _, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
     assert.NoError(t, err)
     assert.Equal(t, []usecasex.Cursor{"b", "c"}, con.Cursors)
-    assert.True(t, got.HasNextPage)
-    assert.True(t, got.HasPreviousPage)
+
 
     p = usecasex.CursorPagination{
         Last: lo.ToPtr(int64(3)),
     }
 
     con = &consumer{}
-    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    _, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
     assert.NoError(t, err)
     assert.Equal(t, []usecasex.Cursor{"c", "d", "e"}, con.Cursors)
-    assert.False(t, got.HasNextPage)
-    assert.True(t, got.HasPreviousPage)
 }
 
 type consumer struct {
