@@ -261,6 +261,89 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.Equal(t, []usecasex.Cursor{"c", "b", "a"}, con.Cursors)
 }
 
+func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
+    ctx := context.Background()
+    initDB := mongotest.Connect(t)
+    c := NewCollection(initDB(t).Collection("test"))
+
+    seeds := []struct {
+        id        string
+        updatedAt int64
+    }{
+        {"a", 1000},
+        {"b", 2000},
+        {"c", 3000},
+        {"d", 4000},
+        {"e", 5000},
+    }
+
+    _, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s struct {
+        id        string
+        updatedAt int64
+    }, i int) any {
+        return bson.M{"id": s.id, "updatedAt": s.updatedAt}
+    }))
+
+    sortOpt := &usecasex.Sort{Key: "updatedAt", Reverted: false}
+
+    p := usecasex.CursorPagination{
+        First: lo.ToPtr(int64(2)),
+    }
+
+    con := &consumer{}
+    got, err := c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    assert.NoError(t, err)
+    assert.Equal(t, []usecasex.Cursor{"a", "b"}, con.Cursors)
+    assert.True(t, got.HasNextPage)
+    assert.False(t, got.HasPreviousPage)
+
+    p = usecasex.CursorPagination{
+        Last: lo.ToPtr(int64(2)),
+    }
+
+    con = &consumer{}
+    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    assert.NoError(t, err)
+    assert.Equal(t, []usecasex.Cursor{"d", "e"}, con.Cursors)
+    assert.False(t, got.HasNextPage)
+    assert.True(t, got.HasPreviousPage)
+
+    p = usecasex.CursorPagination{
+        First: lo.ToPtr(int64(2)),
+        After: usecasex.Cursor("b").Ref(),
+    }
+
+    con = &consumer{}
+    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    assert.NoError(t, err)
+    assert.Equal(t, []usecasex.Cursor{"c", "d"}, con.Cursors)
+    assert.True(t, got.HasNextPage)
+    assert.True(t, got.HasPreviousPage)
+
+    p = usecasex.CursorPagination{
+        Last:   lo.ToPtr(int64(2)),
+        Before: usecasex.Cursor("d").Ref(),
+    }
+
+    con = &consumer{}
+    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    assert.NoError(t, err)
+    assert.Equal(t, []usecasex.Cursor{"b", "c"}, con.Cursors)
+    assert.True(t, got.HasNextPage)
+    assert.True(t, got.HasPreviousPage)
+
+    p = usecasex.CursorPagination{
+        Last: lo.ToPtr(int64(3)),
+    }
+
+    con = &consumer{}
+    got, err = c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
+    assert.NoError(t, err)
+    assert.Equal(t, []usecasex.Cursor{"c", "d", "e"}, con.Cursors)
+    assert.False(t, got.HasNextPage)
+    assert.True(t, got.HasPreviousPage)
+}
+
 type consumer struct {
 	Cursors []usecasex.Cursor
 }
