@@ -190,17 +190,26 @@ func (c *Collection) aggregateFilter(ctx context.Context, p usecasex.Pagination,
 }
 
 func findOptionsFromPagination(p usecasex.Pagination, s *usecasex.Sort) *options.FindOptions {
-	o := options.Find().SetAllowDiskUse(true).SetLimit(limit(p))
+    o := options.Find().SetAllowDiskUse(true).SetLimit(limit(p))
 
-	if p.Offset != nil {
-		o = o.SetSkip(p.Offset.Offset)
-	}
+    if p.Offset != nil {
+        o = o.SetSkip(p.Offset.Offset)
+    }
 
-	return o.SetCollation(&options.Collation{Strength: 1, Locale: "simple"}).SetSort(sortFilter(p, s))
+    collation := options.Collation{
+        Locale:   "en",
+        Strength: 2,
+    }
+
+    return o.SetCollation(&collation).SetSort(sortFilter(p, s))
 }
 
 func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *options.AggregateOptions {
-	return options.Aggregate().SetAllowDiskUse(true).SetCollation(&options.Collation{Strength: 1, Locale: "simple"})
+    collation := options.Collation{
+        Locale:   "en",
+        Strength: 2,
+    }
+    return options.Aggregate().SetAllowDiskUse(true).SetCollation(&collation)
 }
 
 func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (any, error) {
@@ -256,11 +265,11 @@ func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *u
 }
 
 func sortFilter(p usecasex.Pagination, s *usecasex.Sort) bson.D {
-	var sortOptions bson.D
-	if s != nil && s.Key != "" && s.Key != idKey {
-		sortOptions = append(sortOptions, bson.E{Key: s.Key, Value: sortDirection(p, s)})
-	}
-	return append(sortOptions, bson.E{Key: idKey, Value: sortDirection(p, s)})
+    var sortOptions bson.D
+    if s != nil && s.Key != "" && s.Key != idKey {
+        sortOptions = append(sortOptions, bson.E{Key: s.Key, Value: sortDirection(p, s)})
+    }
+    return append(sortOptions, bson.E{Key: idKey, Value: sortDirection(p, s)})
 }
 
 func limit(p usecasex.Pagination) int64 {
