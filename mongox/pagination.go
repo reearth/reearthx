@@ -177,19 +177,6 @@ func reverse(items []bson.Raw) {
 	}
 }
 
-func (c *Collection) findFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (any, *options.FindOptions, error) {
-	if p.Cursor == nil && p.Offset == nil {
-		return nil, nil, errors.New("invalid pagination")
-	}
-
-	opts := findOptionsFromPagination(p, s)
-	if p.Offset != nil {
-		return nil, opts, nil
-	}
-	f, err := c.pageFilter(ctx, p, s)
-	return f, opts, err
-}
-
 func (c *Collection) aggregateFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) ([]any, *options.AggregateOptions, error) {
 	if p.Cursor == nil && p.Offset == nil {
 		return nil, nil, errors.New("invalid pagination")
@@ -209,21 +196,6 @@ func (c *Collection) aggregateFilter(ctx context.Context, p usecasex.Pagination,
 		stages = append(stages, bson.M{"$match": f})
 	}
 	return append(stages, bson.M{"$limit": limit(p)}), aggregateOptionsFromPagination(p, s), err
-}
-
-func findOptionsFromPagination(p usecasex.Pagination, s *usecasex.Sort) *options.FindOptions {
-    o := options.Find().SetAllowDiskUse(true).SetLimit(limit(p))
-
-    if p.Offset != nil {
-        o = o.SetSkip(p.Offset.Offset)
-    }
-
-    collation := options.Collation{
-        Locale:   "en",
-        Strength: 2,
-    }
-
-    return o.SetCollation(&collation).SetSort(sortFilter(p, s))
 }
 
 func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *options.AggregateOptions {
