@@ -338,6 +338,100 @@ func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
     assert.Equal(t, []usecasex.Cursor{"c", "d", "e"}, con.Cursors)
 }
 
+func TestClientCollection_DetailedPagination(t *testing.T) {
+	ctx := context.Background()
+	initDB := mongotest.Connect(t)
+	c := NewCollection(initDB(t).Collection("test"))
+
+	// Seed data
+	seeds := []struct {
+		id        string
+		updatedAt int64
+	}{
+		{"a", 1000},
+		{"b", 2000},
+		{"c", 3000},
+		{"d", 4000},
+		{"e", 5000},
+	}
+
+	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s struct {
+		id        string
+		updatedAt int64
+	}, i int) any {
+		return bson.M{"id": s.id, "updatedAt": s.updatedAt}
+	}))
+
+	testCases := []struct {
+		name     string
+		sort     *usecasex.Sort
+		pagination *usecasex.CursorPagination
+		expected []string
+	}{
+		{
+			name: "First 2, Ascending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: false},
+			pagination: &usecasex.CursorPagination{First: lo.ToPtr(int64(2))},
+			expected: []string{"a", "b"},
+		},
+		{
+			name: "First 2, Descending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: true},
+			pagination: &usecasex.CursorPagination{First: lo.ToPtr(int64(2))},
+			expected: []string{"e", "d"},
+		},
+		{
+			name: "Last 2, Ascending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: false},
+			pagination: &usecasex.CursorPagination{Last: lo.ToPtr(int64(2))},
+			expected: []string{"d", "e"},
+		},
+		{
+			name: "Last 2, Descending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: true},
+			pagination: &usecasex.CursorPagination{Last: lo.ToPtr(int64(2))},
+			expected: []string{"b", "a"},
+		},
+		{
+			name: "First 2 After 'b', Ascending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: false},
+			pagination: &usecasex.CursorPagination{First: lo.ToPtr(int64(2)), After: usecasex.Cursor("b").Ref()},
+			expected: []string{"c", "d"},
+		},
+		{
+			name: "First 2 After 'd', Descending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: true},
+			pagination: &usecasex.CursorPagination{First: lo.ToPtr(int64(2)), After: usecasex.Cursor("d").Ref()},
+			expected: []string{"c", "b"},
+		},
+		{
+			name: "Last 2 Before 'd', Ascending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: false},
+			pagination: &usecasex.CursorPagination{Last: lo.ToPtr(int64(2)), Before: usecasex.Cursor("d").Ref()},
+			expected: []string{"b", "c"},
+		},
+		{
+			name: "Last 2 Before 'b', Descending",
+			sort: &usecasex.Sort{Key: "updatedAt", Reverted: true},
+			pagination: &usecasex.CursorPagination{Last: lo.ToPtr(int64(2)), Before: usecasex.Cursor("b").Ref()},
+			expected: []string{"d", "c"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			con := &consumer{}
+			_, err := c.Paginate(ctx, bson.M{}, tc.sort, tc.pagination.Wrap(), con)
+			assert.NoError(t, err)
+			
+			gotIDs := lo.Map(con.Cursors, func(c usecasex.Cursor, _ int) string {
+				return string(c)
+			})
+			assert.Equal(t, tc.expected, gotIDs)
+		})
+	}
+}
+
 type consumer struct {
 	Cursors []usecasex.Cursor
 }
