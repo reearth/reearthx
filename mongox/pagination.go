@@ -17,16 +17,38 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		return nil, nil
 	}
 
-	pFilter, pOpts, err := c.findFilter(ctx, *p, s)
+	pFilter, err := c.pageFilter(ctx, *p, s)
 	if err != nil {
 		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
+
 	filter := rawFilter
 	if pFilter != nil {
 		filter = And(rawFilter, "", pFilter)
 	}
 
-	cursor, err := c.collection.Find(ctx, filter, append([]*options.FindOptions{pOpts}, opts...)...)
+	sortKey := idKey
+	sortOrder := 1
+	if s != nil && s.Key != "" {
+		sortKey = s.Key
+		if s.Reverted {
+			sortOrder = -1
+		}
+	}
+
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		sortOrder *= -1
+	}
+
+	findOpts := options.Find().
+		SetSort(bson.D{{Key: sortKey, Value: sortOrder}, {Key: idKey, Value: sortOrder}}).
+		SetLimit(limit(*p))
+
+	if p.Offset != nil {
+		findOpts.SetSkip(p.Offset.Offset)
+	}
+
+	cursor, err := c.collection.Find(ctx, filter, append([]*options.FindOptions{findOpts}, opts...)...)
 	if err != nil {
 		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
 	}
@@ -46,6 +68,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 
 	if p.Cursor != nil && p.Cursor.Last != nil {
 		reverse(items)
+		startCursor, endCursor = endCursor, startCursor
 	}
 
 	for _, item := range items {
@@ -58,7 +81,6 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
-
 
 func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.AggregateOptions) (*usecasex.PageInfo, error) {
 	if p == nil || p.Cursor == nil && p.Offset == nil {
@@ -155,19 +177,6 @@ func reverse(items []bson.Raw) {
 	}
 }
 
-func (c *Collection) findFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (any, *options.FindOptions, error) {
-	if p.Cursor == nil && p.Offset == nil {
-		return nil, nil, errors.New("invalid pagination")
-	}
-
-	opts := findOptionsFromPagination(p, s)
-	if p.Offset != nil {
-		return nil, opts, nil
-	}
-	f, err := c.pageFilter(ctx, p, s)
-	return f, opts, err
-}
-
 func (c *Collection) aggregateFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) ([]any, *options.AggregateOptions, error) {
 	if p.Cursor == nil && p.Offset == nil {
 		return nil, nil, errors.New("invalid pagination")
@@ -189,21 +198,6 @@ func (c *Collection) aggregateFilter(ctx context.Context, p usecasex.Pagination,
 	return append(stages, bson.M{"$limit": limit(p)}), aggregateOptionsFromPagination(p, s), err
 }
 
-func findOptionsFromPagination(p usecasex.Pagination, s *usecasex.Sort) *options.FindOptions {
-    o := options.Find().SetAllowDiskUse(true).SetLimit(limit(p))
-
-    if p.Offset != nil {
-        o = o.SetSkip(p.Offset.Offset)
-    }
-
-    collation := options.Collation{
-        Locale:   "en",
-        Strength: 2,
-    }
-
-    return o.SetCollation(&collation).SetSort(sortFilter(p, s))
-}
-
 func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *options.AggregateOptions {
     collation := options.Collation{
         Locale:   "en",
@@ -212,56 +206,77 @@ func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *op
     return options.Aggregate().SetAllowDiskUse(true).SetCollation(&collation)
 }
 
-func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (any, error) {
+func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (bson.M, error) {
 	if p.Cursor == nil {
 		return nil, nil
 	}
 
+	var filter bson.M
+	sortKey := idKey
+	sortOrder := 1
+
+	if s != nil && s.Key != "" {
+		sortKey = s.Key
+		if s.Reverted {
+			sortOrder = -1
+		}
+	}
+
+	var cursor *usecasex.Cursor
 	var op string
-	var cur *usecasex.Cursor
 
-	if p.Cursor.First != nil {
+	if p.Cursor.After != nil {
+		cursor = p.Cursor.After
 		op = "$gt"
-		cur = p.Cursor.After
-	} else if p.Cursor.Last != nil {
+	} else if p.Cursor.Before != nil {
+		cursor = p.Cursor.Before
 		op = "$lt"
-		cur = p.Cursor.Before
-	} else {
-		return nil, errors.New("neither first nor last are set")
-	}
-	if cur == nil {
-		return nil, nil
 	}
 
-	var sortKey *string
-	if s != nil {
-		sortKey = &s.Key
-	}
-	var paginationFilter bson.M
-	if sortKey == nil || *sortKey == "" {
-		paginationFilter = bson.M{idKey: bson.M{op: *cur}}
-	} else {
-		var cursorDoc bson.M
-		if err := c.collection.FindOne(ctx, bson.M{idKey: *cur}).Decode(&cursorDoc); err != nil {
-			return nil, fmt.Errorf("failed to find cursor element")
+	if cursor != nil {
+		cursorDoc, err := c.getCursorDocument(ctx, *cursor)
+		if err != nil {
+			return nil, err
 		}
 
-		if cursorDoc[*sortKey] == nil {
-			return nil, fmt.Errorf("invalied sort key")
-		}
-
-		paginationFilter = bson.M{
+		filter = bson.M{
 			"$or": []bson.M{
-				{*sortKey: bson.M{op: cursorDoc[*sortKey]}},
+				{sortKey: bson.M{op: cursorDoc[sortKey]}},
 				{
-					*sortKey: cursorDoc[*sortKey],
-					idKey:    bson.M{op: *cur},
+					sortKey: cursorDoc[sortKey],
+					idKey:   bson.M{op: cursorDoc[idKey]},
 				},
 			},
 		}
+
+		if sortOrder == -1 {
+			if op == "$gt" {
+				op = "$lt"
+			} else {
+				op = "$gt"
+			}
+			filter = bson.M{
+				"$or": []bson.M{
+					{sortKey: bson.M{op: cursorDoc[sortKey]}},
+					{
+						sortKey: cursorDoc[sortKey],
+						idKey:   bson.M{op: cursorDoc[idKey]},
+					},
+				},
+			}
+		}
 	}
 
-	return paginationFilter, nil
+	return filter, nil
+}
+
+func (c *Collection) getCursorDocument(ctx context.Context, cursor usecasex.Cursor) (bson.M, error) {
+	var cursorDoc bson.M
+	err := c.collection.FindOne(ctx, bson.M{idKey: cursor}).Decode(&cursorDoc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find cursor element: %w", err)
+	}
+	return cursorDoc, nil
 }
 
 func sortFilter(p usecasex.Pagination, s *usecasex.Sort) bson.D {
