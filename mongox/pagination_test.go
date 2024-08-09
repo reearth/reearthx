@@ -16,18 +16,15 @@ func TestClientCollection_Paginate(t *testing.T) {
 	initDB := mongotest.Connect(t)
 	c := NewCollection(initDB(t).Collection("test"))
 
-	// seeds
 	seeds := []string{"a", "b", "c"}
 	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s string, i int) any {
 		return bson.M{"id": s, "i": len(seeds) - i}
 	}))
 
-	// nil
 	got, goterr := c.Paginate(ctx, nil, nil, nil, nil)
 	assert.Nil(t, got)
 	assert.NoError(t, goterr)
 
-	// cursor: first
 	p := usecasex.CursorPagination{
 		First: lo.ToPtr(int64(1)),
 	}
@@ -44,7 +41,6 @@ func TestClientCollection_Paginate(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"a"}, con.Cursors)
 
-	// cursor: first, after
 	p = usecasex.CursorPagination{
 		First: lo.ToPtr(int64(1)),
 		After: usecasex.Cursor("b").Ref(),
@@ -62,7 +58,6 @@ func TestClientCollection_Paginate(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"c"}, con.Cursors)
 
-	// cursor: last
 	p = usecasex.CursorPagination{
 		Last: lo.ToPtr(int64(1)),
 	}
@@ -79,7 +74,6 @@ func TestClientCollection_Paginate(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"c"}, con.Cursors)
 
-	// cursor: last, before
 	p = usecasex.CursorPagination{
 		Last:   lo.ToPtr(int64(1)),
 		Before: usecasex.Cursor("b").Ref(),
@@ -97,7 +91,6 @@ func TestClientCollection_Paginate(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"a"}, con.Cursors)
 
-	// cursor: offset
 	op := usecasex.OffsetPagination{
 		Offset: int64(1),
 		Limit:  int64(2),
@@ -115,7 +108,6 @@ func TestClientCollection_Paginate(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"b", "c"}, con.Cursors)
 
-	// cursor: offset, sort
 	op = usecasex.OffsetPagination{
 		Offset: int64(0),
 		Limit:  int64(0),
@@ -141,18 +133,15 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	initDB := mongotest.Connect(t)
 	c := NewCollection(initDB(t).Collection("test"))
 
-	// seeds
 	seeds := []string{"a", "b", "c"}
 	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s string, i int) any {
 		return bson.M{"id": s, "i": len(seeds) - i}
 	}))
 
-	// nil
 	got, goterr := c.PaginateAggregation(ctx, nil, nil, nil, nil)
 	assert.Nil(t, got)
 	assert.NoError(t, goterr)
 
-	// cursor: first
 	p := usecasex.CursorPagination{
 		First: lo.ToPtr(int64(1)),
 	}
@@ -169,7 +158,6 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"a"}, con.Cursors)
 
-	// cursor: first, after
 	p = usecasex.CursorPagination{
 		First: lo.ToPtr(int64(1)),
 		After: usecasex.Cursor("b").Ref(),
@@ -187,7 +175,6 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"c"}, con.Cursors)
 
-	// cursor: last
 	p = usecasex.CursorPagination{
 		Last: lo.ToPtr(int64(1)),
 	}
@@ -204,7 +191,6 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"c"}, con.Cursors)
 
-	// cursor: last, before
 	p = usecasex.CursorPagination{
 		Last:   lo.ToPtr(int64(1)),
 		Before: usecasex.Cursor("b").Ref(),
@@ -222,7 +208,6 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"a"}, con.Cursors)
 
-	// cursor: offset
 	op := usecasex.OffsetPagination{
 		Offset: int64(1),
 		Limit:  int64(2),
@@ -240,7 +225,6 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.NoError(t, goterr)
 	assert.Equal(t, []usecasex.Cursor{"b", "c"}, con.Cursors)
 
-	// cursor: offset, sort
 	op = usecasex.OffsetPagination{
 		Offset: int64(0),
 		Limit:  int64(0),
@@ -343,7 +327,6 @@ func TestClientCollection_DetailedPagination(t *testing.T) {
 	initDB := mongotest.Connect(t)
 	c := NewCollection(initDB(t).Collection("test"))
 
-	// Seed data
 	seeds := []struct {
 		id        string
 		updatedAt int64
