@@ -29,6 +29,18 @@ func NewUserWith(users ...*user.User) *User {
 	return r
 }
 
+func (r *User) FindAll(ctx context.Context) (user.List, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	res := r.data.FindAll(func(key user.ID, value *user.User) bool {
+		return true
+	})
+
+	return res, nil
+}
+
 func (r *User) FindByIDs(_ context.Context, ids user.IDList) (user.List, error) {
 	if r.err != nil {
 		return nil, r.err
