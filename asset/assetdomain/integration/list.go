@@ -1,7 +1,7 @@
 package integration
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/event"
+	"github.com/reearth/reearthx/asset/assetdomain/event"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 	"golang.org/x/exp/slices"

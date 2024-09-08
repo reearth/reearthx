@@ -3,8 +3,6 @@ package interactor
 import (
 	"bytes"
 	"context"
-	"github.com/reearth/reearthx/asset/assetinfrastructure/assetfs"
-	"github.com/reearth/reearthx/asset/assetinfrastructure/assetmemory"
 	"io"
 	"path"
 	"runtime"
@@ -22,6 +20,8 @@ import (
 	"github.com/reearth/reearthx/asset/assetdomain/file"
 	"github.com/reearth/reearthx/asset/assetdomain/project"
 	"github.com/reearth/reearthx/asset/assetdomain/task"
+	"github.com/reearth/reearthx/asset/assetinfrastructure/assetfs"
+	"github.com/reearth/reearthx/asset/assetinfrastructure/assetmemory"
 	usecase "github.com/reearth/reearthx/asset/assetusecase"
 	gateway "github.com/reearth/reearthx/asset/assetusecase/assetgateway"
 	interfaces "github.com/reearth/reearthx/asset/assetusecase/assetinterfaces"

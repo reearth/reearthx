@@ -3,7 +3,7 @@ package thread
 import (
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/operator"
+	"github.com/reearth/reearthx/asset/assetdomain/operator"
 )
 
 type Comment struct {

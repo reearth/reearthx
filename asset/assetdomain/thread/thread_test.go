@@ -3,9 +3,9 @@ package thread
 import (
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/operator"
 	"github.com/reearth/reearthx/account/accountdomain"
+	id "github.com/reearth/reearthx/asset/assetdomain"
+	"github.com/reearth/reearthx/asset/assetdomain/operator"
 	"github.com/stretchr/testify/assert"
 )
 

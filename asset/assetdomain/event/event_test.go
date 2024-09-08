@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/asset"
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/operator"
-	"github.com/reearth/reearth-cms/server/pkg/project"
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	id "github.com/reearth/reearthx/asset/assetdomain"
+	"github.com/reearth/reearthx/asset/assetdomain/asset"
+	"github.com/reearth/reearthx/asset/assetdomain/operator"
+	"github.com/reearth/reearthx/asset/assetdomain/project"
 	"github.com/stretchr/testify/assert"
 )
 

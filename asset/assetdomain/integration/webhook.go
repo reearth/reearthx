@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/event"
+	"github.com/reearth/reearthx/asset/assetdomain/event"
 )
 
 type Webhook struct {

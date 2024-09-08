@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/event"
-	"github.com/reearth/reearth-cms/server/pkg/id"
+	id "github.com/reearth/reearthx/asset/assetdomain"
+	"github.com/reearth/reearthx/asset/assetdomain/event"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )

@@ -30,7 +30,6 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/ravilushqa/otelgqlgen v0.15.0
-	github.com/reearth/reearth-cms/server v0.0.0-20240903081242-e53864457087
 	github.com/samber/lo v1.39.0
 	github.com/sendgrid/sendgrid-go v3.14.0+incompatible
 	github.com/spf13/afero v1.11.0
@@ -73,7 +72,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.23.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.4 // indirect
 	github.com/aws/smithy-go v1.20.1 // indirect
-	github.com/chrispappas/golang-generics-set v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/trifles v0.0.0-20200705224438-cafc02a1ee2b // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -99,7 +97,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/paulmach/go.geojson v1.5.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/rs/cors v1.10.1 // indirect
