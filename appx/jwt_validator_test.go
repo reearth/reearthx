@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,7 +24,10 @@ func TestMultiValidator(t *testing.T) {
 	key := lo.Must(rsa.GenerateKey(rand.Reader, 2048))
 
 	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	t.Cleanup(func() {
+		httpmock.DeactivateAndReset()
+	})
+
 	httpmock.RegisterResponder(
 		http.MethodGet,
 		"https://example.com/.well-known/openid-configuration",
@@ -206,5 +210,43 @@ func TestMultiValidator(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, res)
 		assert.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("mixed valid and invalid tokens", func(t *testing.T) {
+		v, err := NewJWTMultipleValidator([]JWTProvider{
+			{ISS: "https://example.com/", AUD: []string{"a", "b"}, ALG: &jwt.SigningMethodRS256.Name},
+			{ISS: "https://example2.com/", AUD: []string{"c"}, ALG: &jwt.SigningMethodRS256.Name},
+		})
+		assert.NoError(t, err)
+
+		// Test with valid token
+		res, err := v.ValidateToken(context.Background(), tokenString)
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+
+		// Test with invalid token
+		res, err = v.ValidateToken(context.Background(), "invalid.token")
+		assert.Error(t, err)
+		assert.Nil(t, res)
+	})
+
+	t.Run("concurrent validations", func(t *testing.T) {
+		v, err := NewJWTMultipleValidator([]JWTProvider{
+			{ISS: "https://example.com/", AUD: []string{"a", "b"}, ALG: &jwt.SigningMethodRS256.Name},
+			{ISS: "https://example2.com/", AUD: []string{"c"}, ALG: &jwt.SigningMethodRS256.Name},
+		})
+		assert.NoError(t, err)
+
+		var wg sync.WaitGroup
+		for i := 0; i < 10; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				res, err := v.ValidateToken(context.Background(), tokenString)
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+			}()
+		}
+		wg.Wait()
 	})
 }
