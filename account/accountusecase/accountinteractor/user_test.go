@@ -94,7 +94,7 @@ func TestUser_VerifyUser(t *testing.T) {
 			u, err := uc.VerifyUser(ctx, tt.code)
 
 			if tt.wantUser != nil {
-				// assert.Equal(t, tt.wantUser(u), u)
+				assert.Equal(t, tt.wantUser(u), u)
 			} else {
 				assert.Nil(t, u)
 			}
