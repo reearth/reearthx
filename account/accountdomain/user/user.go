@@ -25,7 +25,6 @@ type User struct {
 	verification  *Verification
 	passwordReset *PasswordReset
 	host          string
-	mockAuth      bool
 }
 
 func (u *User) ID() ID {
