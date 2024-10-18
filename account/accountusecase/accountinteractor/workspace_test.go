@@ -936,7 +936,10 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	userID2 := accountdomain.NewUserID()
 	userID3 := accountdomain.NewUserID()
 	userID4 := accountdomain.NewUserID()
-	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
+	u := user.New().ID(userID).Name("aaa").Email("a@b.c").MustBuild()
+	u2 := user.New().ID(userID2).Name("bbb").Email("b@b.c").MustBuild()
+	u3 := user.New().ID(userID3).Name("ccc").Email("c@b.c").MustBuild()
+	u4 := user.New().ID(userID4).Name("ddd").Email("d@b.c").MustBuild()
 
 	id1 := accountdomain.NewWorkspaceID()
 	w1 := workspace.New().ID(id1).Name("W1").
@@ -951,18 +954,20 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	w2 := workspace.New().ID(id2).Name("W2").
 		Members(map[user.ID]workspace.Member{
 			userID: {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
 		}).Personal(true).MustBuild()
 
 	id3 := accountdomain.NewWorkspaceID()
 	w3 := workspace.New().ID(id3).Name("W3").
 		Members(map[user.ID]workspace.Member{
 			userID: {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
 		}).Personal(false).MustBuild()
 
 	op := &accountusecase.Operator{
 		User:               &userID,
 		ReadableWorkspaces: []workspace.ID{id1},
-		OwningWorkspaces:   []workspace.ID{id1},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3},
 	}
 
 	tests := []struct {
@@ -979,34 +984,35 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		want             *workspace.Members
 	}{
 		{
-			name:       "Remove multiple existing users",
+			name:       "Remove multiple existing members",
 			seeds:      workspace.List{w1},
-			usersSeeds: []*user.User{u},
+			usersSeeds: []*user.User{u, u2, u3, u4},
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
 				operator *accountusecase.Operator
 			}{
 				wId:      id1,
-				uIds:     workspace.UserIDList{userID2, userID3, userID4},
+				uIds:     workspace.UserIDList{userID2, userID3},
 				operator: op,
 			},
 			wantErr: nil,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
 				userID: {Role: workspace.RoleOwner},
+				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
 		{
-			name:       "Remove from personal workspace",
+			name:       "Remove multiple members, cannot remove from personal workspace",
 			seeds:      workspace.List{w2},
-			usersSeeds: []*user.User{u},
+			usersSeeds: []*user.User{u, u2},
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
 				operator *accountusecase.Operator
 			}{
 				wId:      id2,
-				uIds:     workspace.UserIDList{userID},
+				uIds:     workspace.UserIDList{userID, userID2},
 				operator: op,
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
@@ -1015,16 +1021,16 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			}, nil, false),
 		},
 		{
-			name:       "Remove single member, cannot remove owner",
+			name:       "Remove multiple members, cannot remove owner",
 			seeds:      workspace.List{w3},
-			usersSeeds: []*user.User{u},
+			usersSeeds: []*user.User{u, u2},
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
 				operator *accountusecase.Operator
 			}{
 				wId:      id3,
-				uIds:     workspace.UserIDList{userID},
+				uIds:     workspace.UserIDList{userID, userID2},
 				operator: op,
 			},
 			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
@@ -1070,12 +1076,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				return
 			}
 			assert.NoError(t, err)
-
-			if got != nil {
-				assert.Equal(t, tc.want, got.Members())
-			} else {
-				assert.Nil(t, got)
-			}
+			assert.Equal(t, tc.want, got.Members())
 
 			got, err = db.Workspace.FindByID(ctx, tc.args.wId)
 			if tc.want == nil {
@@ -1083,9 +1084,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			if got != nil {
-				assert.Equal(t, tc.want, got.Members())
-			}
+			assert.Equal(t, tc.want, got.Members())
 		})
 	}
 }
