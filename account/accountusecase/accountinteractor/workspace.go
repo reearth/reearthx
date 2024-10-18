@@ -227,6 +227,49 @@ func (i *Workspace) RemoveUserMember(ctx context.Context, id workspace.ID, u wor
 	})
 }
 
+func (i *Workspace) RemoveMultipleUserMembers(ctx context.Context, id workspace.ID, userIDs workspace.UserIDList, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+	if operator.User == nil {
+		return nil, accountinterfaces.ErrInvalidOperator
+	}
+
+	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
+		ws, err := i.repos.Workspace.FindByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		if ws.IsPersonal() {
+			return nil, workspace.ErrCannotModifyPersonalWorkspace
+		}
+
+		isOwner := ws.Members().UserRole(*operator.User) == workspace.RoleOwner
+
+		for _, u := range userIDs {
+			isSelfLeave := *operator.User == u
+
+			if !isOwner && !isSelfLeave {
+				return nil, accountinterfaces.ErrOperationDenied
+			}
+			if isSelfLeave && ws.Members().IsOnlyOwner(u) {
+				return nil, accountinterfaces.ErrOwnerCannotLeaveTheWorkspace
+			}
+
+			err := ws.Members().Leave(u)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		err = i.repos.Workspace.Save(ctx, ws)
+		if err != nil {
+			return nil, err
+		}
+
+		i.applyDefaultPolicy(ws, operator)
+		return ws, nil
+	})
+}
+
 func (i *Workspace) RemoveIntegration(ctx context.Context, wId workspace.ID, iId workspace.IntegrationID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
