@@ -931,6 +931,165 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 	}
 }
 
+func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
+	userID := accountdomain.NewUserID()
+	userID2 := accountdomain.NewUserID()
+	userID3 := accountdomain.NewUserID()
+	userID4 := accountdomain.NewUserID()
+	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
+
+	id1 := accountdomain.NewWorkspaceID()
+	w1 := workspace.New().ID(id1).Name("W1").
+		Members(map[user.ID]workspace.Member{
+			userID:  {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
+			userID3: {Role: workspace.RoleReader},
+			userID4: {Role: workspace.RoleReader},
+		}).Personal(false).MustBuild()
+
+	id2 := accountdomain.NewWorkspaceID()
+	w2 := workspace.New().ID(id2).Name("W2").
+		Members(map[user.ID]workspace.Member{
+			userID: {Role: workspace.RoleOwner},
+		}).Personal(true).MustBuild()
+
+	id3 := accountdomain.NewWorkspaceID()
+	w3 := workspace.New().ID(id3).Name("W3").
+		Members(map[user.ID]workspace.Member{
+			userID: {Role: workspace.RoleOwner},
+		}).Personal(false).MustBuild()
+
+	op := &accountusecase.Operator{
+		User:               &userID,
+		ReadableWorkspaces: []workspace.ID{id1},
+		OwningWorkspaces:   []workspace.ID{id1},
+	}
+
+	tests := []struct {
+		name       string
+		seeds      workspace.List
+		usersSeeds []*user.User
+		args       struct {
+			wId      workspace.ID
+			uIds     workspace.UserIDList
+			operator *accountusecase.Operator
+		}
+		wantErr          error
+		mockWorkspaceErr bool
+		want             *workspace.Members
+	}{
+		{
+			name:       "Remove multiple existing users",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:     workspace.UserIDList{userID2, userID3, userID4},
+				operator: op,
+			},
+			wantErr: nil,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+			}, nil, false),
+		},
+		{
+			name:       "Remove from personal workspace",
+			seeds:      workspace.List{w2},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id2,
+				uIds:     workspace.UserIDList{userID},
+				operator: op,
+			},
+			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+			}, nil, false),
+		},
+		{
+			name:       "Remove single member, cannot remove owner",
+			seeds:      workspace.List{w3},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id3,
+				uIds:     workspace.UserIDList{userID},
+				operator: op,
+			},
+			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+			}, nil, false),
+		},
+		{
+			name: "mock error",
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{operator: op},
+			wantErr:          errors.New("test"),
+			mockWorkspaceErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			db := accountmemory.New()
+			if tc.mockWorkspaceErr {
+				accountmemory.SetWorkspaceError(db.Workspace, tc.wantErr)
+			}
+			for _, p := range tc.seeds {
+				err := db.Workspace.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+			for _, p := range tc.usersSeeds {
+				err := db.User.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+			workspaceUC := NewWorkspace(db, nil)
+
+			got, err := workspaceUC.RemoveMultipleUserMembers(ctx, tc.args.wId, tc.args.uIds, tc.args.operator)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			if got != nil {
+				assert.Equal(t, tc.want, got.Members())
+			} else {
+				assert.Nil(t, got)
+			}
+
+			got, err = db.Workspace.FindByID(ctx, tc.args.wId)
+			if tc.want == nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			if got != nil {
+				assert.Equal(t, tc.want, got.Members())
+			}
+		})
+	}
+}
+
 func TestWorkspace_UpdateMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
