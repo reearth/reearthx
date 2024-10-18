@@ -48,6 +48,7 @@ type SignupParam struct {
 	Theme       *user.Theme
 	UserID      *user.ID
 	WorkspaceID *workspace.ID
+	MockAuth    bool
 }
 
 type UserFindOrCreateParam struct {

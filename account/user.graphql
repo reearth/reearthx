@@ -31,6 +31,7 @@ input SignUpInput {
   secret: String
   lang: Lang
   theme: Theme
+  mockAuth: Boolean
 }
 
 input SignupOIDCInput {

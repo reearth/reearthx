@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/reearth/reearthx/log"
@@ -29,7 +30,7 @@ func NewJWTValidatorWithError(
 	audience []string,
 	opts ...validator.Option,
 ) (*JWTValidatorWithError, error) {
-	validator, err := validator.New(
+	v, err := validator.New(
 		keyFunc,
 		signatureAlgorithm,
 		issuerURL,
@@ -40,7 +41,7 @@ func NewJWTValidatorWithError(
 		return nil, err
 	}
 	return &JWTValidatorWithError{
-		validator: validator,
+		validator: v,
 		iss:       issuerURL,
 		aud:       slices.Clone(audience),
 	}, nil
@@ -49,9 +50,9 @@ func NewJWTValidatorWithError(
 func (v *JWTValidatorWithError) ValidateToken(ctx context.Context, token string) (interface{}, error) {
 	res, err := v.validator.ValidateToken(ctx, token)
 	if err != nil {
-		err = fmt.Errorf("invalid JWT: iss=%s aud=%v err=%w", v.iss, v.aud, err)
+		return nil, fmt.Errorf("invalid JWT: iss=%s aud=%v err=%w", v.iss, v.aud, err)
 	}
-	return res, err
+	return res, nil
 }
 
 type JWTMultipleValidator []JWTValidator
@@ -62,20 +63,53 @@ func NewJWTMultipleValidator(providers []JWTProvider) (JWTMultipleValidator, err
 	})
 }
 
-// ValidateToken Trys to validate the token with each validator
+// ValidateToken tries to validate the token with each validator concurrently
 // NOTE: the last validation error only is returned
-func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString string) (res interface{}, err error) {
+func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString string) (interface{}, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	type result struct {
+		res interface{}
+		err error
+	}
+
+	resultChan := make(chan result, len(mv))
+	var wg sync.WaitGroup
+
 	for _, v := range mv {
-		var err2 error
-		res, err2 = v.ValidateToken(ctx, tokenString)
-		if err2 == nil {
-			err = nil
-			return
+		wg.Add(1)
+		go func(validator JWTValidator) {
+			defer wg.Done()
+			res, err := validator.ValidateToken(ctx, tokenString)
+			select {
+			case resultChan <- result{res, err}:
+			case <-ctx.Done():
+				return
+			}
+		}(v)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
+
+	var lastErr error
+	for i := 0; i < len(mv); i++ {
+		select {
+		case r := <-resultChan:
+			if r.err == nil {
+				cancel()
+				return r.res, nil
+			}
+			lastErr = errors.Join(lastErr, r.err)
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
-		err = errors.Join(err, err2)
 	}
 
 	log.Debugfc(ctx, "auth: invalid JWT token: %s", tokenString)
-	log.Errorfc(ctx, "auth: invalid JWT token: %v", err)
-	return
+	log.Errorfc(ctx, "auth: invalid JWT token: %v", lastErr)
+	return nil, lastErr
 }

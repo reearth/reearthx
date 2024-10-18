@@ -1489,6 +1489,7 @@ type SignUpInput struct {
 	Secret      string `json:"secret"`
 	Lang        string `json:"lang"`
 	Theme       string `json:"theme"`
+	MockAuth    bool   `json:"mockAuth"`
 }
 
 // GetId returns SignUpInput.Id, and is useful for accessing the field via an interface.
@@ -1514,6 +1515,9 @@ func (v *SignUpInput) GetLang() string { return v.Lang }
 
 // GetTheme returns SignUpInput.Theme, and is useful for accessing the field via an interface.
 func (v *SignUpInput) GetTheme() string { return v.Theme }
+
+// GetMockAuth returns SignUpInput.MockAuth, and is useful for accessing the field via an interface.
+func (v *SignUpInput) GetMockAuth() bool { return v.MockAuth }
 
 // SignUpResponse is returned by SignUp on success.
 type SignUpResponse struct {
