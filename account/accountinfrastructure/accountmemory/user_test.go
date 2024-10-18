@@ -33,6 +33,31 @@ func TestNewUserWith(t *testing.T) {
 	assert.Equal(t, u, got)
 }
 
+func TestUser_FindAll(t *testing.T) {
+	ctx := context.Background()
+	u1 := user.New().NewID().Name("hoge").Email("abc@bb.cc").MustBuild()
+	u2 := user.New().NewID().Name("foo").Email("cba@bb.cc").MustBuild()
+	r := &User{
+		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+	}
+
+	out, err := r.FindAll(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(out))
+
+	r.data.Store(u1.ID(), u1)
+	r.data.Store(u2.ID(), u2)
+
+	out, err = r.FindAll(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(out))
+
+	wantErr := errors.New("test")
+	SetUserError(r, wantErr)
+	_, err = r.FindAll(ctx)
+	assert.Same(t, wantErr, err)
+}
+
 func TestUser_FindBySub(t *testing.T) {
 	ctx := context.Background()
 	u := user.New().NewID().Name("hoge").Email("aa@bb.cc").Auths([]user.Auth{{

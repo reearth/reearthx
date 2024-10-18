@@ -13,6 +13,67 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestUserRepo_FindAll(t *testing.T) {
+	wsid := user.NewWorkspaceID()
+	user1 := user.New().
+		NewID().
+		Email("aa@bb.cc").
+		Workspace(wsid).
+		Name("foo").
+		MustBuild()
+	user2 := user.New().
+		NewID().
+		Email("aa2@bb.cc").
+		Workspace(wsid).
+		Name("hoge").
+		MustBuild()
+
+	tests := []struct {
+		Name               string
+		RepoData, Expected []*user.User
+	}{
+		{
+			Name:     "must find users",
+			RepoData: []*user.User{user1, user2},
+			Expected: []*user.User{user1, user2},
+		},
+		{
+			Name:     "must not find any user",
+			RepoData: []*user.User{},
+		},
+	}
+
+	init := mongotest.Connect(t)
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.Name, func(tt *testing.T) {
+			tt.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+
+			repo := NewUser(client)
+			ctx := context.Background()
+			for _, u := range tc.RepoData {
+				err := repo.Save(ctx, u)
+				assert.NoError(tt, err)
+			}
+
+			got, err := repo.FindAll(ctx)
+			assert.NoError(tt, err)
+			for k, u := range got {
+				if u != nil {
+					assert.Equal(tt, tc.Expected[k].ID(), u.ID())
+					assert.Equal(tt, tc.Expected[k].Email(), u.Email())
+					assert.Equal(tt, tc.Expected[k].Name(), u.Name())
+					assert.Equal(tt, tc.Expected[k].Workspace(), u.Workspace())
+				}
+			}
+		})
+	}
+}
+
 func TestUserRepo_FindByID(t *testing.T) {
 	wsid := user.NewWorkspaceID()
 	user1 := user.New().
