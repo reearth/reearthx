@@ -167,6 +167,12 @@ mutation RemoveUserFromWorkspace($input: RemoveUserFromWorkspaceInput!) {
     }
 }
 
+mutation RemoveMultipleUsersFromWorkspace($input: RemoveMultipleUsersFromWorkspaceInput!) {
+    removeMultipleUsersFromWorkspace(input: $input) {
+        workspace {...FragmentWorkspace}
+    }
+}
+
 mutation RemoveIntegrationFromWorkspace($input: RemoveIntegrationFromWorkspaceInput!) {
     removeIntegrationFromWorkspace(input: $input) {
         workspace{...FragmentWorkspace}
