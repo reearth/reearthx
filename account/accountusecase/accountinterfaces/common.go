@@ -8,5 +8,5 @@ import (
 var (
 	ErrOperationDenied error = rerror.NewE(i18n.T("operation denied"))
 	ErrInvalidOperator error = rerror.NewE(i18n.T("invalid operator"))
-	ErrNoUsersSpecified error = rerror.NewE(i18n.T("no users specified for removal"))
+	ErrNoSpecifiedUsers error = rerror.NewE(i18n.T("no specified users for removal"))
 )

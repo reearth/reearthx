@@ -964,10 +964,17 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(false).MustBuild()
 
+	id4 := accountdomain.NewWorkspaceID()
+	w4 := workspace.New().ID(id4).Name("W4").
+		Members(map[user.ID]workspace.Member{
+			userID: {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
+		}).Personal(false).MustBuild()
+
 	op := &accountusecase.Operator{
 		User:               &userID,
 		ReadableWorkspaces: []workspace.ID{id1},
-		OwningWorkspaces:   []workspace.ID{id1, id2, id3},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3, id4},
 	}
 
 	tests := []struct {
@@ -1016,9 +1023,6 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator: op,
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
-			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
-			}, nil, false),
 		},
 		{
 			name:       "Remove multiple members, cannot remove owner",
@@ -1034,9 +1038,21 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator: op,
 			},
 			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
-			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
-			}, nil, false),
+		},
+		{
+			name:       "Empty user id list",
+			seeds:      workspace.List{w4},
+			usersSeeds: []*user.User{u, u2},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id4,
+				uIds:     workspace.UserIDList{},
+				operator: op,
+			},
+			wantErr: accountinterfaces.ErrNoSpecifiedUsers,
 		},
 		{
 			name: "mock error",
@@ -1044,7 +1060,10 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
 				operator *accountusecase.Operator
-			}{operator: op},
+			}{
+				uIds:     workspace.UserIDList{userID2, userID3},
+				operator: op,
+			},
 			wantErr:          errors.New("test"),
 			mockWorkspaceErr: true,
 		},
