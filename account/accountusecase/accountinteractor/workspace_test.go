@@ -1023,6 +1023,10 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator: op,
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}, nil, false),
 		},
 		{
 			name:       "Remove multiple members, cannot remove owner",
@@ -1038,9 +1042,13 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator: op,
 			},
 			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}, nil, false),
 		},
 		{
-			name:       "Empty user id list",
+			name:       "Remove multiple members, empty user id list",
 			seeds:      workspace.List{w4},
 			usersSeeds: []*user.User{u, u2},
 			args: struct {
@@ -1053,6 +1061,10 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator: op,
 			},
 			wantErr: accountinterfaces.ErrNoSpecifiedUsers,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}, nil, false),
 		},
 		{
 			name: "mock error",
@@ -1091,7 +1103,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 
 			got, err := workspaceUC.RemoveMultipleUserMembers(ctx, tc.args.wId, tc.args.uIds, tc.args.operator)
 			if tc.wantErr != nil {
-				assert.Equal(t, tc.wantErr, err)
+				assert.ErrorIs(t, tc.wantErr, err)
 				return
 			}
 			assert.NoError(t, err)
