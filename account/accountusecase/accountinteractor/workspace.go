@@ -227,7 +227,7 @@ func (i *Workspace) RemoveUserMember(ctx context.Context, id workspace.ID, u wor
 	})
 }
 
-func (i *Workspace) RemoveMultipleUserMembers(ctx context.Context, id workspace.ID, userIDs workspace.UserIDList, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) RemoveMultipleUserMembers(ctx context.Context, id workspace.ID, userIds workspace.UserIDList, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -244,17 +244,17 @@ func (i *Workspace) RemoveMultipleUserMembers(ctx context.Context, id workspace.
 
 		isOwner := ws.Members().UserRole(*operator.User) == workspace.RoleOwner
 
-		for _, u := range userIDs {
-			isSelfLeave := *operator.User == u
+		for _, uId := range userIds {
+			isSelfLeave := *operator.User == uId
 
 			if !isOwner && !isSelfLeave {
 				return nil, accountinterfaces.ErrOperationDenied
 			}
-			if isSelfLeave && ws.Members().IsOnlyOwner(u) {
+			if isSelfLeave && ws.Members().IsOnlyOwner(uId) {
 				return nil, accountinterfaces.ErrOwnerCannotLeaveTheWorkspace
 			}
 
-			err := ws.Members().Leave(u)
+			err := ws.Members().Leave(uId)
 			if err != nil {
 				return nil, err
 			}
