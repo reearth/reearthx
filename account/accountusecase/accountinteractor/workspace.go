@@ -233,7 +233,7 @@ func (i *Workspace) RemoveMultipleUserMembers(ctx context.Context, id workspace.
 	}
 
 	if userIds.Len() == 0 {
-		return nil, accountinterfaces.ErrNoSpecifiedUsers
+		return nil, workspace.ErrNoSpecifiedUsers
 	}
 
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {

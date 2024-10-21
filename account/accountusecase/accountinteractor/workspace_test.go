@@ -1060,7 +1060,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				uIds:     workspace.UserIDList{},
 				operator: op,
 			},
-			wantErr: accountinterfaces.ErrNoSpecifiedUsers,
+			wantErr: workspace.ErrNoSpecifiedUsers,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
 				userID: {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
