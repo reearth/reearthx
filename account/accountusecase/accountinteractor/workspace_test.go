@@ -991,6 +991,22 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		want             *workspace.Members
 	}{
 		{
+			name:       "Remove non existing",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:      workspace.UserIDList{accountdomain.NewUserID()},
+				operator: op,
+			},
+			wantErr: workspace.ErrTargetUserNotInTheWorkspace,
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+		},
+		{
 			name:       "Remove multiple existing members",
 			seeds:      workspace.List{w1},
 			usersSeeds: []*user.User{u, u2, u3, u4},
@@ -1006,6 +1022,48 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			wantErr: nil,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
 				userID: {Role: workspace.RoleOwner},
+				userID4: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Invalid Operator",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u, u2, u3, u4},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:     workspace.UserIDList{userID2, userID3},
+				operator: &accountusecase.Operator{},
+			},
+			wantErr: accountinterfaces.ErrInvalidOperator,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID4: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Operation Denied",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u, u2, u3, u4},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:     workspace.UserIDList{userID2},
+				operator: &accountusecase.Operator{
+					User:               &userID3,
+					ReadableWorkspaces: []workspace.ID{id1},
+				},
+			},
+			wantErr: accountinterfaces.ErrOperationDenied,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID3: {Role: workspace.RoleReader},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
