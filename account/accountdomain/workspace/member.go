@@ -15,6 +15,7 @@ var (
 	ErrCannotModifyPersonalWorkspace = rerror.NewE(i18n.T("personal workspace cannot be modified"))
 	ErrTargetUserNotInTheWorkspace   = rerror.NewE(i18n.T("target user does not exist in the workspace"))
 	ErrInvalidWorkspaceName          = rerror.NewE(i18n.T("invalid workspace name"))
+	ErrNoSpecifiedUsers              = rerror.NewE(i18n.T("no specified users for removal"))
 )
 
 type Member struct {

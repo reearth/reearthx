@@ -931,6 +931,253 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 	}
 }
 
+func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
+	userID := accountdomain.NewUserID()
+	userID2 := accountdomain.NewUserID()
+	userID3 := accountdomain.NewUserID()
+	userID4 := accountdomain.NewUserID()
+	u := user.New().ID(userID).Name("aaa").Email("a@b.c").MustBuild()
+	u2 := user.New().ID(userID2).Name("bbb").Email("b@b.c").MustBuild()
+	u3 := user.New().ID(userID3).Name("ccc").Email("c@b.c").MustBuild()
+	u4 := user.New().ID(userID4).Name("ddd").Email("d@b.c").MustBuild()
+
+	id1 := accountdomain.NewWorkspaceID()
+	w1 := workspace.New().ID(id1).Name("W1").
+		Members(map[user.ID]workspace.Member{
+			userID:  {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
+			userID3: {Role: workspace.RoleReader},
+			userID4: {Role: workspace.RoleReader},
+		}).Personal(false).MustBuild()
+
+	id2 := accountdomain.NewWorkspaceID()
+	w2 := workspace.New().ID(id2).Name("W2").
+		Members(map[user.ID]workspace.Member{
+			userID: {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
+		}).Personal(true).MustBuild()
+
+	id3 := accountdomain.NewWorkspaceID()
+	w3 := workspace.New().ID(id3).Name("W3").
+		Members(map[user.ID]workspace.Member{
+			userID: {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
+		}).Personal(false).MustBuild()
+
+	id4 := accountdomain.NewWorkspaceID()
+	w4 := workspace.New().ID(id4).Name("W4").
+		Members(map[user.ID]workspace.Member{
+			userID: {Role: workspace.RoleOwner},
+			userID2: {Role: workspace.RoleReader},
+		}).Personal(false).MustBuild()
+
+	op := &accountusecase.Operator{
+		User:               &userID,
+		ReadableWorkspaces: []workspace.ID{id1},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3, id4},
+	}
+
+	tests := []struct {
+		name       string
+		seeds      workspace.List
+		usersSeeds []*user.User
+		args       struct {
+			wId      workspace.ID
+			uIds     workspace.UserIDList
+			operator *accountusecase.Operator
+		}
+		wantErr          error
+		mockWorkspaceErr bool
+		want             *workspace.Members
+	}{
+		{
+			name:       "Remove non existing",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:      workspace.UserIDList{accountdomain.NewUserID()},
+				operator: op,
+			},
+			wantErr: workspace.ErrTargetUserNotInTheWorkspace,
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+		},
+		{
+			name:       "Remove multiple existing members",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u, u2, u3, u4},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:     workspace.UserIDList{userID2, userID3},
+				operator: op,
+			},
+			wantErr: nil,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID4: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Invalid Operator",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u, u2, u3, u4},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:     workspace.UserIDList{userID2, userID3},
+				operator: &accountusecase.Operator{},
+			},
+			wantErr: accountinterfaces.ErrInvalidOperator,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID4: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Operation Denied",
+			seeds:      workspace.List{w1},
+			usersSeeds: []*user.User{u, u2, u3, u4},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id1,
+				uIds:     workspace.UserIDList{userID2},
+				operator: &accountusecase.Operator{
+					User:               &userID3,
+					ReadableWorkspaces: []workspace.ID{id1},
+				},
+			},
+			wantErr: accountinterfaces.ErrOperationDenied,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID3: {Role: workspace.RoleReader},
+				userID4: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Remove multiple members, cannot remove from personal workspace",
+			seeds:      workspace.List{w2},
+			usersSeeds: []*user.User{u, u2},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id2,
+				uIds:     workspace.UserIDList{userID, userID2},
+				operator: op,
+			},
+			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Remove multiple members, cannot remove owner",
+			seeds:      workspace.List{w3},
+			usersSeeds: []*user.User{u, u2},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id3,
+				uIds:     workspace.UserIDList{userID, userID2},
+				operator: op,
+			},
+			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name:       "Remove multiple members, empty user id list",
+			seeds:      workspace.List{w4},
+			usersSeeds: []*user.User{u, u2},
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				wId:      id4,
+				uIds:     workspace.UserIDList{},
+				operator: op,
+			},
+			wantErr: workspace.ErrNoSpecifiedUsers,
+			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
+				userID: {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}, nil, false),
+		},
+		{
+			name: "mock error",
+			args: struct {
+				wId      workspace.ID
+				uIds     workspace.UserIDList
+				operator *accountusecase.Operator
+			}{
+				uIds:     workspace.UserIDList{userID2, userID3},
+				operator: op,
+			},
+			wantErr:          errors.New("test"),
+			mockWorkspaceErr: true,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			db := accountmemory.New()
+			if tc.mockWorkspaceErr {
+				accountmemory.SetWorkspaceError(db.Workspace, tc.wantErr)
+			}
+			for _, p := range tc.seeds {
+				err := db.Workspace.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+			for _, p := range tc.usersSeeds {
+				err := db.User.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+			workspaceUC := NewWorkspace(db, nil)
+
+			got, err := workspaceUC.RemoveMultipleUserMembers(ctx, tc.args.wId, tc.args.uIds, tc.args.operator)
+			if tc.wantErr != nil {
+				assert.ErrorIs(t, tc.wantErr, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, got.Members())
+
+			got, err = db.Workspace.FindByID(ctx, tc.args.wId)
+			if tc.want == nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.want, got.Members())
+		})
+	}
+}
+
 func TestWorkspace_UpdateMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
