@@ -27,4 +27,5 @@ type UserQuery interface {
 	FindByEmail(context.Context, string) (*user.User, error)
 	FindByName(context.Context, string) (*user.User, error)
 	FindByNameOrEmail(context.Context, string) (*user.User, error)
+	SearchByKeyword(context.Context, string) (user.List, error)
 }

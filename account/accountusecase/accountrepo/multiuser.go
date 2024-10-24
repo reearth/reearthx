@@ -58,6 +58,18 @@ func (u MultiUser) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*
 	})
 }
 
+func (u MultiUser) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
+	res := user.List{}
+	for _, r := range u {
+		if r, err := r.SearchByKeyword(ctx, keyword); err != nil {
+			return nil, err
+		} else {
+			res = append(res, r...)
+		}
+	}
+	return res, nil
+}
+
 func (u MultiUser) FindByVerification(ctx context.Context, v string) (*user.User, error) {
 	return u.first2(func(r User) (*user.User, error) {
 		return r.FindByVerification(ctx, v)

@@ -74,7 +74,8 @@ type UpdateMeParam struct {
 type UserQuery interface {
 	FetchByID(context.Context, user.IDList) (user.List, error)
 	FetchBySub(context.Context, string) (*user.User, error)
-	SearchUser(context.Context, string) (*user.Simple, error)
+	FetchByNameOrEmail(context.Context, string) (*user.Simple, error)
+	SearchUser(context.Context, string) (user.SimpleList, error)
 }
 
 type User interface {

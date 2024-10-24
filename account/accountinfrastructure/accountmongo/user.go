@@ -3,6 +3,7 @@ package accountmongo
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
@@ -10,6 +11,7 @@ import (
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -89,6 +91,19 @@ func (r *User) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*user
 		"$or": []bson.M{
 			{"email": nameOrEmail},
 			{"name": nameOrEmail},
+		},
+	})
+}
+
+func (r *User) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
+	if len(keyword) < 3 {
+		return nil, nil
+	}
+	regex := bson.M{"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(keyword)), Options: "i"}}
+	return r.find(ctx, bson.M{
+		"$or": []bson.M{
+			{"email": regex},
+			{"name": regex},
 		},
 	})
 }

@@ -2,6 +2,7 @@ package accountmemory
 
 import (
 	"context"
+	"strings"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
@@ -28,7 +29,7 @@ func NewUserWith(users ...*user.User) *User {
 	return r
 }
 
-func (r *User) FindByIDs(ctx context.Context, ids user.IDList) (user.List, error) {
+func (r *User) FindByIDs(_ context.Context, ids user.IDList) (user.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -40,7 +41,7 @@ func (r *User) FindByIDs(ctx context.Context, ids user.IDList) (user.List, error
 	return res, nil
 }
 
-func (r *User) FindByID(ctx context.Context, v user.ID) (*user.User, error) {
+func (r *User) FindByID(_ context.Context, v user.ID) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -50,7 +51,7 @@ func (r *User) FindByID(ctx context.Context, v user.ID) (*user.User, error) {
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, error) {
+func (r *User) FindBySub(_ context.Context, auth0sub string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -64,7 +65,7 @@ func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, erro
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindByPasswordResetRequest(ctx context.Context, token string) (*user.User, error) {
+func (r *User) FindByPasswordResetRequest(_ context.Context, token string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -78,7 +79,7 @@ func (r *User) FindByPasswordResetRequest(ctx context.Context, token string) (*u
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *User) FindByEmail(_ context.Context, email string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -92,7 +93,7 @@ func (r *User) FindByEmail(ctx context.Context, email string) (*user.User, error
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindByName(ctx context.Context, name string) (*user.User, error) {
+func (r *User) FindByName(_ context.Context, name string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -106,7 +107,7 @@ func (r *User) FindByName(ctx context.Context, name string) (*user.User, error) 
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*user.User, error) {
+func (r *User) FindByNameOrEmail(_ context.Context, nameOrEmail string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -120,7 +121,21 @@ func (r *User) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*user
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindByVerification(ctx context.Context, code string) (*user.User, error) {
+func (r *User) SearchByKeyword(_ context.Context, keyword string) (user.List, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	if len(keyword) < 3 {
+		return nil, nil
+	}
+
+	return rerror.ErrIfNil(r.data.FindAll(func(key user.ID, value *user.User) bool {
+		return strings.Contains(value.Email(), keyword) || strings.Contains(value.Name(), keyword)
+	}), rerror.ErrNotFound)
+}
+
+func (r *User) FindByVerification(_ context.Context, code string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -135,7 +150,7 @@ func (r *User) FindByVerification(ctx context.Context, code string) (*user.User,
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) FindBySubOrCreate(ctx context.Context, u *user.User, sub string) (*user.User, error) {
+func (r *User) FindBySubOrCreate(_ context.Context, u *user.User, sub string) (*user.User, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -150,7 +165,7 @@ func (r *User) FindBySubOrCreate(ctx context.Context, u *user.User, sub string) 
 	return u2, nil
 }
 
-func (r *User) Create(ctx context.Context, u *user.User) error {
+func (r *User) Create(_ context.Context, u *user.User) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -164,7 +179,7 @@ func (r *User) Create(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (r *User) Save(ctx context.Context, u *user.User) error {
+func (r *User) Save(_ context.Context, u *user.User) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -173,7 +188,7 @@ func (r *User) Save(ctx context.Context, u *user.User) error {
 	return nil
 }
 
-func (r *User) Remove(ctx context.Context, user user.ID) error {
+func (r *User) Remove(_ context.Context, user user.ID) error {
 	if r.err != nil {
 		return r.err
 	}
