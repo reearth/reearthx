@@ -130,8 +130,11 @@ func (r *User) SearchByKeyword(_ context.Context, keyword string) (user.List, er
 		return nil, nil
 	}
 
+	keyword = strings.TrimSpace(strings.ToLower(keyword))
+
 	return rerror.ErrIfNil(r.data.FindAll(func(key user.ID, value *user.User) bool {
-		return strings.Contains(value.Email(), keyword) || strings.Contains(value.Name(), keyword)
+		return strings.Contains(strings.ToLower(value.Email()), keyword) ||
+			strings.Contains(strings.ToLower(value.Name()), keyword)
 	}), rerror.ErrNotFound)
 }
 
