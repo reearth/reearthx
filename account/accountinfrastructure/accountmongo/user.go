@@ -99,13 +99,11 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string) (user.List, 
 	if len(keyword) < 3 {
 		return nil, nil
 	}
-	regex := bson.M{"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(keyword)), Options: "i"}}
-	return r.find(ctx, bson.M{
-		"$or": []bson.M{
-			{"email": regex},
-			{"name": regex},
-		},
-	})
+	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
+	return r.find(ctx,
+		bson.M{"$or": []bson.M{{"email": regex}, {"name": regex}}},
+		options.Find().SetLimit(10).SetSort(bson.M{"name": 1}),
+	)
 }
 
 func (r *User) FindByVerification(ctx context.Context, code string) (*user.User, error) {
@@ -172,9 +170,9 @@ func (r *User) Remove(ctx context.Context, user user.ID) error {
 	return r.client.RemoveOne(ctx, bson.M{"id": user.String()})
 }
 
-func (r *User) find(ctx context.Context, filter any) (user.List, error) {
+func (r *User) find(ctx context.Context, filter any, options ...*options.FindOptions) (user.List, error) {
 	c := mongodoc.NewUserConsumer(r.host)
-	if err := r.client.Find(ctx, filter, c); err != nil {
+	if err := r.client.Find(ctx, filter, c, options...); err != nil {
 		return nil, err
 	}
 	return c.Result, nil
