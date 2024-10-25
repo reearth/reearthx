@@ -1512,11 +1512,11 @@ const (
 
 // SearchUserResponse is returned by SearchUser on success.
 type SearchUserResponse struct {
-	SearchUser SearchUserSearchUser `json:"searchUser"`
+	SearchUser []SearchUserSearchUser `json:"searchUser"`
 }
 
 // GetSearchUser returns SearchUserResponse.SearchUser, and is useful for accessing the field via an interface.
-func (v *SearchUserResponse) GetSearchUser() SearchUserSearchUser { return v.SearchUser }
+func (v *SearchUserResponse) GetSearchUser() []SearchUserSearchUser { return v.SearchUser }
 
 // SearchUserSearchUser includes the requested fields of the GraphQL type User.
 type SearchUserSearchUser struct {
@@ -2606,6 +2606,106 @@ func (v *UserByIDsResponse) __premarshalJSON() (*__premarshalUserByIDsResponse, 
 	return &retval, nil
 }
 
+// UserByNameOrEmailResponse is returned by UserByNameOrEmail on success.
+type UserByNameOrEmailResponse struct {
+	UserByNameOrEmail UserByNameOrEmailUserByNameOrEmailUser `json:"userByNameOrEmail"`
+}
+
+// GetUserByNameOrEmail returns UserByNameOrEmailResponse.UserByNameOrEmail, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailResponse) GetUserByNameOrEmail() UserByNameOrEmailUserByNameOrEmailUser {
+	return v.UserByNameOrEmail
+}
+
+// UserByNameOrEmailUserByNameOrEmailUser includes the requested fields of the GraphQL type User.
+type UserByNameOrEmailUserByNameOrEmailUser struct {
+	FragmentUser `json:"-"`
+}
+
+// GetId returns UserByNameOrEmailUserByNameOrEmailUser.Id, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetId() string { return v.FragmentUser.Id }
+
+// GetName returns UserByNameOrEmailUserByNameOrEmailUser.Name, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetName() string { return v.FragmentUser.Name }
+
+// GetEmail returns UserByNameOrEmailUserByNameOrEmailUser.Email, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetEmail() string { return v.FragmentUser.Email }
+
+// GetLang returns UserByNameOrEmailUserByNameOrEmailUser.Lang, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetLang() string { return v.FragmentUser.Lang }
+
+// GetTheme returns UserByNameOrEmailUserByNameOrEmailUser.Theme, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetTheme() string { return v.FragmentUser.Theme }
+
+// GetWorkspace returns UserByNameOrEmailUserByNameOrEmailUser.Workspace, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetWorkspace() string {
+	return v.FragmentUser.Workspace
+}
+
+// GetAuths returns UserByNameOrEmailUserByNameOrEmailUser.Auths, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetAuths() []string { return v.FragmentUser.Auths }
+
+func (v *UserByNameOrEmailUserByNameOrEmailUser) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*UserByNameOrEmailUserByNameOrEmailUser
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.UserByNameOrEmailUserByNameOrEmailUser = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.FragmentUser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalUserByNameOrEmailUserByNameOrEmailUser struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	Email string `json:"email"`
+
+	Lang string `json:"lang"`
+
+	Theme string `json:"theme"`
+
+	Workspace string `json:"workspace"`
+
+	Auths []string `json:"auths"`
+}
+
+func (v *UserByNameOrEmailUserByNameOrEmailUser) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *UserByNameOrEmailUserByNameOrEmailUser) __premarshalJSON() (*__premarshalUserByNameOrEmailUserByNameOrEmailUser, error) {
+	var retval __premarshalUserByNameOrEmailUserByNameOrEmailUser
+
+	retval.Id = v.FragmentUser.Id
+	retval.Name = v.FragmentUser.Name
+	retval.Email = v.FragmentUser.Email
+	retval.Lang = v.FragmentUser.Lang
+	retval.Theme = v.FragmentUser.Theme
+	retval.Workspace = v.FragmentUser.Workspace
+	retval.Auths = v.FragmentUser.Auths
+	return &retval, nil
+}
+
 type VerifyUserInput struct {
 	Code string `json:"code"`
 }
@@ -3091,11 +3191,11 @@ func (v *__RemoveUserFromWorkspaceInput) GetInput() RemoveUserFromWorkspaceInput
 
 // __SearchUserInput is used internally by genqlient
 type __SearchUserInput struct {
-	NameOrEmail string `json:"nameOrEmail"`
+	Keyword string `json:"keyword"`
 }
 
-// GetNameOrEmail returns __SearchUserInput.NameOrEmail, and is useful for accessing the field via an interface.
-func (v *__SearchUserInput) GetNameOrEmail() string { return v.NameOrEmail }
+// GetKeyword returns __SearchUserInput.Keyword, and is useful for accessing the field via an interface.
+func (v *__SearchUserInput) GetKeyword() string { return v.Keyword }
 
 // __SignUpInput is used internally by genqlient
 type __SignUpInput struct {
@@ -3162,6 +3262,14 @@ type __UserByIDsInput struct {
 
 // GetId returns __UserByIDsInput.Id, and is useful for accessing the field via an interface.
 func (v *__UserByIDsInput) GetId() []string { return v.Id }
+
+// __UserByNameOrEmailInput is used internally by genqlient
+type __UserByNameOrEmailInput struct {
+	NameOrEmail string `json:"nameOrEmail"`
+}
+
+// GetNameOrEmail returns __UserByNameOrEmailInput.NameOrEmail, and is useful for accessing the field via an interface.
+func (v *__UserByNameOrEmailInput) GetNameOrEmail() string { return v.NameOrEmail }
 
 // __VerifyUserInput is used internally by genqlient
 type __VerifyUserInput struct {
@@ -3823,8 +3931,8 @@ func RemoveUserFromWorkspace(
 
 // The query or mutation executed by SearchUser.
 const SearchUser_Operation = `
-query SearchUser ($nameOrEmail: String!) {
-	searchUser(nameOrEmail: $nameOrEmail) {
+query SearchUser ($keyword: String!) {
+	searchUser(keyword: $keyword) {
 		... FragmentUser
 	}
 }
@@ -3842,13 +3950,13 @@ fragment FragmentUser on User {
 func SearchUser(
 	ctx context.Context,
 	client graphql.Client,
-	nameOrEmail string,
+	keyword string,
 ) (*SearchUserResponse, error) {
 	req := &graphql.Request{
 		OpName: "SearchUser",
 		Query:  SearchUser_Operation,
 		Variables: &__SearchUserInput{
-			NameOrEmail: nameOrEmail,
+			Keyword: keyword,
 		},
 	}
 	var err error
@@ -4234,6 +4342,50 @@ func UserByIDs(
 	var err error
 
 	var data UserByIDsResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by UserByNameOrEmail.
+const UserByNameOrEmail_Operation = `
+query UserByNameOrEmail ($nameOrEmail: String!) {
+	userByNameOrEmail(nameOrEmail: $nameOrEmail) {
+		... FragmentUser
+	}
+}
+fragment FragmentUser on User {
+	id
+	name
+	email
+	lang
+	theme
+	workspace
+	auths
+}
+`
+
+func UserByNameOrEmail(
+	ctx context.Context,
+	client graphql.Client,
+	nameOrEmail string,
+) (*UserByNameOrEmailResponse, error) {
+	req := &graphql.Request{
+		OpName: "UserByNameOrEmail",
+		Query:  UserByNameOrEmail_Operation,
+		Variables: &__UserByNameOrEmailInput{
+			NameOrEmail: nameOrEmail,
+		},
+	}
+	var err error
+
+	var data UserByNameOrEmailResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(

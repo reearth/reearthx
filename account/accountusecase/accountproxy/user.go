@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/util"
 
 	_ "github.com/Khan/genqlient/generate"
 	"github.com/Khan/genqlient/graphql"
@@ -104,16 +105,32 @@ func (u *User) RemoveMyAuth(ctx context.Context, auth string, op *accountusecase
 	return MeToUser(res.RemoveMyAuth.Me.FragmentMe)
 }
 
-func (u *User) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
-	res, err := SearchUser(ctx, u.gql, nameOrEmail)
+func (u *User) FetchByNameOrEmail(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
+	res, err := UserByNameOrEmail(ctx, u.gql, nameOrEmail)
 	if err != nil {
 		return nil, err
 	}
-	r, err := FragmentToUser(res.SearchUser.FragmentUser)
+	r, err := FragmentToUser(res.UserByNameOrEmail.FragmentUser)
 	if err != nil {
 		return nil, err
 	}
 	return user.SimpleFrom(r), nil
+}
+
+func (u *User) SearchUser(ctx context.Context, keyword string) (user.SimpleList, error) {
+	res, err := SearchUser(ctx, u.gql, keyword)
+	if err != nil {
+		return nil, err
+	}
+	r, err := util.TryMap(res.SearchUser, func(u SearchUserSearchUser) (*user.User, error) {
+		return FragmentToUser(u.FragmentUser)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return util.Map(r, func(u *user.User) *user.Simple {
+		return user.SimpleFrom(u)
+	}), nil
 }
 
 func (u *User) DeleteMe(ctx context.Context, id user.ID, op *accountusecase.Operator) error {

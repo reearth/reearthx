@@ -3,6 +3,7 @@ package accountmongo
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
@@ -10,6 +11,7 @@ import (
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -93,6 +95,17 @@ func (r *User) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*user
 	})
 }
 
+func (r *User) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
+	if len(keyword) < 3 {
+		return nil, nil
+	}
+	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
+	return r.find(ctx,
+		bson.M{"$or": []bson.M{{"email": regex}, {"name": regex}}},
+		options.Find().SetLimit(10).SetSort(bson.M{"name": 1}),
+	)
+}
+
 func (r *User) FindByVerification(ctx context.Context, code string) (*user.User, error) {
 	return r.findOne(ctx, bson.M{
 		"verification.code": code,
@@ -157,9 +170,9 @@ func (r *User) Remove(ctx context.Context, user user.ID) error {
 	return r.client.RemoveOne(ctx, bson.M{"id": user.String()})
 }
 
-func (r *User) find(ctx context.Context, filter any) (user.List, error) {
+func (r *User) find(ctx context.Context, filter any, options ...*options.FindOptions) (user.List, error) {
 	c := mongodoc.NewUserConsumer(r.host)
-	if err := r.client.Find(ctx, filter, c); err != nil {
+	if err := r.client.Find(ctx, filter, c, options...); err != nil {
 		return nil, err
 	}
 	return c.Result, nil
