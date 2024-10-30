@@ -26,34 +26,32 @@ type Rule struct {
 	Roles   []string `yaml:"roles"`
 }
 
-type ResourceDefiner interface {
-	DefineResources(builder *ResourceBuilder) []ResourceDefinition
-}
+type DefineResourcesFunc func(builder *ResourceBuilder) []ResourceDefinition
 
-func GeneratePolicies(definer ResourceDefiner, outputDir string) error {
-	builder := NewResourceBuilder("")
-	resources := definer.DefineResources(builder)
+func GeneratePolicies(serviceName string, defineResources DefineResourcesFunc, outputDir string) error {
+	builder := NewResourceBuilder(serviceName)
+	resources := defineResources(builder)
 
 	for _, resource := range resources {
 		policy := CerbosPolicy{
 			APIVersion: "api.cerbos.dev/v1",
 			ResourcePolicy: ResourcePolicy{
 				Version:  "default",
-				Resource: resource.GetResource(),
-				Rules:    make([]Rule, 0, len(resource.GetActions())),
+				Resource: resource.Resource,
+				Rules:    make([]Rule, 0, len(resource.Actions)),
 			},
 		}
 
-		for _, action := range resource.GetActions() {
+		for _, action := range resource.Actions {
 			rule := Rule{
-				Actions: []string{action.GetAction()},
+				Actions: []string{action.Action},
 				Effect:  "EFFECT_ALLOW",
-				Roles:   action.GetRoles(),
+				Roles:   action.Roles,
 			}
 			policy.ResourcePolicy.Rules = append(policy.ResourcePolicy.Rules, rule)
 		}
 
-		filename := strings.ReplaceAll(resource.GetResource(), ":", "_")
+		filename := strings.ReplaceAll(resource.Resource, ":", "_")
 		outputPath := filepath.Join(outputDir, fmt.Sprintf("%s.yaml", filename))
 
 		if err := os.MkdirAll(outputDir, 0755); err != nil {
