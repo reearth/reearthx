@@ -9,16 +9,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type ResourceDefinition interface {
-	GetResource() string
-	GetActions() []ActionDefinition
-}
-
-type ActionDefinition interface {
-	GetAction() string
-	GetRoles() []string
-}
-
 type CerbosPolicy struct {
 	APIVersion     string         `yaml:"apiVersion"`
 	ResourcePolicy ResourcePolicy `yaml:"resourcePolicy"`
@@ -36,7 +26,14 @@ type Rule struct {
 	Roles   []string `yaml:"roles"`
 }
 
-func GeneratePolicyFiles(resources []ResourceDefinition, outputDir string) error {
+type ResourceDefiner interface {
+	DefineResources(builder *ResourceBuilder) []ResourceDefinition
+}
+
+func GeneratePolicies(definer ResourceDefiner, outputDir string) error {
+	builder := NewResourceBuilder("")
+	resources := definer.DefineResources(builder)
+
 	for _, resource := range resources {
 		policy := CerbosPolicy{
 			APIVersion: "api.cerbos.dev/v1",
@@ -72,5 +69,6 @@ func GeneratePolicyFiles(resources []ResourceDefinition, outputDir string) error
 			return fmt.Errorf("failed to write file: %w", err)
 		}
 	}
+
 	return nil
 }
