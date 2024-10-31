@@ -29,10 +29,9 @@ type GraphQLQuery struct {
 	Variables interface{} `json:"variables"`
 }
 
-func CheckPermission(ctx context.Context, dashboardURL string, input CheckPermissionInput) (bool, error) {
-	au := getAuthInfo(ctx)
-	if au == nil {
-		return false, fmt.Errorf("auth info not found")
+func CheckPermission(ctx context.Context, dashboardURL string, authInfo *appx.AuthInfo, input CheckPermissionInput) (bool, error) {
+	if authInfo == nil {
+		return false, fmt.Errorf("auth info is required")
 	}
 
 	query := `
@@ -60,7 +59,7 @@ func CheckPermission(ctx context.Context, dashboardURL string, input CheckPermis
 		return false, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+au.Token)
+	req.Header.Set("Authorization", "Bearer "+authInfo.Token)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -76,13 +75,4 @@ func CheckPermission(ctx context.Context, dashboardURL string, input CheckPermis
 	}
 
 	return response.Data.CheckPermission.Allowed, nil
-}
-
-func getAuthInfo(ctx context.Context) *appx.AuthInfo {
-	if v := ctx.Value("authinfo"); v != nil {
-		if v2, ok := v.(appx.AuthInfo); ok {
-			return &v2
-		}
-	}
-	return nil
 }
