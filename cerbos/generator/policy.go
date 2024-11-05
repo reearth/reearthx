@@ -29,10 +29,18 @@ type Rule struct {
 type DefineResourcesFunc func(builder *ResourceBuilder) []ResourceDefinition
 
 func GeneratePolicies(serviceName string, defineResources DefineResourcesFunc, outputDir string) error {
+	if defineResources == nil {
+		return fmt.Errorf("define resources function is required")
+	}
+
 	builder := NewResourceBuilder(serviceName)
 	resources := defineResources(builder)
 
 	for _, resource := range resources {
+		if resource.Resource == "" {
+			return fmt.Errorf("invalid resource name")
+		}
+
 		policy := CerbosPolicy{
 			APIVersion: "api.cerbos.dev/v1",
 			ResourcePolicy: ResourcePolicy{

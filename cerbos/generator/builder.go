@@ -22,6 +22,13 @@ func NewResourceBuilder(serviceName string) *ResourceBuilder {
 	}
 }
 
+func NewActionDefinition(action string, roles []string) ActionDefinition {
+	return ActionDefinition{
+		Action: action,
+		Roles:  roles,
+	}
+}
+
 func (b *ResourceBuilder) AddResource(resource string, actions []ActionDefinition) *ResourceBuilder {
 	b.resources[resource] = actions
 	return b
@@ -36,11 +43,4 @@ func (b *ResourceBuilder) Build() []ResourceDefinition {
 		})
 	}
 	return result
-}
-
-func NewActionDefinition(action string, roles []string) ActionDefinition {
-	return ActionDefinition{
-		Action: action,
-		Roles:  roles,
-	}
 }

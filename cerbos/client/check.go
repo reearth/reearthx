@@ -10,6 +10,29 @@ import (
 	"github.com/reearth/reearthx/appx"
 )
 
+const (
+	checkPermissionQuery = `
+        query CheckPermission($input: CheckPermissionInput!) {
+            checkPermission(input: $input) {
+                allowed
+            }
+        }
+    `
+	graphqlPath = "/api/graphql"
+)
+
+type Client struct {
+	httpClient   *http.Client
+	dashboardURL string
+}
+
+func NewClient(dashboardURL string) *Client {
+	return &Client{
+		httpClient:   &http.Client{},
+		dashboardURL: dashboardURL,
+	}
+}
+
 type CheckPermissionInput struct {
 	Service  string `json:"service"`
 	Resource string `json:"resource"`
@@ -29,21 +52,29 @@ type GraphQLQuery struct {
 	Variables interface{} `json:"variables"`
 }
 
-func CheckPermission(ctx context.Context, dashboardURL string, authInfo *appx.AuthInfo, input CheckPermissionInput) (bool, error) {
-	if authInfo == nil {
-		return false, fmt.Errorf("auth info is required")
+func (c *Client) CheckPermission(ctx context.Context, authInfo *appx.AuthInfo, input CheckPermissionInput) (bool, error) {
+	if err := c.validateInput(authInfo); err != nil {
+		return false, err
 	}
 
-	query := `
-		query CheckPermission($input: CheckPermissionInput!) {
-			checkPermission(input: $input) {
-				allowed
-			}
-		}
-	`
+	req, err := c.createRequest(ctx, authInfo, input)
+	if err != nil {
+		return false, err
+	}
 
+	return c.executeRequest(req)
+}
+
+func (c *Client) validateInput(authInfo *appx.AuthInfo) error {
+	if authInfo == nil {
+		return fmt.Errorf("auth info is required")
+	}
+	return nil
+}
+
+func (c *Client) createRequest(ctx context.Context, authInfo *appx.AuthInfo, input CheckPermissionInput) (*http.Request, error) {
 	gqlRequest := GraphQLQuery{
-		Query: query,
+		Query: checkPermissionQuery,
 		Variables: map[string]interface{}{
 			"input": input,
 		},
@@ -51,19 +82,25 @@ func CheckPermission(ctx context.Context, dashboardURL string, authInfo *appx.Au
 
 	requestBody, err := json.Marshal(gqlRequest)
 	if err != nil {
-		return false, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", dashboardURL+"/api/graphql", bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.dashboardURL+graphqlPath, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return false, fmt.Errorf("failed to create request: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+authInfo.Token)
-	req.Header.Set("Content-Type", "application/json")
+	c.setHeaders(req, authInfo)
+	return req, nil
+}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+func (c *Client) setHeaders(req *http.Request, authInfo *appx.AuthInfo) {
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", authInfo.Token))
+	req.Header.Set("Content-Type", "application/json")
+}
+
+func (c *Client) executeRequest(req *http.Request) (bool, error) {
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("failed to send request: %w", err)
 	}
