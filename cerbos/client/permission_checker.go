@@ -20,6 +20,10 @@ func NewPermissionChecker(service string, dashboardURL string) *PermissionChecke
 }
 
 func (p *PermissionChecker) CheckPermission(ctx context.Context, authInfo *appx.AuthInfo, resource string, action string) (bool, error) {
+	if p == nil {
+		return false, fmt.Errorf("permission checker not found")
+	}
+
 	if authInfo == nil {
 		return false, fmt.Errorf("auth info not found")
 	}
