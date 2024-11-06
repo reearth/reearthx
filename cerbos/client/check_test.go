@@ -125,7 +125,10 @@ func TestClient_CheckPermission(t *testing.T) {
 
 				w.WriteHeader(tt.serverStatus)
 				if tt.serverStatus == http.StatusOK {
-					json.NewEncoder(w).Encode(tt.serverResp)
+					if err := json.NewEncoder(w).Encode(tt.serverResp); err != nil {
+						t.Fatalf("failed to encode response: %v", err)
+						return
+					}
 				}
 			}))
 			defer server.Close()
