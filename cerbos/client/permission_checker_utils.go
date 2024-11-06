@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	"github.com/reearth/reearthx/appx"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 )
@@ -12,7 +13,7 @@ var (
 )
 
 type PermissionService interface {
-	CheckPermission(ctx context.Context, resource string, action string) (bool, error)
+	CheckPermission(ctx context.Context, authInfo *appx.AuthInfo, resource string, action string) (bool, error)
 }
 
 func checkPermissionClient(client any) (PermissionService, bool) {
@@ -27,11 +28,11 @@ func checkPermissionClient(client any) (PermissionService, bool) {
 	return adapter, true
 }
 
-func CheckPermission(ctx context.Context, client any, resource string, action string) (bool, error) {
+func CheckPermission(ctx context.Context, authInfo *appx.AuthInfo, client any, resource string, action string) (bool, error) {
 	checkPermissionAdapter, ok := checkPermissionClient(client)
 	if !ok {
 		return false, errOperationDenied
 	}
 
-	return checkPermissionAdapter.CheckPermission(ctx, resource, action)
+	return checkPermissionAdapter.CheckPermission(ctx, authInfo, resource, action)
 }
