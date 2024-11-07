@@ -38,6 +38,14 @@ func (r *User) Init() error {
 	return createIndexes(context.Background(), r.client, userIndexes, userUniqueIndexes)
 }
 
+func (r *User) FindAll(ctx context.Context) (user.List, error) {
+	res, err := r.find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (r *User) FindByID(ctx context.Context, id2 user.ID) (*user.User, error) {
 	return r.findOne(ctx, bson.M{"id": id2.String()})
 }
