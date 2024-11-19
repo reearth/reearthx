@@ -40,8 +40,13 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		sortOrder *= -1
 	}
 
+	sort := bson.D{{Key: sortKey, Value: sortOrder}}
+	if sortKey != idKey {
+		sort = append(sort, bson.E{Key: idKey, Value: sortOrder})
+	}
+
 	findOpts := options.Find().
-		SetSort(bson.D{{Key: sortKey, Value: sortOrder}, {Key: idKey, Value: sortOrder}}).
+		SetSort(sort).
 		SetLimit(limit(*p))
 
 	if p.Offset != nil {
