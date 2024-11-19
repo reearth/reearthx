@@ -2,7 +2,6 @@ package mongox
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/reearth/reearthx/mongox/mongotest"
@@ -419,11 +418,6 @@ type consumer struct {
 func (c *consumer) Consume(b bson.Raw) error {
 	c.Cursors = append(c.Cursors, lo.FromPtr(lo.Must(getCursor(b))))
 	return nil
-}
-
-func toJSONString(v interface{}) string {
-	jsonData, _ := json.Marshal(v)
-	return string(jsonData)
 }
 
 func TestPaginate_SortLogic(t *testing.T) {
