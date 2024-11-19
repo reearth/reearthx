@@ -2,6 +2,7 @@ package mongox
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/reearth/reearthx/mongox/mongotest"
@@ -9,7 +10,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func TestClientCollection_Paginate(t *testing.T) {
@@ -421,6 +421,11 @@ func (c *consumer) Consume(b bson.Raw) error {
 	return nil
 }
 
+func toJSONString(v interface{}) string {
+	jsonData, _ := json.Marshal(v)
+	return string(jsonData)
+}
+
 func TestPaginate_SortLogic(t *testing.T) {
 	ctx := context.Background()
 	initDB := mongotest.Connect(t)
@@ -446,31 +451,31 @@ func TestPaginate_SortLogic(t *testing.T) {
 		name          string
 		sortKey       string
 		sortOrder     int
-		expectedOrder []string
+		expectedOrder []usecasex.Cursor
 	}{
 		{
 			name:          "Sort by id ascending",
 			sortKey:       "id",
 			sortOrder:     1,
-			expectedOrder: []string{"a", "b", "c"},
+			expectedOrder: []usecasex.Cursor{"a", "b", "c"},
 		},
 		{
 			name:          "Sort by id descending",
 			sortKey:       "id",
 			sortOrder:     -1,
-			expectedOrder: []string{"c", "b", "a"},
+			expectedOrder: []usecasex.Cursor{"c", "b", "a"},
 		},
 		{
 			name:          "Sort by updatedAt ascending",
 			sortKey:       "updatedAt",
 			sortOrder:     1,
-			expectedOrder: []string{"a", "b", "c"},
+			expectedOrder: []usecasex.Cursor{"a", "b", "c"},
 		},
 		{
 			name:          "Sort by updatedAt descending",
 			sortKey:       "updatedAt",
 			sortOrder:     -1,
-			expectedOrder: []string{"c", "b", "a"},
+			expectedOrder: []usecasex.Cursor{"c", "b", "a"},
 		},
 	}
 
@@ -489,12 +494,6 @@ func TestPaginate_SortLogic(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedOrder, con.Cursors)
 
-			findOpts := options.Find().SetLimit(limit(*p.Wrap()))
-			if tc.sortKey == idKey {
-				assert.Equal(t, bson.D{{Key: tc.sortKey, Value: tc.sortOrder}}, findOpts.Sort)
-			} else {
-				assert.Equal(t, bson.D{{Key: tc.sortKey, Value: tc.sortOrder}, {Key: idKey, Value: tc.sortOrder}}, findOpts.Sort)
-			}
 		})
 	}
 }
