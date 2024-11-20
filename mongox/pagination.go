@@ -8,7 +8,6 @@ import (
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -41,11 +40,9 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		sortOrder *= -1
 	}
 
-	var sort primitive.D
-	if sortKey == idKey {
-		sort = bson.D{{Key: sortKey, Value: sortOrder}}
-	} else {
-		sort = bson.D{{Key: sortKey, Value: sortOrder}, {Key: idKey, Value: sortOrder}}
+	sort := bson.D{{Key: sortKey, Value: sortOrder}}
+	if sortKey != idKey {
+		sort = append(sort, bson.E{Key: idKey, Value: sortOrder})
 	}
 
 	findOpts := options.Find().
