@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/i18n"
@@ -29,6 +30,7 @@ type Members struct {
 	users        map[UserID]Member
 	integrations map[IntegrationID]Member
 	fixed        bool
+	mu           sync.Mutex
 }
 
 func NewMembers() *Members {
@@ -221,6 +223,9 @@ func (m *Members) AddIntegration(iid IntegrationID, role Role, i UserID) error {
 }
 
 func (m *Members) Leave(u UserID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if m.fixed {
 		return ErrCannotModifyPersonalWorkspace
 	}

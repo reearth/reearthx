@@ -204,11 +204,11 @@ func (c *Collection) aggregateFilter(ctx context.Context, p usecasex.Pagination,
 }
 
 func aggregateOptionsFromPagination(_ usecasex.Pagination, _ *usecasex.Sort) *options.AggregateOptions {
-    collation := options.Collation{
-        Locale:   "en",
-        Strength: 2,
-    }
-    return options.Aggregate().SetAllowDiskUse(true).SetCollation(&collation)
+	collation := options.Collation{
+		Locale:   "en",
+		Strength: 2,
+	}
+	return options.Aggregate().SetAllowDiskUse(true).SetCollation(&collation)
 }
 
 func (c *Collection) pageFilter(ctx context.Context, p usecasex.Pagination, s *usecasex.Sort) (bson.M, error) {
@@ -285,11 +285,11 @@ func (c *Collection) getCursorDocument(ctx context.Context, cursor usecasex.Curs
 }
 
 func sortFilter(p usecasex.Pagination, s *usecasex.Sort) bson.D {
-    var sortOptions bson.D
-    if s != nil && s.Key != "" && s.Key != idKey {
-        sortOptions = append(sortOptions, bson.E{Key: s.Key, Value: sortDirection(p, s)})
-    }
-    return append(sortOptions, bson.E{Key: idKey, Value: sortDirection(p, s)})
+	var sortOptions bson.D
+	if s != nil && s.Key != "" && s.Key != idKey {
+		sortOptions = append(sortOptions, bson.E{Key: s.Key, Value: sortDirection(p, s)})
+	}
+	return append(sortOptions, bson.E{Key: idKey, Value: sortDirection(p, s)})
 }
 
 func limit(p usecasex.Pagination) int64 {
