@@ -321,7 +321,7 @@ func getCursor(raw bson.Raw) (*usecasex.Cursor, error) {
 
 func wrapError(ctx context.Context, err error) error {
 	if IsTransactionError(err) {
-		log.Error(ctx, "transaction error", err)
+		log.Errorfc(ctx, "transaction error: %v", err)
 		return usecasex.ErrTransaction
 	}
 	return rerror.ErrInternalByWithContext(ctx, err)
