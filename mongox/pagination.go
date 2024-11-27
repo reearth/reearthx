@@ -27,7 +27,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		filter = And(rawFilter, "", pFilter)
 	}
 
-	return c.paginate(ctx, rawFilter, s, p, filter, consumer)
+	return c.paginate(ctx, rawFilter, s, p, filter, consumer, opts)
 }
 
 func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.AggregateOptions) (*usecasex.PageInfo, error) {
@@ -286,11 +286,11 @@ func (c *Collection) PaginateProject(ctx context.Context, rawFilter any, s *usec
 		filter = AddCondition(rawFilter, "", pFilter)
 	}
 
-	return c.paginate(ctx, rawFilter, s, p, filter, consumer)
+	return c.paginate(ctx, rawFilter, s, p, filter, consumer, opts)
 
 }
 
-func (c *Collection) paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, filter any, consumer Consumer) (*usecasex.PageInfo, error) {
+func (c *Collection) paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, filter any, consumer Consumer, opts []*options.FindOptions) (*usecasex.PageInfo, error) {
 
 	sortKey := idKey
 	sortOrder := 1

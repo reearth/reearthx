@@ -234,10 +234,7 @@ func TestAndProjectRefetchFilter(t *testing.T) {
 	condition := bson.M{
 		"$or": bson.A{
 			bson.M{"updatedat": bson.M{"$lt": updatedat}},
-			bson.M{
-				"id":        bson.M{"$lt": last},
-				"updatedat": updatedat,
-			},
+			bson.M{"id": bson.M{"$lt": last}, "updatedat": updatedat},
 		},
 	}
 
@@ -351,7 +348,8 @@ func TestAddConditionComplexFilter(t *testing.T) {
 			bson.M{"y": 20},
 			bson.M{"c": bson.M{"d": 3}},
 		},
-		"$or": bson.A{bson.M{"a": 1},
+		"$or": bson.A{
+			bson.M{"a": 1},
 			bson.M{"b": 2},
 		},
 	}
@@ -402,29 +400,29 @@ func TestAddConditionProjectRefetchFilter(t *testing.T) {
 	condition := bson.M{
 		"$or": bson.A{
 			bson.M{"updatedat": bson.M{"$lt": updatedat}},
-			bson.M{
-				"id":        bson.M{"$lt": last},
-				"updatedat": updatedat,
-			},
+			bson.M{"id": bson.M{"$lt": last}, "updatedat": updatedat},
 		},
 	}
 
 	expected := bson.M{
 		"$and": bson.A{
-			bson.M{"$or": bson.A{
-				bson.M{"deleted": false},
-				bson.M{"deleted": bson.M{"$exists": false}},
+			bson.M{
+				"$or": bson.A{
+					bson.M{"deleted": false},
+					bson.M{"deleted": bson.M{"$exists": false}},
+				},
 			},
+			bson.M{
+				"$or": bson.A{
+					bson.M{"coresupport": true},
+					bson.M{"coresupport": bson.M{"$exists": false}},
+				},
 			},
-			bson.M{"$or": bson.A{
-				bson.M{"coresupport": true},
-				bson.M{"coresupport": bson.M{"$exists": false}},
-			},
-			},
-			bson.M{"$or": bson.A{
-				bson.M{"updatedat": bson.M{"$lt": updatedat}},
-				bson.M{"id": bson.M{"$lt": last}, "updatedat": updatedat},
-			},
+			bson.M{
+				"$or": bson.A{
+					bson.M{"updatedat": bson.M{"$lt": updatedat}},
+					bson.M{"id": bson.M{"$lt": last}, "updatedat": updatedat},
+				},
 			},
 		},
 		"team": team,
