@@ -27,64 +27,7 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 		filter = And(rawFilter, "", pFilter)
 	}
 
-	sortKey := idKey
-	sortOrder := 1
-	if s != nil && s.Key != "" {
-		sortKey = s.Key
-		if s.Reverted {
-			sortOrder = -1
-		}
-	}
-
-	if p.Cursor != nil && p.Cursor.Last != nil {
-		sortOrder *= -1
-	}
-
-	sort := bson.D{{Key: sortKey, Value: sortOrder}}
-	if sortKey != idKey {
-		sort = append(sort, bson.E{Key: idKey, Value: sortOrder})
-	}
-
-	findOpts := options.Find().
-		SetSort(sort).
-		SetLimit(limit(*p))
-
-	if p.Offset != nil {
-		findOpts.SetSkip(p.Offset.Offset)
-	}
-
-	cursor, err := c.collection.Find(ctx, filter, append([]*options.FindOptions{findOpts}, opts...)...)
-	if err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
-	}
-	defer func() {
-		_ = cursor.Close(ctx)
-	}()
-
-	count, err := c.collection.CountDocuments(ctx, rawFilter)
-	if err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
-	}
-
-	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
-	if err != nil {
-		return nil, err
-	}
-
-	if p.Cursor != nil && p.Cursor.Last != nil {
-		reverse(items)
-		startCursor, endCursor = endCursor, startCursor
-	}
-
-	for _, item := range items {
-		if err := consumer.Consume(item); err != nil {
-			return nil, err
-		}
-	}
-
-	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
-
-	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
+	return c.paginate(ctx, rawFilter, s, p, filter, consumer)
 }
 
 func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.AggregateOptions) (*usecasex.PageInfo, error) {
@@ -326,4 +269,85 @@ func sortDirection(p usecasex.Pagination, s *usecasex.Sort) int {
 		return -1
 	}
 	return 1
+}
+
+func (c *Collection) PaginateProject(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.FindOptions) (*usecasex.PageInfo, error) {
+	if p == nil || (p.Cursor == nil && p.Offset == nil) {
+		return nil, nil
+	}
+
+	pFilter, err := c.pageFilter(ctx, *p, s)
+	if err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, err)
+	}
+
+	filter := rawFilter
+	if pFilter != nil {
+		filter = AddCondition(rawFilter, "", pFilter)
+	}
+
+	return c.paginate(ctx, rawFilter, s, p, filter, consumer)
+
+}
+
+func (c *Collection) paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, filter any, consumer Consumer) (*usecasex.PageInfo, error) {
+
+	sortKey := idKey
+	sortOrder := 1
+	if s != nil && s.Key != "" {
+		sortKey = s.Key
+		if s.Reverted {
+			sortOrder = -1
+		}
+	}
+
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		sortOrder *= -1
+	}
+
+	sort := bson.D{{Key: sortKey, Value: sortOrder}}
+	if sortKey != idKey {
+		sort = append(sort, bson.E{Key: idKey, Value: sortOrder})
+	}
+
+	findOpts := options.Find().
+		SetSort(sort).
+		SetLimit(limit(*p))
+
+	if p.Offset != nil {
+		findOpts.SetSkip(p.Offset.Offset)
+	}
+
+	cursor, err := c.collection.Find(ctx, filter, append([]*options.FindOptions{findOpts}, opts...)...)
+	if err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
+	}
+	defer func() {
+		_ = cursor.Close(ctx)
+	}()
+
+	count, err := c.collection.CountDocuments(ctx, rawFilter)
+	if err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
+	}
+
+	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
+	if err != nil {
+		return nil, err
+	}
+
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		reverse(items)
+		startCursor, endCursor = endCursor, startCursor
+	}
+
+	for _, item := range items {
+		if err := consumer.Consume(item); err != nil {
+			return nil, err
+		}
+	}
+
+	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
+
+	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
 }
