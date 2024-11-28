@@ -1,6 +1,11 @@
 package mongox
 
-import "go.mongodb.org/mongo-driver/bson"
+import (
+	"encoding/json"
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 func AppendE(f interface{}, elements ...bson.E) interface{} {
 	switch f2 := f.(type) {
@@ -199,16 +204,33 @@ func AddCondition(filter interface{}, key string, condition interface{}) interfa
 		newCondition = condition
 	}
 
-	if existingAnd, ok := filterMap["$and"].(bson.A); ok {
-		filterMap["$and"] = append(existingAnd, newCondition)
-	} else {
-		existingConditions := make(bson.A, 0)
-		for k, v := range filterMap {
-			if k != "$and" {
-				existingConditions = append(existingConditions, bson.M{k: v})
+	if newConditionMap, ok := newCondition.(bson.M); ok {
+		if existingAnd, ok := filterMap["$and"].(bson.A); ok {
+			filterMap["$and"] = append(existingAnd, newConditionMap)
+		} else if existingAnd, ok := filterMap["$and"].([]bson.M); ok {
+			filterMap["$and"] = append(existingAnd, newConditionMap)
+		} else {
+			existingConditions := make(bson.A, 0)
+			for k, v := range filterMap {
+				if k != "$and" {
+					existingConditions = append(existingConditions, bson.M{k: v})
+				}
 			}
+			filterMap["$and"] = append(existingConditions, newConditionMap)
 		}
-		filterMap["$and"] = append(existingConditions, newCondition)
+	} else {
+		return filter
 	}
+
 	return filterMap
+}
+
+func IndentPrint(title string, data interface{}) {
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Printf("===== %s =====\n", title)
+		fmt.Println(string(jsonData))
+	}
 }
