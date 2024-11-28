@@ -1,6 +1,8 @@
 package mongox
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -375,10 +377,10 @@ func TestAddConditionEmptySliceCondition(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
-func TestAddConditionProjectRefetchFilter(t *testing.T) {
+func TestAddConditionProjectRefetchFilter_bsonM(t *testing.T) {
 	team := "team_id_example"
 	last := "last_project_id"
-	updatedat := 1654849072592
+	updatedat := 1111111111111
 	filter := bson.M{
 		"$and": bson.A{
 			bson.M{
@@ -429,5 +431,149 @@ func TestAddConditionProjectRefetchFilter(t *testing.T) {
 	}
 
 	actual := AddCondition(filter, "", condition)
+	JSONEqAny(t, expected, actual)
 	assert.Equal(t, expected, actual)
+}
+
+func TestAddConditionProjectRefetchFilter_bsonA(t *testing.T) {
+	team := "team_id_example"
+	last := "last_project_id"
+	updatedat := 1111111111111
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{
+				"$or": bson.A{
+					bson.M{"deleted": false},
+					bson.M{"deleted": bson.M{"$exists": false}},
+				},
+			},
+			bson.M{
+				"$or": bson.A{
+					bson.M{"coresupport": true},
+					bson.M{"coresupport": bson.M{"$exists": false}},
+				},
+			},
+		},
+		"team": team,
+	}
+
+	condition := bson.M{
+		"$or": []bson.M{
+			{"updatedat": bson.M{"$lt": updatedat}},
+			{"id": bson.M{"$lt": last}, "updatedat": updatedat},
+		},
+	}
+	expected := bson.M{
+		"$and": bson.A{
+			bson.M{
+				"$or": bson.A{
+					bson.M{"deleted": false},
+					bson.M{"deleted": bson.M{"$exists": false}},
+				},
+			},
+			bson.M{
+				"$or": bson.A{
+					bson.M{"coresupport": true},
+					bson.M{"coresupport": bson.M{"$exists": false}},
+				},
+			},
+			bson.M{
+				"$or": []bson.M{
+					{"updatedat": bson.M{"$lt": updatedat}},
+					{"id": bson.M{"$lt": last}, "updatedat": updatedat},
+				},
+			},
+		},
+		"team": team,
+	}
+
+	actual := AddCondition(filter, "", condition)
+	JSONEqAny(t, expected, actual)
+	assert.Equal(t, expected, actual)
+}
+
+func TestAddConditionProjectRefetchFilterWithKeyword(t *testing.T) {
+	team := "team_id_example"
+	last := "last_project_id"
+	updatedat := 1654849072592
+
+	filter := bson.M{
+		"$and": []bson.M{
+			{
+				"$and": []bson.M{
+					{
+						"$or": []bson.M{
+							{"deleted": false},
+							{"deleted": bson.M{"$exists": false}},
+						},
+					},
+					{
+						"$or": []bson.M{
+							{"coresupport": true},
+							{"coresupport": bson.M{"$exists": false}},
+						},
+					},
+				},
+			},
+			{"team": team},
+			{"name": bson.M{"$regex": bson.M{"pattern": ".*test.*", "options": "i"}}},
+		},
+	}
+
+	condition := bson.M{
+		"$or": []bson.M{
+			{"updatedat": bson.M{"$lt": updatedat}},
+			{"id": bson.M{"$lt": last}, "updatedat": updatedat},
+		},
+	}
+
+	expected := bson.M{
+		"$and": []bson.M{
+			{
+				"$and": []bson.M{
+					{
+						"$or": []bson.M{
+							{"deleted": false}, {"deleted": bson.M{"$exists": false}},
+						},
+					},
+					{
+						"$or": []bson.M{
+							{"coresupport": true}, {"coresupport": bson.M{"$exists": false}},
+						},
+					},
+				},
+			},
+			{"team": team},
+			{
+				"name": bson.M{
+					"$regex": bson.M{
+						"pattern": ".*test.*",
+						"options": "i",
+					},
+				},
+			},
+			{
+				"$or": []bson.M{
+					{"updatedat": bson.M{"$lt": updatedat}},
+					{"id": bson.M{"$lt": last}, "updatedat": updatedat},
+				},
+			},
+		},
+	}
+
+	actual := AddCondition(filter, "", condition)
+	JSONEqAny(t, expected, actual)
+	assert.Equal(t, expected, actual)
+}
+
+func JSONEqAny(t *testing.T, expected interface{}, actual interface{}) {
+	e, err := json.Marshal(expected)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	a, err := json.Marshal(actual)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	assert.JSONEq(t, string(e), string(a))
 }
