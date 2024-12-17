@@ -10,11 +10,11 @@ type Type interface {
 }
 
 type ID[T Type] struct {
-	nid
+	*nid
 }
 
 func New[T Type]() ID[T] {
-	return ID[T]{nid: nid{id: generateID()}}
+	return ID[T]{nid: &nid{id: generateID()}}
 }
 
 func NewAll[T Type](n int) (l List[T]) {
@@ -24,8 +24,8 @@ func NewAll[T Type](n int) (l List[T]) {
 	if n == 1 {
 		return List[T]{New[T]()}
 	}
-	return nidsTo[T](lo.Map(generateAllID(n), func(id ulid.ULID, _ int) nid {
-		return nid{id: id}
+	return nidsTo[T](lo.Map(generateAllID(n), func(id ulid.ULID, _ int) *nid {
+		return &nid{id: id}
 	}))
 }
 
@@ -56,11 +56,17 @@ func FromRef[T Type](id *string) *ID[T] {
 	return &nid
 }
 
-func (id ID[T]) Ref() *ID[T] {
-	return &id
+func (id *ID[T]) Ref() *ID[T] {
+	if id == nil {
+		return nil
+	}
+	return id
 }
 
-func (id ID[T]) Clone() ID[T] {
+func (id *ID[T]) Clone() ID[T] {
+	if id == nil || id.nid == nil {
+		return ID[T]{}
+	}
 	return ID[T]{nid: id.nid.Clone()}
 }
 
@@ -72,26 +78,38 @@ func (id *ID[T]) CloneRef() *ID[T] {
 	return &i
 }
 
-func (ID[T]) Type() string {
+func (id *ID[T]) Type() string {
 	var t T
 	return t.Type()
 }
 
 // GoString implements fmt.GoStringer interface.
-func (id ID[T]) GoString() string {
+func (id *ID[T]) GoString() string {
+	if id == nil || id.nid == nil {
+		return id.Type() + "ID()"
+	}
 	return id.Type() + "ID(" + id.String() + ")"
 }
 
-func (id ID[T]) Compare(id2 ID[T]) int {
+func (id *ID[T]) Compare(id2 *ID[T]) int {
+	if id == nil {
+		if id2 == nil {
+			return 0
+		}
+		return -1
+	}
+	if id2 == nil {
+		return 1
+	}
 	return id.nid.Compare(id2.nid)
 }
 
 func (id *ID[T]) IsNil() bool {
-	return id == nil || id.nid.IsNil()
+	return id == nil || id.nid == nil || id.nid.IsNil()
 }
 
 func (id *ID[T]) StringRef() *string {
-	if id == nil {
+	if id == nil || id.nid == nil {
 		return nil
 	}
 	return id.nid.StringRef()
