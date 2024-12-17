@@ -1,13 +1,9 @@
 package idx
 
 import (
-	"errors"
-
 	"github.com/oklog/ulid"
 	"github.com/samber/lo"
 )
-
-var ErrInvalidID = errors.New("invalid ID")
 
 type Type interface {
 	Type() string
