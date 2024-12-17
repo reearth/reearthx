@@ -27,19 +27,17 @@ func MustList[T Type](ids []string) List[T] {
 	return got
 }
 
-func (l List[T]) list() []*nid {
-	return newNIDs(l)
-}
-
 func (l List[T]) Has(ids ...ID[T]) bool {
-	if l == nil {
+	if l == nil || len(ids) == 0 {
 		return false
 	}
-	list := l.list()
-	for _, id := range newNIDs(ids) {
+	for _, id := range ids {
+		if id.nid == nil {
+			continue
+		}
 		found := false
-		for _, lid := range list {
-			if lid.Compare(id) == 0 {
+		for _, lid := range l {
+			if lid.nid != nil && lid.nid.Compare(id.nid) == 0 {
 				found = true
 				break
 			}
@@ -59,11 +57,11 @@ func (l List[T]) At(i int) *ID[T] {
 }
 
 func (l List[T]) Index(id ID[T]) int {
-	if l == nil {
+	if l == nil || id.nid == nil {
 		return -1
 	}
 	for i, lid := range l {
-		if lid.Compare(&id) == 0 {
+		if lid.nid != nil && lid.nid.Compare(id.nid) == 0 {
 			return i
 		}
 	}
@@ -100,7 +98,7 @@ func (l List[T]) Delete(ids ...ID[T]) List[T] {
 	for _, item := range l {
 		keep := true
 		for _, id := range ids {
-			if item.Compare(&id) == 0 {
+			if id.nid != nil && item.nid != nil && item.nid.Compare(id.nid) == 0 {
 				keep = false
 				break
 			}
@@ -116,21 +114,27 @@ func (l List[T]) DeleteAt(i int) List[T] {
 	if l == nil || i < 0 || i >= len(l) {
 		return l
 	}
-	return append(l[:i], l[i+1:]...)
+	result := make(List[T], len(l)-1)
+	copy(result[:i], l[:i])
+	copy(result[i:], l[i+1:])
+	return result
 }
 
 func (l List[T]) Add(ids ...ID[T]) List[T] {
 	if l == nil {
 		return append(List[T]{}, ids...)
 	}
-	return append(l, ids...)
+	result := make(List[T], len(l)+len(ids))
+	copy(result, l)
+	copy(result[len(l):], ids)
+	return result
 }
 
 func (l List[T]) AddUniq(ids ...ID[T]) List[T] {
 	if l == nil {
 		return append(List[T]{}, ids...)
 	}
-	result := l
+	result := l.Clone()
 	for _, id := range ids {
 		if !result.Has(id) {
 			result = append(result, id)
@@ -141,7 +145,10 @@ func (l List[T]) AddUniq(ids ...ID[T]) List[T] {
 
 func (l List[T]) Insert(i int, ids ...ID[T]) List[T] {
 	if l == nil {
-		return ids
+		return append(List[T]{}, ids...)
+	}
+	if len(ids) == 0 {
+		return l.Clone()
 	}
 	if i < 0 {
 		i = 0
@@ -149,20 +156,31 @@ func (l List[T]) Insert(i int, ids ...ID[T]) List[T] {
 	if i > len(l) {
 		i = len(l)
 	}
-	result := make(List[T], len(l)+len(ids))
-	copy(result, l[:i])
-	copy(result[i:], ids)
-	copy(result[i+len(ids):], l[i:])
+	// Create a new slice with the right capacity
+	result := make(List[T], 0, len(l)+len(ids))
+	// Add elements before insertion point
+	result = append(result, l[:i]...)
+	// Add new elements
+	result = append(result, ids...)
+	// Add remaining elements
+	result = append(result, l[i:]...)
 	return result
 }
 
 func (l List[T]) Move(e ID[T], to int) List[T] {
+
 	if l == nil {
 		return nil
+	}
+	if to < 0 {
+		return l.Delete(e)
 	}
 	from := l.Index(e)
 	if from < 0 {
 		return l
+	}
+	if to >= len(l) {
+		to = len(l) - 1
 	}
 	return l.MoveAt(from, to)
 }
@@ -171,13 +189,15 @@ func (l List[T]) MoveAt(from, to int) List[T] {
 	if l == nil || from < 0 || from >= len(l) || to < 0 || to >= len(l) {
 		return l
 	}
-	result := make(List[T], len(l))
-	copy(result, l)
+	if from == to {
+		return l.Clone()
+	}
+	result := l.Clone()
 	item := result[from]
 	if from < to {
-		copy(result[from:], result[from+1:to+1])
+		copy(result[from:to], result[from+1:to+1])
 	} else {
-		copy(result[to+1:], result[to:from])
+		copy(result[to+1:from+1], result[to:from])
 	}
 	result[to] = item
 	return result
@@ -188,14 +208,23 @@ func (l List[T]) Reverse() List[T] {
 		return nil
 	}
 	result := make(List[T], len(l))
-	for i, j := 0, len(l)-1; i <= j; i, j = i+1, j-1 {
-		result[i], result[j] = l[j], l[i]
+	for i := range l {
+		result[i] = l[len(l)-1-i]
 	}
 	return result
 }
 
 func (l List[T]) Concat(m List[T]) List[T] {
-	return append(l.Clone(), m...)
+	if l == nil {
+		if m == nil {
+			return nil
+		}
+		return m.Clone()
+	}
+	result := make(List[T], len(l)+len(m))
+	copy(result, l)
+	copy(result[len(l):], m)
+	return result
 }
 
 func (l List[T]) Intersect(m List[T]) List[T] {
@@ -228,14 +257,22 @@ func (l List[T]) Clone() List[T] {
 	}
 	result := make(List[T], len(l))
 	for i, id := range l {
-		result[i] = id.Clone()
+		cloned := id
+		if id.nid != nil {
+			cloned.nid = id.nid.Clone()
+		}
+		result[i] = cloned
 	}
 	return result
 }
 
 func (l List[T]) Sort() List[T] {
-	sort.Sort(l)
-	return l
+	if l == nil {
+		return nil
+	}
+	result := l.Clone()
+	sort.Sort(result)
+	return result
 }
 
 func (l RefList[T]) Deref() List[T] {
@@ -252,7 +289,10 @@ func (l RefList[T]) Deref() List[T] {
 }
 
 func (l List[T]) Less(i, j int) bool {
-	return l[i].Compare(&l[j]) < 0
+	if l[i].nid == nil || l[j].nid == nil {
+		return false
+	}
+	return l[i].nid.Compare(l[j].nid) < 0
 }
 
 func (l List[T]) Swap(i, j int) {

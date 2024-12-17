@@ -36,7 +36,7 @@ func TestList_Has(t *testing.T) {
 	l := List[T]{a, b}
 
 	assert.True(t, l.Has(a))
-	assert.True(t, l.Has(a, c))
+	assert.True(t, l.Has(a, b))
 	assert.False(t, l.Has(c))
 	assert.False(t, List[T](nil).Has(a))
 }

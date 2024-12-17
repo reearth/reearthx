@@ -2,7 +2,9 @@
 package asset
 
 import (
+	"context"
 	"errors"
+	"io"
 	"time"
 )
 
@@ -24,6 +26,26 @@ type Asset struct {
 	status      Status // For tracking extraction status
 	metadata    Metadata
 	createdAt   time.Time
+}
+
+type AssetManager interface {
+	Create(ctx context.Context, asset *Asset) error
+	Read(ctx context.Context, id string) (*Asset, error)
+	Update(ctx context.Context, asset *Asset) error
+	Delete(ctx context.Context, id string) error
+
+	// File operations
+	Upload(ctx context.Context, file io.Reader) (*AssetInfo, error)
+	GetSignedURL(ctx context.Context, id string) (string, error)
+
+	// Async operations
+	UnzipAsync(ctx context.Context, assetID string) (*AsyncOperation, error)
+}
+
+type AssetEventPublisher interface {
+	PublishAssetCreated(ctx context.Context, asset *Asset) error
+	PublishAssetUpdated(ctx context.Context, asset *Asset) error
+	PublishExtractionStatusChanged(ctx context.Context, status *ExtractionStatus) error
 }
 
 type Status string
