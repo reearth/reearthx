@@ -1,4 +1,3 @@
-// pkg/asset/repository.go
 package asset
 
 import (
