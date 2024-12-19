@@ -75,7 +75,6 @@ func Test_generateToken(t *testing.T) {
 	assert.NotEmpty(t, t1)
 	assert.NotEmpty(t, t2)
 	assert.NotEqual(t, t1, t2)
-
 }
 
 func TestPasswordResetFrom(t *testing.T) {

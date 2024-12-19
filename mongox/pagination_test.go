@@ -264,7 +264,8 @@ func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
 	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s struct {
 		id        string
 		updatedAt int64
-	}, i int) any {
+	}, i int,
+	) any {
 		return bson.M{"id": s.id, "updatedAt": s.updatedAt}
 	}))
 
@@ -337,7 +338,8 @@ func TestClientCollection_DetailedPagination(t *testing.T) {
 	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s struct {
 		id        string
 		updatedAt int64
-	}, i int) any {
+	}, i int,
+	) any {
 		return bson.M{"id": s.id, "updatedAt": s.updatedAt}
 	}))
 
@@ -437,7 +439,8 @@ func TestPaginate_SortLogic(t *testing.T) {
 	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s struct {
 		id        string
 		updatedAt int64
-	}, i int) any {
+	}, i int,
+	) any {
 		return bson.M{"id": s.id, "updatedAt": s.updatedAt}
 	}))
 
@@ -487,7 +490,6 @@ func TestPaginate_SortLogic(t *testing.T) {
 			_, err := c.Paginate(ctx, bson.M{}, sortOpt, p.Wrap(), con)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedOrder, con.Cursors)
-
 		})
 	}
 }

@@ -953,21 +953,21 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	id2 := accountdomain.NewWorkspaceID()
 	w2 := workspace.New().ID(id2).Name("W2").
 		Members(map[user.ID]workspace.Member{
-			userID: {Role: workspace.RoleOwner},
+			userID:  {Role: workspace.RoleOwner},
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(true).MustBuild()
 
 	id3 := accountdomain.NewWorkspaceID()
 	w3 := workspace.New().ID(id3).Name("W3").
 		Members(map[user.ID]workspace.Member{
-			userID: {Role: workspace.RoleOwner},
+			userID:  {Role: workspace.RoleOwner},
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(false).MustBuild()
 
 	id4 := accountdomain.NewWorkspaceID()
 	w4 := workspace.New().ID(id4).Name("W4").
 		Members(map[user.ID]workspace.Member{
-			userID: {Role: workspace.RoleOwner},
+			userID:  {Role: workspace.RoleOwner},
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(false).MustBuild()
 
@@ -1000,7 +1000,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator *accountusecase.Operator
 			}{
 				wId:      id1,
-				uIds:      workspace.UserIDList{accountdomain.NewUserID()},
+				uIds:     workspace.UserIDList{accountdomain.NewUserID()},
 				operator: op,
 			},
 			wantErr: workspace.ErrTargetUserNotInTheWorkspace,
@@ -1021,7 +1021,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: nil,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1040,7 +1040,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: accountinterfaces.ErrInvalidOperator,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1053,8 +1053,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				uIds     workspace.UserIDList
 				operator *accountusecase.Operator
 			}{
-				wId:      id1,
-				uIds:     workspace.UserIDList{userID2},
+				wId:  id1,
+				uIds: workspace.UserIDList{userID2},
 				operator: &accountusecase.Operator{
 					User:               &userID3,
 					ReadableWorkspaces: []workspace.ID{id1},
@@ -1062,7 +1062,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: accountinterfaces.ErrOperationDenied,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID3: {Role: workspace.RoleReader},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
@@ -1082,7 +1082,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1101,7 +1101,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1120,7 +1120,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: workspace.ErrNoSpecifiedUsers,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
