@@ -230,7 +230,8 @@ func TestToWorkspaces(t *testing.T) {
 			},
 			want:    []*workspace.Workspace{ws},
 			wantErr: false,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ToWorkspaces(tt.args.r)
@@ -299,7 +300,8 @@ func TestToWorkspace(t *testing.T) {
 			},
 			want:    ws,
 			wantErr: false,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ToWorkspace(tt.args.r)
