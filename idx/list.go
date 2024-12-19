@@ -37,25 +37,9 @@ func (l List[T]) list() util.List[nid] {
 }
 
 func (l List[T]) Has(ids ...ID[T]) bool {
-	if l == nil || len(ids) == 0 {
-		return false
-	}
-	for _, id := range ids {
-		if id.nid == nil {
-			continue
-		}
-		found := false
-		for _, lid := range l {
-			if lid.nid != nil && lid.nid.Compare(id.nid) == 0 {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
-	return true
+	nids := newNIDs(ids)
+	values := convertToUtilList(nids)
+	return l.list().Has(values...)
 }
 
 func (l List[T]) At(i int) *ID[T] {
@@ -120,15 +104,14 @@ func (l List[T]) Delete(ids ...ID[T]) List[T] {
 }
 
 func (l List[T]) DeleteAt(i int) List[T] {
-	if l == nil || i < 0 || i >= len(l) {
-		return l
+	if l == nil {
+		return nil
 	}
-	result := make(List[T], len(l)-1)
-	copy(result[:i], l[:i])
-	copy(result[i:], l[i+1:])
-	return result
-}
 
+	// Convert util.List[nid] to []*nid
+	convertedList := convertToNidSlice(l.list().DeleteAt(i))
+	return nidsTo[T](convertedList)
+}
 func (l List[T]) Add(ids ...ID[T]) List[T] {
 	if l == nil {
 		return append(List[T]{}, ids...)
@@ -184,15 +167,6 @@ func (l List[T]) MoveAt(from, to int) List[T] {
 	// Convert util.List[nid] to []*nid
 	convertedList := convertToNidSlice(l.list().MoveAt(from, to))
 	return nidsTo[T](convertedList)
-}
-
-// Helper function to convert util.List[nid] to []*nid
-func convertToNidSlice(list util.List[nid]) []*nid {
-	var result []*nid
-	for _, item := range list {
-		result = append(result, &item)
-	}
-	return result
 }
 
 func (l List[T]) Reverse() List[T] {
@@ -300,4 +274,21 @@ func (l List[T]) Set() *Set[T] {
 	}
 	s.Add(l...)
 	return s
+}
+
+// Helper function to convert util.List[nid] to []*nid
+func convertToNidSlice(list util.List[nid]) []*nid {
+	var result []*nid
+	for _, item := range list {
+		result = append(result, &item)
+	}
+	return result
+}
+
+func convertToUtilList(list []*nid) util.List[nid] {
+	var result util.List[nid]
+	for _, item := range list {
+		result = append(result, *item)
+	}
+	return result
 }
