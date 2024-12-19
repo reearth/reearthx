@@ -27,6 +27,15 @@ func MustList[T Type](ids []string) List[T] {
 	return got
 }
 
+func (l List[T]) list() util.List[nid] {
+	nids := newNIDs(l)
+	values := make([]nid, len(nids))
+	for i, n := range nids {
+		values[i] = *n
+	}
+	return util.List[nid](values)
+}
+
 func (l List[T]) Has(ids ...ID[T]) bool {
 	if l == nil || len(ids) == 0 {
 		return false
@@ -144,62 +153,45 @@ func (l List[T]) AddUniq(ids ...ID[T]) List[T] {
 }
 
 func (l List[T]) Insert(i int, ids ...ID[T]) List[T] {
-	if l == nil {
-		return append(List[T]{}, ids...)
+	nids := newNIDs(ids)
+	values := make([]nid, len(nids))
+	for i, n := range nids {
+		values[i] = *n
 	}
-	if len(ids) == 0 {
-		return l.Clone()
+	inserted := l.list().Insert(i, values...)
+	pointers := make([]*nid, len(inserted))
+	for i, v := range inserted {
+		pointers[i] = &v
 	}
-	if i < 0 {
-		i = 0
-	}
-	if i > len(l) {
-		i = len(l)
-	}
-	// Create a new slice with the right capacity
-	result := make(List[T], 0, len(l)+len(ids))
-	// Add elements before insertion point
-	result = append(result, l[:i]...)
-	// Add new elements
-	result = append(result, ids...)
-	// Add remaining elements
-	result = append(result, l[i:]...)
-	return result
+	return nidsTo[T](pointers)
 }
 
 func (l List[T]) Move(e ID[T], to int) List[T] {
-
 	if l == nil {
 		return nil
 	}
-	if to < 0 {
-		return l.Delete(e)
-	}
-	from := l.Index(e)
-	if from < 0 {
-		return l
-	}
-	if to >= len(l) {
-		to = len(l) - 1
-	}
-	return l.MoveAt(from, to)
+
+	// Convert util.List[nid] to []*nid
+	convertedList := convertToNidSlice(l.list().Move(*newNID(e), to))
+	return nidsTo[T](convertedList)
 }
 
 func (l List[T]) MoveAt(from, to int) List[T] {
-	if l == nil || from < 0 || from >= len(l) || to < 0 || to >= len(l) {
-		return l
+	if l == nil {
+		return nil
 	}
-	if from == to {
-		return l.Clone()
+
+	// Convert util.List[nid] to []*nid
+	convertedList := convertToNidSlice(l.list().MoveAt(from, to))
+	return nidsTo[T](convertedList)
+}
+
+// Helper function to convert util.List[nid] to []*nid
+func convertToNidSlice(list util.List[nid]) []*nid {
+	var result []*nid
+	for _, item := range list {
+		result = append(result, &item)
 	}
-	result := l.Clone()
-	item := result[from]
-	if from < to {
-		copy(result[from:to], result[from+1:to+1])
-	} else {
-		copy(result[to+1:from+1], result[to:from])
-	}
-	result[to] = item
 	return result
 }
 
