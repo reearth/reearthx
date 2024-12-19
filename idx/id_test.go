@@ -16,19 +16,22 @@ type T struct{}
 func (T) Type() string { return "_" }
 
 var dummyULID = mustParseID("01fzxycwmq7n84q8kessktvb8z")
-var dummyID = TID{nid: nid{id: dummyULID}}
+var dummyID = TID{nid: &nid{id: dummyULID}}
 
 func TestNew(t *testing.T) {
 	id := New[T]()
 	assert.Equal(t, TID{nid: id.nid}, id)
-	assert.NotZero(t, id.nid)
+	assert.NotNil(t, id.nid)
+	assert.NotZero(t, id.nid.id)
 }
 
 func TestNewAll(t *testing.T) {
 	ids := NewAll[T](2)
 	assert.Equal(t, List[T]{{nid: ids[0].nid}, {nid: ids[1].nid}}, ids)
-	assert.NotZero(t, ids[0].nid)
-	assert.NotZero(t, ids[1].nid)
+	assert.NotNil(t, ids[0].nid)
+	assert.NotNil(t, ids[1].nid)
+	assert.NotZero(t, ids[0].nid.id)
+	assert.NotZero(t, ids[1].nid.id)
 }
 
 func TestFrom(t *testing.T) {
@@ -55,38 +58,44 @@ func TestFromRef(t *testing.T) {
 }
 
 func TestID_Ref(t *testing.T) {
-	assert.Equal(t, &dummyID, dummyID.Ref())
-	assert.NotSame(t, dummyID, *dummyID.Ref())
+	id := dummyID
+	ref := id.Ref()
+	assert.Equal(t, &id, ref)
 }
 
 func TestID_Clone(t *testing.T) {
-	assert.Equal(t, dummyID, dummyID.Clone())
-	assert.NotSame(t, dummyID, dummyID.Clone())
+	clone := dummyID.Clone()
+	assert.Equal(t, dummyID, clone)
+	assert.NotSame(t, dummyID.nid, clone.nid)
 }
 
 func TestID_CloneRef(t *testing.T) {
-	assert.Equal(t, &dummyID, dummyID.CloneRef())
-	assert.NotSame(t, dummyID, *dummyID.CloneRef())
+	id := &dummyID
+	ref := id.CloneRef()
+	assert.Equal(t, id, ref)
+	assert.NotSame(t, id, ref)
 	assert.Nil(t, (*TID)(nil).CloneRef())
 }
 
 func TestID_Type(t *testing.T) {
-	assert.Equal(t, "_", TID{}.Type())
+	id := &TID{}
+	assert.Equal(t, "_", id.Type())
 }
 
 func TestID_String(t *testing.T) {
 	assert.Equal(t, "01fzxycwmq7n84q8kessktvb8z", dummyID.String())
-	assert.Equal(t, "", ID[T]{}.String())
+	assert.Equal(t, "", (&TID{}).String())
 }
 
 func TestID_GoString(t *testing.T) {
-	assert.Equal(t, "_ID(01fzxycwmq7n84q8kessktvb8z)", dummyID.GoString())
-	assert.Equal(t, "_ID()", TID{}.GoString())
+	id := &dummyID
+	assert.Equal(t, "_ID(01fzxycwmq7n84q8kessktvb8z)", id.GoString())
+	assert.Equal(t, "_ID()", (&TID{}).GoString())
 }
 
 func TestID_Text(t *testing.T) {
-	var id TID
-	assert.NoError(t, (&id).UnmarshalText([]byte(`01fzxycwmq7n84q8kessktvb8z`)))
+	id := ID[T]{nid: &nid{}}
+	assert.NoError(t, id.UnmarshalText([]byte(`01fzxycwmq7n84q8kessktvb8z`)))
 	assert.Equal(t, dummyID, id)
 	got, err := id.MarshalText()
 	assert.NoError(t, err)
@@ -94,10 +103,10 @@ func TestID_Text(t *testing.T) {
 }
 
 func TestID_JSON(t *testing.T) {
-	var id TID
+	id := ID[T]{nid: &nid{}}
 	assert.NoError(t, json.Unmarshal([]byte(`"01fzxycwmq7n84q8kessktvb8z"`), &id))
 	assert.Equal(t, dummyID, id)
-	got, err := json.Marshal(id)
+	got, err := json.Marshal(&id)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte(`"01fzxycwmq7n84q8kessktvb8z"`), got)
 }

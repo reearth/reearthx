@@ -18,10 +18,12 @@ type InitParams struct {
 
 func Init(p InitParams) (*user.User, *Workspace, error) {
 	if p.UserID == nil {
-		p.UserID = user.NewID().Ref()
+		newID := user.NewID()
+		p.UserID = newID.Ref()
 	}
 	if p.WorkspaceID == nil {
-		p.WorkspaceID = NewID().Ref()
+		newWorkspaceID := NewID()
+		p.WorkspaceID = newWorkspaceID.Ref()
 	}
 	if p.Lang == nil {
 		p.Lang = &language.Tag{}
