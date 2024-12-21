@@ -15,16 +15,32 @@ type AssetFilter struct {
 }
 
 type Asset interface {
+	// Filtered returns a filtered list of assets based on the provided filter.
 	Filtered(ProjectFilter) Asset
-	FindByProject(context.Context, id.ProjectID, AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error)
-	FindByID(context.Context, id.AssetID) (*asset.Asset, error)
-	FindByIDs(context.Context, id.AssetIDList) ([]*asset.Asset, error)
-	Save(context.Context, *asset.Asset) error
-	Delete(context.Context, id.AssetID) error
+
+	// FindByProject retrieves assets by project ID with optional filtering.
+	FindByProject(ctx context.Context, projectID id.ProjectID, filter AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error)
+
+	// FindByID retrieves a single asset by its ID.
+	FindByID(ctx context.Context, assetID id.AssetID) (*asset.Asset, error)
+
+	// FindByIDs retrieves multiple assets by their IDs.
+	FindByIDs(ctx context.Context, assetIDs id.AssetIDList) ([]*asset.Asset, error)
+
+	// Save creates or updates an asset.
+	Save(ctx context.Context, a *asset.Asset) error
+
+	// Delete removes an asset by its ID.
+	Delete(ctx context.Context, assetID id.AssetID) error
 }
 
 type AssetFile interface {
-	FindByID(context.Context, id.AssetID) (*asset.File, error)
-	Save(context.Context, id.AssetID, *asset.File) error
-	SaveFlat(context.Context, id.AssetID, *asset.File, []*asset.File) error
+	// FindByID retrieves a file by asset ID.
+	FindByID(ctx context.Context, assetID id.AssetID) (*asset.File, error)
+
+	// Save creates or updates a file associated with an asset.
+	Save(ctx context.Context, assetID id.AssetID, file *asset.File) error
+
+	// SaveFlat saves a file and its related files.
+	SaveFlat(ctx context.Context, assetID id.AssetID, file *asset.File, relatedFiles []*asset.File) error
 }
