@@ -5,25 +5,28 @@ import (
 
 	id "github.com/reearth/reearthx/asset/assetdomain"
 	"github.com/reearth/reearthx/asset/assetdomain/asset"
+	"github.com/reearth/reearthx/asset/assetusecase/assetrepo"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/util"
 	"golang.org/x/exp/slices"
 )
 
-type AssetFile struct {
+var _ assetrepo.AssetFile = (*AssetFileImpl)(nil)
+
+type AssetFileImpl struct {
 	data  *util.SyncMap[asset.ID, *asset.File]
 	files *util.SyncMap[asset.ID, []*asset.File]
 	err   error
 }
 
-func NewAssetFile() *AssetFile {
-	return &AssetFile{
+func NewAssetFile() *AssetFileImpl {
+	return &AssetFileImpl{
 		data:  &util.SyncMap[id.AssetID, *asset.File]{},
 		files: &util.SyncMap[id.AssetID, []*asset.File]{},
 	}
 }
 
-func (r *AssetFile) FindByID(ctx context.Context, id id.AssetID) (*asset.File, error) {
+func (r *AssetFileImpl) FindByID(ctx context.Context, id id.AssetID) (*asset.File, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -41,7 +44,7 @@ func (r *AssetFile) FindByID(ctx context.Context, id id.AssetID) (*asset.File, e
 	return rerror.ErrIfNil(f, rerror.ErrNotFound)
 }
 
-func (r *AssetFile) Save(ctx context.Context, id id.AssetID, file *asset.File) error {
+func (r *AssetFileImpl) Save(ctx context.Context, id id.AssetID, file *asset.File) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -50,7 +53,7 @@ func (r *AssetFile) Save(ctx context.Context, id id.AssetID, file *asset.File) e
 	return nil
 }
 
-func (r *AssetFile) SaveFlat(ctx context.Context, id id.AssetID, parent *asset.File, files []*asset.File) error {
+func (r *AssetFileImpl) SaveFlat(ctx context.Context, id id.AssetID, parent *asset.File, files []*asset.File) error {
 	if r.err != nil {
 		return r.err
 	}

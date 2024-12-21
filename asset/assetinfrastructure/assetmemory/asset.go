@@ -12,26 +12,28 @@ import (
 	"github.com/samber/lo"
 )
 
-type Asset struct {
+var _ repo.Asset = (*AssetImpl)(nil)
+
+type AssetImpl struct {
 	data *util.SyncMap[asset.ID, *asset.Asset]
 	err  error
 	f    repo.ProjectFilter
 }
 
 func NewAsset() repo.Asset {
-	return &Asset{
+	return &AssetImpl{
 		data: &util.SyncMap[id.AssetID, *asset.Asset]{},
 	}
 }
 
-func (r *Asset) Filtered(f repo.ProjectFilter) repo.Asset {
-	return &Asset{
+func (r *AssetImpl) Filtered(f repo.ProjectFilter) repo.Asset {
+	return &AssetImpl{
 		data: r.data,
 		f:    r.f.Merge(f),
 	}
 }
 
-func (r *Asset) FindByID(ctx context.Context, id id.AssetID) (*asset.Asset, error) {
+func (r *AssetImpl) FindByID(ctx context.Context, id id.AssetID) (*asset.Asset, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -41,7 +43,7 @@ func (r *Asset) FindByID(ctx context.Context, id id.AssetID) (*asset.Asset, erro
 	}), rerror.ErrNotFound)
 }
 
-func (r *Asset) FindByIDs(ctx context.Context, ids id.AssetIDList) ([]*asset.Asset, error) {
+func (r *AssetImpl) FindByIDs(ctx context.Context, ids id.AssetIDList) ([]*asset.Asset, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -52,7 +54,7 @@ func (r *Asset) FindByIDs(ctx context.Context, ids id.AssetIDList) ([]*asset.Ass
 	return res, nil
 }
 
-func (r *Asset) FindByProject(ctx context.Context, id id.ProjectID, filter repo.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+func (r *AssetImpl) FindByProject(ctx context.Context, id id.ProjectID, filter repo.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(id) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -81,7 +83,7 @@ func (r *Asset) FindByProject(ctx context.Context, id id.ProjectID, filter repo.
 
 }
 
-func (r *Asset) Save(ctx context.Context, a *asset.Asset) error {
+func (r *AssetImpl) Save(ctx context.Context, a *asset.Asset) error {
 	if !r.f.CanWrite(a.Project()) {
 		return repo.ErrOperationDenied
 	}
@@ -94,7 +96,7 @@ func (r *Asset) Save(ctx context.Context, a *asset.Asset) error {
 	return nil
 }
 
-func (r *Asset) Delete(ctx context.Context, id id.AssetID) error {
+func (r *AssetImpl) Delete(ctx context.Context, id id.AssetID) error {
 	if r.err != nil {
 		return r.err
 	}
