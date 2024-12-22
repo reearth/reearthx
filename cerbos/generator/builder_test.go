@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -176,6 +177,12 @@ func TestResourceBuilder_Build(t *testing.T) {
 				resources:   tt.resources,
 			}
 			result := builder.Build()
+			sort.Slice(result, func(i, j int) bool {
+				return result[i].Resource < result[j].Resource
+			})
+			sort.Slice(tt.expected, func(i, j int) bool {
+				return tt.expected[i].Resource < tt.expected[j].Resource
+			})
 			assert.Equal(t, tt.expected, result)
 		})
 	}
