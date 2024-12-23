@@ -20,8 +20,8 @@ func TestContextLogger(t *testing.T) {
 	ctx := AttachLoggerToContext(context.Background(), l)
 	Infofc(ctx, "hoge %s", "fuga")
 	Infofc(context.Background(), "hoge %s", "fuga2")
-	//nolint:staticcheck // test nil context
-	Infofc(nil, "hoge %s", "fuga3")
+	//nolint:staticcheck // test context.TODO() instead of nil context
+	Infofc(context.TODO(), "hoge %s", "fuga3")
 
 	scanner := bufio.NewScanner(w)
 	assert.True(t, scanner.Scan())
