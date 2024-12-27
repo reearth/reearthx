@@ -12,98 +12,123 @@ import (
 )
 
 type ZipDecompressor struct {
-	assetService *asset.Service
+	assetService asset.Service
 }
 
-func NewZipDecompressor(assetService *asset.Service) *ZipDecompressor {
+// NewZipDecompressor creates a new zip decompressor
+func NewZipDecompressor(assetService asset.Service) Decompressor {
 	return &ZipDecompressor{
 		assetService: assetService,
 	}
 }
 
+// DecompressAsync implements Decompressor interface
 func (d *ZipDecompressor) DecompressAsync(ctx context.Context, assetID asset.ID) error {
-	// Get the zip file from asset service
-	zipFile, err := d.assetService.GetFile(ctx, assetID)
+	zipContent, err := d.fetchZipContent(ctx, assetID)
 	if err != nil {
-		return fmt.Errorf("failed to get zip file: %w", err)
-	}
-	defer zipFile.Close()
-
-	// Read all content to buffer for zip reader
-	content, err := io.ReadAll(zipFile)
-	if err != nil {
-		return fmt.Errorf("failed to read zip content: %w", err)
+		return err
 	}
 
-	// Create zip reader
-	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
+	zipReader, err := d.createZipReader(zipContent)
 	if err != nil {
-		return fmt.Errorf("failed to create zip reader: %w", err)
+		return err
 	}
 
-	// Update asset status to EXTRACTING
-	_, err = d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
-		Status: asset.StatusExtracting,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update asset status: %w", err)
+	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
+		return err
 	}
 
-	// Start async processing
-	go func() {
-		if err := d.processZipFile(ctx, zipReader); err != nil {
-			// Update status to ERROR if processing fails
-			d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
-				Status: asset.StatusError,
-				Error:  err.Error(),
-			})
-		} else {
-			// Update status to ACTIVE if processing succeeds
-			d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
-				Status: asset.StatusActive,
-			})
-		}
-	}()
+	go d.processZipAsync(ctx, assetID, zipReader)
 
 	return nil
 }
 
-func (d *ZipDecompressor) processZipFile(ctx context.Context, zipReader *zip.Reader) error {
+func (d *ZipDecompressor) fetchZipContent(ctx context.Context, assetID asset.ID) ([]byte, error) {
+	zipFile, err := d.assetService.GetFile(ctx, assetID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get zip file: %w", err)
+	}
+	defer zipFile.Close()
+
+	content, err := io.ReadAll(zipFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read zip content: %w", err)
+	}
+
+	return content, nil
+}
+
+func (d *ZipDecompressor) createZipReader(content []byte) (*zip.Reader, error) {
+	reader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zip reader: %w", err)
+	}
+	return reader, nil
+}
+
+func (d *ZipDecompressor) updateAssetStatus(ctx context.Context, assetID asset.ID, status asset.Status) error {
+	_, err := d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
+		Status: status,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update asset status: %w", err)
+	}
+	return nil
+}
+
+func (d *ZipDecompressor) processZipAsync(ctx context.Context, assetID asset.ID, zipReader *zip.Reader) {
+	if err := d.processZipContents(ctx, zipReader); err != nil {
+		d.updateAssetStatus(ctx, assetID, asset.StatusError)
+		return
+	}
+	d.updateAssetStatus(ctx, assetID, asset.StatusActive)
+}
+
+func (d *ZipDecompressor) processZipContents(ctx context.Context, zipReader *zip.Reader) error {
 	for _, f := range zipReader.File {
-		// Skip directories and hidden files
-		if f.FileInfo().IsDir() || isHiddenFile(f.Name) {
-			continue
+		if err := d.processZipEntry(ctx, f); err != nil {
+			return err
 		}
+	}
+	return nil
+}
 
-		// Open file in zip
-		rc, err := f.Open()
-		if err != nil {
-			return fmt.Errorf("failed to open file in zip: %w", err)
-		}
+func (d *ZipDecompressor) processZipEntry(ctx context.Context, f *zip.File) error {
+	if f.FileInfo().IsDir() || isHiddenFile(f.Name) {
+		return nil
+	}
 
-		// Create new asset for the file
-		input := asset.CreateAssetInput{
-			Name:        filepath.Base(f.Name),
-			Size:        int64(f.UncompressedSize64),
-			ContentType: detectContentType(f.Name),
-		}
+	rc, err := f.Open()
+	if err != nil {
+		return fmt.Errorf("failed to open file in zip: %w", err)
+	}
+	defer rc.Close()
 
-		newAsset, err := d.assetService.Create(ctx, input)
-		if err != nil {
-			rc.Close()
-			return fmt.Errorf("failed to create asset: %w", err)
-		}
+	newAsset, err := d.createAsset(ctx, f)
+	if err != nil {
+		return err
+	}
 
-		// Upload file content
-		if err := d.assetService.Upload(ctx, newAsset.ID, rc); err != nil {
-			rc.Close()
-			return fmt.Errorf("failed to upload file content: %w", err)
-		}
-
-		rc.Close()
+	if err := d.assetService.Upload(ctx, newAsset.ID, rc); err != nil {
+		return fmt.Errorf("failed to upload file content: %w", err)
 	}
 
 	return nil
+}
+
+func (d *ZipDecompressor) createAsset(ctx context.Context, f *zip.File) (*asset.Asset, error) {
+	input := asset.CreateAssetInput{
+		Name:        filepath.Base(f.Name),
+		Size:        int64(f.UncompressedSize64),
+		ContentType: detectContentType(f.Name),
+	}
+
+	newAsset, err := d.assetService.Create(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create asset: %w", err)
+	}
+
+	return newAsset, nil
 }
 
 func isHiddenFile(name string) bool {
