@@ -18,6 +18,8 @@ type Repository struct {
 	basePath   string
 }
 
+var _ asset.Repository = (*Repository)(nil)
+
 func NewRepository(ctx context.Context, bucketName string) (*Repository, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
@@ -49,14 +51,21 @@ func (r *Repository) Create(ctx context.Context, asset *asset.Asset) error {
 	return writer.Close()
 }
 
+func (r *Repository) getObject(id asset.ID) *storage.ObjectHandle {
+	return r.bucket.Object(r.objectPath(id))
+}
+
+func (r *Repository) handleNotFound(err error, id asset.ID) error {
+	if err == storage.ErrObjectNotExist {
+		return fmt.Errorf("asset not found: %s", id)
+	}
+	return fmt.Errorf("failed to get asset: %w", err)
+}
+
 func (r *Repository) Read(ctx context.Context, id asset.ID) (*asset.Asset, error) {
-	obj := r.bucket.Object(r.objectPath(id))
-	attrs, err := obj.Attrs(ctx)
+	attrs, err := r.getObject(id).Attrs(ctx)
 	if err != nil {
-		if err == storage.ErrObjectNotExist {
-			return nil, fmt.Errorf("asset not found: %s", id)
-		}
-		return nil, fmt.Errorf("failed to get asset: %w", err)
+		return nil, r.handleNotFound(err, id)
 	}
 
 	return &asset.Asset{
