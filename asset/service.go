@@ -20,11 +20,12 @@ func (s *Service) Create(ctx context.Context, input CreateAssetInput) (*Asset, e
 		Name:        input.Name,
 		Size:        input.Size,
 		ContentType: input.ContentType,
+		Status:      StatusPending,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
-	if err := s.repo.Save(ctx, asset); err != nil {
+	if err := s.repo.Create(ctx, asset); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +33,7 @@ func (s *Service) Create(ctx context.Context, input CreateAssetInput) (*Asset, e
 }
 
 func (s *Service) Update(ctx context.Context, id ID, input UpdateAssetInput) (*Asset, error) {
-	asset, err := s.repo.Fetch(ctx, id)
+	asset, err := s.repo.Read(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -46,9 +47,11 @@ func (s *Service) Update(ctx context.Context, id ID, input UpdateAssetInput) (*A
 	if input.ContentType != nil {
 		asset.ContentType = *input.ContentType
 	}
+	asset.Status = input.Status
+	asset.Error = input.Error
 	asset.UpdatedAt = time.Now()
 
-	if err := s.repo.Save(ctx, asset); err != nil {
+	if err := s.repo.Update(ctx, asset); err != nil {
 		return nil, err
 	}
 
@@ -56,11 +59,11 @@ func (s *Service) Update(ctx context.Context, id ID, input UpdateAssetInput) (*A
 }
 
 func (s *Service) Delete(ctx context.Context, id ID) error {
-	return s.repo.Remove(ctx, id)
+	return s.repo.Delete(ctx, id)
 }
 
 func (s *Service) Get(ctx context.Context, id ID) (*Asset, error) {
-	return s.repo.Fetch(ctx, id)
+	return s.repo.Read(ctx, id)
 }
 
 func (s *Service) GetFile(ctx context.Context, id ID) (io.ReadCloser, error) {

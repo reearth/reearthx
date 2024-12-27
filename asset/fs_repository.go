@@ -102,3 +102,65 @@ func (r *FSRepository) GetUploadURL(ctx context.Context, id ID) (string, error) 
 func (r *FSRepository) getPath(id ID) string {
 	return filepath.Join(r.baseDir, id.String())
 }
+
+// Create creates a new asset
+func (r *FSRepository) Create(ctx context.Context, asset *Asset) error {
+	if asset == nil {
+		return fmt.Errorf("asset is nil")
+	}
+
+	// Save metadata
+	return r.Save(ctx, asset)
+}
+
+// Read returns an asset by ID
+func (r *FSRepository) Read(ctx context.Context, id ID) (*Asset, error) {
+	return r.Fetch(ctx, id)
+}
+
+// Update updates an existing asset
+func (r *FSRepository) Update(ctx context.Context, asset *Asset) error {
+	if asset == nil {
+		return fmt.Errorf("asset is nil")
+	}
+
+	// Check if asset exists
+	_, err := r.Fetch(ctx, asset.ID)
+	if err != nil {
+		return err
+	}
+
+	return r.Save(ctx, asset)
+}
+
+// Delete removes an asset by ID
+func (r *FSRepository) Delete(ctx context.Context, id ID) error {
+	return r.Remove(ctx, id)
+}
+
+// List returns all assets
+func (r *FSRepository) List(ctx context.Context) ([]*Asset, error) {
+	files, err := os.ReadDir(r.baseDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	var assets []*Asset
+	for _, file := range files {
+		info, err := file.Info()
+		if err != nil {
+			continue
+		}
+
+		asset := &Asset{
+			ID:        ID(file.Name()),
+			Name:      info.Name(),
+			Size:      info.Size(),
+			CreatedAt: info.ModTime(),
+			UpdatedAt: info.ModTime(),
+		}
+		assets = append(assets, asset)
+	}
+
+	return assets, nil
+}
