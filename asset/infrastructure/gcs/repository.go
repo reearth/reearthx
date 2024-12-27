@@ -9,6 +9,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/repository"
 	"google.golang.org/api/iterator"
 )
 
@@ -18,7 +19,7 @@ type Repository struct {
 	basePath   string
 }
 
-var _ domain.Repository = (*Repository)(nil)
+var _ repository.Repository = (*Repository)(nil)
 
 func NewRepository(ctx context.Context, bucketName string) (*Repository, error) {
 	client, err := storage.NewClient(ctx)
