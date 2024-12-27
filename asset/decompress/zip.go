@@ -3,6 +3,8 @@ package decompress
 import (
 	"archive/zip"
 	"context"
+	"io"
+
 	"github.com/reearth/reearthx/asset"
 )
 
@@ -24,8 +26,36 @@ func (d *ZipDecompressor) DecompressAsync(ctx context.Context, assetID asset.ID)
 	}
 	defer zipFile.Close()
 
-	// Create a temporary file to store the zip content
-	// Implementation of async zip extraction
+	// Create zip reader
+	zipReader, err := zip.NewReader(zipFile.(io.ReaderAt), -1)
+	if err != nil {
+		return err
+	}
+
+	// Update asset status to EXTRACTING
+	_, err = d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
+		Status: asset.StatusExtracting,
+	})
+	if err != nil {
+		return err
+	}
+
+	// Start async processing
+	go func() {
+		if err := d.processZipFile(ctx, zipReader); err != nil {
+			// Update status to ERROR if processing fails
+			d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
+				Status: asset.StatusError,
+				Error:  err.Error(),
+			})
+		} else {
+			// Update status to ACTIVE if processing succeeds
+			d.assetService.Update(ctx, assetID, asset.UpdateAssetInput{
+				Status: asset.StatusActive,
+			})
+		}
+	}()
+
 	return nil
 }
 
