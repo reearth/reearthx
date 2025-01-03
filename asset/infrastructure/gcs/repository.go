@@ -13,28 +13,28 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type Repository struct {
+type GCS struct {
 	bucket     *storage.BucketHandle
 	bucketName string
 	basePath   string
 }
 
-var _ repository.Repository = (*Repository)(nil)
+var _ repository.Repository = (*GCS)(nil)
 
-func NewRepository(ctx context.Context, bucketName string) (*Repository, error) {
+func NewRepository(ctx context.Context, bucketName string) (*GCS, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
-	return &Repository{
+	return &GCS{
 		bucket:     client.Bucket(bucketName),
 		bucketName: bucketName,
 		basePath:   "assets",
 	}, nil
 }
 
-func (r *Repository) Create(ctx context.Context, asset *domain.Asset) error {
+func (r *GCS) Create(ctx context.Context, asset *domain.Asset) error {
 	obj := r.getObject(asset.ID())
 	attrs := storage.ObjectAttrs{
 		Metadata: map[string]string{
@@ -52,7 +52,7 @@ func (r *Repository) Create(ctx context.Context, asset *domain.Asset) error {
 	return writer.Close()
 }
 
-func (r *Repository) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) {
+func (r *GCS) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) {
 	attrs, err := r.getObject(id).Attrs(ctx)
 	if err != nil {
 		return nil, r.handleNotFound(err, id)
@@ -68,7 +68,7 @@ func (r *Repository) Read(ctx context.Context, id domain.ID) (*domain.Asset, err
 	return asset, nil
 }
 
-func (r *Repository) Update(ctx context.Context, asset *domain.Asset) error {
+func (r *GCS) Update(ctx context.Context, asset *domain.Asset) error {
 	obj := r.getObject(asset.ID())
 	update := storage.ObjectAttrsToUpdate{
 		Metadata: map[string]string{
@@ -83,7 +83,7 @@ func (r *Repository) Update(ctx context.Context, asset *domain.Asset) error {
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, id domain.ID) error {
+func (r *GCS) Delete(ctx context.Context, id domain.ID) error {
 	obj := r.getObject(id)
 	if err := obj.Delete(ctx); err != nil {
 		if err == storage.ErrObjectNotExist {
@@ -94,7 +94,7 @@ func (r *Repository) Delete(ctx context.Context, id domain.ID) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context) ([]*domain.Asset, error) {
+func (r *GCS) List(ctx context.Context) ([]*domain.Asset, error) {
 	var assets []*domain.Asset
 	it := r.bucket.Objects(ctx, &storage.Query{Prefix: r.basePath})
 
@@ -119,7 +119,7 @@ func (r *Repository) List(ctx context.Context) ([]*domain.Asset, error) {
 	return assets, nil
 }
 
-func (r *Repository) Upload(ctx context.Context, id domain.ID, content io.Reader) error {
+func (r *GCS) Upload(ctx context.Context, id domain.ID, content io.Reader) error {
 	obj := r.getObject(id)
 	writer := obj.NewWriter(ctx)
 
@@ -134,7 +134,7 @@ func (r *Repository) Upload(ctx context.Context, id domain.ID, content io.Reader
 	return nil
 }
 
-func (r *Repository) Download(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
+func (r *GCS) Download(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
 	obj := r.getObject(id)
 	reader, err := obj.NewReader(ctx)
 	if err != nil {
@@ -146,7 +146,7 @@ func (r *Repository) Download(ctx context.Context, id domain.ID) (io.ReadCloser,
 	return reader, nil
 }
 
-func (r *Repository) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
+func (r *GCS) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
 	opts := &storage.SignedURLOptions{
 		Method:  "PUT",
 		Expires: time.Now().Add(15 * time.Minute),
@@ -159,15 +159,15 @@ func (r *Repository) GetUploadURL(ctx context.Context, id domain.ID) (string, er
 	return url, nil
 }
 
-func (r *Repository) getObject(id domain.ID) *storage.ObjectHandle {
+func (r *GCS) getObject(id domain.ID) *storage.ObjectHandle {
 	return r.bucket.Object(r.objectPath(id))
 }
 
-func (r *Repository) objectPath(id domain.ID) string {
+func (r *GCS) objectPath(id domain.ID) string {
 	return path.Join(r.basePath, id.String())
 }
 
-func (r *Repository) handleNotFound(err error, id domain.ID) error {
+func (r *GCS) handleNotFound(err error, id domain.ID) error {
 	if err == storage.ErrObjectNotExist {
 		return fmt.Errorf("asset not found: %s", id)
 	}
