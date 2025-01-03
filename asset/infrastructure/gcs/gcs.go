@@ -9,7 +9,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/reearth/reearthx/asset/domain"
-	"github.com/reearth/reearthx/asset/domain/repository"
+	"github.com/reearth/reearthx/asset/repository"
 	"google.golang.org/api/iterator"
 )
 
