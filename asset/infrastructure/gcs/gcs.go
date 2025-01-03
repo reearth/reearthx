@@ -2,6 +2,7 @@ package gcs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -13,28 +14,28 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type GCSClient struct {
+type Client struct {
 	bucket     *storage.BucketHandle
 	bucketName string
 	basePath   string
 }
 
-var _ repository.Repository = (*GCSClient)(nil)
+var _ repository.Repository = (*Client)(nil)
 
-func NewGCSClient(ctx context.Context, bucketName string) (*GCSClient, error) {
+func NewGCSClient(ctx context.Context, bucketName string) (*Client, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
-	return &GCSClient{
+	return &Client{
 		bucket:     client.Bucket(bucketName),
 		bucketName: bucketName,
 		basePath:   "assets",
 	}, nil
 }
 
-func (r *GCSClient) Create(ctx context.Context, asset *domain.Asset) error {
+func (r *Client) Create(ctx context.Context, asset *domain.Asset) error {
 	obj := r.getObject(asset.ID())
 	attrs := storage.ObjectAttrs{
 		Metadata: map[string]string{
@@ -52,7 +53,7 @@ func (r *GCSClient) Create(ctx context.Context, asset *domain.Asset) error {
 	return writer.Close()
 }
 
-func (r *GCSClient) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) {
+func (r *Client) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) {
 	attrs, err := r.getObject(id).Attrs(ctx)
 	if err != nil {
 		return nil, r.handleNotFound(err, id)
@@ -68,7 +69,7 @@ func (r *GCSClient) Read(ctx context.Context, id domain.ID) (*domain.Asset, erro
 	return asset, nil
 }
 
-func (r *GCSClient) Update(ctx context.Context, asset *domain.Asset) error {
+func (r *Client) Update(ctx context.Context, asset *domain.Asset) error {
 	obj := r.getObject(asset.ID())
 	update := storage.ObjectAttrsToUpdate{
 		Metadata: map[string]string{
@@ -83,10 +84,10 @@ func (r *GCSClient) Update(ctx context.Context, asset *domain.Asset) error {
 	return nil
 }
 
-func (r *GCSClient) Delete(ctx context.Context, id domain.ID) error {
+func (r *Client) Delete(ctx context.Context, id domain.ID) error {
 	obj := r.getObject(id)
 	if err := obj.Delete(ctx); err != nil {
-		if err == storage.ErrObjectNotExist {
+		if errors.Is(err, storage.ErrObjectNotExist) {
 			return nil
 		}
 		return fmt.Errorf("failed to delete asset: %w", err)
@@ -94,13 +95,13 @@ func (r *GCSClient) Delete(ctx context.Context, id domain.ID) error {
 	return nil
 }
 
-func (r *GCSClient) List(ctx context.Context) ([]*domain.Asset, error) {
+func (r *Client) List(ctx context.Context) ([]*domain.Asset, error) {
 	var assets []*domain.Asset
 	it := r.bucket.Objects(ctx, &storage.Query{Prefix: r.basePath})
 
 	for {
 		attrs, err := it.Next()
-		if err == iterator.Done {
+		if errors.Is(err, iterator.Done) {
 			break
 		}
 		if err != nil {
@@ -119,12 +120,15 @@ func (r *GCSClient) List(ctx context.Context) ([]*domain.Asset, error) {
 	return assets, nil
 }
 
-func (r *GCSClient) Upload(ctx context.Context, id domain.ID, content io.Reader) error {
+func (r *Client) Upload(ctx context.Context, id domain.ID, content io.Reader) error {
 	obj := r.getObject(id)
 	writer := obj.NewWriter(ctx)
 
 	if _, err := io.Copy(writer, content); err != nil {
-		writer.Close()
+		err := writer.Close()
+		if err != nil {
+			return err
+		}
 		return fmt.Errorf("failed to upload file: %w", err)
 	}
 
@@ -134,11 +138,11 @@ func (r *GCSClient) Upload(ctx context.Context, id domain.ID, content io.Reader)
 	return nil
 }
 
-func (r *GCSClient) Download(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
+func (r *Client) Download(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
 	obj := r.getObject(id)
 	reader, err := obj.NewReader(ctx)
 	if err != nil {
-		if err == storage.ErrObjectNotExist {
+		if errors.Is(err, storage.ErrObjectNotExist) {
 			return nil, fmt.Errorf("asset not found: %s", id)
 		}
 		return nil, fmt.Errorf("failed to read file: %w", err)
@@ -146,7 +150,7 @@ func (r *GCSClient) Download(ctx context.Context, id domain.ID) (io.ReadCloser, 
 	return reader, nil
 }
 
-func (r *GCSClient) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
+func (r *Client) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
 	opts := &storage.SignedURLOptions{
 		Method:  "PUT",
 		Expires: time.Now().Add(15 * time.Minute),
@@ -159,16 +163,16 @@ func (r *GCSClient) GetUploadURL(ctx context.Context, id domain.ID) (string, err
 	return url, nil
 }
 
-func (r *GCSClient) getObject(id domain.ID) *storage.ObjectHandle {
+func (r *Client) getObject(id domain.ID) *storage.ObjectHandle {
 	return r.bucket.Object(r.objectPath(id))
 }
 
-func (r *GCSClient) objectPath(id domain.ID) string {
+func (r *Client) objectPath(id domain.ID) string {
 	return path.Join(r.basePath, id.String())
 }
 
-func (r *GCSClient) handleNotFound(err error, id domain.ID) error {
-	if err == storage.ErrObjectNotExist {
+func (r *Client) handleNotFound(err error, id domain.ID) error {
+	if errors.Is(err, storage.ErrObjectNotExist) {
 		return fmt.Errorf("asset not found: %s", id)
 	}
 	return fmt.Errorf("failed to get asset: %w", err)
