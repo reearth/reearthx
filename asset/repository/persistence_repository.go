@@ -24,7 +24,7 @@ type FileOperator interface {
 	GetUploadURL(ctx context.Context, id domain.ID) (string, error)
 }
 
-type Repository interface {
+type PersistenceRepository interface {
 	Reader
 	Writer
 	FileOperator

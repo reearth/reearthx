@@ -1,4 +1,4 @@
-package decompress
+package repository
 
 import (
 	"context"
