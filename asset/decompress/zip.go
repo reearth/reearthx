@@ -186,12 +186,85 @@ func detectContentType(filename string) string {
 
 // CompressAsync implements compression of multiple files into a zip archive
 func (d *ZipDecompressor) CompressAsync(ctx context.Context, assetID asset.ID, files []asset.ID) error {
-	return fmt.Errorf("compression not implemented")
+	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
+		return err
+	}
+
+	go func() {
+		buf := new(bytes.Buffer)
+		zipWriter := zip.NewWriter(buf)
+
+		for _, fileID := range files {
+			content, err := d.assetService.Download(ctx, domain.ID(fileID))
+			if err != nil {
+				d.updateAssetStatus(ctx, assetID, asset.StatusError)
+				return
+			}
+			defer content.Close()
+
+			assetObj, err := d.assetService.Read(ctx, domain.ID(fileID))
+			if err != nil {
+				d.updateAssetStatus(ctx, assetID, asset.StatusError)
+				return
+			}
+
+			writer, err := zipWriter.Create(assetObj.Name())
+			if err != nil {
+				d.updateAssetStatus(ctx, assetID, asset.StatusError)
+				return
+			}
+
+			if _, err := io.Copy(writer, content); err != nil {
+				d.updateAssetStatus(ctx, assetID, asset.StatusError)
+				return
+			}
+		}
+
+		if err := zipWriter.Close(); err != nil {
+			d.updateAssetStatus(ctx, assetID, asset.StatusError)
+			return
+		}
+
+		if err := d.assetService.Upload(ctx, domain.ID(assetID), bytes.NewReader(buf.Bytes())); err != nil {
+			d.updateAssetStatus(ctx, assetID, asset.StatusError)
+			return
+		}
+
+		d.updateAssetStatus(ctx, assetID, asset.StatusActive)
+	}()
+
+	return nil
 }
 
 // CompressWithContent implements direct content compression
 func (d *ZipDecompressor) CompressWithContent(ctx context.Context, assetID asset.ID, files map[string]io.Reader) error {
-	return fmt.Errorf("compression not implemented")
+	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(buf)
+
+	for filename, content := range files {
+		writer, err := zipWriter.Create(filename)
+		if err != nil {
+			return fmt.Errorf("failed to create file in zip: %w", err)
+		}
+
+		if _, err := io.Copy(writer, content); err != nil {
+			return fmt.Errorf("failed to write content: %w", err)
+		}
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		return fmt.Errorf("failed to close zip writer: %w", err)
+	}
+
+	if err := d.assetService.Upload(ctx, domain.ID(assetID), bytes.NewReader(buf.Bytes())); err != nil {
+		return fmt.Errorf("failed to upload zip file: %w", err)
+	}
+
+	return d.updateAssetStatus(ctx, assetID, asset.StatusActive)
 }
 
 // GetStatus returns the current operation status
