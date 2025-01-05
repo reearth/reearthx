@@ -20,7 +20,7 @@ type ZipDecompressor struct {
 }
 
 // NewZipDecompressor creates a new zip decompressor
-func NewZipDecompressor(assetService repository.PersistenceRepository) *ZipDecompressor {
+func NewZipDecompressor(assetService repository.PersistenceRepository) repository.Decompressor {
 	return &ZipDecompressor{
 		assetService: assetService,
 	}
