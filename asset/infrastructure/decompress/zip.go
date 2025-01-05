@@ -99,39 +99,70 @@ func (d *ZipDecompressor) processFile(f *zip.File) (io.Reader, error) {
 // CompressWithContent compresses the provided content into a zip archive.
 // It takes a map of filenames to their content readers and returns the compressed bytes.
 func (d *ZipDecompressor) CompressWithContent(ctx context.Context, files map[string]io.Reader) ([]byte, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
+
 	buf := new(bytes.Buffer)
 	zipWriter := zip.NewWriter(buf)
+	defer zipWriter.Close()
 
+	// Use a mutex to protect concurrent writes to the zip writer
+	var mu sync.Mutex
 	var wg sync.WaitGroup
-	errChan := make(chan error, len(files))
+	errChan := make(chan error, 1)
 
-	// Process each file in parallel
+	// Process each file sequentially to avoid corruption
 	for filename, content := range files {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		wg.Add(1)
 		go func(filename string, content io.Reader) {
 			defer wg.Done()
 
-			select {
-			case <-ctx.Done():
-				errChan <- ctx.Err()
+			// Read the entire content first to avoid holding the lock during I/O
+			data, err := io.ReadAll(content)
+			if err != nil {
+				select {
+				case errChan <- fmt.Errorf("failed to read content: %w", err):
+				default:
+				}
 				return
-			default:
-				if err := d.addFileToZip(zipWriter, filename, content); err != nil {
-					errChan <- err
+			}
+
+			mu.Lock()
+			err = d.addFileToZip(zipWriter, filename, bytes.NewReader(data))
+			mu.Unlock()
+
+			if err != nil {
+				select {
+				case errChan <- err:
+				default:
 				}
 			}
 		}(filename, content)
 	}
 
-	// Wait for all files to be processed
-	wg.Wait()
-	close(errChan)
+	// Wait for all goroutines to finish
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
 
-	// Check for any errors
-	for err := range errChan {
-		if err != nil {
-			return nil, fmt.Errorf("compression error: %w", err)
-		}
+	// Wait for either completion or error
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case err := <-errChan:
+		return nil, err
+	case <-done:
 	}
 
 	if err := zipWriter.Close(); err != nil {
@@ -142,6 +173,7 @@ func (d *ZipDecompressor) CompressWithContent(ctx context.Context, files map[str
 }
 
 // addFileToZip adds a single file to the zip archive
+// Note: This function is not thread-safe and should be protected by a mutex
 func (d *ZipDecompressor) addFileToZip(zipWriter *zip.Writer, filename string, content io.Reader) error {
 	writer, err := zipWriter.Create(filename)
 	if err != nil {
