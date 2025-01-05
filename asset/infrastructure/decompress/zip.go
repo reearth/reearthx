@@ -8,277 +8,155 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"sync"
 
-	"github.com/reearth/reearthx/asset"
-	"github.com/reearth/reearthx/asset/domain"
 	"github.com/reearth/reearthx/asset/repository"
 )
 
-// ZipDecompressor handles decompression of zip files and manages the extracted assets.
-type ZipDecompressor struct {
-	assetService repository.PersistenceRepository
-}
+// ZipDecompressor handles decompression of zip files.
+type ZipDecompressor struct{}
 
 var _ repository.Decompressor = (*ZipDecompressor)(nil)
 
 // NewZipDecompressor creates a new zip decompressor
-func NewZipDecompressor(assetService repository.PersistenceRepository) repository.Decompressor {
-	return &ZipDecompressor{
-		assetService: assetService,
-	}
+func NewZipDecompressor() repository.Decompressor {
+	return &ZipDecompressor{}
 }
 
-// DecompressAsync implements Decompressor interface by asynchronously decompressing a zip file
-// identified by assetID. It downloads the zip content, creates a reader, updates the asset status,
-// and processes the contents in a separate goroutine.
-func (d *ZipDecompressor) DecompressAsync(ctx context.Context, assetID asset.ID) error {
-	content, err := d.assetService.Download(ctx, domain.ID(assetID))
-	if err != nil {
-		return fmt.Errorf("failed to get zip file: %w", err)
-	}
-	defer content.Close()
-
-	zipContent, err := io.ReadAll(content)
-	if err != nil {
-		return fmt.Errorf("failed to read zip content: %w", err)
-	}
-
-	zipReader, err := d.createZipReader(zipContent)
-	if err != nil {
-		return err
-	}
-
-	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
-		return err
-	}
-
-	go d.processZipAsync(ctx, assetID, zipReader)
-
-	return nil
-}
-
-// DecompressWithContent decompresses zip content directly without downloading it first.
-// It takes the zip content as a byte slice, creates a reader, updates the asset status,
-// and processes the contents asynchronously.
-func (d *ZipDecompressor) DecompressWithContent(ctx context.Context, assetID asset.ID, content []byte) error {
-	zipReader, err := d.createZipReader(content)
-	if err != nil {
-		return err
-	}
-
-	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
-		return err
-	}
-
-	go d.processZipAsync(ctx, assetID, zipReader)
-
-	return nil
-}
-
-// createZipReader creates a new zip.Reader from the provided content byte slice.
-func (d *ZipDecompressor) createZipReader(content []byte) (*zip.Reader, error) {
-	reader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
+// DecompressWithContent decompresses zip content directly.
+// It processes each file asynchronously and returns a channel of decompressed files.
+func (d *ZipDecompressor) DecompressWithContent(ctx context.Context, content []byte) (<-chan repository.DecompressedFile, error) {
+	zipReader, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create zip reader: %w", err)
 	}
-	return reader, nil
-}
 
-// updateAssetStatus updates the status of an asset identified by assetID.
-func (d *ZipDecompressor) updateAssetStatus(ctx context.Context, assetID asset.ID, status asset.Status) error {
-	assetObj, err := d.assetService.Read(ctx, domain.ID(assetID))
-	if err != nil {
-		return fmt.Errorf("failed to read asset: %w", err)
-	}
+	// Create a buffered channel to hold the decompressed files
+	resultChan := make(chan repository.DecompressedFile, len(zipReader.File))
+	var wg sync.WaitGroup
 
-	assetObj.UpdateStatus(domain.Status(status), "")
-	err = d.assetService.Update(ctx, assetObj)
-	if err != nil {
-		return fmt.Errorf("failed to update asset status: %w", err)
-	}
-	return nil
-}
+	// Start a goroutine to close the channel when all files are processed
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
 
-// processZipAsync handles the asynchronous processing of zip contents.
-// It updates the asset status based on the processing result.
-func (d *ZipDecompressor) processZipAsync(ctx context.Context, assetID asset.ID, zipReader *zip.Reader) {
-	if err := d.processZipContents(ctx, zipReader); err != nil {
-		d.updateAssetStatus(ctx, assetID, asset.StatusError)
-		return
-	}
-	d.updateAssetStatus(ctx, assetID, asset.StatusActive)
-}
-
-// processZipContents iterates through all files in the zip archive and processes each entry.
-func (d *ZipDecompressor) processZipContents(ctx context.Context, zipReader *zip.Reader) error {
+	// Process each file in the zip archive
 	for _, f := range zipReader.File {
-		if err := d.processZipEntry(ctx, f); err != nil {
-			return err
+		if f.FileInfo().IsDir() || isHiddenFile(f.Name) {
+			continue
 		}
+
+		wg.Add(1)
+		go func(f *zip.File) {
+			defer wg.Done()
+
+			select {
+			case <-ctx.Done():
+				resultChan <- repository.DecompressedFile{
+					Filename: f.Name,
+					Error:    ctx.Err(),
+				}
+				return
+			default:
+				content, err := d.processFile(f)
+				if err != nil {
+					resultChan <- repository.DecompressedFile{
+						Filename: f.Name,
+						Error:    err,
+					}
+					return
+				}
+
+				resultChan <- repository.DecompressedFile{
+					Filename: f.Name,
+					Content:  content,
+				}
+			}
+		}(f)
 	}
-	return nil
+
+	return resultChan, nil
 }
 
-// processZipEntry processes a single file from the zip archive.
-// It skips directories and hidden files, and creates a new asset for each valid file.
-func (d *ZipDecompressor) processZipEntry(ctx context.Context, f *zip.File) error {
-	if f.FileInfo().IsDir() || isHiddenFile(f.Name) {
-		return nil
-	}
-
+// processFile handles a single file from the zip archive
+func (d *ZipDecompressor) processFile(f *zip.File) (io.Reader, error) {
 	rc, err := f.Open()
 	if err != nil {
-		return fmt.Errorf("failed to open file in zip: %w", err)
+		return nil, fmt.Errorf("failed to open file in zip: %w", err)
 	}
 	defer rc.Close()
 
-	newAsset, err := d.createAsset(ctx, f)
+	// Read the entire file content into memory
+	content, err := io.ReadAll(rc)
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to read file content: %w", err)
 	}
 
-	if err := d.assetService.Upload(ctx, newAsset.ID(), rc); err != nil {
-		return fmt.Errorf("failed to upload file content: %w", err)
+	return bytes.NewReader(content), nil
+}
+
+// CompressWithContent compresses the provided content into a zip archive.
+// It takes a map of filenames to their content readers and returns the compressed bytes.
+func (d *ZipDecompressor) CompressWithContent(ctx context.Context, files map[string]io.Reader) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	zipWriter := zip.NewWriter(buf)
+
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(files))
+
+	// Process each file in parallel
+	for filename, content := range files {
+		wg.Add(1)
+		go func(filename string, content io.Reader) {
+			defer wg.Done()
+
+			select {
+			case <-ctx.Done():
+				errChan <- ctx.Err()
+				return
+			default:
+				if err := d.addFileToZip(zipWriter, filename, content); err != nil {
+					errChan <- err
+				}
+			}
+		}(filename, content)
+	}
+
+	// Wait for all files to be processed
+	wg.Wait()
+	close(errChan)
+
+	// Check for any errors
+	for err := range errChan {
+		if err != nil {
+			return nil, fmt.Errorf("compression error: %w", err)
+		}
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close zip writer: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+// addFileToZip adds a single file to the zip archive
+func (d *ZipDecompressor) addFileToZip(zipWriter *zip.Writer, filename string, content io.Reader) error {
+	writer, err := zipWriter.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create file in zip: %w", err)
+	}
+
+	if _, err := io.Copy(writer, content); err != nil {
+		return fmt.Errorf("failed to write content: %w", err)
 	}
 
 	return nil
-}
-
-// createAsset creates a new asset in the repository for a file from the zip archive.
-func (d *ZipDecompressor) createAsset(ctx context.Context, f *zip.File) (*domain.Asset, error) {
-	asset := domain.NewAsset(
-		"", // ID will be generated by the repository
-		filepath.Base(f.Name),
-		int64(f.UncompressedSize64),
-		detectContentType(f.Name),
-	)
-
-	err := d.assetService.Create(ctx, asset)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create asset: %w", err)
-	}
-
-	return asset, nil
 }
 
 // isHiddenFile checks if a file is hidden (starts with a dot).
 func isHiddenFile(name string) bool {
 	base := filepath.Base(name)
 	return len(base) > 0 && base[0] == '.'
-}
-
-// detectContentType determines the MIME type of a file based on its extension.
-func detectContentType(filename string) string {
-	ext := filepath.Ext(filename)
-	switch ext {
-	case ".jpg", ".jpeg":
-		return "image/jpeg"
-	case ".png":
-		return "image/png"
-	case ".gif":
-		return "image/gif"
-	case ".pdf":
-		return "application/pdf"
-	case ".zip":
-		return "application/zip"
-	default:
-		return "application/octet-stream"
-	}
-}
-
-// CompressAsync implements compression of multiple files into a zip archive
-func (d *ZipDecompressor) CompressAsync(ctx context.Context, assetID asset.ID, files []asset.ID) error {
-	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
-		return err
-	}
-
-	go func() {
-		buf := new(bytes.Buffer)
-		zipWriter := zip.NewWriter(buf)
-
-		for _, fileID := range files {
-			content, err := d.assetService.Download(ctx, domain.ID(fileID))
-			if err != nil {
-				d.updateAssetStatus(ctx, assetID, asset.StatusError)
-				return
-			}
-			defer content.Close()
-
-			assetObj, err := d.assetService.Read(ctx, domain.ID(fileID))
-			if err != nil {
-				d.updateAssetStatus(ctx, assetID, asset.StatusError)
-				return
-			}
-
-			writer, err := zipWriter.Create(assetObj.Name())
-			if err != nil {
-				d.updateAssetStatus(ctx, assetID, asset.StatusError)
-				return
-			}
-
-			if _, err := io.Copy(writer, content); err != nil {
-				d.updateAssetStatus(ctx, assetID, asset.StatusError)
-				return
-			}
-		}
-
-		if err := zipWriter.Close(); err != nil {
-			d.updateAssetStatus(ctx, assetID, asset.StatusError)
-			return
-		}
-
-		if err := d.assetService.Upload(ctx, domain.ID(assetID), bytes.NewReader(buf.Bytes())); err != nil {
-			d.updateAssetStatus(ctx, assetID, asset.StatusError)
-			return
-		}
-
-		d.updateAssetStatus(ctx, assetID, asset.StatusActive)
-	}()
-
-	return nil
-}
-
-// CompressWithContent implements direct content compression
-func (d *ZipDecompressor) CompressWithContent(ctx context.Context, assetID asset.ID, files map[string]io.Reader) error {
-	if err := d.updateAssetStatus(ctx, assetID, asset.StatusExtracting); err != nil {
-		return err
-	}
-
-	buf := new(bytes.Buffer)
-	zipWriter := zip.NewWriter(buf)
-
-	for filename, content := range files {
-		writer, err := zipWriter.Create(filename)
-		if err != nil {
-			return fmt.Errorf("failed to create file in zip: %w", err)
-		}
-
-		if _, err := io.Copy(writer, content); err != nil {
-			return fmt.Errorf("failed to write content: %w", err)
-		}
-	}
-
-	if err := zipWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close zip writer: %w", err)
-	}
-
-	if err := d.assetService.Upload(ctx, domain.ID(assetID), bytes.NewReader(buf.Bytes())); err != nil {
-		return fmt.Errorf("failed to upload zip file: %w", err)
-	}
-
-	return d.updateAssetStatus(ctx, assetID, asset.StatusActive)
-}
-
-// GetStatus returns the current operation status
-func (d *ZipDecompressor) GetStatus(ctx context.Context, assetID asset.ID) (asset.Status, error) {
-	assetObj, err := d.assetService.Read(ctx, domain.ID(assetID))
-	if err != nil {
-		return "", err
-	}
-	return asset.Status(assetObj.Status()), nil
-}
-
-// CancelOperation cancels an ongoing operation
-func (d *ZipDecompressor) CancelOperation(ctx context.Context, assetID asset.ID) error {
-	return fmt.Errorf("operation cancellation not implemented")
 }
