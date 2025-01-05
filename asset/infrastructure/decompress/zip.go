@@ -19,6 +19,8 @@ type ZipDecompressor struct {
 	assetService repository.PersistenceRepository
 }
 
+var _ repository.Decompressor = (*ZipDecompressor)(nil)
+
 // NewZipDecompressor creates a new zip decompressor
 func NewZipDecompressor(assetService repository.PersistenceRepository) repository.Decompressor {
 	return &ZipDecompressor{
