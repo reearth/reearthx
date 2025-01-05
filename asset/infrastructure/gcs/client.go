@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"path"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -26,26 +28,38 @@ const (
 	errFailedToReadFile     = "failed to read file: %w"
 	errFailedToGetAsset     = "failed to get asset: %w"
 	errFailedToGenerateURL  = "failed to generate upload URL: %w"
+	errFailedToMoveAsset    = "failed to move asset: %w"
+	errInvalidURL           = "invalid URL format: %s"
 )
 
 type Client struct {
 	bucket     *storage.BucketHandle
 	bucketName string
 	basePath   string
+	baseURL    *url.URL
 }
 
 var _ repository.PersistenceRepository = (*Client)(nil)
 
-func NewClient(ctx context.Context, bucketName string, basePath string) (*Client, error) {
+func NewClient(ctx context.Context, bucketName string, basePath string, baseURL string) (*Client, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf(errFailedToCreateClient, err)
+	}
+
+	var u *url.URL
+	if baseURL != "" {
+		u, err = url.Parse(baseURL)
+		if err != nil {
+			return nil, fmt.Errorf(errInvalidURL, err)
+		}
 	}
 
 	return &Client{
 		bucket:     client.Bucket(bucketName),
 		bucketName: bucketName,
 		basePath:   basePath,
+		baseURL:    u,
 	}, nil
 }
 
@@ -139,10 +153,7 @@ func (c *Client) Upload(ctx context.Context, id domain.ID, content io.Reader) er
 	writer := obj.NewWriter(ctx)
 
 	if _, err := io.Copy(writer, content); err != nil {
-		err := writer.Close()
-		if err != nil {
-			return err
-		}
+		_ = writer.Close()
 		return fmt.Errorf(errFailedToUploadFile, err)
 	}
 
@@ -175,6 +186,78 @@ func (c *Client) GetUploadURL(ctx context.Context, id domain.ID) (string, error)
 		return "", fmt.Errorf(errFailedToGenerateURL, err)
 	}
 	return url, nil
+}
+
+func (c *Client) Move(ctx context.Context, fromID, toID domain.ID) error {
+	src := c.getObject(fromID)
+	dst := c.getObject(toID)
+
+	if _, err := dst.CopierFrom(src).Run(ctx); err != nil {
+		return fmt.Errorf(errFailedToMoveAsset, err)
+	}
+
+	if err := src.Delete(ctx); err != nil {
+		return fmt.Errorf(errFailedToMoveAsset, err)
+	}
+
+	return nil
+}
+
+func (c *Client) DeleteAll(ctx context.Context, prefix string) error {
+	it := c.bucket.Objects(ctx, &storage.Query{
+		Prefix: path.Join(c.basePath, prefix),
+	})
+
+	for {
+		attrs, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf(errFailedToDeleteAsset, err)
+		}
+
+		if err := c.bucket.Object(attrs.Name).Delete(ctx); err != nil {
+			if !errors.Is(err, storage.ErrObjectNotExist) {
+				return fmt.Errorf(errFailedToDeleteAsset, err)
+			}
+		}
+	}
+	return nil
+}
+
+func (c *Client) GetObjectURL(id domain.ID) string {
+	if c.baseURL == nil {
+		return ""
+	}
+	u := *c.baseURL
+	u.Path = path.Join(u.Path, c.objectPath(id))
+	return u.String()
+}
+
+func (c *Client) GetIDFromURL(urlStr string) (domain.ID, error) {
+	if c.baseURL == nil {
+		return "", fmt.Errorf(errInvalidURL, "base URL not set")
+	}
+
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return "", fmt.Errorf(errInvalidURL, err)
+	}
+
+	if u.Host != c.baseURL.Host || u.Scheme != c.baseURL.Scheme {
+		return "", fmt.Errorf(errInvalidURL, "host or scheme mismatch")
+	}
+
+	p := strings.TrimPrefix(u.Path, "/")
+	p = strings.TrimPrefix(p, c.basePath)
+	p = strings.TrimPrefix(p, "/")
+
+	if p == "" {
+		return "", fmt.Errorf(errInvalidURL, "empty path")
+	}
+
+	return domain.ID(p), nil
 }
 
 func (c *Client) getObject(id domain.ID) *storage.ObjectHandle {
