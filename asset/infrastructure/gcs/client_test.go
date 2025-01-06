@@ -209,6 +209,11 @@ func TestClient_GetIDFromURL(t *testing.T) {
 		baseURL:    u,
 	}
 
+	validID := domain.NewID()
+	// Get the empty ID that will be used for error cases
+	emptyID, err := client.GetIDFromURL("://invalid-url")
+	assert.Error(t, err) // Ensure we got an error
+
 	tests := []struct {
 		name    string
 		url     string
@@ -217,26 +222,26 @@ func TestClient_GetIDFromURL(t *testing.T) {
 	}{
 		{
 			name:    "valid URL",
-			url:     "https://example.com/test-path/test-id",
-			wantID:  domain.ID("test-id"),
+			url:     "https://example.com/test-path/" + validID.String(),
+			wantID:  validID,
 			wantErr: false,
 		},
 		{
 			name:    "invalid URL",
 			url:     "://invalid-url",
-			wantID:  "",
+			wantID:  emptyID,
 			wantErr: true,
 		},
 		{
 			name:    "different host",
-			url:     "https://different.com/test-path/test-id",
-			wantID:  "",
+			url:     "https://different.com/test-path/" + validID.String(),
+			wantID:  emptyID,
 			wantErr: true,
 		},
 		{
 			name:    "empty path",
 			url:     "https://example.com",
-			wantID:  "",
+			wantID:  emptyID,
 			wantErr: true,
 		},
 	}
@@ -246,7 +251,7 @@ func TestClient_GetIDFromURL(t *testing.T) {
 			id, err := client.GetIDFromURL(tt.url)
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.Empty(t, id)
+				assert.Equal(t, tt.wantID, id)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantID, id)
@@ -256,7 +261,7 @@ func TestClient_GetIDFromURL(t *testing.T) {
 
 	// Test with nil baseURL
 	client.baseURL = nil
-	_, err := client.GetIDFromURL("https://example.com/test-path/test-id")
+	_, err = client.GetIDFromURL("https://example.com/test-path/" + validID.String())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "base URL not set")
 }

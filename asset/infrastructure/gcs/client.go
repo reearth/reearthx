@@ -236,17 +236,19 @@ func (c *Client) GetObjectURL(id domain.ID) string {
 }
 
 func (c *Client) GetIDFromURL(urlStr string) (domain.ID, error) {
+	emptyID := domain.NewID()
+
 	if c.baseURL == nil {
-		return "", fmt.Errorf(errInvalidURL, "base URL not set")
+		return emptyID, fmt.Errorf(errInvalidURL, "base URL not set")
 	}
 
 	u, err := url.Parse(urlStr)
 	if err != nil {
-		return "", fmt.Errorf(errInvalidURL, err)
+		return emptyID, fmt.Errorf(errInvalidURL, err)
 	}
 
 	if u.Host != c.baseURL.Host || u.Scheme != c.baseURL.Scheme {
-		return "", fmt.Errorf(errInvalidURL, "host or scheme mismatch")
+		return emptyID, fmt.Errorf(errInvalidURL, "host or scheme mismatch")
 	}
 
 	p := strings.TrimPrefix(u.Path, "/")
@@ -254,10 +256,15 @@ func (c *Client) GetIDFromURL(urlStr string) (domain.ID, error) {
 	p = strings.TrimPrefix(p, "/")
 
 	if p == "" {
-		return "", fmt.Errorf(errInvalidURL, "empty path")
+		return emptyID, fmt.Errorf(errInvalidURL, "empty path")
 	}
 
-	return domain.ID(p), nil
+	id, err := domain.IDFrom(p)
+	if err != nil {
+		return emptyID, fmt.Errorf(errInvalidURL, err)
+	}
+
+	return id, nil
 }
 
 func (c *Client) getObject(id domain.ID) *storage.ObjectHandle {
