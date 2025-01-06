@@ -23,12 +23,38 @@ type Asset struct {
 	UpdatedAt   time.Time   `json:"updatedAt"`
 }
 
+type DeleteAssetInput struct {
+	ID string `json:"id"`
+}
+
+type DeleteAssetPayload struct {
+	AssetID string `json:"assetId"`
+}
+
+type DeleteAssetsInput struct {
+	Ids []string `json:"ids"`
+}
+
+type DeleteAssetsPayload struct {
+	AssetIds []string `json:"assetIds"`
+}
+
 type GetAssetUploadURLInput struct {
 	ID string `json:"id"`
 }
 
 type GetAssetUploadURLPayload struct {
 	UploadURL string `json:"uploadURL"`
+}
+
+type MoveAssetInput struct {
+	ID            string  `json:"id"`
+	ToWorkspaceID *string `json:"toWorkspaceId,omitempty"`
+	ToProjectID   *string `json:"toProjectId,omitempty"`
+}
+
+type MoveAssetPayload struct {
+	Asset *Asset `json:"asset"`
 }
 
 type Mutation struct {

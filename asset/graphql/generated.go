@@ -40,6 +40,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Query() QueryResolver
 }
 
 type DirectiveRoot struct {
@@ -58,17 +59,34 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
+	DeleteAssetPayload struct {
+		AssetID func(childComplexity int) int
+	}
+
+	DeleteAssetsPayload struct {
+		AssetIds func(childComplexity int) int
+	}
+
 	GetAssetUploadURLPayload struct {
 		UploadURL func(childComplexity int) int
 	}
 
+	MoveAssetPayload struct {
+		Asset func(childComplexity int) int
+	}
+
 	Mutation struct {
+		DeleteAsset         func(childComplexity int, input DeleteAssetInput) int
+		DeleteAssets        func(childComplexity int, input DeleteAssetsInput) int
 		GetAssetUploadURL   func(childComplexity int, input GetAssetUploadURLInput) int
+		MoveAsset           func(childComplexity int, input MoveAssetInput) int
 		UpdateAssetMetadata func(childComplexity int, input UpdateAssetMetadataInput) int
 		UploadAsset         func(childComplexity int, input UploadAssetInput) int
 	}
 
 	Query struct {
+		Asset  func(childComplexity int, id string) int
+		Assets func(childComplexity int) int
 	}
 
 	UpdateAssetMetadataPayload struct {
@@ -84,6 +102,13 @@ type MutationResolver interface {
 	UploadAsset(ctx context.Context, input UploadAssetInput) (*UploadAssetPayload, error)
 	GetAssetUploadURL(ctx context.Context, input GetAssetUploadURLInput) (*GetAssetUploadURLPayload, error)
 	UpdateAssetMetadata(ctx context.Context, input UpdateAssetMetadataInput) (*UpdateAssetMetadataPayload, error)
+	DeleteAsset(ctx context.Context, input DeleteAssetInput) (*DeleteAssetPayload, error)
+	DeleteAssets(ctx context.Context, input DeleteAssetsInput) (*DeleteAssetsPayload, error)
+	MoveAsset(ctx context.Context, input MoveAssetInput) (*MoveAssetPayload, error)
+}
+type QueryResolver interface {
+	Asset(ctx context.Context, id string) (*Asset, error)
+	Assets(ctx context.Context) ([]*Asset, error)
 }
 
 type executableSchema struct {
@@ -168,12 +193,57 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Asset.UpdatedAt(childComplexity), true
 
+	case "DeleteAssetPayload.assetId":
+		if e.complexity.DeleteAssetPayload.AssetID == nil {
+			break
+		}
+
+		return e.complexity.DeleteAssetPayload.AssetID(childComplexity), true
+
+	case "DeleteAssetsPayload.assetIds":
+		if e.complexity.DeleteAssetsPayload.AssetIds == nil {
+			break
+		}
+
+		return e.complexity.DeleteAssetsPayload.AssetIds(childComplexity), true
+
 	case "GetAssetUploadURLPayload.uploadURL":
 		if e.complexity.GetAssetUploadURLPayload.UploadURL == nil {
 			break
 		}
 
 		return e.complexity.GetAssetUploadURLPayload.UploadURL(childComplexity), true
+
+	case "MoveAssetPayload.asset":
+		if e.complexity.MoveAssetPayload.Asset == nil {
+			break
+		}
+
+		return e.complexity.MoveAssetPayload.Asset(childComplexity), true
+
+	case "Mutation.deleteAsset":
+		if e.complexity.Mutation.DeleteAsset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteAsset_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteAsset(childComplexity, args["input"].(DeleteAssetInput)), true
+
+	case "Mutation.deleteAssets":
+		if e.complexity.Mutation.DeleteAssets == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteAssets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteAssets(childComplexity, args["input"].(DeleteAssetsInput)), true
 
 	case "Mutation.getAssetUploadURL":
 		if e.complexity.Mutation.GetAssetUploadURL == nil {
@@ -186,6 +256,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.GetAssetUploadURL(childComplexity, args["input"].(GetAssetUploadURLInput)), true
+
+	case "Mutation.moveAsset":
+		if e.complexity.Mutation.MoveAsset == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_moveAsset_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MoveAsset(childComplexity, args["input"].(MoveAssetInput)), true
 
 	case "Mutation.updateAssetMetadata":
 		if e.complexity.Mutation.UpdateAssetMetadata == nil {
@@ -211,6 +293,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UploadAsset(childComplexity, args["input"].(UploadAssetInput)), true
 
+	case "Query.asset":
+		if e.complexity.Query.Asset == nil {
+			break
+		}
+
+		args, err := ec.field_Query_asset_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Asset(childComplexity, args["id"].(string)), true
+
+	case "Query.assets":
+		if e.complexity.Query.Assets == nil {
+			break
+		}
+
+		return e.complexity.Query.Assets(childComplexity), true
+
 	case "UpdateAssetMetadataPayload.asset":
 		if e.complexity.UpdateAssetMetadataPayload.Asset == nil {
 			break
@@ -233,7 +334,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputDeleteAssetInput,
+		ec.unmarshalInputDeleteAssetsInput,
 		ec.unmarshalInputGetAssetUploadURLInput,
+		ec.unmarshalInputMoveAssetInput,
 		ec.unmarshalInputUpdateAssetMetadataInput,
 		ec.unmarshalInputUploadAssetInput,
 	)
@@ -352,6 +456,36 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_deleteAsset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 DeleteAssetInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteAssetInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteAssets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 DeleteAssetsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteAssetsInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_getAssetUploadURL_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -359,6 +493,21 @@ func (ec *executionContext) field_Mutation_getAssetUploadURL_args(ctx context.Co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNGetAssetUploadURLInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐGetAssetUploadURLInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_moveAsset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 MoveAssetInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNMoveAssetInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐMoveAssetInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -409,6 +558,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_asset_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -840,6 +1004,94 @@ func (ec *executionContext) fieldContext_Asset_updatedAt(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteAssetPayload_assetId(ctx context.Context, field graphql.CollectedField, obj *DeleteAssetPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteAssetPayload_assetId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AssetID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteAssetPayload_assetId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteAssetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteAssetsPayload_assetIds(ctx context.Context, field graphql.CollectedField, obj *DeleteAssetsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteAssetsPayload_assetIds(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AssetIds, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNID2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteAssetsPayload_assetIds(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteAssetsPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _GetAssetUploadURLPayload_uploadURL(ctx context.Context, field graphql.CollectedField, obj *GetAssetUploadURLPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_GetAssetUploadURLPayload_uploadURL(ctx, field)
 	if err != nil {
@@ -879,6 +1131,70 @@ func (ec *executionContext) fieldContext_GetAssetUploadURLPayload_uploadURL(ctx 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MoveAssetPayload_asset(ctx context.Context, field graphql.CollectedField, obj *MoveAssetPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MoveAssetPayload_asset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Asset, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Asset)
+	fc.Result = res
+	return ec.marshalNAsset2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAsset(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MoveAssetPayload_asset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MoveAssetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Asset_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Asset_name(ctx, field)
+			case "size":
+				return ec.fieldContext_Asset_size(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Asset_contentType(ctx, field)
+			case "url":
+				return ec.fieldContext_Asset_url(ctx, field)
+			case "status":
+				return ec.fieldContext_Asset_status(ctx, field)
+			case "error":
+				return ec.fieldContext_Asset_error(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Asset_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Asset_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
 		},
 	}
 	return fc, nil
@@ -1057,6 +1373,322 @@ func (ec *executionContext) fieldContext_Mutation_updateAssetMetadata(ctx contex
 	if fc.Args, err = ec.field_Mutation_updateAssetMetadata_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteAsset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteAsset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteAsset(rctx, fc.Args["input"].(DeleteAssetInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*DeleteAssetPayload)
+	fc.Result = res
+	return ec.marshalNDeleteAssetPayload2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteAsset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "assetId":
+				return ec.fieldContext_DeleteAssetPayload_assetId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteAssetPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteAsset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteAssets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteAssets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteAssets(rctx, fc.Args["input"].(DeleteAssetsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*DeleteAssetsPayload)
+	fc.Result = res
+	return ec.marshalNDeleteAssetsPayload2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetsPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteAssets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "assetIds":
+				return ec.fieldContext_DeleteAssetsPayload_assetIds(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteAssetsPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteAssets_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_moveAsset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_moveAsset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MoveAsset(rctx, fc.Args["input"].(MoveAssetInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*MoveAssetPayload)
+	fc.Result = res
+	return ec.marshalNMoveAssetPayload2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐMoveAssetPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_moveAsset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "asset":
+				return ec.fieldContext_MoveAssetPayload_asset(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MoveAssetPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_moveAsset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_asset(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_asset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Asset(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*Asset)
+	fc.Result = res
+	return ec.marshalNAsset2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAsset(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_asset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Asset_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Asset_name(ctx, field)
+			case "size":
+				return ec.fieldContext_Asset_size(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Asset_contentType(ctx, field)
+			case "url":
+				return ec.fieldContext_Asset_url(ctx, field)
+			case "status":
+				return ec.fieldContext_Asset_status(ctx, field)
+			case "error":
+				return ec.fieldContext_Asset_error(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Asset_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Asset_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_asset_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_assets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_assets(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Assets(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*Asset)
+	fc.Result = res
+	return ec.marshalNAsset2ᚕᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAssetᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_assets(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Asset_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Asset_name(ctx, field)
+			case "size":
+				return ec.fieldContext_Asset_size(ctx, field)
+			case "contentType":
+				return ec.fieldContext_Asset_contentType(ctx, field)
+			case "url":
+				return ec.fieldContext_Asset_url(ctx, field)
+			case "status":
+				return ec.fieldContext_Asset_status(ctx, field)
+			case "error":
+				return ec.fieldContext_Asset_error(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Asset_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Asset_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Asset", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -3091,6 +3723,60 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputDeleteAssetInput(ctx context.Context, obj interface{}) (DeleteAssetInput, error) {
+	var it DeleteAssetInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteAssetsInput(ctx context.Context, obj interface{}) (DeleteAssetsInput, error) {
+	var it DeleteAssetsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ids"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ids":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ids = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGetAssetUploadURLInput(ctx context.Context, obj interface{}) (GetAssetUploadURLInput, error) {
 	var it GetAssetUploadURLInput
 	asMap := map[string]interface{}{}
@@ -3112,6 +3798,47 @@ func (ec *executionContext) unmarshalInputGetAssetUploadURLInput(ctx context.Con
 				return it, err
 			}
 			it.ID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputMoveAssetInput(ctx context.Context, obj interface{}) (MoveAssetInput, error) {
+	var it MoveAssetInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "toWorkspaceId", "toProjectId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "toWorkspaceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toWorkspaceId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToWorkspaceID = data
+		case "toProjectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toProjectId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToProjectID = data
 		}
 	}
 
@@ -3281,6 +4008,84 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var deleteAssetPayloadImplementors = []string{"DeleteAssetPayload"}
+
+func (ec *executionContext) _DeleteAssetPayload(ctx context.Context, sel ast.SelectionSet, obj *DeleteAssetPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteAssetPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteAssetPayload")
+		case "assetId":
+			out.Values[i] = ec._DeleteAssetPayload_assetId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteAssetsPayloadImplementors = []string{"DeleteAssetsPayload"}
+
+func (ec *executionContext) _DeleteAssetsPayload(ctx context.Context, sel ast.SelectionSet, obj *DeleteAssetsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteAssetsPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteAssetsPayload")
+		case "assetIds":
+			out.Values[i] = ec._DeleteAssetsPayload_assetIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var getAssetUploadURLPayloadImplementors = []string{"GetAssetUploadURLPayload"}
 
 func (ec *executionContext) _GetAssetUploadURLPayload(ctx context.Context, sel ast.SelectionSet, obj *GetAssetUploadURLPayload) graphql.Marshaler {
@@ -3294,6 +4099,45 @@ func (ec *executionContext) _GetAssetUploadURLPayload(ctx context.Context, sel a
 			out.Values[i] = graphql.MarshalString("GetAssetUploadURLPayload")
 		case "uploadURL":
 			out.Values[i] = ec._GetAssetUploadURLPayload_uploadURL(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var moveAssetPayloadImplementors = []string{"MoveAssetPayload"}
+
+func (ec *executionContext) _MoveAssetPayload(ctx context.Context, sel ast.SelectionSet, obj *MoveAssetPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, moveAssetPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MoveAssetPayload")
+		case "asset":
+			out.Values[i] = ec._MoveAssetPayload_asset(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3360,6 +4204,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deleteAsset":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteAsset(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteAssets":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteAssets(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveAsset":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_moveAsset(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3402,6 +4267,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "asset":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_asset(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "assets":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_assets(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -3837,6 +4746,54 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAsset2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAsset(ctx context.Context, sel ast.SelectionSet, v Asset) graphql.Marshaler {
+	return ec._Asset(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAsset2ᚕᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAssetᚄ(ctx context.Context, sel ast.SelectionSet, v []*Asset) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAsset2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAsset(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNAsset2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐAsset(ctx context.Context, sel ast.SelectionSet, v *Asset) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3870,6 +4827,44 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNDeleteAssetInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetInput(ctx context.Context, v interface{}) (DeleteAssetInput, error) {
+	res, err := ec.unmarshalInputDeleteAssetInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteAssetPayload2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetPayload(ctx context.Context, sel ast.SelectionSet, v DeleteAssetPayload) graphql.Marshaler {
+	return ec._DeleteAssetPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteAssetPayload2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetPayload(ctx context.Context, sel ast.SelectionSet, v *DeleteAssetPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteAssetPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteAssetsInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetsInput(ctx context.Context, v interface{}) (DeleteAssetsInput, error) {
+	res, err := ec.unmarshalInputDeleteAssetsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteAssetsPayload2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetsPayload(ctx context.Context, sel ast.SelectionSet, v DeleteAssetsPayload) graphql.Marshaler {
+	return ec._DeleteAssetsPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteAssetsPayload2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐDeleteAssetsPayload(ctx context.Context, sel ast.SelectionSet, v *DeleteAssetsPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteAssetsPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNGetAssetUploadURLInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐGetAssetUploadURLInput(ctx context.Context, v interface{}) (GetAssetUploadURLInput, error) {
@@ -3906,6 +4901,38 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3919,6 +4946,25 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNMoveAssetInput2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐMoveAssetInput(ctx context.Context, v interface{}) (MoveAssetInput, error) {
+	res, err := ec.unmarshalInputMoveAssetInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNMoveAssetPayload2githubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐMoveAssetPayload(ctx context.Context, sel ast.SelectionSet, v MoveAssetPayload) graphql.Marshaler {
+	return ec._MoveAssetPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNMoveAssetPayload2ᚖgithubᚗcomᚋreearthᚋreearthxᚋassetᚋgraphqlᚐMoveAssetPayload(ctx context.Context, sel ast.SelectionSet, v *MoveAssetPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MoveAssetPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -4280,6 +5326,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalID(*v)
 	return res
 }
 

@@ -6,6 +6,7 @@ package graphql
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/reearth/reearthx/asset/domain"
 )
@@ -102,7 +103,36 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 	}, nil
 }
 
+// DeleteAsset is the resolver for the deleteAsset field.
+func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInput) (*DeleteAssetPayload, error) {
+	panic(fmt.Errorf("not implemented: DeleteAsset - deleteAsset"))
+}
+
+// DeleteAssets is the resolver for the deleteAssets field.
+func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsInput) (*DeleteAssetsPayload, error) {
+	panic(fmt.Errorf("not implemented: DeleteAssets - deleteAssets"))
+}
+
+// MoveAsset is the resolver for the moveAsset field.
+func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) (*MoveAssetPayload, error) {
+	panic(fmt.Errorf("not implemented: MoveAsset - moveAsset"))
+}
+
+// Asset is the resolver for the asset field.
+func (r *queryResolver) Asset(ctx context.Context, id string) (*Asset, error) {
+	panic(fmt.Errorf("not implemented: Asset - asset"))
+}
+
+// Assets is the resolver for the assets field.
+func (r *queryResolver) Assets(ctx context.Context) ([]*Asset, error) {
+	panic(fmt.Errorf("not implemented: Assets - assets"))
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
 type mutationResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }

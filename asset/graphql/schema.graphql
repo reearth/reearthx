@@ -20,6 +20,13 @@ enum AssetStatus {
 scalar Time
 scalar Upload
 
+type Query {
+  # Get a single asset by ID
+  asset(id: ID!): Asset!
+  # List all assets
+  assets: [Asset!]!
+}
+
 type Mutation {
   # Direct upload mutation
   uploadAsset(input: UploadAssetInput!): UploadAssetPayload!
@@ -29,6 +36,15 @@ type Mutation {
   
   # Update asset metadata after signed URL upload
   updateAssetMetadata(input: UpdateAssetMetadataInput!): UpdateAssetMetadataPayload!
+
+  # Delete a single asset
+  deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
+
+  # Delete multiple assets
+  deleteAssets(input: DeleteAssetsInput!): DeleteAssetsPayload!
+
+  # Move asset to another workspace/project
+  moveAsset(input: MoveAssetInput!): MoveAssetPayload!
 }
 
 input UploadAssetInput {
@@ -56,5 +72,31 @@ input UpdateAssetMetadataInput {
 }
 
 type UpdateAssetMetadataPayload {
+  asset: Asset!
+}
+
+input DeleteAssetInput {
+  id: ID!
+}
+
+type DeleteAssetPayload {
+  assetId: ID!
+}
+
+input DeleteAssetsInput {
+  ids: [ID!]!
+}
+
+type DeleteAssetsPayload {
+  assetIds: [ID!]!
+}
+
+input MoveAssetInput {
+  id: ID!
+  toWorkspaceId: ID
+  toProjectId: ID
+}
+
+type MoveAssetPayload {
   asset: Asset!
 } 
