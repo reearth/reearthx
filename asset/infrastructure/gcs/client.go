@@ -136,8 +136,13 @@ func (c *Client) List(ctx context.Context) ([]*domain.Asset, error) {
 			return nil, fmt.Errorf(errFailedToListAssets, err)
 		}
 
+		id, err := domain.IDFrom(path.Base(attrs.Name))
+		if err != nil {
+			continue // skip invalid IDs
+		}
+
 		asset := domain.NewAsset(
-			domain.ID(path.Base(attrs.Name)),
+			id,
 			attrs.Metadata["name"],
 			attrs.Size,
 			attrs.ContentType,
