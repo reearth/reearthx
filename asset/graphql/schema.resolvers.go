@@ -6,7 +6,6 @@ package graphql
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/reearth/reearthx/asset/domain"
 )
@@ -105,27 +104,107 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInput) (*DeleteAssetPayload, error) {
-	panic(fmt.Errorf("not implemented: DeleteAsset - deleteAsset"))
+	id, err := domain.IDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.assetService.Delete(ctx, id); err != nil {
+		return nil, err
+	}
+
+	return &DeleteAssetPayload{
+		AssetID: input.ID,
+	}, nil
 }
 
 // DeleteAssets is the resolver for the deleteAssets field.
 func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsInput) (*DeleteAssetsPayload, error) {
-	panic(fmt.Errorf("not implemented: DeleteAssets - deleteAssets"))
+	var assetIDs []domain.ID
+	for _, idStr := range input.Ids {
+		id, err := domain.IDFrom(idStr)
+		if err != nil {
+			return nil, err
+		}
+		assetIDs = append(assetIDs, id)
+	}
+
+	for _, id := range assetIDs {
+		if err := r.assetService.Delete(ctx, id); err != nil {
+			return nil, err
+		}
+	}
+
+	return &DeleteAssetsPayload{
+		AssetIds: input.Ids,
+	}, nil
 }
 
 // MoveAsset is the resolver for the moveAsset field.
 func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) (*MoveAssetPayload, error) {
-	panic(fmt.Errorf("not implemented: MoveAsset - moveAsset"))
+	id, err := domain.IDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	asset, err := r.assetService.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.ToWorkspaceID != nil {
+		wsID, err := domain.WorkspaceIDFrom(*input.ToWorkspaceID)
+		if err != nil {
+			return nil, err
+		}
+		asset.MoveToWorkspace(wsID)
+	}
+
+	if input.ToProjectID != nil {
+		projID, err := domain.ProjectIDFrom(*input.ToProjectID)
+		if err != nil {
+			return nil, err
+		}
+		asset.MoveToProject(projID)
+	}
+
+	if err := r.assetService.Update(ctx, asset); err != nil {
+		return nil, err
+	}
+
+	return &MoveAssetPayload{
+		Asset: AssetFromDomain(asset),
+	}, nil
 }
 
 // Asset is the resolver for the asset field.
 func (r *queryResolver) Asset(ctx context.Context, id string) (*Asset, error) {
-	panic(fmt.Errorf("not implemented: Asset - asset"))
+	assetID, err := domain.IDFrom(id)
+	if err != nil {
+		return nil, err
+	}
+
+	asset, err := r.assetService.Get(ctx, assetID)
+	if err != nil {
+		return nil, err
+	}
+
+	return AssetFromDomain(asset), nil
 }
 
 // Assets is the resolver for the assets field.
 func (r *queryResolver) Assets(ctx context.Context) ([]*Asset, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
+	assets, err := r.assetService.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*Asset, len(assets))
+	for i, asset := range assets {
+		result[i] = AssetFromDomain(asset)
+	}
+
+	return result, nil
 }
 
 // Mutation returns MutationResolver implementation.

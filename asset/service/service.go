@@ -43,3 +43,7 @@ func (s *Service) Download(ctx context.Context, id domain.ID) (io.ReadCloser, er
 func (s *Service) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
 	return s.repo.GetUploadURL(ctx, id)
 }
+
+func (s *Service) List(ctx context.Context) ([]*domain.Asset, error) {
+	return s.repo.List(ctx)
+}

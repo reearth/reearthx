@@ -129,3 +129,13 @@ func (a *Asset) UpdateMetadata(name, url, contentType string) {
 	}
 	a.updatedAt = time.Now()
 }
+
+func (a *Asset) MoveToWorkspace(workspaceID WorkspaceID) {
+	a.workspaceID = workspaceID
+	a.updatedAt = time.Now()
+}
+
+func (a *Asset) MoveToProject(projectID ProjectID) {
+	a.projectID = projectID
+	a.updatedAt = time.Now()
+}
