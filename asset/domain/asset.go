@@ -22,6 +22,8 @@ const (
 type Asset struct {
 	id          ID
 	groupID     ID
+	projectID   ID
+	workspaceID ID
 	name        string
 	size        int64
 	url         string
@@ -48,6 +50,8 @@ func NewAsset(id ID, name string, size int64, contentType string) *Asset {
 // Getters
 func (a *Asset) ID() ID               { return a.id }
 func (a *Asset) GroupID() ID          { return a.groupID }
+func (a *Asset) ProjectID() ID        { return a.projectID }
+func (a *Asset) WorkspaceID() ID      { return a.workspaceID }
 func (a *Asset) Name() string         { return a.name }
 func (a *Asset) Size() int64          { return a.size }
 func (a *Asset) URL() string          { return a.url }
