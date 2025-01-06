@@ -34,7 +34,16 @@ func (s *Set[T]) Clone() *Set[T] {
 	if s == nil {
 		return nil
 	}
-	return NewSet(s.l...)
+	ns := &Set[T]{
+		l: s.l.Clone(),
+	}
+	if s.m != nil {
+		ns.m = make(map[ID[T]]struct{}, len(s.m))
+		for k, v := range s.m {
+			ns.m[k] = v
+		}
+	}
+	return ns
 }
 
 func (s *Set[T]) Add(id ...ID[T]) {
