@@ -107,7 +107,6 @@ func TestClient_CRUD(t *testing.T) {
 
 	// Test Read
 	attrs := &storage.ObjectAttrs{
-		Name:     obj.name,
 		Metadata: obj.metadata,
 	}
 	readAsset := domain.NewAsset(
@@ -127,7 +126,6 @@ func TestClient_CRUD(t *testing.T) {
 		"content_type": updatedAsset.ContentType(),
 	}
 	attrs = &storage.ObjectAttrs{
-		Name:     obj.name,
 		Metadata: obj.metadata,
 	}
 	assert.Equal(t, updatedAsset.Name(), attrs.Metadata["name"])
