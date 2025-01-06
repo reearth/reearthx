@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/reearth/reearthx/log"
+	"go.uber.org/zap"
 	"io"
 	"path/filepath"
 	"sync"
@@ -85,7 +87,12 @@ func (d *ZipDecompressor) processFile(f *zip.File) (io.Reader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file in zip: %w", err)
 	}
-	defer rc.Close()
+	defer func(rc io.ReadCloser) {
+		err := rc.Close()
+		if err != nil {
+			log.Warn("failed to close file in zip", zap.Error(err))
+		}
+	}(rc)
 
 	// Read the entire file content into memory
 	content, err := io.ReadAll(rc)

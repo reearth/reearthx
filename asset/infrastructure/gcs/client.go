@@ -181,11 +181,11 @@ func (c *Client) GetUploadURL(ctx context.Context, id domain.ID) (string, error)
 		Expires: time.Now().Add(15 * time.Minute),
 	}
 
-	url, err := c.bucket.SignedURL(c.objectPath(id), opts)
+	signedURL, err := c.bucket.SignedURL(c.objectPath(id), opts)
 	if err != nil {
 		return "", fmt.Errorf(errFailedToGenerateURL, err)
 	}
-	return url, nil
+	return signedURL, nil
 }
 
 func (c *Client) Move(ctx context.Context, fromID, toID domain.ID) error {
