@@ -1,0 +1,60 @@
+type Asset {
+  id: ID!
+  name: String!
+  size: Int!
+  contentType: String!
+  url: String
+  status: AssetStatus!
+  error: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+enum AssetStatus {
+  PENDING
+  ACTIVE
+  EXTRACTING
+  ERROR
+}
+
+scalar Time
+scalar Upload
+
+type Mutation {
+  # Direct upload mutation
+  uploadAsset(input: UploadAssetInput!): UploadAssetPayload!
+  
+  # Get signed URL for upload
+  getAssetUploadURL(input: GetAssetUploadURLInput!): GetAssetUploadURLPayload!
+  
+  # Update asset metadata after signed URL upload
+  updateAssetMetadata(input: UpdateAssetMetadataInput!): UpdateAssetMetadataPayload!
+}
+
+input UploadAssetInput {
+  id: ID!
+  file: Upload!
+}
+
+type UploadAssetPayload {
+  asset: Asset!
+}
+
+input GetAssetUploadURLInput {
+  id: ID!
+}
+
+type GetAssetUploadURLPayload {
+  uploadURL: String!
+}
+
+input UpdateAssetMetadataInput {
+  id: ID!
+  name: String!
+  size: Int!
+  contentType: String!
+}
+
+type UpdateAssetMetadataPayload {
+  asset: Asset!
+} 
