@@ -7,7 +7,11 @@ type Set[T Type] struct {
 
 func NewSet[T Type](id ...ID[T]) *Set[T] {
 	s := &Set[T]{}
-	s.Add(id...)
+	if len(id) != 0 {
+		s.l = make(List[T], 0, len(id))
+		s.m = make(map[ID[T]]struct{}, len(id))
+		s.Add(id...)
+	}
 	return s
 }
 
@@ -34,7 +38,7 @@ func (s *Set[T]) Clone() *Set[T] {
 	if s == nil {
 		return nil
 	}
-	return NewSet(s.l...)
+	return NewSet[T](s.l...)
 }
 
 func (s *Set[T]) Add(id ...ID[T]) {
