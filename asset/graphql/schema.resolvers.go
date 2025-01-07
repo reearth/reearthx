@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/reearth/reearthx/asset/domain"
-	"github.com/reearth/reearthx/log"
 )
 
 // UploadAsset is the resolver for the uploadAsset field.
@@ -31,11 +30,6 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 		return nil, err
 	}
 
-	// Publish created event
-	if err := r.pubsub.PublishAssetCreated(ctx, asset); err != nil {
-		log.Errorfc(ctx, "failed to publish asset created event: %v", err)
-	}
-
 	// Upload file content
 	if err := r.assetService.Upload(ctx, id, FileFromUpload(&input.File)); err != nil {
 		return nil, err
@@ -45,11 +39,6 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 	asset.UpdateStatus(domain.StatusActive, "")
 	if err := r.assetService.Update(ctx, asset); err != nil {
 		return nil, err
-	}
-
-	// Publish uploaded event
-	if err := r.pubsub.PublishAssetUploaded(ctx, asset); err != nil {
-		log.Errorfc(ctx, "failed to publish asset uploaded event: %v", err)
 	}
 
 	return &UploadAssetPayload{
@@ -74,11 +63,6 @@ func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAsset
 
 	if err := r.assetService.Create(ctx, asset); err != nil {
 		return nil, err
-	}
-
-	// Publish created event
-	if err := r.pubsub.PublishAssetCreated(ctx, asset); err != nil {
-		log.Errorfc(ctx, "failed to publish asset created event: %v", err)
 	}
 
 	// Generate signed URL
@@ -113,11 +97,6 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 		return nil, err
 	}
 
-	// Publish updated event
-	if err := r.pubsub.PublishAssetUpdated(ctx, asset); err != nil {
-		log.Errorfc(ctx, "failed to publish asset updated event: %v", err)
-	}
-
 	return &UpdateAssetMetadataPayload{
 		Asset: AssetFromDomain(asset),
 	}, nil
@@ -132,11 +111,6 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInp
 
 	if err := r.assetService.Delete(ctx, id); err != nil {
 		return nil, err
-	}
-
-	// Publish deleted event
-	if err := r.pubsub.PublishAssetDeleted(ctx, id); err != nil {
-		log.Errorfc(ctx, "failed to publish asset deleted event: %v", err)
 	}
 
 	return &DeleteAssetPayload{
@@ -158,11 +132,6 @@ func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsI
 	for _, id := range assetIDs {
 		if err := r.assetService.Delete(ctx, id); err != nil {
 			return nil, err
-		}
-
-		// Publish deleted event for each asset
-		if err := r.pubsub.PublishAssetDeleted(ctx, id); err != nil {
-			log.Errorfc(ctx, "failed to publish asset deleted event: %v", err)
 		}
 	}
 
@@ -201,11 +170,6 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 
 	if err := r.assetService.Update(ctx, asset); err != nil {
 		return nil, err
-	}
-
-	// Publish transferred event
-	if err := r.pubsub.PublishAssetTransferred(ctx, asset); err != nil {
-		log.Errorfc(ctx, "failed to publish asset transferred event: %v", err)
 	}
 
 	return &MoveAssetPayload{
