@@ -58,9 +58,9 @@ func TestAssetPubSub_Subscribe(t *testing.T) {
 
 	// Publish events
 	ctx := context.Background()
-	ps.PublishAssetCreated(ctx, asset)
-	ps.PublishAssetUpdated(ctx, asset)
-	ps.PublishAssetUploaded(ctx, asset)
+	assert.NoError(t, ps.PublishAssetCreated(ctx, asset))
+	assert.NoError(t, ps.PublishAssetUpdated(ctx, asset))
+	assert.NoError(t, ps.PublishAssetUploaded(ctx, asset))
 
 	// Check received events
 	mu.Lock()
@@ -94,9 +94,9 @@ func TestAssetPubSub_SubscribeSpecificEvent(t *testing.T) {
 
 	// Publish different events
 	ctx := context.Background()
-	ps.PublishAssetCreated(ctx, asset)  // Should be received
-	ps.PublishAssetUpdated(ctx, asset)  // Should be ignored
-	ps.PublishAssetUploaded(ctx, asset) // Should be ignored
+	assert.NoError(t, ps.PublishAssetCreated(ctx, asset))  // Should be received
+	assert.NoError(t, ps.PublishAssetUpdated(ctx, asset))  // Should be ignored
+	assert.NoError(t, ps.PublishAssetUploaded(ctx, asset)) // Should be ignored
 
 	// Check received events
 	mu.Lock()
@@ -131,7 +131,7 @@ func TestAssetPubSub_Unsubscribe(t *testing.T) {
 
 	// Publish event
 	ctx := context.Background()
-	ps.PublishAssetCreated(ctx, asset)
+	assert.NoError(t, ps.PublishAssetCreated(ctx, asset))
 
 	// Check no events were received
 	mu.Lock()

@@ -183,6 +183,7 @@ func TestBuilder_MustBuild(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.wantPanic != nil {
 				assert.PanicsWithValue(t, tt.wantPanic, func() {
+					//nolint:errcheck // MustBuild panics on error, return value is intentionally not checked
 					tt.build().MustBuild()
 				})
 			} else {
