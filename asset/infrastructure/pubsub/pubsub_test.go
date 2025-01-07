@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/repository"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,15 +50,15 @@ func TestAssetPubSub_PublishEvents(t *testing.T) {
 	tests := []struct {
 		name     string
 		publish  func() error
-		expected AssetEvent
+		expected repository.AssetEvent
 	}{
 		{
 			name: "publish created event",
 			publish: func() error {
 				return ps.PublishAssetCreated(ctx, asset)
 			},
-			expected: AssetEvent{
-				Type:        EventTypeAssetCreated,
+			expected: repository.AssetEvent{
+				Type:        repository.EventTypeAssetCreated,
 				AssetID:     asset.ID(),
 				WorkspaceID: asset.WorkspaceID(),
 				ProjectID:   asset.ProjectID(),
@@ -70,8 +71,8 @@ func TestAssetPubSub_PublishEvents(t *testing.T) {
 			publish: func() error {
 				return ps.PublishAssetUpdated(ctx, asset)
 			},
-			expected: AssetEvent{
-				Type:        EventTypeAssetUpdated,
+			expected: repository.AssetEvent{
+				Type:        repository.EventTypeAssetUpdated,
 				AssetID:     asset.ID(),
 				WorkspaceID: asset.WorkspaceID(),
 				ProjectID:   asset.ProjectID(),
@@ -84,8 +85,8 @@ func TestAssetPubSub_PublishEvents(t *testing.T) {
 			publish: func() error {
 				return ps.PublishAssetDeleted(ctx, asset.ID())
 			},
-			expected: AssetEvent{
-				Type:    EventTypeAssetDeleted,
+			expected: repository.AssetEvent{
+				Type:    repository.EventTypeAssetDeleted,
 				AssetID: asset.ID(),
 			},
 		},
@@ -94,8 +95,8 @@ func TestAssetPubSub_PublishEvents(t *testing.T) {
 			publish: func() error {
 				return ps.PublishAssetUploaded(ctx, asset)
 			},
-			expected: AssetEvent{
-				Type:        EventTypeAssetUploaded,
+			expected: repository.AssetEvent{
+				Type:        repository.EventTypeAssetUploaded,
 				AssetID:     asset.ID(),
 				WorkspaceID: asset.WorkspaceID(),
 				ProjectID:   asset.ProjectID(),
@@ -108,8 +109,8 @@ func TestAssetPubSub_PublishEvents(t *testing.T) {
 			publish: func() error {
 				return ps.PublishAssetExtracted(ctx, asset)
 			},
-			expected: AssetEvent{
-				Type:        EventTypeAssetExtracted,
+			expected: repository.AssetEvent{
+				Type:        repository.EventTypeAssetExtracted,
 				AssetID:     asset.ID(),
 				WorkspaceID: asset.WorkspaceID(),
 				ProjectID:   asset.ProjectID(),
@@ -122,8 +123,8 @@ func TestAssetPubSub_PublishEvents(t *testing.T) {
 			publish: func() error {
 				return ps.PublishAssetTransferred(ctx, asset)
 			},
-			expected: AssetEvent{
-				Type:        EventTypeAssetTransferred,
+			expected: repository.AssetEvent{
+				Type:        repository.EventTypeAssetTransferred,
 				AssetID:     asset.ID(),
 				WorkspaceID: asset.WorkspaceID(),
 				ProjectID:   asset.ProjectID(),
