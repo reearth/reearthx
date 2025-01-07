@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/reearth/reearthx/asset/domain"
@@ -29,6 +30,113 @@ func TestNewAssetPubSub(t *testing.T) {
 	assert.NotNil(t, ps)
 	assert.Equal(t, pub, ps.publisher)
 	assert.Equal(t, "test-topic", ps.topic)
+}
+
+func TestAssetPubSub_Subscribe(t *testing.T) {
+	ps := NewAssetPubSub(&mockPublisher{}, "test-topic")
+
+	var receivedEvents []repository.AssetEvent
+	var mu sync.Mutex
+
+	// Subscribe to all events
+	ps.Subscribe("*", func(ctx context.Context, event repository.AssetEvent) {
+		mu.Lock()
+		receivedEvents = append(receivedEvents, event)
+		mu.Unlock()
+	})
+
+	// Create test asset
+	asset := domain.NewAsset(
+		domain.NewID(),
+		"test.txt",
+		100,
+		"text/plain",
+	)
+	asset.MoveToWorkspace(domain.NewWorkspaceID())
+	asset.MoveToProject(domain.NewProjectID())
+	asset.UpdateStatus(domain.StatusActive, "")
+
+	// Publish events
+	ctx := context.Background()
+	ps.PublishAssetCreated(ctx, asset)
+	ps.PublishAssetUpdated(ctx, asset)
+	ps.PublishAssetUploaded(ctx, asset)
+
+	// Check received events
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, 3, len(receivedEvents))
+	assert.Equal(t, repository.EventTypeAssetCreated, receivedEvents[0].Type)
+	assert.Equal(t, repository.EventTypeAssetUpdated, receivedEvents[1].Type)
+	assert.Equal(t, repository.EventTypeAssetUploaded, receivedEvents[2].Type)
+}
+
+func TestAssetPubSub_SubscribeSpecificEvent(t *testing.T) {
+	ps := NewAssetPubSub(&mockPublisher{}, "test-topic")
+
+	var receivedEvents []repository.AssetEvent
+	var mu sync.Mutex
+
+	// Subscribe only to created events
+	ps.Subscribe(repository.EventTypeAssetCreated, func(ctx context.Context, event repository.AssetEvent) {
+		mu.Lock()
+		receivedEvents = append(receivedEvents, event)
+		mu.Unlock()
+	})
+
+	// Create test asset
+	asset := domain.NewAsset(
+		domain.NewID(),
+		"test.txt",
+		100,
+		"text/plain",
+	)
+
+	// Publish different events
+	ctx := context.Background()
+	ps.PublishAssetCreated(ctx, asset)  // Should be received
+	ps.PublishAssetUpdated(ctx, asset)  // Should be ignored
+	ps.PublishAssetUploaded(ctx, asset) // Should be ignored
+
+	// Check received events
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, 1, len(receivedEvents))
+	assert.Equal(t, repository.EventTypeAssetCreated, receivedEvents[0].Type)
+}
+
+func TestAssetPubSub_Unsubscribe(t *testing.T) {
+	ps := NewAssetPubSub(&mockPublisher{}, "test-topic")
+
+	var receivedEvents []repository.AssetEvent
+	var mu sync.Mutex
+
+	handler := func(ctx context.Context, event repository.AssetEvent) {
+		mu.Lock()
+		receivedEvents = append(receivedEvents, event)
+		mu.Unlock()
+	}
+
+	// Subscribe and then unsubscribe
+	ps.Subscribe(repository.EventTypeAssetCreated, handler)
+	ps.Unsubscribe(repository.EventTypeAssetCreated, handler)
+
+	// Create test asset
+	asset := domain.NewAsset(
+		domain.NewID(),
+		"test.txt",
+		100,
+		"text/plain",
+	)
+
+	// Publish event
+	ctx := context.Background()
+	ps.PublishAssetCreated(ctx, asset)
+
+	// Check no events were received
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, 0, len(receivedEvents))
 }
 
 func TestAssetPubSub_PublishEvents(t *testing.T) {

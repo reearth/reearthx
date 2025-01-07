@@ -29,7 +29,10 @@ type AssetEvent struct {
 	Error       string             `json:"error,omitempty"`
 }
 
-// PubSubRepository defines the interface for publishing asset events
+// EventHandler is a function that handles asset events
+type EventHandler func(ctx context.Context, event AssetEvent)
+
+// PubSubRepository defines the interface for publishing and subscribing to asset events
 type PubSubRepository interface {
 	// PublishAssetCreated publishes an asset created event
 	PublishAssetCreated(ctx context.Context, asset *domain.Asset) error
@@ -48,4 +51,11 @@ type PubSubRepository interface {
 
 	// PublishAssetTransferred publishes an asset transferred event
 	PublishAssetTransferred(ctx context.Context, asset *domain.Asset) error
+
+	// Subscribe registers a handler for a specific event type
+	// Use "*" as eventType to subscribe to all events
+	Subscribe(eventType EventType, handler EventHandler)
+
+	// Unsubscribe removes a handler for a specific event type
+	Unsubscribe(eventType EventType, handler EventHandler)
 }
