@@ -60,8 +60,13 @@ func TestZipDecompressor_CompressWithContent(t *testing.T) {
 
 	// Test compression
 	ctx := context.Background()
-	compressed, err := d.CompressWithContent(ctx, files)
+	compressChan, err := d.CompressWithContent(ctx, files)
 	assert.NoError(t, err)
+
+	// Get compression result
+	result := <-compressChan
+	assert.NoError(t, result.Error)
+	compressed := result.Content
 
 	// Test decompression of the compressed content
 	resultChan, err := d.DecompressWithContent(ctx, compressed)
@@ -106,8 +111,11 @@ func TestZipDecompressor_ContextCancellation(t *testing.T) {
 	testFiles := map[string]io.Reader{
 		"test1.txt": strings.NewReader("Hello, World!"),
 	}
-	_, err = d.CompressWithContent(ctx, testFiles)
-	assert.ErrorIs(t, err, context.Canceled)
+	compressChan, err := d.CompressWithContent(ctx, testFiles)
+	assert.NoError(t, err)
+
+	result := <-compressChan
+	assert.ErrorIs(t, result.Error, context.Canceled)
 
 	// Test decompression with cancelled context
 	resultChan, err := d.DecompressWithContent(ctx, zipContent)
@@ -140,5 +148,11 @@ func createTestZip(files map[string]string) ([]byte, error) {
 		readers[name] = strings.NewReader(content)
 	}
 
-	return d.CompressWithContent(ctx, readers)
+	compressChan, err := d.CompressWithContent(ctx, readers)
+	if err != nil {
+		return nil, err
+	}
+
+	result := <-compressChan
+	return result.Content, result.Error
 }

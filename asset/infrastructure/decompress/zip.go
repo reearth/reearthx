@@ -6,11 +6,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/reearth/reearthx/log"
-	"go.uber.org/zap"
 	"io"
 	"path/filepath"
 	"sync"
+
+	"github.com/reearth/reearthx/log"
+	"go.uber.org/zap"
 
 	"github.com/reearth/reearthx/asset/repository"
 )
@@ -104,79 +105,89 @@ func (d *ZipDecompressor) processFile(f *zip.File) (io.Reader, error) {
 }
 
 // CompressWithContent compresses the provided content into a zip archive.
-// It takes a map of filenames to their content readers and returns the compressed bytes.
-func (d *ZipDecompressor) CompressWithContent(ctx context.Context, files map[string]io.Reader) ([]byte, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-	}
+// It takes a map of filenames to their content readers and returns a channel that will receive the compressed bytes.
+// The channel will be closed when compression is complete or if an error occurs.
+func (d *ZipDecompressor) CompressWithContent(ctx context.Context, files map[string]io.Reader) (<-chan repository.CompressResult, error) {
+	resultChan := make(chan repository.CompressResult, 1)
 
-	buf := new(bytes.Buffer)
-	zipWriter := zip.NewWriter(buf)
-	defer zipWriter.Close()
+	go func() {
+		defer close(resultChan)
 
-	// Use a mutex to protect concurrent writes to the zip writer
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	errChan := make(chan error, 1)
-
-	// Process each file sequentially to avoid corruption
-	for filename, content := range files {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			resultChan <- repository.CompressResult{Error: ctx.Err()}
+			return
 		default:
 		}
 
-		wg.Add(1)
-		go func(filename string, content io.Reader) {
-			defer wg.Done()
+		buf := new(bytes.Buffer)
+		zipWriter := zip.NewWriter(buf)
+		defer zipWriter.Close()
 
-			// Read the entire content first to avoid holding the lock during I/O
-			data, err := io.ReadAll(content)
-			if err != nil {
-				select {
-				case errChan <- fmt.Errorf("failed to read content: %w", err):
-				default:
+		// Use a mutex to protect concurrent writes to the zip writer
+		var mu sync.Mutex
+		var wg sync.WaitGroup
+		errChan := make(chan error, 1)
+
+		// Process each file sequentially to avoid corruption
+		for filename, content := range files {
+			select {
+			case <-ctx.Done():
+				resultChan <- repository.CompressResult{Error: ctx.Err()}
+				return
+			default:
+			}
+
+			wg.Add(1)
+			go func(filename string, content io.Reader) {
+				defer wg.Done()
+
+				// Read the entire content first to avoid holding the lock during I/O
+				data, err := io.ReadAll(content)
+				if err != nil {
+					select {
+					case errChan <- fmt.Errorf("failed to read content: %w", err):
+					default:
+					}
+					return
 				}
+
+				mu.Lock()
+				err = d.addFileToZip(zipWriter, filename, bytes.NewReader(data))
+				mu.Unlock()
+
+				if err != nil {
+					select {
+					case errChan <- err:
+					default:
+					}
+				}
+			}(filename, content)
+		}
+
+		// Wait for all goroutines to finish
+		done := make(chan struct{})
+		go func() {
+			wg.Wait()
+			close(done)
+		}()
+
+		// Wait for either completion or error
+		select {
+		case <-ctx.Done():
+			resultChan <- repository.CompressResult{Error: ctx.Err()}
+		case err := <-errChan:
+			resultChan <- repository.CompressResult{Error: err}
+		case <-done:
+			if err := zipWriter.Close(); err != nil {
+				resultChan <- repository.CompressResult{Error: fmt.Errorf("failed to close zip writer: %w", err)}
 				return
 			}
-
-			mu.Lock()
-			err = d.addFileToZip(zipWriter, filename, bytes.NewReader(data))
-			mu.Unlock()
-
-			if err != nil {
-				select {
-				case errChan <- err:
-				default:
-				}
-			}
-		}(filename, content)
-	}
-
-	// Wait for all goroutines to finish
-	done := make(chan struct{})
-	go func() {
-		wg.Wait()
-		close(done)
+			resultChan <- repository.CompressResult{Content: buf.Bytes()}
+		}
 	}()
 
-	// Wait for either completion or error
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case err := <-errChan:
-		return nil, err
-	case <-done:
-	}
-
-	if err := zipWriter.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close zip writer: %w", err)
-	}
-
-	return buf.Bytes(), nil
+	return resultChan, nil
 }
 
 // addFileToZip adds a single file to the zip archive

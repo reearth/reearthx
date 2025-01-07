@@ -59,6 +59,7 @@ func (s *Service) DecompressZip(ctx context.Context, content []byte) (<-chan rep
 }
 
 // CompressZip compresses the provided files into a zip archive
-func (s *Service) CompressZip(ctx context.Context, files map[string]io.Reader) ([]byte, error) {
+// Returns a channel that will receive the compressed bytes or an error
+func (s *Service) CompressZip(ctx context.Context, files map[string]io.Reader) (<-chan repository.CompressResult, error) {
 	return s.decompressor.CompressWithContent(ctx, files)
 }

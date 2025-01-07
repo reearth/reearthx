@@ -105,7 +105,7 @@ type testClient struct {
 	mockBucket *mockBucketHandle
 }
 
-func newTestClient(t *testing.T) *testClient {
+func newTestClient(_ *testing.T) *testClient {
 	mockBucket := newMockBucketHandle()
 	client := &Client{
 		bucketName: "test-bucket",
