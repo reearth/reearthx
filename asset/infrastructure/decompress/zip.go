@@ -23,6 +23,7 @@ var _ repository.Decompressor = (*ZipDecompressor)(nil)
 
 // NewZipDecompressor creates a new zip decompressor
 func NewZipDecompressor() repository.Decompressor {
+
 	return &ZipDecompressor{}
 }
 
@@ -38,48 +39,51 @@ func (d *ZipDecompressor) DecompressWithContent(ctx context.Context, content []b
 	resultChan := make(chan repository.DecompressedFile, len(zipReader.File))
 	var wg sync.WaitGroup
 
-	// Start a goroutine to close the channel when all files are processed
+	// Process files in a separate goroutine to avoid race conditions
 	go func() {
+		for _, f := range zipReader.File {
+			if f.FileInfo().IsDir() || isHiddenFile(f.Name) {
+				continue
+			}
+
+			wg.Add(1)
+			go d.processZipFile(ctx, f, resultChan, &wg)
+		}
+
+		// Wait for all files to be processed before closing the channel
 		wg.Wait()
 		close(resultChan)
 	}()
 
-	// Process each file in the zip archive
-	for _, f := range zipReader.File {
-		if f.FileInfo().IsDir() || isHiddenFile(f.Name) {
-			continue
+	return resultChan, nil
+}
+
+// processZipFile handles processing of a single zip file entry
+func (d *ZipDecompressor) processZipFile(ctx context.Context, f *zip.File, resultChan chan<- repository.DecompressedFile, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	select {
+	case <-ctx.Done():
+		resultChan <- repository.DecompressedFile{
+			Filename: f.Name,
+			Error:    ctx.Err(),
+		}
+		return
+	default:
+		content, err := d.processFile(f)
+		if err != nil {
+			resultChan <- repository.DecompressedFile{
+				Filename: f.Name,
+				Error:    err,
+			}
+			return
 		}
 
-		wg.Add(1)
-		go func(f *zip.File) {
-			defer wg.Done()
-
-			select {
-			case <-ctx.Done():
-				resultChan <- repository.DecompressedFile{
-					Filename: f.Name,
-					Error:    ctx.Err(),
-				}
-				return
-			default:
-				content, err := d.processFile(f)
-				if err != nil {
-					resultChan <- repository.DecompressedFile{
-						Filename: f.Name,
-						Error:    err,
-					}
-					return
-				}
-
-				resultChan <- repository.DecompressedFile{
-					Filename: f.Name,
-					Content:  content,
-				}
-			}
-		}(f)
+		resultChan <- repository.DecompressedFile{
+			Filename: f.Name,
+			Content:  content,
+		}
 	}
-
-	return resultChan, nil
 }
 
 // processFile handles a single file from the zip archive
