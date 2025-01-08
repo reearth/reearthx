@@ -34,7 +34,7 @@ func GraphQLHandler(c GraphQLHandlerConfig) http.Handler {
 		// show more detailed error messgage in debug mode
 		func(ctx context.Context, e error) *gqlerror.Error {
 			if c.Dev {
-				return gqlerror.ErrorPathf(graphql.GetFieldContext(ctx).Path(), e.Error())
+				return gqlerror.ErrorPathf(graphql.GetFieldContext(ctx).Path(), "%s", e.Error())
 			}
 			return graphql.DefaultErrorPresenter(ctx, e)
 		},
