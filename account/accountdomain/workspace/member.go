@@ -167,17 +167,33 @@ func (m *Members) Fixed() bool {
 	return m != nil && m.fixed
 }
 
+// Internal version without locks - caller must hold the lock
+func (m *Members) usersByRole(role Role) []UserID {
+	users := make([]UserID, 0, len(m.users))
+	for u, m := range m.users {
+		if m.Role == role {
+			users = append(users, u)
+		}
+	}
+
+	sort.SliceStable(users, func(a, b int) bool {
+		return users[a].Compare(users[b]) > 0
+	})
+
+	return users
+}
+
+func (m *Members) UsersByRole(role Role) []UserID {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.usersByRole(role)
+}
+
 func (m *Members) IsOnlyOwner(u UserID) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	ownerCount := 0
-	for _, member := range m.users {
-		if member.Role == RoleOwner {
-			ownerCount++
-		}
-	}
-	return ownerCount == 1 && m.users[u].Role == RoleOwner
+	owners := m.usersByRole(RoleOwner)
+	return len(owners) == 1 && m.users[u].Role == RoleOwner
 }
 
 func (m *Members) IsOwnerOrMaintainer(u UserID) bool {
@@ -292,22 +308,4 @@ func (m *Members) DeleteIntegration(iid IntegrationID) error {
 		return ErrTargetUserNotInTheWorkspace
 	}
 	return nil
-}
-
-func (m *Members) UsersByRole(role Role) []UserID {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	users := make([]UserID, 0, len(m.users))
-	for u, m := range m.users {
-		if m.Role == role {
-			users = append(users, u)
-		}
-	}
-
-	sort.SliceStable(users, func(a, b int) bool {
-		return users[a].Compare(users[b]) > 0
-	})
-
-	return users
 }
