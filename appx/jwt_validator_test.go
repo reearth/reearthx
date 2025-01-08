@@ -24,9 +24,7 @@ func TestMultiValidator(t *testing.T) {
 	key := lo.Must(rsa.GenerateKey(rand.Reader, 2048))
 
 	httpmock.Activate()
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
+	defer httpmock.DeactivateAndReset()
 
 	httpmock.RegisterResponder(
 		http.MethodGet,
