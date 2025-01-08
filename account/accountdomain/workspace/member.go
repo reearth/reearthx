@@ -76,10 +76,14 @@ func (m *Members) Clone() *Members {
 }
 
 func (m *Members) Users() map[UserID]Member {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return maps.Clone(m.users)
 }
 
 func (m *Members) UserIDs() []UserID {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	users := lo.Keys(m.users)
 	sort.SliceStable(users, func(a, b int) bool {
 		return users[a].Compare(users[b]) > 0
@@ -88,10 +92,14 @@ func (m *Members) UserIDs() []UserID {
 }
 
 func (m *Members) Integrations() map[IntegrationID]Member {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return maps.Clone(m.integrations)
 }
 
 func (m *Members) IntegrationIDs() []IntegrationID {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	integrations := lo.Keys(m.integrations)
 	sort.SliceStable(integrations, func(a, b int) bool {
 		return integrations[a].Compare(integrations[b]) > 0
@@ -100,16 +108,22 @@ func (m *Members) IntegrationIDs() []IntegrationID {
 }
 
 func (m *Members) HasUser(u UserID) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	_, ok := m.users[u]
 	return ok
 }
 
 func (m *Members) HasIntegration(i IntegrationID) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	_, ok := m.integrations[i]
 	return ok
 }
 
 func (m *Members) User(u UserID) *Member {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	um, ok := m.users[u]
 	if ok {
 		return &um
@@ -118,6 +132,8 @@ func (m *Members) User(u UserID) *Member {
 }
 
 func (m *Members) Integration(i IntegrationID) *Member {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	im, ok := m.integrations[i]
 	if ok {
 		return &im
@@ -126,14 +142,20 @@ func (m *Members) Integration(i IntegrationID) *Member {
 }
 
 func (m *Members) Count() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return len(m.users)
 }
 
 func (m *Members) UserRole(u UserID) Role {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.users[u].Role
 }
 
 func (m *Members) IntegrationRole(iId IntegrationID) Role {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.integrations[iId].Role
 }
 
@@ -146,14 +168,21 @@ func (m *Members) Fixed() bool {
 }
 
 func (m *Members) IsOnlyOwner(u UserID) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return len(m.UsersByRole(RoleOwner)) == 1 && m.users[u].Role == RoleOwner
 }
 
 func (m *Members) IsOwnerOrMaintainer(u UserID) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	return m.users[u].Role == RoleOwner || m.users[u].Role == RoleMaintainer
 }
 
 func (m *Members) UpdateUserRole(u UserID, role Role) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if m.fixed {
 		return ErrCannotModifyPersonalWorkspace
 	}
@@ -170,6 +199,9 @@ func (m *Members) UpdateUserRole(u UserID, role Role) error {
 }
 
 func (m *Members) UpdateIntegrationRole(iId IntegrationID, role Role) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if !role.Valid() {
 		return nil
 	}
@@ -183,6 +215,9 @@ func (m *Members) UpdateIntegrationRole(iId IntegrationID, role Role) error {
 }
 
 func (m *Members) Join(u *user.User, role Role, i UserID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if m.fixed {
 		return ErrCannotModifyPersonalWorkspace
 	}
@@ -205,6 +240,9 @@ func (m *Members) Join(u *user.User, role Role, i UserID) error {
 }
 
 func (m *Members) AddIntegration(iid IntegrationID, role Role, i UserID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if _, ok := m.integrations[iid]; ok {
 		return ErrUserAlreadyJoined
 	}
@@ -238,6 +276,9 @@ func (m *Members) Leave(u UserID) error {
 }
 
 func (m *Members) DeleteIntegration(iid IntegrationID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if _, ok := m.integrations[iid]; ok {
 		delete(m.integrations, iid)
 	} else {
@@ -247,6 +288,9 @@ func (m *Members) DeleteIntegration(iid IntegrationID) error {
 }
 
 func (m *Members) UsersByRole(role Role) []UserID {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	users := make([]UserID, 0, len(m.users))
 	for u, m := range m.users {
 		if m.Role == role {
