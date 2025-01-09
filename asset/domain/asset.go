@@ -110,7 +110,6 @@ func (a *Asset) Error() string            { return a.error }
 func (a *Asset) CreatedAt() time.Time     { return a.createdAt }
 func (a *Asset) UpdatedAt() time.Time     { return a.updatedAt }
 
-// Methods
 func (a *Asset) UpdateStatus(status Status, err string) {
 	a.status = status
 	a.error = err
