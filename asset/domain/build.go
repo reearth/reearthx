@@ -11,15 +11,15 @@ var (
 	ErrEmptySize        = errors.New("size must be greater than 0")
 )
 
-type Builder struct {
+type AssetBuilder struct {
 	a *Asset
 }
 
-func New() *Builder {
-	return &Builder{a: &Asset{}}
+func NewAssetBuilder() *AssetBuilder {
+	return &AssetBuilder{a: &Asset{}}
 }
 
-func (b *Builder) Build() (*Asset, error) {
+func (b *AssetBuilder) Build() (*Asset, error) {
 	if b.a.id.IsNil() {
 		return nil, ErrInvalidID
 	}
@@ -43,7 +43,7 @@ func (b *Builder) Build() (*Asset, error) {
 	return b.a, nil
 }
 
-func (b *Builder) MustBuild() *Asset {
+func (b *AssetBuilder) MustBuild() *Asset {
 	r, err := b.Build()
 	if err != nil {
 		panic(err)
@@ -51,67 +51,133 @@ func (b *Builder) MustBuild() *Asset {
 	return r
 }
 
-func (b *Builder) ID(id ID) *Builder {
+func (b *AssetBuilder) ID(id ID) *AssetBuilder {
 	b.a.id = id
 	return b
 }
 
-func (b *Builder) NewID() *Builder {
+func (b *AssetBuilder) NewID() *AssetBuilder {
 	b.a.id = NewID()
 	return b
 }
 
-func (b *Builder) GroupID(groupID GroupID) *Builder {
+func (b *AssetBuilder) GroupID(groupID GroupID) *AssetBuilder {
 	b.a.groupID = groupID
 	return b
 }
 
-func (b *Builder) ProjectID(projectID ProjectID) *Builder {
+func (b *AssetBuilder) ProjectID(projectID ProjectID) *AssetBuilder {
 	b.a.projectID = projectID
 	return b
 }
 
-func (b *Builder) WorkspaceID(workspaceID WorkspaceID) *Builder {
+func (b *AssetBuilder) WorkspaceID(workspaceID WorkspaceID) *AssetBuilder {
 	b.a.workspaceID = workspaceID
 	return b
 }
 
-func (b *Builder) Name(name string) *Builder {
+func (b *AssetBuilder) Name(name string) *AssetBuilder {
 	b.a.name = name
 	return b
 }
 
-func (b *Builder) Size(size int64) *Builder {
+func (b *AssetBuilder) Size(size int64) *AssetBuilder {
 	b.a.size = size
 	return b
 }
 
-func (b *Builder) URL(url string) *Builder {
+func (b *AssetBuilder) URL(url string) *AssetBuilder {
 	b.a.url = url
 	return b
 }
 
-func (b *Builder) ContentType(contentType string) *Builder {
+func (b *AssetBuilder) ContentType(contentType string) *AssetBuilder {
 	b.a.contentType = contentType
 	return b
 }
 
-func (b *Builder) Status(status Status) *Builder {
+func (b *AssetBuilder) Status(status Status) *AssetBuilder {
 	b.a.status = status
 	return b
 }
 
-func (b *Builder) Error(err string) *Builder {
+func (b *AssetBuilder) Error(err string) *AssetBuilder {
 	b.a.error = err
 	return b
 }
 
-func (b *Builder) CreatedAt(createdAt time.Time) *Builder {
+func (b *AssetBuilder) CreatedAt(createdAt time.Time) *AssetBuilder {
 	b.a.createdAt = createdAt
 	return b
 }
 
-func (b *Builder) UpdatedAt(updatedAt time.Time) *Builder {
+func (b *AssetBuilder) UpdatedAt(updatedAt time.Time) *AssetBuilder {
 	b.a.updatedAt = updatedAt
+	return b
+}
+
+type GroupBuilder struct {
+	g *Group
+}
+
+func NewGroupBuilder() *GroupBuilder {
+	return &GroupBuilder{g: &Group{}}
+}
+
+func (b *GroupBuilder) Build() (*Group, error) {
+	if b.g.id.IsNil() {
+		return nil, ErrInvalidID
+	}
+	if b.g.name == "" {
+		return nil, ErrEmptyGroupName
+	}
+	if b.g.createdAt.IsZero() {
+		now := time.Now()
+		b.g.createdAt = now
+		b.g.updatedAt = now
+	}
+	return b.g, nil
+}
+
+func (b *GroupBuilder) MustBuild() *Group {
+	r, err := b.Build()
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
+func (b *GroupBuilder) ID(id GroupID) *GroupBuilder {
+	b.g.id = id
+	return b
+}
+
+func (b *GroupBuilder) NewID() *GroupBuilder {
+	b.g.id = NewGroupID()
+	return b
+}
+
+func (b *GroupBuilder) Name(name string) *GroupBuilder {
+	b.g.name = name
+	return b
+}
+
+func (b *GroupBuilder) Policy(policy string) *GroupBuilder {
+	b.g.policy = policy
+	return b
+}
+
+func (b *GroupBuilder) Description(description string) *GroupBuilder {
+	b.g.description = description
+	return b
+}
+
+func (b *GroupBuilder) CreatedAt(createdAt time.Time) *GroupBuilder {
+	b.g.createdAt = createdAt
+	return b
+}
+
+func (b *GroupBuilder) UpdatedAt(updatedAt time.Time) *GroupBuilder {
+	b.g.updatedAt = updatedAt
 	return b
 }
