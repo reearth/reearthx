@@ -138,3 +138,9 @@ func (a *Asset) MoveToProject(projectID ProjectID) {
 	a.projectID = projectID
 	a.updatedAt = time.Now()
 }
+
+// SetSize sets the size of the asset
+func (a *Asset) SetSize(size int64) {
+	a.size = size
+	a.updatedAt = time.Now()
+}

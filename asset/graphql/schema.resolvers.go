@@ -26,18 +26,18 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 	)
 
 	// Create asset metadata first
-	if err := r.assetService.Create(ctx, asset); err != nil {
+	if err := r.assetUsecase.CreateAsset(ctx, asset); err != nil {
 		return nil, err
 	}
 
 	// Upload file content
-	if err := r.assetService.Upload(ctx, id, FileFromUpload(&input.File)); err != nil {
+	if err := r.assetUsecase.UploadAssetContent(ctx, id, FileFromUpload(&input.File)); err != nil {
 		return nil, err
 	}
 
 	// Update asset status to active
 	asset.UpdateStatus(domain.StatusActive, "")
-	if err := r.assetService.Update(ctx, asset); err != nil {
+	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
 		return nil, err
 	}
 
@@ -53,20 +53,7 @@ func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAsset
 		return nil, err
 	}
 
-	// Create empty asset metadata first
-	asset := domain.NewAsset(
-		id,
-		"", // Name will be updated after upload
-		0,  // Size will be updated after upload
-		"", // ContentType will be updated after upload
-	)
-
-	if err := r.assetService.Create(ctx, asset); err != nil {
-		return nil, err
-	}
-
-	// Generate signed URL
-	url, err := r.assetService.GetUploadURL(ctx, id)
+	url, err := r.assetUsecase.GetAssetUploadURL(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -83,17 +70,14 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 		return nil, err
 	}
 
-	// Get existing asset
-	asset, err := r.assetService.Get(ctx, id)
+	asset, err := r.assetUsecase.GetAsset(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Update metadata
 	asset.UpdateMetadata(input.Name, "", input.ContentType)
-	asset.UpdateStatus(domain.StatusActive, "")
-
-	if err := r.assetService.Update(ctx, asset); err != nil {
+	asset.SetSize(int64(input.Size))
+	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
 		return nil, err
 	}
 
@@ -109,7 +93,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInp
 		return nil, err
 	}
 
-	if err := r.assetService.Delete(ctx, id); err != nil {
+	if err := r.assetUsecase.DeleteAsset(ctx, id); err != nil {
 		return nil, err
 	}
 
@@ -130,13 +114,29 @@ func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsI
 	}
 
 	for _, id := range assetIDs {
-		if err := r.assetService.Delete(ctx, id); err != nil {
+		if err := r.assetUsecase.DeleteAsset(ctx, id); err != nil {
 			return nil, err
 		}
 	}
 
 	return &DeleteAssetsPayload{
 		AssetIds: input.Ids,
+	}, nil
+}
+
+// DeleteAssetsInGroup is the resolver for the deleteAssetsInGroup field.
+func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input DeleteAssetsInGroupInput) (*DeleteAssetsInGroupPayload, error) {
+	groupID, err := domain.GroupIDFrom(input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.assetUsecase.DeleteAllAssetsInGroup(ctx, groupID); err != nil {
+		return nil, err
+	}
+
+	return &DeleteAssetsInGroupPayload{
+		GroupID: input.GroupID,
 	}, nil
 }
 
@@ -147,7 +147,7 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 		return nil, err
 	}
 
-	asset, err := r.assetService.Get(ctx, id)
+	asset, err := r.assetUsecase.GetAsset(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -168,28 +168,12 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 		asset.MoveToProject(projID)
 	}
 
-	if err := r.assetService.Update(ctx, asset); err != nil {
+	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
 		return nil, err
 	}
 
 	return &MoveAssetPayload{
 		Asset: AssetFromDomain(asset),
-	}, nil
-}
-
-// DeleteAssetsInGroup is the resolver for the deleteAssetsInGroup field.
-func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input DeleteAssetsInGroupInput) (*DeleteAssetsInGroupPayload, error) {
-	groupID, err := domain.GroupIDFrom(input.GroupID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.assetService.DeleteAllInGroup(ctx, groupID); err != nil {
-		return nil, err
-	}
-
-	return &DeleteAssetsInGroupPayload{
-		GroupID: input.GroupID,
 	}, nil
 }
 
@@ -200,7 +184,7 @@ func (r *queryResolver) Asset(ctx context.Context, id string) (*Asset, error) {
 		return nil, err
 	}
 
-	asset, err := r.assetService.Get(ctx, assetID)
+	asset, err := r.assetUsecase.GetAsset(ctx, assetID)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +194,7 @@ func (r *queryResolver) Asset(ctx context.Context, id string) (*Asset, error) {
 
 // Assets is the resolver for the assets field.
 func (r *queryResolver) Assets(ctx context.Context) ([]*Asset, error) {
-	assets, err := r.assetService.List(ctx)
+	assets, err := r.assetUsecase.ListAssets(ctx)
 	if err != nil {
 		return nil, err
 	}

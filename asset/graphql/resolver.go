@@ -1,18 +1,18 @@
 package graphql
 
 import (
+	"github.com/reearth/reearthx/asset/assetusecase"
 	"github.com/reearth/reearthx/asset/repository"
-	"github.com/reearth/reearthx/asset/service"
 )
 
 type Resolver struct {
-	assetService *service.Service
+	assetUsecase assetusecase.Usecase
 	pubsub       repository.PubSubRepository
 }
 
-func NewResolver(assetService *service.Service, pubsub repository.PubSubRepository) *Resolver {
+func NewResolver(assetUsecase assetusecase.Usecase, pubsub repository.PubSubRepository) *Resolver {
 	return &Resolver{
-		assetService: assetService,
+		assetUsecase: assetUsecase,
 		pubsub:       pubsub,
 	}
 }
