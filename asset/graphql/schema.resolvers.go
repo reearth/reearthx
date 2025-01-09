@@ -177,6 +177,22 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 	}, nil
 }
 
+// DeleteAssetsInGroup is the resolver for the deleteAssetsInGroup field.
+func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input DeleteAssetsInGroupInput) (*DeleteAssetsInGroupPayload, error) {
+	groupID, err := domain.GroupIDFrom(input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := r.assetService.DeleteAllInGroup(ctx, groupID); err != nil {
+		return nil, err
+	}
+
+	return &DeleteAssetsInGroupPayload{
+		GroupID: input.GroupID,
+	}, nil
+}
+
 // Asset is the resolver for the asset field.
 func (r *queryResolver) Asset(ctx context.Context, id string) (*Asset, error) {
 	assetID, err := domain.IDFrom(id)

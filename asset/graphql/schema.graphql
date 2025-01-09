@@ -45,6 +45,9 @@ type Mutation {
 
   # Move asset to another workspace/project
   moveAsset(input: MoveAssetInput!): MoveAssetPayload!
+
+  # Delete all assets in a group
+  deleteAssetsInGroup(input: DeleteAssetsInGroupInput!): DeleteAssetsInGroupPayload!
 }
 
 input UploadAssetInput {
@@ -99,4 +102,12 @@ input MoveAssetInput {
 
 type MoveAssetPayload {
   asset: Asset!
+}
+
+input DeleteAssetsInGroupInput {
+  groupId: ID!
+}
+
+type DeleteAssetsInGroupPayload {
+  groupId: ID!
 } 

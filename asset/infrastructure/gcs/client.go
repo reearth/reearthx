@@ -286,3 +286,35 @@ func (c *Client) handleNotFound(err error, id domain.ID) error {
 	}
 	return fmt.Errorf(errFailedToGetAsset, err)
 }
+
+func (c *Client) FindByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Asset, error) {
+	var assets []*domain.Asset
+	it := c.bucket.Objects(ctx, &storage.Query{
+		Prefix: path.Join(c.basePath, groupID.String()),
+	})
+
+	for {
+		attrs, err := it.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf(errFailedToListAssets, err)
+		}
+
+		id, err := domain.IDFrom(path.Base(attrs.Name))
+		if err != nil {
+			continue // skip invalid IDs
+		}
+
+		asset := domain.NewAsset(
+			id,
+			attrs.Metadata["name"],
+			attrs.Size,
+			attrs.ContentType,
+		)
+		assets = append(assets, asset)
+	}
+
+	return assets, nil
+}

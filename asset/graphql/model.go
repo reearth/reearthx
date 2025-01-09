@@ -31,6 +31,14 @@ type DeleteAssetPayload struct {
 	AssetID string `json:"assetId"`
 }
 
+type DeleteAssetsInGroupInput struct {
+	GroupID string `json:"groupId"`
+}
+
+type DeleteAssetsInGroupPayload struct {
+	GroupID string `json:"groupId"`
+}
+
 type DeleteAssetsInput struct {
 	Ids []string `json:"ids"`
 }

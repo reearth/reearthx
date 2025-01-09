@@ -137,3 +137,22 @@ func (s *Service) DecompressZip(ctx context.Context, content []byte) (<-chan rep
 func (s *Service) CompressZip(ctx context.Context, files map[string]io.Reader) (<-chan repository.CompressResult, error) {
 	return s.decompressor.CompressWithContent(ctx, files)
 }
+
+// DeleteAllInGroup deletes all assets in a group
+func (s *Service) DeleteAllInGroup(ctx context.Context, groupID domain.GroupID) error {
+	// Get all assets in the group
+	assets, err := s.repo.FindByGroup(ctx, groupID)
+	if err != nil {
+		return err
+	}
+
+	// Delete each asset
+	for _, asset := range assets {
+		if err := s.Delete(ctx, asset.ID()); err != nil {
+			log.Errorfc(ctx, "failed to delete asset %s in group %s: %v", asset.ID(), groupID, err)
+			return err
+		}
+	}
+
+	return nil
+}

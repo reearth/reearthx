@@ -10,6 +10,7 @@ import (
 type Reader interface {
 	Read(ctx context.Context, id domain.ID) (*domain.Asset, error)
 	List(ctx context.Context) ([]*domain.Asset, error)
+	FindByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Asset, error)
 }
 
 type Writer interface {
