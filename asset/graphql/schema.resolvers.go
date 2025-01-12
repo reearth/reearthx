@@ -12,14 +12,14 @@ import (
 
 // UploadAsset is the resolver for the uploadAsset field.
 func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInput) (*UploadAssetPayload, error) {
-	id, err := domain.IDFrom(input.ID)
+	assetID, err := domain.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create asset metadata
 	asset := domain.NewAsset(
-		id,
+		assetID,
 		input.File.Filename,
 		input.File.Size,
 		input.File.ContentType,
@@ -31,7 +31,7 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 	}
 
 	// Upload file content
-	if err := r.assetUsecase.UploadAssetContent(ctx, id, FileFromUpload(&input.File)); err != nil {
+	if err := r.assetUsecase.UploadAssetContent(ctx, assetID, FileFromUpload(&input.File)); err != nil {
 		return nil, err
 	}
 
@@ -48,12 +48,12 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 
 // GetAssetUploadURL is the resolver for the getAssetUploadURL field.
 func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAssetUploadURLInput) (*GetAssetUploadURLPayload, error) {
-	id, err := domain.IDFrom(input.ID)
+	assetID, err := domain.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	url, err := r.assetUsecase.GetAssetUploadURL(ctx, id)
+	url, err := r.assetUsecase.GetAssetUploadURL(ctx, assetID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +65,12 @@ func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAsset
 
 // UpdateAssetMetadata is the resolver for the updateAssetMetadata field.
 func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input UpdateAssetMetadataInput) (*UpdateAssetMetadataPayload, error) {
-	id, err := domain.IDFrom(input.ID)
+	assetID, err := domain.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	asset, err := r.assetUsecase.GetAsset(ctx, id)
+	asset, err := r.assetUsecase.GetAsset(ctx, assetID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +88,12 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInput) (*DeleteAssetPayload, error) {
-	id, err := domain.IDFrom(input.ID)
+	assetID, err := domain.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := r.assetUsecase.DeleteAsset(ctx, id); err != nil {
+	if err := r.assetUsecase.DeleteAsset(ctx, assetID); err != nil {
 		return nil, err
 	}
 
@@ -106,15 +106,15 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInp
 func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsInput) (*DeleteAssetsPayload, error) {
 	var assetIDs []domain.ID
 	for _, idStr := range input.Ids {
-		id, err := domain.IDFrom(idStr)
+		assetID, err := domain.IDFrom(idStr)
 		if err != nil {
 			return nil, err
 		}
-		assetIDs = append(assetIDs, id)
+		assetIDs = append(assetIDs, assetID)
 	}
 
-	for _, id := range assetIDs {
-		if err := r.assetUsecase.DeleteAsset(ctx, id); err != nil {
+	for _, assetID := range assetIDs {
+		if err := r.assetUsecase.DeleteAsset(ctx, assetID); err != nil {
 			return nil, err
 		}
 	}
@@ -142,12 +142,12 @@ func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input Delete
 
 // MoveAsset is the resolver for the moveAsset field.
 func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) (*MoveAssetPayload, error) {
-	id, err := domain.IDFrom(input.ID)
+	assetID, err := domain.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	asset, err := r.assetUsecase.GetAsset(ctx, id)
+	asset, err := r.assetUsecase.GetAsset(ctx, assetID)
 	if err != nil {
 		return nil, err
 	}

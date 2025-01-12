@@ -25,15 +25,10 @@ func TestGroup_UpdateName(t *testing.T) {
 	createdAt := g.CreatedAt()
 	time.Sleep(time.Millisecond)
 
-	err := g.UpdateName("new-name")
-	assert.NoError(t, err)
+	g.UpdateName("new-name")
 	assert.Equal(t, "new-name", g.Name())
 	assert.Equal(t, createdAt, g.CreatedAt())
 	assert.True(t, g.UpdatedAt().After(createdAt))
-
-	// Test empty name
-	err = g.UpdateName("")
-	assert.Equal(t, ErrEmptyGroupName, err)
 }
 
 func TestGroup_UpdateDescription(t *testing.T) {
@@ -47,18 +42,13 @@ func TestGroup_UpdateDescription(t *testing.T) {
 	assert.True(t, g.UpdatedAt().After(createdAt))
 }
 
-func TestGroup_AssignPolicy(t *testing.T) {
+func TestGroup_UpdatePolicy(t *testing.T) {
 	g := NewGroup(NewGroupID(), "test-group")
 	createdAt := g.CreatedAt()
 	time.Sleep(time.Millisecond)
 
-	err := g.AssignPolicy("test-policy")
-	assert.NoError(t, err)
+	g.UpdatePolicy("test-policy")
 	assert.Equal(t, "test-policy", g.Policy())
 	assert.Equal(t, createdAt, g.CreatedAt())
 	assert.True(t, g.UpdatedAt().After(createdAt))
-
-	// Test empty policy
-	err = g.AssignPolicy("")
-	assert.Equal(t, ErrEmptyPolicy, err)
 }

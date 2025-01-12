@@ -3,15 +3,12 @@ package domain
 import (
 	"errors"
 	"time"
-)
 
-var (
-	ErrEmptyGroupName = errors.New("group name is required")
-	ErrEmptyPolicy    = errors.New("policy is required")
+	"github.com/reearth/reearthx/asset/domain/id"
 )
 
 type Group struct {
-	id          GroupID
+	id          id.GroupID
 	name        string
 	policy      string
 	description string
@@ -19,7 +16,12 @@ type Group struct {
 	updatedAt   time.Time
 }
 
-func NewGroup(id GroupID, name string) *Group {
+var (
+	ErrEmptyGroupName = errors.New("group name is required")
+	ErrEmptyPolicy    = errors.New("policy is required")
+)
+
+func NewGroup(id id.GroupID, name string) *Group {
 	now := time.Now()
 	return &Group{
 		id:        id,
@@ -30,7 +32,7 @@ func NewGroup(id GroupID, name string) *Group {
 }
 
 // Getters
-func (g *Group) ID() GroupID          { return g.id }
+func (g *Group) ID() id.GroupID       { return g.id }
 func (g *Group) Name() string         { return g.name }
 func (g *Group) Policy() string       { return g.policy }
 func (g *Group) Description() string  { return g.description }
@@ -38,25 +40,17 @@ func (g *Group) CreatedAt() time.Time { return g.createdAt }
 func (g *Group) UpdatedAt() time.Time { return g.updatedAt }
 
 // Setters
-func (g *Group) UpdateName(name string) error {
-	if name == "" {
-		return ErrEmptyGroupName
-	}
+func (g *Group) UpdateName(name string) {
 	g.name = name
 	g.updatedAt = time.Now()
-	return nil
+}
+
+func (g *Group) UpdatePolicy(policy string) {
+	g.policy = policy
+	g.updatedAt = time.Now()
 }
 
 func (g *Group) UpdateDescription(description string) {
 	g.description = description
 	g.updatedAt = time.Now()
-}
-
-func (g *Group) AssignPolicy(policy string) error {
-	if policy == "" {
-		return ErrEmptyPolicy
-	}
-	g.policy = policy
-	g.updatedAt = time.Now()
-	return nil
 }
