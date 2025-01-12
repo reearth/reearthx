@@ -96,7 +96,7 @@ func NewAsset(id ID, name string, size int64, contentType string) *Asset {
 	}
 }
 
-// Getters
+// ID Getters
 func (a *Asset) ID() ID                   { return a.id }
 func (a *Asset) GroupID() GroupID         { return a.groupID }
 func (a *Asset) ProjectID() ProjectID     { return a.projectID }
