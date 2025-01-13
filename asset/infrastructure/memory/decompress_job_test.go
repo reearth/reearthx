@@ -64,9 +64,14 @@ func TestDecompressJobRepository(t *testing.T) {
 			StartedAt: time.Now(),
 		}
 
-		repo.Save(ctx, status1)
-		repo.Save(ctx, status2)
-		repo.Save(ctx, status3)
+		err := repo.Save(ctx, status1)
+		assert.NoError(t, err)
+
+		err = repo.Save(ctx, status2)
+		assert.NoError(t, err)
+
+		err = repo.Save(ctx, status3)
+		assert.NoError(t, err)
 
 		// Should only return active jobs (not completed or failed)
 		jobs, err := repo.List(ctx)
@@ -82,10 +87,11 @@ func TestDecompressJobRepository(t *testing.T) {
 			StartedAt: time.Now(),
 		}
 
-		repo.Save(ctx, status)
+		err := repo.Save(ctx, status)
+		assert.NoError(t, err)
 
 		// Test Delete
-		err := repo.Delete(ctx, "job1")
+		err = repo.Delete(ctx, "job1")
 		assert.NoError(t, err)
 
 		// Verify deletion
@@ -106,10 +112,11 @@ func TestDecompressJobRepository(t *testing.T) {
 			StartedAt: time.Now(),
 		}
 
-		repo.Save(ctx, status)
+		err := repo.Save(ctx, status)
+		assert.NoError(t, err)
 
 		// Test UpdateProgress
-		err := repo.UpdateProgress(ctx, "job1", 50.0)
+		err = repo.UpdateProgress(ctx, "job1", 50.0)
 		assert.NoError(t, err)
 
 		// Verify progress update
@@ -134,11 +141,13 @@ func TestDecompressJobRepository(t *testing.T) {
 			StartedAt: time.Now(),
 		}
 
-		repo.Save(ctx, status1)
-		repo.Save(ctx, status2)
+		err := repo.Save(ctx, status1)
+		assert.NoError(t, err)
+		err = repo.Save(ctx, status2)
+		assert.NoError(t, err)
 
 		// Test Complete
-		err := repo.Complete(ctx, "job1")
+		err = repo.Complete(ctx, "job1")
 		assert.NoError(t, err)
 		got, _ := repo.Get(ctx, "job1")
 		assert.Equal(t, "completed", got.Status)

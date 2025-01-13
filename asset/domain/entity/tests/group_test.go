@@ -65,11 +65,13 @@ func TestGroup_UpdateDescription(t *testing.T) {
 	time.Sleep(time.Millisecond)
 
 	// Test description update
-	group.UpdateDescription("new description")
+	err := group.UpdateDescription("new description")
+	assert.NoError(t, err)
 	assert.Equal(t, "new description", group.Description())
 	assert.True(t, group.UpdatedAt().After(initialUpdatedAt))
 
 	// Test empty description (should be allowed)
-	group.UpdateDescription("")
+	err = group.UpdateDescription("")
+	assert.NoError(t, err)
 	assert.Empty(t, group.Description())
 }

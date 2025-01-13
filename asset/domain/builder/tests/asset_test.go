@@ -132,7 +132,7 @@ func TestAssetBuilder_MustBuild(t *testing.T) {
 
 	// Test panic on invalid build
 	assert.Panics(t, func() {
-		builder.NewAssetBuilder().MustBuild()
+		_ = builder.NewAssetBuilder().MustBuild()
 	})
 }
 

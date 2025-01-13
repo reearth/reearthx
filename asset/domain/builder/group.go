@@ -66,7 +66,9 @@ func (b *GroupBuilder) Policy(policy string) *GroupBuilder {
 }
 
 func (b *GroupBuilder) Description(description string) *GroupBuilder {
-	b.g.UpdateDescription(description)
+	if err := b.g.UpdateDescription(description); err != nil {
+		return b
+	}
 	return b
 }
 

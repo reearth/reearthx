@@ -33,8 +33,14 @@ func TestGroupBuilder_Build(t *testing.T) {
 			},
 			want: func() *entity.Group {
 				group := entity.NewGroup(groupID, "test-group")
-				group.UpdatePolicy("test-policy")
-				group.UpdateDescription("test description")
+				err := group.UpdatePolicy("test-policy")
+				if err != nil {
+					panic(err)
+				}
+				err = group.UpdateDescription("test description")
+				if err != nil {
+					panic(err)
+				}
 				return group
 			}(),
 			wantErr: nil,

@@ -214,7 +214,9 @@ func (i *AssetInteractor) DecompressZipContent(ctx context.Context, content []by
 		go func() {
 			ctx := context.Background()
 			status.Status = "processing"
-			i.jobRepo.Save(ctx, status)
+			if err := i.jobRepo.Save(ctx, status); err != nil {
+				log.Errorfc(ctx, "failed to save job status: %v", err)
+			}
 
 			err := i.txManager.WithTransaction(ctx, func(ctx context.Context) error {
 				asset, err := i.repo.Read(ctx, assetID)
@@ -238,7 +240,9 @@ func (i *AssetInteractor) DecompressZipContent(ctx context.Context, content []by
 			if err != nil {
 				status.Status = "failed"
 				status.Error = err.Error()
-				i.jobRepo.Save(ctx, status)
+				if err := i.jobRepo.Save(ctx, status); err != nil {
+					log.Errorfc(ctx, "failed to save job status: %v", err)
+				}
 				return
 			}
 
@@ -252,13 +256,17 @@ func (i *AssetInteractor) DecompressZipContent(ctx context.Context, content []by
 			for _ = range ch {
 				processedFiles++
 				progress := float64(processedFiles) / float64(totalFiles) * 100
-				i.jobRepo.UpdateProgress(ctx, jobID, progress)
+				if err := i.jobRepo.UpdateProgress(ctx, jobID, progress); err != nil {
+					log.Errorfc(ctx, "failed to update job progress: %v", err)
+				}
 			}
 
 			status.Status = "completed"
 			status.Progress = 100
 			status.CompletedAt = time.Now()
-			i.jobRepo.Save(ctx, status)
+			if err := i.jobRepo.Save(ctx, status); err != nil {
+				log.Errorfc(ctx, "failed to save job status: %v", err)
+			}
 		}()
 
 		return assetusecase.NewResult(map[string]interface{}{
@@ -320,7 +328,8 @@ func (i *AssetInteractor) DeliverAsset(ctx context.Context, id id.ID, options *a
 
 	// Apply transformations if needed
 	if options != nil && options.Transform {
-		// TODO: Implement content transformation
+		// TODO: Implement transformation logic when needed
+		log.Infofc(ctx, "Asset transformation requested but not implemented yet")
 	}
 
 	// Prepare response metadata
