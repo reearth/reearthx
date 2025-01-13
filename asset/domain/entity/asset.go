@@ -118,3 +118,8 @@ func (a *Asset) SetSize(size int64) {
 	a.size = size
 	a.updatedAt = time.Now()
 }
+
+// SetCreatedAt is an internal setter for createdAt, only used by builder
+func (a *Asset) SetCreatedAt(createdAt time.Time) {
+	a.createdAt = createdAt
+}

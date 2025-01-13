@@ -74,15 +74,7 @@ func (b *GroupBuilder) Description(description string) *GroupBuilder {
 
 // CreatedAt sets the creation time of the group
 func (b *GroupBuilder) CreatedAt(createdAt time.Time) *GroupBuilder {
-	// We need to create a new group to set createdAt
-	b.g = entity.NewGroup(b.g.ID(), b.g.Name())
-	// Restore other fields
-	if b.g.Policy() != "" {
-		b.Policy(b.g.Policy())
-	}
-	if b.g.Description() != "" {
-		b.Description(b.g.Description())
-	}
+	b.g.SetCreatedAt(createdAt)
 	return b
 }
 

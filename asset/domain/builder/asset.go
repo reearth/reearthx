@@ -103,27 +103,7 @@ func (b *AssetBuilder) Error(err string) *AssetBuilder {
 
 // CreatedAt sets the creation time of the asset
 func (b *AssetBuilder) CreatedAt(createdAt time.Time) *AssetBuilder {
-	// We need to create a new asset to set createdAt
-	b.a = entity.NewAsset(b.a.ID(), b.a.Name(), b.a.Size(), b.a.ContentType())
-	// Restore other fields
-	if b.a.GroupID() != (id.GroupID{}) {
-		b.GroupID(b.a.GroupID())
-	}
-	if b.a.ProjectID() != (id.ProjectID{}) {
-		b.ProjectID(b.a.ProjectID())
-	}
-	if b.a.WorkspaceID() != (id.WorkspaceID{}) {
-		b.WorkspaceID(b.a.WorkspaceID())
-	}
-	if b.a.URL() != "" {
-		b.URL(b.a.URL())
-	}
-	if b.a.Status() != "" {
-		b.Status(b.a.Status())
-	}
-	if b.a.Error() != "" {
-		b.Error(b.a.Error())
-	}
+	b.a.SetCreatedAt(createdAt)
 	return b
 }
 

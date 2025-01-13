@@ -81,3 +81,8 @@ func (g *Group) UpdateDescription(description string) error {
 	g.updatedAt = time.Now()
 	return nil
 }
+
+// SetCreatedAt is an internal setter for createdAt, only used by builder
+func (g *Group) SetCreatedAt(createdAt time.Time) {
+	g.createdAt = createdAt
+}
