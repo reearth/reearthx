@@ -253,7 +253,7 @@ func (i *AssetInteractor) DecompressZipContent(ctx context.Context, content []by
 				totalFiles++
 			}
 
-			for _ = range ch {
+			for range ch {
 				processedFiles++
 				progress := float64(processedFiles) / float64(totalFiles) * 100
 				if err := i.jobRepo.UpdateProgress(ctx, jobID, progress); err != nil {
