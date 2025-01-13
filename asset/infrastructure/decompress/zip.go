@@ -23,7 +23,6 @@ var _ repository.Decompressor = (*ZipDecompressor)(nil)
 
 // NewZipDecompressor creates a new zip decompressor
 func NewZipDecompressor() repository.Decompressor {
-
 	return &ZipDecompressor{}
 }
 
@@ -65,23 +64,23 @@ func (d *ZipDecompressor) processZipFile(ctx context.Context, f *zip.File, resul
 	select {
 	case <-ctx.Done():
 		resultChan <- repository.DecompressedFile{
-			Filename: f.Name,
-			Error:    ctx.Err(),
+			Name:  f.Name,
+			Error: ctx.Err(),
 		}
 		return
 	default:
 		content, err := d.processFile(f)
 		if err != nil {
 			resultChan <- repository.DecompressedFile{
-				Filename: f.Name,
-				Error:    err,
+				Name:  f.Name,
+				Error: err,
 			}
 			return
 		}
 
 		resultChan <- repository.DecompressedFile{
-			Filename: f.Name,
-			Content:  content,
+			Name:    f.Name,
+			Content: content,
 		}
 	}
 }

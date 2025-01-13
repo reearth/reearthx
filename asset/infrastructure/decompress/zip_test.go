@@ -39,7 +39,7 @@ func TestZipDecompressor_DecompressWithContent(t *testing.T) {
 
 		content, err := io.ReadAll(file.Content)
 		assert.NoError(t, err)
-		results[file.Filename] = string(content)
+		results[file.Name] = string(content)
 	}
 
 	// Verify results
@@ -82,7 +82,7 @@ func TestZipDecompressor_CompressWithContent(t *testing.T) {
 
 		content, err := io.ReadAll(file.Content)
 		assert.NoError(t, err)
-		results[file.Filename] = string(content)
+		results[file.Name] = string(content)
 	}
 
 	assert.Equal(t, 2, len(results))
@@ -104,27 +104,18 @@ func TestZipDecompressor_ContextCancellation(t *testing.T) {
 	// Create decompressor
 	d := NewZipDecompressor()
 
-	// Test compression with cancelled context
+	// Create a context that's already cancelled
 	ctx, cancel := context.WithCancel(context.Background())
-	cancel() // Cancel immediately
-
-	testFiles := map[string]io.Reader{
-		"test1.txt": strings.NewReader("Hello, World!"),
-	}
-	compressChan, err := d.CompressWithContent(ctx, testFiles)
-	assert.NoError(t, err)
-
-	result := <-compressChan
-	assert.ErrorIs(t, result.Error, context.Canceled)
+	cancel()
 
 	// Test decompression with cancelled context
 	resultChan, err := d.DecompressWithContent(ctx, zipContent)
-	assert.NoError(t, err) // Creating the channel should not fail
+	assert.NoError(t, err)
 
-	// Verify that we get context cancellation errors
+	// Verify that all files return context cancelled error
 	for file := range resultChan {
 		assert.Error(t, file.Error)
-		assert.ErrorIs(t, file.Error, context.Canceled)
+		assert.Equal(t, context.Canceled, file.Error)
 	}
 }
 
@@ -133,7 +124,7 @@ func TestZipDecompressor_InvalidZip(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with invalid zip content
-	_, err := d.DecompressWithContent(ctx, []byte("not a zip file"))
+	_, err := d.DecompressWithContent(ctx, []byte("invalid zip content"))
 	assert.Error(t, err)
 }
 

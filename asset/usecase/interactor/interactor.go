@@ -4,7 +4,8 @@ import (
 	"context"
 	"io"
 
-	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/entity"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/infrastructure/decompress"
 	"github.com/reearth/reearthx/asset/repository"
 	"github.com/reearth/reearthx/log"
@@ -25,7 +26,7 @@ func NewAssetInteractor(repo repository.PersistenceRepository, pubsub repository
 }
 
 // CreateAsset creates a new asset
-func (i *AssetInteractor) CreateAsset(ctx context.Context, asset *domain.Asset) error {
+func (i *AssetInteractor) CreateAsset(ctx context.Context, asset *entity.Asset) error {
 	if err := i.repo.Create(ctx, asset); err != nil {
 		return err
 	}
@@ -38,12 +39,12 @@ func (i *AssetInteractor) CreateAsset(ctx context.Context, asset *domain.Asset) 
 }
 
 // GetAsset retrieves an asset by ID
-func (i *AssetInteractor) GetAsset(ctx context.Context, id domain.ID) (*domain.Asset, error) {
+func (i *AssetInteractor) GetAsset(ctx context.Context, id id.ID) (*entity.Asset, error) {
 	return i.repo.Read(ctx, id)
 }
 
 // UpdateAsset updates an existing asset
-func (i *AssetInteractor) UpdateAsset(ctx context.Context, asset *domain.Asset) error {
+func (i *AssetInteractor) UpdateAsset(ctx context.Context, asset *entity.Asset) error {
 	if err := i.repo.Update(ctx, asset); err != nil {
 		return err
 	}
@@ -56,7 +57,7 @@ func (i *AssetInteractor) UpdateAsset(ctx context.Context, asset *domain.Asset) 
 }
 
 // DeleteAsset removes an asset by ID
-func (i *AssetInteractor) DeleteAsset(ctx context.Context, id domain.ID) error {
+func (i *AssetInteractor) DeleteAsset(ctx context.Context, id id.ID) error {
 	if err := i.repo.Delete(ctx, id); err != nil {
 		return err
 	}
@@ -69,7 +70,7 @@ func (i *AssetInteractor) DeleteAsset(ctx context.Context, id domain.ID) error {
 }
 
 // UploadAssetContent uploads content for an asset with the given ID
-func (i *AssetInteractor) UploadAssetContent(ctx context.Context, id domain.ID, content io.Reader) error {
+func (i *AssetInteractor) UploadAssetContent(ctx context.Context, id id.ID, content io.Reader) error {
 	if err := i.repo.Upload(ctx, id, content); err != nil {
 		return err
 	}
@@ -87,17 +88,17 @@ func (i *AssetInteractor) UploadAssetContent(ctx context.Context, id domain.ID, 
 }
 
 // DownloadAssetContent retrieves the content of an asset by ID
-func (i *AssetInteractor) DownloadAssetContent(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
+func (i *AssetInteractor) DownloadAssetContent(ctx context.Context, id id.ID) (io.ReadCloser, error) {
 	return i.repo.Download(ctx, id)
 }
 
 // GetAssetUploadURL generates a URL for uploading content to an asset
-func (i *AssetInteractor) GetAssetUploadURL(ctx context.Context, id domain.ID) (string, error) {
+func (i *AssetInteractor) GetAssetUploadURL(ctx context.Context, id id.ID) (string, error) {
 	return i.repo.GetUploadURL(ctx, id)
 }
 
 // ListAssets returns all assets
-func (i *AssetInteractor) ListAssets(ctx context.Context) ([]*domain.Asset, error) {
+func (i *AssetInteractor) ListAssets(ctx context.Context) ([]*entity.Asset, error) {
 	return i.repo.List(ctx)
 }
 
@@ -109,13 +110,13 @@ func (i *AssetInteractor) DecompressZipContent(ctx context.Context, content []by
 	}
 
 	// Get asset ID from context if available
-	if assetID, ok := ctx.Value("assetID").(domain.ID); ok {
+	if assetID, ok := ctx.Value("assetID").(id.ID); ok {
 		asset, err := i.repo.Read(ctx, assetID)
 		if err != nil {
 			return nil, err
 		}
 
-		asset.UpdateStatus(domain.StatusExtracting, "")
+		asset.UpdateStatus(entity.StatusExtracting, "")
 		if err := i.repo.Update(ctx, asset); err != nil {
 			return nil, err
 		}
@@ -134,7 +135,7 @@ func (i *AssetInteractor) CompressToZip(ctx context.Context, files map[string]io
 }
 
 // DeleteAllAssetsInGroup deletes all assets in a group
-func (i *AssetInteractor) DeleteAllAssetsInGroup(ctx context.Context, groupID domain.GroupID) error {
+func (i *AssetInteractor) DeleteAllAssetsInGroup(ctx context.Context, groupID id.GroupID) error {
 	// Get all assets in the group
 	assets, err := i.repo.FindByGroup(ctx, groupID)
 	if err != nil {

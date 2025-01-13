@@ -1,9 +1,18 @@
-package domain
+package entity
 
 import (
 	"time"
 
 	"github.com/reearth/reearthx/asset/domain/id"
+)
+
+type Status string
+
+const (
+	StatusPending    Status = "PENDING"
+	StatusActive     Status = "ACTIVE"
+	StatusExtracting Status = "EXTRACTING"
+	StatusError      Status = "ERROR"
 )
 
 type Asset struct {
@@ -20,15 +29,6 @@ type Asset struct {
 	createdAt   time.Time
 	updatedAt   time.Time
 }
-
-type Status string
-
-const (
-	StatusPending    Status = "PENDING"
-	StatusActive     Status = "ACTIVE"
-	StatusExtracting Status = "EXTRACTING"
-	StatusError      Status = "ERROR"
-)
 
 func NewAsset(id id.ID, name string, size int64, contentType string) *Asset {
 	now := time.Now()
@@ -83,6 +83,11 @@ func (a *Asset) MoveToWorkspace(workspaceID id.WorkspaceID) {
 
 func (a *Asset) MoveToProject(projectID id.ProjectID) {
 	a.projectID = projectID
+	a.updatedAt = time.Now()
+}
+
+func (a *Asset) MoveToGroup(groupID id.GroupID) {
+	a.groupID = groupID
 	a.updatedAt = time.Now()
 }
 

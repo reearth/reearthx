@@ -5,7 +5,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/entity"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/repository"
 	"github.com/reearth/reearthx/log"
 )
@@ -78,13 +79,13 @@ func (p *AssetPubSub) notify(ctx context.Context, event repository.AssetEvent) {
 }
 
 // PublishAssetCreated publishes an asset created event
-func (p *AssetPubSub) PublishAssetCreated(ctx context.Context, asset *domain.Asset) error {
+func (p *AssetPubSub) PublishAssetCreated(ctx context.Context, asset *entity.Asset) error {
 	event := repository.AssetEvent{
 		Type:        repository.EventTypeAssetCreated,
 		AssetID:     asset.ID(),
 		WorkspaceID: asset.WorkspaceID(),
 		ProjectID:   asset.ProjectID(),
-		Status:      asset.Status(),
+		Status:      string(asset.Status()),
 		Error:       asset.Error(),
 	}
 
@@ -98,13 +99,13 @@ func (p *AssetPubSub) PublishAssetCreated(ctx context.Context, asset *domain.Ass
 }
 
 // PublishAssetUpdated publishes an asset updated event
-func (p *AssetPubSub) PublishAssetUpdated(ctx context.Context, asset *domain.Asset) error {
+func (p *AssetPubSub) PublishAssetUpdated(ctx context.Context, asset *entity.Asset) error {
 	event := repository.AssetEvent{
 		Type:        repository.EventTypeAssetUpdated,
 		AssetID:     asset.ID(),
 		WorkspaceID: asset.WorkspaceID(),
 		ProjectID:   asset.ProjectID(),
-		Status:      asset.Status(),
+		Status:      string(asset.Status()),
 		Error:       asset.Error(),
 	}
 
@@ -118,7 +119,7 @@ func (p *AssetPubSub) PublishAssetUpdated(ctx context.Context, asset *domain.Ass
 }
 
 // PublishAssetDeleted publishes an asset deleted event
-func (p *AssetPubSub) PublishAssetDeleted(ctx context.Context, assetID domain.ID) error {
+func (p *AssetPubSub) PublishAssetDeleted(ctx context.Context, assetID id.ID) error {
 	event := repository.AssetEvent{
 		Type:    repository.EventTypeAssetDeleted,
 		AssetID: assetID,
@@ -134,13 +135,13 @@ func (p *AssetPubSub) PublishAssetDeleted(ctx context.Context, assetID domain.ID
 }
 
 // PublishAssetUploaded publishes an asset uploaded event
-func (p *AssetPubSub) PublishAssetUploaded(ctx context.Context, asset *domain.Asset) error {
+func (p *AssetPubSub) PublishAssetUploaded(ctx context.Context, asset *entity.Asset) error {
 	event := repository.AssetEvent{
 		Type:        repository.EventTypeAssetUploaded,
 		AssetID:     asset.ID(),
 		WorkspaceID: asset.WorkspaceID(),
 		ProjectID:   asset.ProjectID(),
-		Status:      asset.Status(),
+		Status:      string(asset.Status()),
 		Error:       asset.Error(),
 	}
 
@@ -154,13 +155,13 @@ func (p *AssetPubSub) PublishAssetUploaded(ctx context.Context, asset *domain.As
 }
 
 // PublishAssetExtracted publishes an asset extraction status event
-func (p *AssetPubSub) PublishAssetExtracted(ctx context.Context, asset *domain.Asset) error {
+func (p *AssetPubSub) PublishAssetExtracted(ctx context.Context, asset *entity.Asset) error {
 	event := repository.AssetEvent{
 		Type:        repository.EventTypeAssetExtracted,
 		AssetID:     asset.ID(),
 		WorkspaceID: asset.WorkspaceID(),
 		ProjectID:   asset.ProjectID(),
-		Status:      asset.Status(),
+		Status:      string(asset.Status()),
 		Error:       asset.Error(),
 	}
 
@@ -174,13 +175,13 @@ func (p *AssetPubSub) PublishAssetExtracted(ctx context.Context, asset *domain.A
 }
 
 // PublishAssetTransferred publishes an asset transferred event
-func (p *AssetPubSub) PublishAssetTransferred(ctx context.Context, asset *domain.Asset) error {
+func (p *AssetPubSub) PublishAssetTransferred(ctx context.Context, asset *entity.Asset) error {
 	event := repository.AssetEvent{
 		Type:        repository.EventTypeAssetTransferred,
 		AssetID:     asset.ID(),
 		WorkspaceID: asset.WorkspaceID(),
 		ProjectID:   asset.ProjectID(),
-		Status:      asset.Status(),
+		Status:      string(asset.Status()),
 		Error:       asset.Error(),
 	}
 

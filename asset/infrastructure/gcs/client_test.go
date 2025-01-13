@@ -11,7 +11,8 @@ import (
 	"testing"
 
 	"cloud.google.com/go/storage"
-	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/entity"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -121,7 +122,7 @@ func newTestClient(_ *testing.T) *testClient {
 	}
 }
 
-func (c *testClient) Create(ctx context.Context, asset *domain.Asset) error {
+func (c *testClient) Create(ctx context.Context, asset *entity.Asset) error {
 	objPath := c.objectPath(asset.ID())
 	if _, exists := c.mockBucket.objects[objPath]; exists {
 		return fmt.Errorf(errAssetAlreadyExists, asset.ID())
@@ -141,14 +142,14 @@ func (c *testClient) Create(ctx context.Context, asset *domain.Asset) error {
 	return nil
 }
 
-func (c *testClient) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) {
+func (c *testClient) Read(ctx context.Context, id id.ID) (*entity.Asset, error) {
 	objPath := c.objectPath(id)
 	obj, exists := c.mockBucket.objects[objPath]
 	if !exists {
 		return nil, fmt.Errorf(errAssetNotFound, id)
 	}
 
-	return domain.NewAsset(
+	return entity.NewAsset(
 		id,
 		obj.attrs.Metadata["name"],
 		int64(len(obj.data)),
@@ -156,7 +157,7 @@ func (c *testClient) Read(ctx context.Context, id domain.ID) (*domain.Asset, err
 	), nil
 }
 
-func (c *testClient) Update(ctx context.Context, asset *domain.Asset) error {
+func (c *testClient) Update(ctx context.Context, asset *entity.Asset) error {
 	objPath := c.objectPath(asset.ID())
 	obj, exists := c.mockBucket.objects[objPath]
 	if !exists {
@@ -168,13 +169,13 @@ func (c *testClient) Update(ctx context.Context, asset *domain.Asset) error {
 	return nil
 }
 
-func (c *testClient) Delete(ctx context.Context, id domain.ID) error {
+func (c *testClient) Delete(ctx context.Context, id id.ID) error {
 	objPath := c.objectPath(id)
 	delete(c.mockBucket.objects, objPath)
 	return nil
 }
 
-func (c *testClient) Upload(ctx context.Context, id domain.ID, content io.Reader) error {
+func (c *testClient) Upload(ctx context.Context, id id.ID, content io.Reader) error {
 	objPath := c.objectPath(id)
 	data, err := io.ReadAll(content)
 	if err != nil {
@@ -198,7 +199,7 @@ func (c *testClient) Upload(ctx context.Context, id domain.ID, content io.Reader
 	return nil
 }
 
-func (c *testClient) Download(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
+func (c *testClient) Download(ctx context.Context, id id.ID) (io.ReadCloser, error) {
 	objPath := c.objectPath(id)
 	obj, exists := c.mockBucket.objects[objPath]
 	if !exists {
@@ -208,11 +209,11 @@ func (c *testClient) Download(ctx context.Context, id domain.ID) (io.ReadCloser,
 	return &mockReader{bytes.NewReader(obj.data)}, nil
 }
 
-func (c *testClient) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
+func (c *testClient) GetUploadURL(ctx context.Context, id id.ID) (string, error) {
 	return fmt.Sprintf("https://storage.googleapis.com/%s", c.objectPath(id)), nil
 }
 
-func (c *testClient) Move(ctx context.Context, fromID, toID domain.ID) error {
+func (c *testClient) Move(ctx context.Context, fromID, toID id.ID) error {
 	fromPath := c.objectPath(fromID)
 	toPath := c.objectPath(toID)
 
@@ -239,15 +240,15 @@ func (c *testClient) Move(ctx context.Context, fromID, toID domain.ID) error {
 	return nil
 }
 
-func (c *testClient) List(ctx context.Context) ([]*domain.Asset, error) {
-	var assets []*domain.Asset
+func (c *testClient) List(ctx context.Context) ([]*entity.Asset, error) {
+	var assets []*entity.Asset
 	for _, obj := range c.mockBucket.objects {
-		id, err := domain.IDFrom(path.Base(obj.name))
+		id, err := id.IDFrom(path.Base(obj.name))
 		if err != nil {
 			continue
 		}
 
-		asset := domain.NewAsset(
+		asset := entity.NewAsset(
 			id,
 			obj.attrs.Metadata["name"],
 			int64(len(obj.data)),
@@ -271,8 +272,8 @@ func (c *testClient) DeleteAll(ctx context.Context, prefix string) error {
 func TestClient_Create(t *testing.T) {
 	client := newTestClient(t)
 
-	asset := domain.NewAsset(
-		domain.NewID(),
+	asset := entity.NewAsset(
+		id.NewID(),
 		"test-asset",
 		100,
 		"application/json",
@@ -290,7 +291,7 @@ func TestClient_Create(t *testing.T) {
 func TestClient_Read(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	name := "test-asset"
 	contentType := "application/json"
 	objPath := client.objectPath(id)
@@ -317,7 +318,7 @@ func TestClient_Read(t *testing.T) {
 func TestClient_Update(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	objPath := client.objectPath(id)
 
 	client.mockBucket.objects[objPath] = &mockObject{
@@ -332,7 +333,7 @@ func TestClient_Update(t *testing.T) {
 		},
 	}
 
-	updatedAsset := domain.NewAsset(
+	updatedAsset := entity.NewAsset(
 		id,
 		"updated-asset",
 		100,
@@ -349,7 +350,7 @@ func TestClient_Update(t *testing.T) {
 func TestClient_Delete(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	objPath := client.objectPath(id)
 
 	client.mockBucket.objects[objPath] = &mockObject{
@@ -374,7 +375,7 @@ func TestClient_Delete(t *testing.T) {
 func TestClient_Upload(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	content := []byte("test content")
 	objPath := client.objectPath(id)
 
@@ -388,7 +389,7 @@ func TestClient_Upload(t *testing.T) {
 func TestClient_Download(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	content := []byte("test content")
 	objPath := client.objectPath(id)
 
@@ -413,8 +414,8 @@ func TestClient_Download(t *testing.T) {
 func TestClient_Create_AlreadyExists(t *testing.T) {
 	client := newTestClient(t)
 
-	asset := domain.NewAsset(
-		domain.NewID(),
+	asset := entity.NewAsset(
+		id.NewID(),
 		"test-asset",
 		100,
 		"application/json",
@@ -437,15 +438,15 @@ func TestClient_Create_AlreadyExists(t *testing.T) {
 func TestClient_Read_NotFound(t *testing.T) {
 	client := newTestClient(t)
 
-	_, err := client.Read(context.Background(), domain.NewID())
+	_, err := client.Read(context.Background(), id.NewID())
 	assert.Error(t, err)
 }
 
 func TestClient_Update_NotFound(t *testing.T) {
 	client := newTestClient(t)
 
-	asset := domain.NewAsset(
-		domain.NewID(),
+	asset := entity.NewAsset(
+		id.NewID(),
 		"test-asset",
 		100,
 		"application/json",
@@ -458,14 +459,14 @@ func TestClient_Update_NotFound(t *testing.T) {
 func TestClient_Download_NotFound(t *testing.T) {
 	client := newTestClient(t)
 
-	_, err := client.Download(context.Background(), domain.NewID())
+	_, err := client.Download(context.Background(), id.NewID())
 	assert.Error(t, err)
 }
 
 func TestClient_GetObjectURL(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	url := client.GetObjectURL(id)
 	assert.NotEmpty(t, url)
 	assert.Contains(t, url, client.objectPath(id))
@@ -474,7 +475,7 @@ func TestClient_GetObjectURL(t *testing.T) {
 func TestClient_GetIDFromURL(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	url := client.GetObjectURL(id)
 
 	parsedID, err := client.GetIDFromURL(url)
@@ -576,13 +577,13 @@ func TestClient_List(t *testing.T) {
 
 	// Create multiple test objects
 	objects := []struct {
-		id          domain.ID
+		id          id.ID
 		name        string
 		contentType string
 	}{
-		{domain.NewID(), "asset1", "application/json"},
-		{domain.NewID(), "asset2", "application/json"},
-		{domain.NewID(), "asset3", "application/json"},
+		{id.NewID(), "asset1", "application/json"},
+		{id.NewID(), "asset2", "application/json"},
+		{id.NewID(), "asset3", "application/json"},
 	}
 
 	for _, obj := range objects {
@@ -610,14 +611,14 @@ func TestClient_DeleteAll(t *testing.T) {
 
 	// Create test objects with different prefixes
 	objects := []struct {
-		id          domain.ID
+		id          id.ID
 		name        string
 		contentType string
 		prefix      string
 	}{
-		{domain.NewID(), "asset1", "application/json", "test-prefix"},
-		{domain.NewID(), "asset2", "application/json", "test-prefix"},
-		{domain.NewID(), "asset3", "application/json", "other-prefix"},
+		{id.NewID(), "asset1", "application/json", "test-prefix"},
+		{id.NewID(), "asset2", "application/json", "test-prefix"},
+		{id.NewID(), "asset3", "application/json", "other-prefix"},
 	}
 
 	for _, obj := range objects {
@@ -653,8 +654,8 @@ func TestClient_DeleteAll(t *testing.T) {
 func TestClient_Move(t *testing.T) {
 	client := newTestClient(t)
 
-	fromID := domain.NewID()
-	toID := domain.NewID()
+	fromID := id.NewID()
+	toID := id.NewID()
 	content := []byte("test content")
 	fromPath := client.objectPath(fromID)
 	toPath := client.objectPath(toID)
@@ -686,15 +687,15 @@ func TestClient_Move(t *testing.T) {
 func TestClient_Move_SourceNotFound(t *testing.T) {
 	client := newTestClient(t)
 
-	err := client.Move(context.Background(), domain.NewID(), domain.NewID())
+	err := client.Move(context.Background(), id.NewID(), id.NewID())
 	assert.Error(t, err)
 }
 
 func TestClient_Move_DestinationExists(t *testing.T) {
 	client := newTestClient(t)
 
-	fromID := domain.NewID()
-	toID := domain.NewID()
+	fromID := id.NewID()
+	toID := id.NewID()
 	fromPath := client.objectPath(fromID)
 	toPath := client.objectPath(toID)
 
@@ -725,7 +726,7 @@ func TestClient_Move_DestinationExists(t *testing.T) {
 func TestClient_GetUploadURL(t *testing.T) {
 	client := newTestClient(t)
 
-	id := domain.NewID()
+	id := id.NewID()
 	objPath := client.objectPath(id)
 
 	url, err := client.GetUploadURL(context.Background(), id)

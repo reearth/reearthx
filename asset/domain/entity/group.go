@@ -1,9 +1,9 @@
-package domain
+package entity
 
 import (
-	"errors"
 	"time"
 
+	"github.com/reearth/reearthx/asset/domain"
 	"github.com/reearth/reearthx/asset/domain/id"
 )
 
@@ -15,11 +15,6 @@ type Group struct {
 	createdAt   time.Time
 	updatedAt   time.Time
 }
-
-var (
-	ErrEmptyGroupName = errors.New("group name is required")
-	ErrEmptyPolicy    = errors.New("policy is required")
-)
 
 func NewGroup(id id.GroupID, name string) *Group {
 	now := time.Now()
@@ -40,14 +35,22 @@ func (g *Group) CreatedAt() time.Time { return g.createdAt }
 func (g *Group) UpdatedAt() time.Time { return g.updatedAt }
 
 // Setters
-func (g *Group) UpdateName(name string) {
+func (g *Group) UpdateName(name string) error {
+	if name == "" {
+		return domain.ErrEmptyGroupName
+	}
 	g.name = name
 	g.updatedAt = time.Now()
+	return nil
 }
 
-func (g *Group) UpdatePolicy(policy string) {
+func (g *Group) UpdatePolicy(policy string) error {
+	if policy == "" {
+		return domain.ErrEmptyPolicy
+	}
 	g.policy = policy
 	g.updatedAt = time.Now()
+	return nil
 }
 
 func (g *Group) UpdateDescription(description string) {

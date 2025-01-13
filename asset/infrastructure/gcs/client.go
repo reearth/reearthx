@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/storage"
-	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/entity"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/repository"
 	"google.golang.org/api/iterator"
 )
@@ -63,7 +64,7 @@ func NewClient(ctx context.Context, bucketName string, basePath string, baseURL 
 	}, nil
 }
 
-func (c *Client) Create(ctx context.Context, asset *domain.Asset) error {
+func (c *Client) Create(ctx context.Context, asset *entity.Asset) error {
 	obj := c.getObject(asset.ID())
 	attrs := storage.ObjectAttrs{
 		Metadata: map[string]string{
@@ -81,13 +82,13 @@ func (c *Client) Create(ctx context.Context, asset *domain.Asset) error {
 	return writer.Close()
 }
 
-func (c *Client) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) {
+func (c *Client) Read(ctx context.Context, id id.ID) (*entity.Asset, error) {
 	attrs, err := c.getObject(id).Attrs(ctx)
 	if err != nil {
 		return nil, c.handleNotFound(err, id)
 	}
 
-	asset := domain.NewAsset(
+	asset := entity.NewAsset(
 		id,
 		attrs.Metadata["name"],
 		attrs.Size,
@@ -97,7 +98,7 @@ func (c *Client) Read(ctx context.Context, id domain.ID) (*domain.Asset, error) 
 	return asset, nil
 }
 
-func (c *Client) Update(ctx context.Context, asset *domain.Asset) error {
+func (c *Client) Update(ctx context.Context, asset *entity.Asset) error {
 	obj := c.getObject(asset.ID())
 	update := storage.ObjectAttrsToUpdate{
 		Metadata: map[string]string{
@@ -112,7 +113,7 @@ func (c *Client) Update(ctx context.Context, asset *domain.Asset) error {
 	return nil
 }
 
-func (c *Client) Delete(ctx context.Context, id domain.ID) error {
+func (c *Client) Delete(ctx context.Context, id id.ID) error {
 	obj := c.getObject(id)
 	if err := obj.Delete(ctx); err != nil {
 		if errors.Is(err, storage.ErrObjectNotExist) {
@@ -123,8 +124,8 @@ func (c *Client) Delete(ctx context.Context, id domain.ID) error {
 	return nil
 }
 
-func (c *Client) List(ctx context.Context) ([]*domain.Asset, error) {
-	var assets []*domain.Asset
+func (c *Client) List(ctx context.Context) ([]*entity.Asset, error) {
+	var assets []*entity.Asset
 	it := c.bucket.Objects(ctx, &storage.Query{Prefix: c.basePath})
 
 	for {
@@ -136,12 +137,12 @@ func (c *Client) List(ctx context.Context) ([]*domain.Asset, error) {
 			return nil, fmt.Errorf(errFailedToListAssets, err)
 		}
 
-		id, err := domain.IDFrom(path.Base(attrs.Name))
+		id, err := id.IDFrom(path.Base(attrs.Name))
 		if err != nil {
 			continue // skip invalid IDs
 		}
 
-		asset := domain.NewAsset(
+		asset := entity.NewAsset(
 			id,
 			attrs.Metadata["name"],
 			attrs.Size,
@@ -153,7 +154,7 @@ func (c *Client) List(ctx context.Context) ([]*domain.Asset, error) {
 	return assets, nil
 }
 
-func (c *Client) Upload(ctx context.Context, id domain.ID, content io.Reader) error {
+func (c *Client) Upload(ctx context.Context, id id.ID, content io.Reader) error {
 	obj := c.getObject(id)
 	writer := obj.NewWriter(ctx)
 
@@ -168,7 +169,7 @@ func (c *Client) Upload(ctx context.Context, id domain.ID, content io.Reader) er
 	return nil
 }
 
-func (c *Client) Download(ctx context.Context, id domain.ID) (io.ReadCloser, error) {
+func (c *Client) Download(ctx context.Context, id id.ID) (io.ReadCloser, error) {
 	obj := c.getObject(id)
 	reader, err := obj.NewReader(ctx)
 	if err != nil {
@@ -180,7 +181,7 @@ func (c *Client) Download(ctx context.Context, id domain.ID) (io.ReadCloser, err
 	return reader, nil
 }
 
-func (c *Client) GetUploadURL(ctx context.Context, id domain.ID) (string, error) {
+func (c *Client) GetUploadURL(ctx context.Context, id id.ID) (string, error) {
 	opts := &storage.SignedURLOptions{
 		Method:  "PUT",
 		Expires: time.Now().Add(15 * time.Minute),
@@ -193,7 +194,7 @@ func (c *Client) GetUploadURL(ctx context.Context, id domain.ID) (string, error)
 	return signedURL, nil
 }
 
-func (c *Client) Move(ctx context.Context, fromID, toID domain.ID) error {
+func (c *Client) Move(ctx context.Context, fromID, toID id.ID) error {
 	src := c.getObject(fromID)
 	dst := c.getObject(toID)
 
@@ -231,7 +232,7 @@ func (c *Client) DeleteAll(ctx context.Context, prefix string) error {
 	return nil
 }
 
-func (c *Client) GetObjectURL(id domain.ID) string {
+func (c *Client) GetObjectURL(id id.ID) string {
 	if c.baseURL == nil {
 		return ""
 	}
@@ -240,8 +241,8 @@ func (c *Client) GetObjectURL(id domain.ID) string {
 	return u.String()
 }
 
-func (c *Client) GetIDFromURL(urlStr string) (domain.ID, error) {
-	emptyID := domain.NewID()
+func (c *Client) GetIDFromURL(urlStr string) (id.ID, error) {
+	emptyID := id.NewID()
 
 	if c.baseURL == nil {
 		return emptyID, fmt.Errorf(errInvalidURL, "base URL not set")
@@ -252,46 +253,36 @@ func (c *Client) GetIDFromURL(urlStr string) (domain.ID, error) {
 		return emptyID, fmt.Errorf(errInvalidURL, err)
 	}
 
-	if u.Host != c.baseURL.Host || u.Scheme != c.baseURL.Scheme {
-		return emptyID, fmt.Errorf(errInvalidURL, "host or scheme mismatch")
+	if u.Host != c.baseURL.Host {
+		return emptyID, fmt.Errorf(errInvalidURL, "host mismatch")
 	}
 
-	p := strings.TrimPrefix(u.Path, "/")
-	p = strings.TrimPrefix(p, c.basePath)
-	p = strings.TrimPrefix(p, "/")
+	urlPath := strings.TrimPrefix(u.Path, c.baseURL.Path)
+	urlPath = strings.TrimPrefix(urlPath, "/")
+	urlPath = strings.TrimPrefix(urlPath, c.basePath)
+	urlPath = strings.TrimPrefix(urlPath, "/")
 
-	if p == "" {
-		return emptyID, fmt.Errorf(errInvalidURL, "empty path")
-	}
-
-	id, err := domain.IDFrom(p)
-	if err != nil {
-		return emptyID, fmt.Errorf(errInvalidURL, err)
-	}
-
-	return id, nil
+	return id.IDFrom(urlPath)
 }
 
-func (c *Client) getObject(id domain.ID) *storage.ObjectHandle {
+func (c *Client) getObject(id id.ID) *storage.ObjectHandle {
 	return c.bucket.Object(c.objectPath(id))
 }
 
-func (c *Client) objectPath(id domain.ID) string {
+func (c *Client) objectPath(id id.ID) string {
 	return path.Join(c.basePath, id.String())
 }
 
-func (c *Client) handleNotFound(err error, id domain.ID) error {
+func (c *Client) handleNotFound(err error, id id.ID) error {
 	if errors.Is(err, storage.ErrObjectNotExist) {
 		return fmt.Errorf(errAssetNotFound, id)
 	}
 	return fmt.Errorf(errFailedToGetAsset, err)
 }
 
-func (c *Client) FindByGroup(ctx context.Context, groupID domain.GroupID) ([]*domain.Asset, error) {
-	var assets []*domain.Asset
-	it := c.bucket.Objects(ctx, &storage.Query{
-		Prefix: path.Join(c.basePath, groupID.String()),
-	})
+func (c *Client) FindByGroup(ctx context.Context, groupID id.GroupID) ([]*entity.Asset, error) {
+	var assets []*entity.Asset
+	it := c.bucket.Objects(ctx, &storage.Query{Prefix: c.basePath})
 
 	for {
 		attrs, err := it.Next()
@@ -302,18 +293,21 @@ func (c *Client) FindByGroup(ctx context.Context, groupID domain.GroupID) ([]*do
 			return nil, fmt.Errorf(errFailedToListAssets, err)
 		}
 
-		id, err := domain.IDFrom(path.Base(attrs.Name))
+		assetID, err := id.IDFrom(path.Base(attrs.Name))
 		if err != nil {
 			continue // skip invalid IDs
 		}
 
-		asset := domain.NewAsset(
-			id,
+		asset := entity.NewAsset(
+			assetID,
 			attrs.Metadata["name"],
 			attrs.Size,
 			attrs.ContentType,
 		)
-		assets = append(assets, asset)
+
+		if asset.GroupID() == groupID {
+			assets = append(assets, asset)
+		}
 	}
 
 	return assets, nil

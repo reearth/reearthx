@@ -25,7 +25,7 @@ type Decompressor interface {
 
 // DecompressedFile represents a single file from the zip archive
 type DecompressedFile struct {
-	Filename string
-	Content  io.Reader
-	Error    error
+	Name    string
+	Content io.Reader
+	Error   error
 }

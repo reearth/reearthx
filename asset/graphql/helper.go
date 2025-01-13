@@ -4,14 +4,14 @@ import (
 	"io"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/entity"
 )
 
 func FileFromUpload(file *graphql.Upload) io.Reader {
 	return file.File
 }
 
-func AssetFromDomain(a *domain.Asset) *Asset {
+func AssetFromDomain(a *entity.Asset) *Asset {
 	if a == nil {
 		return nil
 	}

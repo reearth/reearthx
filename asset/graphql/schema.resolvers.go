@@ -7,18 +7,19 @@ package graphql
 import (
 	"context"
 
-	"github.com/reearth/reearthx/asset/domain"
+	"github.com/reearth/reearthx/asset/domain/entity"
+	"github.com/reearth/reearthx/asset/domain/id"
 )
 
 // UploadAsset is the resolver for the uploadAsset field.
 func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInput) (*UploadAssetPayload, error) {
-	assetID, err := domain.IDFrom(input.ID)
+	assetID, err := id.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create asset metadata
-	asset := domain.NewAsset(
+	asset := entity.NewAsset(
 		assetID,
 		input.File.Filename,
 		input.File.Size,
@@ -36,7 +37,7 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 	}
 
 	// Update asset status to active
-	asset.UpdateStatus(domain.StatusActive, "")
+	asset.UpdateStatus(entity.StatusActive, "")
 	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 
 // GetAssetUploadURL is the resolver for the getAssetUploadURL field.
 func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAssetUploadURLInput) (*GetAssetUploadURLPayload, error) {
-	assetID, err := domain.IDFrom(input.ID)
+	assetID, err := id.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +66,7 @@ func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAsset
 
 // UpdateAssetMetadata is the resolver for the updateAssetMetadata field.
 func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input UpdateAssetMetadataInput) (*UpdateAssetMetadataPayload, error) {
-	assetID, err := domain.IDFrom(input.ID)
+	assetID, err := id.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +89,7 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInput) (*DeleteAssetPayload, error) {
-	assetID, err := domain.IDFrom(input.ID)
+	assetID, err := id.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +105,9 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInp
 
 // DeleteAssets is the resolver for the deleteAssets field.
 func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsInput) (*DeleteAssetsPayload, error) {
-	var assetIDs []domain.ID
+	var assetIDs []id.ID
 	for _, idStr := range input.Ids {
-		assetID, err := domain.IDFrom(idStr)
+		assetID, err := id.IDFrom(idStr)
 		if err != nil {
 			return nil, err
 		}
@@ -124,25 +125,9 @@ func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsI
 	}, nil
 }
 
-// DeleteAssetsInGroup is the resolver for the deleteAssetsInGroup field.
-func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input DeleteAssetsInGroupInput) (*DeleteAssetsInGroupPayload, error) {
-	groupID, err := domain.GroupIDFrom(input.GroupID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := r.assetUsecase.DeleteAllAssetsInGroup(ctx, groupID); err != nil {
-		return nil, err
-	}
-
-	return &DeleteAssetsInGroupPayload{
-		GroupID: input.GroupID,
-	}, nil
-}
-
 // MoveAsset is the resolver for the moveAsset field.
 func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) (*MoveAssetPayload, error) {
-	assetID, err := domain.IDFrom(input.ID)
+	assetID, err := id.IDFrom(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +138,7 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 	}
 
 	if input.ToWorkspaceID != nil {
-		wsID, err := domain.WorkspaceIDFrom(*input.ToWorkspaceID)
+		wsID, err := id.WorkspaceIDFrom(*input.ToWorkspaceID)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +146,7 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 	}
 
 	if input.ToProjectID != nil {
-		projID, err := domain.ProjectIDFrom(*input.ToProjectID)
+		projID, err := id.ProjectIDFrom(*input.ToProjectID)
 		if err != nil {
 			return nil, err
 		}
@@ -177,14 +162,30 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 	}, nil
 }
 
-// Asset is the resolver for the asset field.
-func (r *queryResolver) Asset(ctx context.Context, id string) (*Asset, error) {
-	assetID, err := domain.IDFrom(id)
+// DeleteAssetsInGroup is the resolver for the deleteAssetsInGroup field.
+func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input DeleteAssetsInGroupInput) (*DeleteAssetsInGroupPayload, error) {
+	groupID, err := id.GroupIDFrom(input.GroupID)
 	if err != nil {
 		return nil, err
 	}
 
-	asset, err := r.assetUsecase.GetAsset(ctx, assetID)
+	if err := r.assetUsecase.DeleteAllAssetsInGroup(ctx, groupID); err != nil {
+		return nil, err
+	}
+
+	return &DeleteAssetsInGroupPayload{
+		GroupID: input.GroupID,
+	}, nil
+}
+
+// Asset is the resolver for the asset field.
+func (r *queryResolver) Asset(ctx context.Context, assetID string) (*Asset, error) {
+	aid, err := id.IDFrom(assetID)
+	if err != nil {
+		return nil, err
+	}
+
+	asset, err := r.assetUsecase.GetAsset(ctx, aid)
 	if err != nil {
 		return nil, err
 	}
