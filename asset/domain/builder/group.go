@@ -49,8 +49,6 @@ func (b *GroupBuilder) NewID() *GroupBuilder {
 
 func (b *GroupBuilder) Name(name string) *GroupBuilder {
 	if err := b.g.UpdateName(name); err != nil {
-		// Since this is a builder pattern, we'll ignore the error here
-		// and let it be caught during Build()
 		return b
 	}
 	return b
@@ -58,8 +56,6 @@ func (b *GroupBuilder) Name(name string) *GroupBuilder {
 
 func (b *GroupBuilder) Policy(policy string) *GroupBuilder {
 	if err := b.g.UpdatePolicy(policy); err != nil {
-		// Since this is a builder pattern, we'll ignore the error here
-		// and let it be caught during Build()
 		return b
 	}
 	return b

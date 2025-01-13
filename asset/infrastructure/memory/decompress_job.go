@@ -4,9 +4,12 @@ import (
 	"context"
 	"sync"
 
+	"github.com/reearth/reearthx/asset/repository"
 	assetusecase "github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/rerror"
 )
+
+var _ repository.DecompressJobRepository = (*DecompressJobRepository)(nil)
 
 // DecompressJobRepository is an in-memory implementation of repository.DecompressJobRepository
 type DecompressJobRepository struct {
