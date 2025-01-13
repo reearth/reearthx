@@ -1,10 +1,12 @@
 package entity
 
 import (
+	"context"
 	"time"
 
 	"github.com/reearth/reearthx/asset/domain"
 	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/validation"
 )
 
 type Group struct {
@@ -24,6 +26,27 @@ func NewGroup(id id.GroupID, name string) *Group {
 		createdAt: now,
 		updatedAt: now,
 	}
+}
+
+// Validate implements the Validator interface
+func (g *Group) Validate(ctx context.Context) validation.ValidationResult {
+	validationCtx := validation.NewValidationContext(
+		&validation.RequiredRule{Field: "id"},
+		&validation.RequiredRule{Field: "name"},
+		&validation.MaxLengthRule{Field: "name", MaxLength: 100},
+		&validation.RequiredRule{Field: "policy"},
+		&validation.MaxLengthRule{Field: "description", MaxLength: 500},
+	)
+
+	// Create a map of fields to validate
+	fields := map[string]interface{}{
+		"id":          g.id,
+		"name":        g.name,
+		"policy":      g.policy,
+		"description": g.description,
+	}
+
+	return validationCtx.Validate(ctx, fields)
 }
 
 // Getters
@@ -53,7 +76,8 @@ func (g *Group) UpdatePolicy(policy string) error {
 	return nil
 }
 
-func (g *Group) UpdateDescription(description string) {
+func (g *Group) UpdateDescription(description string) error {
 	g.description = description
 	g.updatedAt = time.Now()
+	return nil
 }

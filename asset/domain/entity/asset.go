@@ -1,9 +1,11 @@
 package entity
 
 import (
+	"context"
 	"time"
 
 	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/validation"
 )
 
 type Status string
@@ -41,6 +43,27 @@ func NewAsset(id id.ID, name string, size int64, contentType string) *Asset {
 		createdAt:   now,
 		updatedAt:   now,
 	}
+}
+
+// Validate implements the Validator interface
+func (a *Asset) Validate(ctx context.Context) validation.ValidationResult {
+	validationCtx := validation.NewValidationContext(
+		&validation.RequiredRule{Field: "id"},
+		&validation.RequiredRule{Field: "name"},
+		&validation.MaxLengthRule{Field: "name", MaxLength: 255},
+		&validation.RequiredRule{Field: "url"},
+		&validation.RequiredRule{Field: "contentType"},
+	)
+
+	// Create a map of fields to validate
+	fields := map[string]interface{}{
+		"id":          a.id,
+		"name":        a.name,
+		"url":         a.url,
+		"contentType": a.contentType,
+	}
+
+	return validationCtx.Validate(ctx, fields)
 }
 
 // ID Getters
