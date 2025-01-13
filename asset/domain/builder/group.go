@@ -86,7 +86,6 @@ func (b *GroupBuilder) CreatedAt(createdAt time.Time) *GroupBuilder {
 	return b
 }
 
-// UpdatedAt is not needed as it's handled internally by the entity
 func (b *GroupBuilder) UpdatedAt(updatedAt time.Time) *GroupBuilder {
 	return b
 }

@@ -63,7 +63,7 @@ func NewErrorResult(code string, message string, details map[string]interface{})
 }
 
 // NewValidationErrorResult creates a new validation error result
-func NewValidationErrorResult(validationErrors []*validation.ValidationError) *Result {
+func NewValidationErrorResult(validationErrors []*validation.Error) *Result {
 	errors := make([]*Error, len(validationErrors))
 	for i, ve := range validationErrors {
 		errors[i] = &Error{

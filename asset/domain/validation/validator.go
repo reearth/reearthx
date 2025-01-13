@@ -6,23 +6,23 @@ import (
 )
 
 // ValidationError represents a validation error
-type ValidationError struct {
+type Error struct {
 	Field   string
 	Message string
 }
 
-func (e *ValidationError) Error() string {
+func (e *Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Message)
 }
 
 // ValidationResult represents the result of a validation
 type ValidationResult struct {
 	IsValid bool
-	Errors  []*ValidationError
+	Errors  []*Error
 }
 
 // NewValidationResult creates a new validation result
-func NewValidationResult(isValid bool, errors ...*ValidationError) ValidationResult {
+func NewValidationResult(isValid bool, errors ...*Error) ValidationResult {
 	return ValidationResult{
 		IsValid: isValid,
 		Errors:  errors,
@@ -35,7 +35,7 @@ func Valid() ValidationResult {
 }
 
 // Invalid creates an invalid validation result with errors
-func Invalid(errors ...*ValidationError) ValidationResult {
+func Invalid(errors ...*Error) ValidationResult {
 	return ValidationResult{
 		IsValid: false,
 		Errors:  errors,
@@ -68,7 +68,7 @@ func NewValidationContext(rules ...ValidationRule) *ValidationContext {
 
 // Validate executes all validation rules in the context
 func (c *ValidationContext) Validate(ctx context.Context, value interface{}) ValidationResult {
-	var errors []*ValidationError
+	var errors []*Error
 
 	// If value is a map, validate each field with its corresponding rules
 	if fields, ok := value.(map[string]interface{}); ok {
@@ -76,7 +76,7 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 			if r, ok := rule.(*RequiredRule); ok {
 				if fieldValue, exists := fields[r.Field]; exists {
 					if err := rule.Validate(ctx, fieldValue); err != nil {
-						errors = append(errors, err.(*ValidationError))
+						errors = append(errors, err.(*Error))
 					}
 				} else {
 					errors = append(errors, NewValidationError(r.Field, "field is required"))
@@ -84,7 +84,7 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 			} else if r, ok := rule.(*MaxLengthRule); ok {
 				if fieldValue, exists := fields[r.Field]; exists {
 					if err := rule.Validate(ctx, fieldValue); err != nil {
-						errors = append(errors, err.(*ValidationError))
+						errors = append(errors, err.(*Error))
 					}
 				}
 			}
@@ -93,10 +93,10 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 		// If value is not a map, validate directly
 		for _, rule := range c.Rules {
 			if err := rule.Validate(ctx, value); err != nil {
-				if verr, ok := err.(*ValidationError); ok {
+				if verr, ok := err.(*Error); ok {
 					errors = append(errors, verr)
 				} else {
-					errors = append(errors, &ValidationError{
+					errors = append(errors, &Error{
 						Message: err.Error(),
 					})
 				}
@@ -111,8 +111,8 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 }
 
 // ValidationError creates a new validation error
-func NewValidationError(field, message string) *ValidationError {
-	return &ValidationError{
+func NewValidationError(field, message string) *Error {
+	return &Error{
 		Field:   field,
 		Message: message,
 	}

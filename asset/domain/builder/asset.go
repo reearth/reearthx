@@ -127,7 +127,6 @@ func (b *AssetBuilder) CreatedAt(createdAt time.Time) *AssetBuilder {
 	return b
 }
 
-// UpdatedAt is not needed as it's handled internally by the entity
 func (b *AssetBuilder) UpdatedAt(updatedAt time.Time) *AssetBuilder {
 	return b
 }
