@@ -27,19 +27,22 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 	)
 
 	// Create asset metadata first
-	if err := r.assetUsecase.CreateAsset(ctx, asset); err != nil {
-		return nil, err
+	result := r.assetUsecase.CreateAsset(ctx, asset)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	// Upload file content
-	if err := r.assetUsecase.UploadAssetContent(ctx, assetID, FileFromUpload(&input.File)); err != nil {
-		return nil, err
+	result = r.assetUsecase.UploadAssetContent(ctx, assetID, FileFromUpload(&input.File))
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	// Update asset status to active
 	asset.UpdateStatus(entity.StatusActive, "")
-	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
-		return nil, err
+	result = r.assetUsecase.UpdateAsset(ctx, asset)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	return &UploadAssetPayload{
@@ -54,13 +57,13 @@ func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAsset
 		return nil, err
 	}
 
-	url, err := r.assetUsecase.GetAssetUploadURL(ctx, assetID)
-	if err != nil {
-		return nil, err
+	result := r.assetUsecase.GetAssetUploadURL(ctx, assetID)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	return &GetAssetUploadURLPayload{
-		UploadURL: url,
+		UploadURL: result.Data.(string),
 	}, nil
 }
 
@@ -71,15 +74,17 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 		return nil, err
 	}
 
-	asset, err := r.assetUsecase.GetAsset(ctx, assetID)
-	if err != nil {
-		return nil, err
+	result := r.assetUsecase.GetAsset(ctx, assetID)
+	if !result.IsSuccess() {
+		return nil, result
 	}
+	asset := result.Data.(*entity.Asset)
 
 	asset.UpdateMetadata(input.Name, "", input.ContentType)
 	asset.SetSize(int64(input.Size))
-	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
-		return nil, err
+	result = r.assetUsecase.UpdateAsset(ctx, asset)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	return &UpdateAssetMetadataPayload{
@@ -94,8 +99,9 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInp
 		return nil, err
 	}
 
-	if err := r.assetUsecase.DeleteAsset(ctx, assetID); err != nil {
-		return nil, err
+	result := r.assetUsecase.DeleteAsset(ctx, assetID)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	return &DeleteAssetPayload{
@@ -115,8 +121,9 @@ func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsI
 	}
 
 	for _, assetID := range assetIDs {
-		if err := r.assetUsecase.DeleteAsset(ctx, assetID); err != nil {
-			return nil, err
+		result := r.assetUsecase.DeleteAsset(ctx, assetID)
+		if !result.IsSuccess() {
+			return nil, result
 		}
 	}
 
@@ -132,10 +139,11 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 		return nil, err
 	}
 
-	asset, err := r.assetUsecase.GetAsset(ctx, assetID)
-	if err != nil {
-		return nil, err
+	result := r.assetUsecase.GetAsset(ctx, assetID)
+	if !result.IsSuccess() {
+		return nil, result
 	}
+	asset := result.Data.(*entity.Asset)
 
 	if input.ToWorkspaceID != nil {
 		wsID, err := id.WorkspaceIDFrom(*input.ToWorkspaceID)
@@ -153,8 +161,9 @@ func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) 
 		asset.MoveToProject(projID)
 	}
 
-	if err := r.assetUsecase.UpdateAsset(ctx, asset); err != nil {
-		return nil, err
+	result = r.assetUsecase.UpdateAsset(ctx, asset)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	return &MoveAssetPayload{
@@ -169,8 +178,9 @@ func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input Delete
 		return nil, err
 	}
 
-	if err := r.assetUsecase.DeleteAllAssetsInGroup(ctx, groupID); err != nil {
-		return nil, err
+	result := r.assetUsecase.DeleteAllAssetsInGroup(ctx, groupID)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
 	return &DeleteAssetsInGroupPayload{
@@ -185,27 +195,28 @@ func (r *queryResolver) Asset(ctx context.Context, assetID string) (*Asset, erro
 		return nil, err
 	}
 
-	asset, err := r.assetUsecase.GetAsset(ctx, aid)
-	if err != nil {
-		return nil, err
+	result := r.assetUsecase.GetAsset(ctx, aid)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
-	return AssetFromDomain(asset), nil
+	return AssetFromDomain(result.Data.(*entity.Asset)), nil
 }
 
 // Assets is the resolver for the assets field.
 func (r *queryResolver) Assets(ctx context.Context) ([]*Asset, error) {
-	assets, err := r.assetUsecase.ListAssets(ctx)
-	if err != nil {
-		return nil, err
+	result := r.assetUsecase.ListAssets(ctx)
+	if !result.IsSuccess() {
+		return nil, result
 	}
 
-	result := make([]*Asset, len(assets))
+	assets := result.Data.([]*entity.Asset)
+	graphqlAssets := make([]*Asset, len(assets))
 	for i, asset := range assets {
-		result[i] = AssetFromDomain(asset)
+		graphqlAssets[i] = AssetFromDomain(asset)
 	}
 
-	return result, nil
+	return graphqlAssets, nil
 }
 
 // Mutation returns MutationResolver implementation.
