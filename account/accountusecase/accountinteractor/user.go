@@ -82,7 +82,7 @@ func (i *User) SearchUser(ctx context.Context, keyword string) (user.SimpleList,
 func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.GetUserByCredentials) (u *user.User, err error) {
 	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
 		u, err = i.repos.User.FindByNameOrEmail(ctx, inp.Email)
-		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
+		if err != nil && !errors.Is(rerror.ErrNotFound, err) {
 			return nil, err
 		} else if u == nil {
 			return nil, accountinterfaces.ErrInvalidUserEmail
