@@ -25,8 +25,9 @@ func TestContextMiddleware(t *testing.T) {
 }
 
 func TestContextMiddlewareBy(t *testing.T) {
-	key := struct{}{}
-	ts := httptest.NewServer(ContextMiddlewareBy(func(r *http.Request) context.Context {
+	type keys struct{}
+	key := keys{}
+	ts := httptest.NewServer(ContextMiddlewareBy(func(w http.ResponseWriter, r *http.Request) context.Context {
 		if r.Method == http.MethodPost {
 			return context.WithValue(r.Context(), key, "aaa")
 		}
@@ -49,7 +50,7 @@ func TestContextMiddlewareBy(t *testing.T) {
 
 func TestRequestIDMiddleware(t *testing.T) {
 	ts := httptest.NewServer(RequestIDMiddleware()(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(GetRequestID(r.Context())))
+		_, _ = w.Write([]byte(GetRequestIDFromContext(r.Context())))
 	})))
 	defer ts.Close()
 

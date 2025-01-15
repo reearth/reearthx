@@ -1,7 +1,10 @@
 package log
 
 import (
+	"fmt"
 	"io"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -203,29 +206,54 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			req := c.Request()
 			res := c.Response()
 			start := time.Now()
-			if err := next(c); err != nil {
-				c.Error(err)
+
+			reqid := GetReqestID(res, req)
+			args := []any{
+				"time_unix", start.Unix(),
+				"remote_ip", c.RealIP(),
+				"host", req.Host,
+				"origin", req.Header.Get("Origin"),
+				"uri", req.RequestURI,
+				"method", req.Method,
+				"path", req.URL.Path,
+				"protocol", req.Proto,
+				"referer", req.Referer(),
+				"user_agent", req.UserAgent(),
+				"bytes_in", req.ContentLength,
+				"request_id", reqid,
+				"route", c.Path(),
 			}
-			stop := time.Now()
 
 			logger := GetLoggerFromContext(c.Request().Context())
 			if logger == nil {
 				logger = l.logger
 			}
+
+			// incoming log
 			logger.Infow(
-				"Handled request",
-				"remote_ip", c.RealIP(),
-				"host", req.Host,
-				"uri", req.RequestURI,
-				"method", req.Method,
-				"path", req.URL.Path,
-				"referer", req.Referer(),
-				"user_agent", req.UserAgent(),
+				fmt.Sprintf("<-- %s %s %s", req.Method, req.URL.Path, reqid),
+				args...,
+			)
+
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
+
+			res = c.Response()
+			stop := time.Now()
+			latency := stop.Sub(start)
+			latencyHuman := latency.String()
+			args = append(args,
 				"status", res.Status,
-				"latency", stop.Sub(start).Microseconds(),
-				"latency_human", stop.Sub(start).String(),
-				"bytes_in", req.ContentLength,
 				"bytes_out", res.Size,
+				"letency", latency.Microseconds(),
+				"latency_human", latencyHuman,
+			)
+
+			// outcoming log
+			logger.Infow(
+				fmt.Sprintf("--> %s %s %s %d %s", req.Method, req.URL.Path, reqid, res.Status, latencyHuman),
+				args...,
 			)
 			return nil
 		}
@@ -239,4 +267,33 @@ func fromMap(m map[string]any) (res []any) {
 		res = append(res, v)
 	}
 	return
+}
+
+func GetReqestID(w http.ResponseWriter, r *http.Request) string {
+	if reqid := getHeader(r,
+		"X-Request-ID",
+		"X-Cloud-Trace-Context", // Google Cloud
+		"X-Amzn-Trace-Id",       // AWS
+		"X-ARR-LOG-ID",          // Azure
+	); reqid != "" {
+		return reqid
+	}
+
+	if reqid := w.Header().Get("X-Request-ID"); reqid != "" {
+		return reqid
+	}
+
+	return ""
+}
+
+func getHeader(r *http.Request, keys ...string) string {
+	for _, k := range keys {
+		if v := r.Header.Get(k); v != "" {
+			return v
+		}
+		if v := r.Header.Get(strings.ToLower(k)); v != "" {
+			return v
+		}
+	}
+	return ""
 }
