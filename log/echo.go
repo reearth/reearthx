@@ -212,7 +212,6 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 				"time_unix", start.Unix(),
 				"remote_ip", c.RealIP(),
 				"host", req.Host,
-				"origin", req.Header.Get("Origin"),
 				"uri", req.RequestURI,
 				"method", req.Method,
 				"path", req.URL.Path,
@@ -231,7 +230,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 
 			// incoming log
 			logger.Infow(
-				fmt.Sprintf("<-- %s %s %s", req.Method, req.URL.Path, reqid),
+				fmt.Sprintf("<-- %s %s", req.Method, req.URL.Path),
 				args...,
 			)
 
@@ -252,7 +251,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 
 			// outcoming log
 			logger.Infow(
-				fmt.Sprintf("--> %s %s %s %d %s", req.Method, req.URL.Path, reqid, res.Status, latencyHuman),
+				fmt.Sprintf("--> %s %d %s %s", req.Method, res.Status, req.URL.Path, latencyHuman),
 				args...,
 			)
 			return nil
