@@ -31,10 +31,11 @@ func (b *AssetBuilder) Build() (*entity.Asset, error) {
 	}
 	if b.a.CreatedAt().IsZero() {
 		now := time.Now()
-		b = b.CreatedAt(now).UpdatedAt(now)
+		b.a.SetCreatedAt(now)
+		b.a.SetUpdatedAt(now)
 	}
 	if b.a.Status() == "" {
-		b = b.Status(entity.StatusPending)
+		b.a.UpdateStatus(entity.StatusPending, b.a.Error())
 	}
 	return b.a, nil
 }
@@ -108,5 +109,6 @@ func (b *AssetBuilder) CreatedAt(createdAt time.Time) *AssetBuilder {
 }
 
 func (b *AssetBuilder) UpdatedAt(updatedAt time.Time) *AssetBuilder {
+	b.a.SetUpdatedAt(updatedAt)
 	return b
 }

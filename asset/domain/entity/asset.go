@@ -46,7 +46,7 @@ func NewAsset(id id.ID, name string, size int64, contentType string) *Asset {
 }
 
 // Validate implements the Validator interface
-func (a *Asset) Validate(ctx context.Context) validation.ValidationResult {
+func (a *Asset) Validate(ctx context.Context) validation.Result {
 	validationCtx := validation.NewValidationContext(
 		&validation.RequiredRule{Field: "id"},
 		&validation.RequiredRule{Field: "name"},
@@ -122,4 +122,9 @@ func (a *Asset) SetSize(size int64) {
 // SetCreatedAt is an internal setter for createdAt, only used by builder
 func (a *Asset) SetCreatedAt(createdAt time.Time) {
 	a.createdAt = createdAt
+}
+
+// SetUpdatedAt is an internal setter for updatedAt, only used by builder
+func (a *Asset) SetUpdatedAt(updatedAt time.Time) {
+	a.updatedAt = updatedAt
 }

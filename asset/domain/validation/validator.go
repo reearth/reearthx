@@ -2,10 +2,11 @@ package validation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 )
 
-// ValidationError represents a validation error
+// Error ValidationError represents a validation error
 type Error struct {
 	Field   string
 	Message string
@@ -15,28 +16,28 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Message)
 }
 
-// ValidationResult represents the result of a validation
-type ValidationResult struct {
+// Result ValidationResult represents the result of a validation
+type Result struct {
 	IsValid bool
 	Errors  []*Error
 }
 
 // NewValidationResult creates a new validation result
-func NewValidationResult(isValid bool, errors ...*Error) ValidationResult {
-	return ValidationResult{
+func NewValidationResult(isValid bool, errors ...*Error) Result {
+	return Result{
 		IsValid: isValid,
 		Errors:  errors,
 	}
 }
 
 // Valid creates a valid validation result
-func Valid() ValidationResult {
-	return ValidationResult{IsValid: true}
+func Valid() Result {
+	return Result{IsValid: true}
 }
 
 // Invalid creates an invalid validation result with errors
-func Invalid(errors ...*Error) ValidationResult {
-	return ValidationResult{
+func Invalid(errors ...*Error) Result {
+	return Result{
 		IsValid: false,
 		Errors:  errors,
 	}
@@ -51,7 +52,7 @@ type ValidationRule interface {
 // Validator defines the interface for entities that can be validated
 type Validator interface {
 	// Validate performs all validation rules and returns the result
-	Validate(ctx context.Context) ValidationResult
+	Validate(ctx context.Context) Result
 }
 
 // ValidationContext holds the context for validation
@@ -67,8 +68,8 @@ func NewValidationContext(rules ...ValidationRule) *ValidationContext {
 }
 
 // Validate executes all validation rules in the context
-func (c *ValidationContext) Validate(ctx context.Context, value interface{}) ValidationResult {
-	var errors []*Error
+func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Result {
+	var validationErrors []*Error
 
 	// If value is a map, validate each field with its corresponding rules
 	if fields, ok := value.(map[string]interface{}); ok {
@@ -76,15 +77,31 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 			if r, ok := rule.(*RequiredRule); ok {
 				if fieldValue, exists := fields[r.Field]; exists {
 					if err := rule.Validate(ctx, fieldValue); err != nil {
-						errors = append(errors, err.(*Error))
+						var verr *Error
+						if errors.As(err, &verr) {
+							validationErrors = append(validationErrors, verr)
+						} else {
+							validationErrors = append(validationErrors, &Error{
+								Field:   r.Field,
+								Message: err.Error(),
+							})
+						}
 					}
 				} else {
-					errors = append(errors, NewValidationError(r.Field, "field is required"))
+					validationErrors = append(validationErrors, NewValidationError(r.Field, "field is required"))
 				}
 			} else if r, ok := rule.(*MaxLengthRule); ok {
 				if fieldValue, exists := fields[r.Field]; exists {
 					if err := rule.Validate(ctx, fieldValue); err != nil {
-						errors = append(errors, err.(*Error))
+						var verr *Error
+						if errors.As(err, &verr) {
+							validationErrors = append(validationErrors, verr)
+						} else {
+							validationErrors = append(validationErrors, &Error{
+								Field:   r.Field,
+								Message: err.Error(),
+							})
+						}
 					}
 				}
 			}
@@ -93,10 +110,11 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 		// If value is not a map, validate directly
 		for _, rule := range c.Rules {
 			if err := rule.Validate(ctx, value); err != nil {
-				if verr, ok := err.(*Error); ok {
-					errors = append(errors, verr)
+				var verr *Error
+				if errors.As(err, &verr) {
+					validationErrors = append(validationErrors, verr)
 				} else {
-					errors = append(errors, &Error{
+					validationErrors = append(validationErrors, &Error{
 						Message: err.Error(),
 					})
 				}
@@ -104,13 +122,13 @@ func (c *ValidationContext) Validate(ctx context.Context, value interface{}) Val
 		}
 	}
 
-	if len(errors) > 0 {
-		return Invalid(errors...)
+	if len(validationErrors) > 0 {
+		return Invalid(validationErrors...)
 	}
 	return Valid()
 }
 
-// ValidationError creates a new validation error
+// NewValidationError ValidationError creates a new validation error
 func NewValidationError(field, message string) *Error {
 	return &Error{
 		Field:   field,

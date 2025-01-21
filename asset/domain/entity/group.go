@@ -29,7 +29,7 @@ func NewGroup(id id.GroupID, name string) *Group {
 }
 
 // Validate implements the Validator interface
-func (g *Group) Validate(ctx context.Context) validation.ValidationResult {
+func (g *Group) Validate(ctx context.Context) validation.Result {
 	validationCtx := validation.NewValidationContext(
 		&validation.RequiredRule{Field: "id"},
 		&validation.RequiredRule{Field: "name"},

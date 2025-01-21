@@ -156,6 +156,6 @@ func TestGroupBuilder_InvalidSetters(t *testing.T) {
 		Name("test-group").
 		Policy("")
 	group, err = b.Build()
-	assert.NoError(t, err) // Empty policy is allowed during build
+	assert.NoError(t, err)
 	assert.NotNil(t, group)
 }

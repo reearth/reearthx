@@ -17,20 +17,20 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-const (
-	errFailedToCreateClient = "failed to create client: %w"
-	errAssetAlreadyExists   = "asset already exists: %s"
-	errAssetNotFound        = "asset not found: %s"
-	errFailedToUpdateAsset  = "failed to update asset: %w"
-	errFailedToDeleteAsset  = "failed to delete asset: %w"
-	errFailedToListAssets   = "failed to list assets: %w"
-	errFailedToUploadFile   = "failed to upload file: %w"
-	errFailedToCloseWriter  = "failed to close writer: %w"
-	errFailedToReadFile     = "failed to read file: %w"
-	errFailedToGetAsset     = "failed to get asset: %w"
-	errFailedToGenerateURL  = "failed to generate upload URL: %w"
-	errFailedToMoveAsset    = "failed to move asset: %w"
-	errInvalidURL           = "invalid URL format: %s"
+var (
+	ErrFailedToCreateClient = errors.New("failed to create client")
+	ErrAssetAlreadyExists   = errors.New("asset already exists")
+	ErrAssetNotFound        = errors.New("asset not found")
+	ErrFailedToUpdateAsset  = errors.New("failed to update asset")
+	ErrFailedToDeleteAsset  = errors.New("failed to delete asset")
+	ErrFailedToListAssets   = errors.New("failed to list assets")
+	ErrFailedToUploadFile   = errors.New("failed to upload file")
+	ErrFailedToCloseWriter  = errors.New("failed to close writer")
+	ErrFailedToReadFile     = errors.New("failed to read file")
+	ErrFailedToGetAsset     = errors.New("failed to get asset")
+	ErrFailedToGenerateURL  = errors.New("failed to generate upload URL")
+	ErrFailedToMoveAsset    = errors.New("failed to move asset")
+	ErrInvalidURL           = errors.New("invalid URL format")
 )
 
 type Client struct {
@@ -45,14 +45,14 @@ var _ repository.PersistenceRepository = (*Client)(nil)
 func NewClient(ctx context.Context, bucketName string, basePath string, baseURL string) (*Client, error) {
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf(errFailedToCreateClient, err)
+		return nil, fmt.Errorf("%w: %v", ErrFailedToCreateClient, err)
 	}
 
 	var u *url.URL
 	if baseURL != "" {
 		u, err = url.Parse(baseURL)
 		if err != nil {
-			return nil, fmt.Errorf(errInvalidURL, err)
+			return nil, fmt.Errorf("%w: %v", ErrInvalidURL, err)
 		}
 	}
 
@@ -74,7 +74,7 @@ func (c *Client) Create(ctx context.Context, asset *entity.Asset) error {
 	}
 
 	if _, err := obj.Attrs(ctx); err == nil {
-		return fmt.Errorf(errAssetAlreadyExists, asset.ID())
+		return fmt.Errorf("%w: %s", ErrAssetAlreadyExists, asset.ID())
 	}
 
 	writer := obj.NewWriter(ctx)
@@ -108,7 +108,7 @@ func (c *Client) Update(ctx context.Context, asset *entity.Asset) error {
 	}
 
 	if _, err := obj.Update(ctx, update); err != nil {
-		return fmt.Errorf(errFailedToUpdateAsset, err)
+		return fmt.Errorf("%w: %v", ErrFailedToUpdateAsset, err)
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func (c *Client) Delete(ctx context.Context, id id.ID) error {
 		if errors.Is(err, storage.ErrObjectNotExist) {
 			return nil
 		}
-		return fmt.Errorf(errFailedToDeleteAsset, err)
+		return fmt.Errorf("%w: %v", ErrFailedToDeleteAsset, err)
 	}
 	return nil
 }
@@ -134,7 +134,7 @@ func (c *Client) List(ctx context.Context) ([]*entity.Asset, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf(errFailedToListAssets, err)
+			return nil, fmt.Errorf("%w: %v", ErrFailedToListAssets, err)
 		}
 
 		id, err := id.IDFrom(path.Base(attrs.Name))
@@ -160,11 +160,11 @@ func (c *Client) Upload(ctx context.Context, id id.ID, content io.Reader) error 
 
 	if _, err := io.Copy(writer, content); err != nil {
 		_ = writer.Close()
-		return fmt.Errorf(errFailedToUploadFile, err)
+		return fmt.Errorf("%w: %v", ErrFailedToUploadFile, err)
 	}
 
 	if err := writer.Close(); err != nil {
-		return fmt.Errorf(errFailedToCloseWriter, err)
+		return fmt.Errorf("%w: %v", ErrFailedToCloseWriter, err)
 	}
 	return nil
 }
@@ -174,9 +174,9 @@ func (c *Client) Download(ctx context.Context, id id.ID) (io.ReadCloser, error) 
 	reader, err := obj.NewReader(ctx)
 	if err != nil {
 		if errors.Is(err, storage.ErrObjectNotExist) {
-			return nil, fmt.Errorf(errAssetNotFound, id)
+			return nil, fmt.Errorf("%w: %s", ErrAssetNotFound, id)
 		}
-		return nil, fmt.Errorf(errFailedToReadFile, err)
+		return nil, fmt.Errorf("%w: %v", ErrFailedToReadFile, err)
 	}
 	return reader, nil
 }
@@ -189,7 +189,7 @@ func (c *Client) GetUploadURL(ctx context.Context, id id.ID) (string, error) {
 
 	signedURL, err := c.bucket.SignedURL(c.objectPath(id), opts)
 	if err != nil {
-		return "", fmt.Errorf(errFailedToGenerateURL, err)
+		return "", fmt.Errorf("%w: %v", ErrFailedToGenerateURL, err)
 	}
 	return signedURL, nil
 }
@@ -199,11 +199,11 @@ func (c *Client) Move(ctx context.Context, fromID, toID id.ID) error {
 	dst := c.getObject(toID)
 
 	if _, err := dst.CopierFrom(src).Run(ctx); err != nil {
-		return fmt.Errorf(errFailedToMoveAsset, err)
+		return fmt.Errorf("%w: %v", ErrFailedToMoveAsset, err)
 	}
 
 	if err := src.Delete(ctx); err != nil {
-		return fmt.Errorf(errFailedToMoveAsset, err)
+		return fmt.Errorf("%w: %v", ErrFailedToMoveAsset, err)
 	}
 
 	return nil
@@ -220,12 +220,12 @@ func (c *Client) DeleteAll(ctx context.Context, prefix string) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf(errFailedToDeleteAsset, err)
+			return fmt.Errorf("%w: %v", ErrFailedToDeleteAsset, err)
 		}
 
 		if err := c.bucket.Object(attrs.Name).Delete(ctx); err != nil {
 			if !errors.Is(err, storage.ErrObjectNotExist) {
-				return fmt.Errorf(errFailedToDeleteAsset, err)
+				return fmt.Errorf("%w: %v", ErrFailedToDeleteAsset, err)
 			}
 		}
 	}
@@ -245,16 +245,16 @@ func (c *Client) GetIDFromURL(urlStr string) (id.ID, error) {
 	emptyID := id.NewID()
 
 	if c.baseURL == nil {
-		return emptyID, fmt.Errorf(errInvalidURL, "base URL not set")
+		return emptyID, fmt.Errorf("%w: base URL not set", ErrInvalidURL)
 	}
 
 	u, err := url.Parse(urlStr)
 	if err != nil {
-		return emptyID, fmt.Errorf(errInvalidURL, err)
+		return emptyID, fmt.Errorf("%w: %v", ErrInvalidURL, err)
 	}
 
 	if u.Host != c.baseURL.Host {
-		return emptyID, fmt.Errorf(errInvalidURL, "host mismatch")
+		return emptyID, fmt.Errorf("%w: host mismatch", ErrInvalidURL)
 	}
 
 	urlPath := strings.TrimPrefix(u.Path, c.baseURL.Path)
@@ -275,9 +275,9 @@ func (c *Client) objectPath(id id.ID) string {
 
 func (c *Client) handleNotFound(err error, id id.ID) error {
 	if errors.Is(err, storage.ErrObjectNotExist) {
-		return fmt.Errorf(errAssetNotFound, id)
+		return fmt.Errorf("%w: %s", ErrAssetNotFound, id)
 	}
-	return fmt.Errorf(errFailedToGetAsset, err)
+	return fmt.Errorf("%w: %v", ErrFailedToGetAsset, err)
 }
 
 func (c *Client) FindByGroup(ctx context.Context, groupID id.GroupID) ([]*entity.Asset, error) {
@@ -290,7 +290,7 @@ func (c *Client) FindByGroup(ctx context.Context, groupID id.GroupID) ([]*entity
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf(errFailedToListAssets, err)
+			return nil, fmt.Errorf("%w: %v", ErrFailedToListAssets, err)
 		}
 
 		assetID, err := id.IDFrom(path.Base(attrs.Name))

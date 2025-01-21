@@ -125,7 +125,7 @@ func newTestClient(_ *testing.T) *testClient {
 func (c *testClient) Create(ctx context.Context, asset *entity.Asset) error {
 	objPath := c.objectPath(asset.ID())
 	if _, exists := c.mockBucket.objects[objPath]; exists {
-		return fmt.Errorf(errAssetAlreadyExists, asset.ID())
+		return fmt.Errorf("%w: %s", ErrAssetAlreadyExists, asset.ID())
 	}
 
 	c.mockBucket.objects[objPath] = &mockObject{
@@ -146,7 +146,7 @@ func (c *testClient) Read(ctx context.Context, id id.ID) (*entity.Asset, error) 
 	objPath := c.objectPath(id)
 	obj, exists := c.mockBucket.objects[objPath]
 	if !exists {
-		return nil, fmt.Errorf(errAssetNotFound, id)
+		return nil, fmt.Errorf("%w: %s", ErrAssetNotFound, id)
 	}
 
 	return entity.NewAsset(
@@ -161,7 +161,7 @@ func (c *testClient) Update(ctx context.Context, asset *entity.Asset) error {
 	objPath := c.objectPath(asset.ID())
 	obj, exists := c.mockBucket.objects[objPath]
 	if !exists {
-		return fmt.Errorf(errAssetNotFound, asset.ID())
+		return fmt.Errorf("%w: %s", ErrAssetNotFound, asset.ID())
 	}
 
 	obj.attrs.Metadata["name"] = asset.Name()
@@ -203,7 +203,7 @@ func (c *testClient) Download(ctx context.Context, id id.ID) (io.ReadCloser, err
 	objPath := c.objectPath(id)
 	obj, exists := c.mockBucket.objects[objPath]
 	if !exists {
-		return nil, fmt.Errorf(errAssetNotFound, id)
+		return nil, fmt.Errorf("%w: %s", ErrAssetNotFound, id)
 	}
 
 	return &mockReader{bytes.NewReader(obj.data)}, nil
@@ -219,7 +219,7 @@ func (c *testClient) Move(ctx context.Context, fromID, toID id.ID) error {
 
 	fromObj, exists := c.mockBucket.objects[fromPath]
 	if !exists {
-		return fmt.Errorf(errAssetNotFound, fromID)
+		return fmt.Errorf("%w: %s", ErrAssetNotFound, fromID)
 	}
 
 	if _, exists := c.mockBucket.objects[toPath]; exists {
