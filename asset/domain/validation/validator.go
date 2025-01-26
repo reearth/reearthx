@@ -22,14 +22,6 @@ type Result struct {
 	Errors  []*Error
 }
 
-// NewValidationResult creates a new validation result
-func NewValidationResult(isValid bool, errors ...*Error) Result {
-	return Result{
-		IsValid: isValid,
-		Errors:  errors,
-	}
-}
-
 // Valid creates a valid validation result
 func Valid() Result {
 	return Result{IsValid: true}
