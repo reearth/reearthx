@@ -137,7 +137,7 @@ func (c *Client) List(ctx context.Context) ([]*entity.Asset, error) {
 			return nil, fmt.Errorf("%w: %v", ErrFailedToListAssets, err)
 		}
 
-		id, err := id.IDFrom(path.Base(attrs.Name))
+		id, err := id.From(path.Base(attrs.Name))
 		if err != nil {
 			continue // skip invalid IDs
 		}
@@ -262,7 +262,7 @@ func (c *Client) GetIDFromURL(urlStr string) (id.ID, error) {
 	urlPath = strings.TrimPrefix(urlPath, c.basePath)
 	urlPath = strings.TrimPrefix(urlPath, "/")
 
-	return id.IDFrom(urlPath)
+	return id.From(urlPath)
 }
 
 func (c *Client) getObject(id id.ID) *storage.ObjectHandle {
@@ -293,7 +293,7 @@ func (c *Client) FindByGroup(ctx context.Context, groupID id.GroupID) ([]*entity
 			return nil, fmt.Errorf("%w: %v", ErrFailedToListAssets, err)
 		}
 
-		assetID, err := id.IDFrom(path.Base(attrs.Name))
+		assetID, err := id.From(path.Base(attrs.Name))
 		if err != nil {
 			continue // skip invalid IDs
 		}

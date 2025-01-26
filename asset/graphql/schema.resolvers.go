@@ -13,7 +13,7 @@ import (
 
 // UploadAsset is the resolver for the uploadAsset field.
 func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInput) (*UploadAssetPayload, error) {
-	assetID, err := id.IDFrom(input.ID)
+	assetID, err := id.From(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (r *mutationResolver) UploadAsset(ctx context.Context, input UploadAssetInp
 
 // GetAssetUploadURL is the resolver for the getAssetUploadURL field.
 func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAssetUploadURLInput) (*GetAssetUploadURLPayload, error) {
-	assetID, err := id.IDFrom(input.ID)
+	assetID, err := id.From(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (r *mutationResolver) GetAssetUploadURL(ctx context.Context, input GetAsset
 
 // UpdateAssetMetadata is the resolver for the updateAssetMetadata field.
 func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input UpdateAssetMetadataInput) (*UpdateAssetMetadataPayload, error) {
-	assetID, err := id.IDFrom(input.ID)
+	assetID, err := id.From(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (r *mutationResolver) UpdateAssetMetadata(ctx context.Context, input Update
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInput) (*DeleteAssetPayload, error) {
-	assetID, err := id.IDFrom(input.ID)
+	assetID, err := id.From(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input DeleteAssetInp
 func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsInput) (*DeleteAssetsPayload, error) {
 	var assetIDs []id.ID
 	for _, idStr := range input.Ids {
-		assetID, err := id.IDFrom(idStr)
+		assetID, err := id.From(idStr)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +134,7 @@ func (r *mutationResolver) DeleteAssets(ctx context.Context, input DeleteAssetsI
 
 // MoveAsset is the resolver for the moveAsset field.
 func (r *mutationResolver) MoveAsset(ctx context.Context, input MoveAssetInput) (*MoveAssetPayload, error) {
-	assetID, err := id.IDFrom(input.ID)
+	assetID, err := id.From(input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (r *mutationResolver) DeleteAssetsInGroup(ctx context.Context, input Delete
 
 // Asset is the resolver for the asset field.
 func (r *queryResolver) Asset(ctx context.Context, assetID string) (*Asset, error) {
-	aid, err := id.IDFrom(assetID)
+	aid, err := id.From(assetID)
 	if err != nil {
 		return nil, err
 	}

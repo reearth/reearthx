@@ -49,7 +49,7 @@ func (g *Group) Validate(ctx context.Context) validation.Result {
 	return validationCtx.Validate(ctx, fields)
 }
 
-// Getters
+// ID Getters
 func (g *Group) ID() id.GroupID       { return g.id }
 func (g *Group) Name() string         { return g.name }
 func (g *Group) Policy() string       { return g.policy }
@@ -57,7 +57,7 @@ func (g *Group) Description() string  { return g.description }
 func (g *Group) CreatedAt() time.Time { return g.createdAt }
 func (g *Group) UpdatedAt() time.Time { return g.updatedAt }
 
-// Setters
+// UpdateName Setters
 func (g *Group) UpdateName(name string) error {
 	if name == "" {
 		return domain.ErrEmptyGroupName

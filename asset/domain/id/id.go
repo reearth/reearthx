@@ -28,12 +28,12 @@ var (
 	MustProjectID   = idx.Must[idProject]
 	MustWorkspaceID = idx.Must[idWorkspace]
 
-	IDFrom          = idx.From[idAsset]
+	From            = idx.From[idAsset]
 	GroupIDFrom     = idx.From[idGroup]
 	ProjectIDFrom   = idx.From[idProject]
 	WorkspaceIDFrom = idx.From[idWorkspace]
 
-	IDFromRef          = idx.FromRef[idAsset]
+	FromRef            = idx.FromRef[idAsset]
 	GroupIDFromRef     = idx.FromRef[idGroup]
 	ProjectIDFromRef   = idx.FromRef[idProject]
 	WorkspaceIDFromRef = idx.FromRef[idWorkspace]

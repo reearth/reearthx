@@ -125,7 +125,12 @@ func (d *ZipDecompressor) CompressWithContent(ctx context.Context, files map[str
 
 		buf := new(bytes.Buffer)
 		zipWriter := zip.NewWriter(buf)
-		defer zipWriter.Close()
+		defer func(zipWriter *zip.Writer) {
+			err := zipWriter.Close()
+			if err != nil {
+				log.Warn("failed to close zip writer", zap.Error(err))
+			}
+		}(zipWriter)
 
 		// Use a mutex to protect concurrent writes to the zip writer
 		var mu sync.Mutex

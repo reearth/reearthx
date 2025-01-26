@@ -243,7 +243,7 @@ func (c *testClient) Move(ctx context.Context, fromID, toID id.ID) error {
 func (c *testClient) List(ctx context.Context) ([]*entity.Asset, error) {
 	var assets []*entity.Asset
 	for _, obj := range c.mockBucket.objects {
-		id, err := id.IDFrom(path.Base(obj.name))
+		id, err := id.From(path.Base(obj.name))
 		if err != nil {
 			continue
 		}
