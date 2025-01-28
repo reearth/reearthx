@@ -27,6 +27,12 @@ func NewEcho() *Echo {
 
 func NewEchoWith(logger *Logger) *Echo {
 	return &Echo{
+		logger: logger.AddCallerSkip(1),
+	}
+}
+
+func NewEchoWithRaw(logger *Logger) *Echo {
+	return &Echo{
 		logger: logger,
 	}
 }
@@ -227,6 +233,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			if logger == nil {
 				logger = l.logger
 			}
+			logger = logger.WithCaller(false)
 
 			// incoming log
 			logger.Infow(
