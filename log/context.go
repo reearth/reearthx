@@ -20,9 +20,13 @@ func GetLoggerFromContext(ctx context.Context) *Logger {
 
 func GetLoggerFromContextOrDefault(ctx context.Context) *Logger {
 	if logger := GetLoggerFromContext(ctx); logger != nil {
-		return logger
+		return logger.AddCallerSkip(1)
 	}
-	return globalLogger
+	return globalLogger.AddCallerSkip(1)
+}
+
+func UpdateContext(ctx context.Context, f func(logger *Logger) *Logger) context.Context {
+	return AttachLoggerToContext(ctx, f(GetLoggerFromContextOrDefault(ctx)))
 }
 
 func Tracefc(ctx context.Context, format string, args ...any) {

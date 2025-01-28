@@ -177,6 +177,26 @@ func (l *Logger) ClearPrefix() *Logger {
 	}
 }
 
+func (l *Logger) WithCaller(enabled bool) *Logger {
+	return &Logger{
+		logger:    l.logger.WithOptions(zap.WithCaller(enabled)),
+		atom:      l.atom,
+		prefix:    l.prefix,
+		dynPrefix: l.dynPrefix,
+		dynSuffix: l.dynSuffix,
+	}
+}
+
+func (l *Logger) AddCallerSkip(skip int) *Logger {
+	return &Logger{
+		logger:    l.logger.WithOptions(zap.AddCallerSkip(skip)),
+		atom:      l.atom,
+		prefix:    l.prefix,
+		dynPrefix: l.dynPrefix,
+		dynSuffix: l.dynSuffix,
+	}
+}
+
 func (l *Logger) Debugf(format string, args ...any) {
 	f := l.format(format, args...)
 	l.logger.Debugf(f.Format, f.Args...)

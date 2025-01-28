@@ -37,9 +37,9 @@ func TestLogger_SetPrefix(t *testing.T) {
 
 	scanner := bufio.NewScanner(w)
 	assert.True(t, scanner.Scan())
-	assert.Contains(t, scanner.Text(), "test\thoge fuga")
+	assert.Regexp(t, `\ttest\t.+?\thoge fuga$`, scanner.Text()) // .+? is a caller
 	assert.True(t, scanner.Scan())
-	assert.Contains(t, scanner.Text(), "test\t[fuga 1]")
+	assert.Regexp(t, `\ttest\t.+?\t\[fuga 1\]$`, scanner.Text())
 	assert.True(t, scanner.Scan())
 	assert.Contains(t, scanner.Text(), "test")
 	assert.Contains(t, scanner.Text(), "abcd")
