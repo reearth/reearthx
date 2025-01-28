@@ -57,7 +57,7 @@ func TestLogger_DynamicPrefixSuffix(t *testing.T) {
 	}).SetDynamicSuffix(func() Format {
 		return Format{
 			Format: " <%s>",
-			Args:   []any{"prefix"},
+			Args:   []any{"suffix"},
 		}
 	})
 	l.Infof("hoge %s", "fuga")
@@ -65,8 +65,29 @@ func TestLogger_DynamicPrefixSuffix(t *testing.T) {
 
 	scanner := bufio.NewScanner(w)
 	assert.True(t, scanner.Scan())
-	assert.Contains(t, scanner.Text(), "[test] hoge fuga <prefix>")
+	assert.Contains(t, scanner.Text(), "[test] hoge fuga <suffix>")
 	assert.True(t, scanner.Scan())
-	assert.Contains(t, scanner.Text(), "[test] [fuga 1] <prefix>")
+	assert.Contains(t, scanner.Text(), "[test] [fuga 1] <suffix>")
+	assert.False(t, scanner.Scan())
+}
+
+func TestLogger_AppendDynamicPrefixS(t *testing.T) {
+	w := &bytes.Buffer{}
+	l := NewWithOutput(w).AppendDynamicPrefix(func() Format {
+		return Format{
+			Format: "[%s] ",
+			Args:   []any{"prefix"},
+		}
+	}).AppendPrefixMessage("<prefix2> ").AppendDynamicSuffix(func() Format {
+		return Format{
+			Format: " [%s]",
+			Args:   []any{"suffix"},
+		}
+	}).AppendSuffixMessage(" <suffix2>")
+	l.Infof("hoge %s", "fuga")
+
+	scanner := bufio.NewScanner(w)
+	assert.True(t, scanner.Scan())
+	assert.Contains(t, scanner.Text(), "[prefix] <prefix2> hoge fuga [suffix] <suffix2>")
 	assert.False(t, scanner.Scan())
 }
