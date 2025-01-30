@@ -29,6 +29,12 @@ func UpdateContext(ctx context.Context, f func(logger *Logger) *Logger) context.
 	return AttachLoggerToContext(ctx, f(GetLoggerFromContextOrDefault(ctx)))
 }
 
+func WithPrefixMessage(ctx context.Context, prefix string) context.Context {
+	return UpdateContext(ctx, func(logger *Logger) *Logger {
+		return logger.AppendPrefixMessage(prefix)
+	})
+}
+
 func Tracefc(ctx context.Context, format string, args ...any) {
 	getLoggerFromContextOrDefault(ctx).Debugf(format, args...)
 }
