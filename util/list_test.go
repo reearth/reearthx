@@ -71,10 +71,11 @@ func TestList_Copy(t *testing.T) {
 	a := &T{}
 	b := &T{}
 	l := List[*T]{a, b}
+	cloned := l.Copy()
 
 	assert.Nil(t, List[*T](nil).Copy())
 	assert.Equal(t, List[*T]{a, b}, l.Copy())
-	assert.NotSame(t, l, l.Copy())
+	assert.NotSame(t, &l, &cloned)
 	assert.Same(t, a, l.Copy()[0])
 	assert.Same(t, b, l.Copy()[1])
 }

@@ -30,6 +30,7 @@ func TestNewReearthAuth(t *testing.T) {
 		Sub:      "reearth|xx|yy",
 	}, NewReearthAuth("xx|yy"))
 }
+
 func TestIsReearth(t *testing.T) {
 	a := Auth{
 		Provider: "reearth",
