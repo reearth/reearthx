@@ -12,11 +12,11 @@ func TestEcho(t *testing.T) {
 	w := &bytes.Buffer{}
 	l := NewEcho()
 	l.SetOutput(w)
-	l.SetPrefix("test")
+	l.SetPrefix("prefix")
 	l.Infof("hoge %s", "fuga")
 
 	scanner := bufio.NewScanner(w)
 	assert.True(t, scanner.Scan())
-	assert.Contains(t, scanner.Text(), "test\thoge fuga")
+	assert.Contains(t, scanner.Text(), "\tprefix\t")
 	assert.False(t, scanner.Scan())
 }
