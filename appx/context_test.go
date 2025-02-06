@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/samber/lo"
@@ -64,4 +65,74 @@ func TestRequestIDMiddleware(t *testing.T) {
 	res = lo.Must(http.DefaultClient.Do(req))
 	body = string(lo.Must(io.ReadAll(res.Body)))
 	assert.Equal(t, "xxx", body)
+}
+
+func TestGetAuthInfo(t *testing.T) {
+	trueValue := true
+	falseValue := false
+	type authInfoKey struct{}
+	type otherKey struct{}
+
+	testCases := []struct {
+		name     string
+		ctx      context.Context
+		key      any
+		expected *AuthInfo
+	}{
+		{
+			name: "Valid auth info",
+			ctx: context.WithValue(context.Background(), authInfoKey{}, &AuthInfo{
+				Token:         "test_token",
+				Sub:           "test_sub",
+				Iss:           "test_iss",
+				Name:          "test_name",
+				Email:         "test_email",
+				EmailVerified: &trueValue,
+			}),
+			key: authInfoKey{},
+			expected: &AuthInfo{
+				Token:         "test_token",
+				Sub:           "test_sub",
+				Iss:           "test_iss",
+				Name:          "test_name",
+				Email:         "test_email",
+				EmailVerified: &trueValue,
+			},
+		},
+		{
+			name:     "Nil context",
+			ctx:      nil,
+			key:      "auth_key",
+			expected: nil,
+		},
+		{
+			name: "Invalid key",
+			ctx: context.WithValue(context.Background(), otherKey{}, &AuthInfo{
+				Token:         "wrong_token",
+				Sub:           "wrong_sub",
+				Iss:           "wrong_iss",
+				Name:          "wrong_name",
+				Email:         "wrong_email",
+				EmailVerified: &falseValue,
+			}),
+			key:      authInfoKey{},
+			expected: nil,
+		},
+		{
+			name:     "Value is not *AuthInfo",
+			ctx:      context.WithValue(context.Background(), authInfoKey{}, "not_auth_info"),
+			key:      authInfoKey{},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := GetAuthInfo(tc.ctx, tc.key)
+
+			if !reflect.DeepEqual(result, tc.expected) {
+				t.Errorf("Test case '%s' failed: expected %+v, got %+v", tc.name, tc.expected, result)
+			}
+		})
+	}
 }

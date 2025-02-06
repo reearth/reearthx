@@ -59,6 +59,16 @@ func GetRequestID(ctx context.Context) string {
 	return ""
 }
 
+func GetAuthInfo(ctx context.Context, key any) *AuthInfo {
+	if ctx == nil {
+		return nil
+	}
+	if auth, ok := ctx.Value(key).(*AuthInfo); ok {
+		return auth
+	}
+	return nil
+}
+
 func getHeader(r *http.Request, keys ...string) string {
 	for _, k := range keys {
 		if v := r.Header.Get(k); v != "" {
