@@ -12,6 +12,8 @@ import (
 type Container struct {
 	User        User
 	Workspace   Workspace
+	Role        Role
+	Permittable Permittable
 	Transaction usecasex.Transaction
 	Users       []User
 }
