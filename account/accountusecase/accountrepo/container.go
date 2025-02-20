@@ -27,9 +27,11 @@ func (c *Container) Filtered(workspace WorkspaceFilter) *Container {
 		return c
 	}
 	return &Container{
-		Workspace: c.Workspace.Filtered(workspace),
-		User:      c.User,
-		Users:     c.Users,
+		Workspace:   c.Workspace.Filtered(workspace),
+		User:        c.User,
+		Users:       c.Users,
+		Role:        c.Role,
+		Permittable: c.Permittable,
 	}
 }
 
