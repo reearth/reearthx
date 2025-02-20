@@ -36,6 +36,8 @@ var IntegrationIDFromRef = idx.FromRef[Integration]
 
 var ErrInvalidID = idx.ErrInvalidID
 
+// TODO: Delete the below once the permission check migration is complete.
+
 type Role struct{}
 type Permittable struct{}
 

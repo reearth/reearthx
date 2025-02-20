@@ -12,8 +12,8 @@ import (
 type Container struct {
 	User        User
 	Workspace   Workspace
-	Role        Role
-	Permittable Permittable
+	Role        Role        // TODO: Delete it once the permission check migration is complete.
+	Permittable Permittable // TODO: Delete it once the permission check migration is complete.
 	Transaction usecasex.Transaction
 	Users       []User
 }

@@ -1,3 +1,5 @@
+// TODO: Delete this file once the permission check migration is complete.
+
 package permittable
 
 import "github.com/reearth/reearthx/account/accountdomain"

@@ -9,8 +9,8 @@ func New() *accountrepo.Container {
 	return &accountrepo.Container{
 		User:        NewUser(),
 		Workspace:   NewWorkspace(),
-		Role:        NewRole(),
-		Permittable: NewPermittable(),
+		Role:        NewRole(),        // TODO: Delete it once the permission check migration is complete.
+		Permittable: NewPermittable(), // TODO: Delete it once the permission check migration is complete.
 		Transaction: &usecasex.NopTransaction{},
 	}
 }

@@ -145,6 +145,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 			}
 		}
 
+		// TODO: Delete it once the permission check migration is complete.
 		maintainerRole, err := i.getMaintainerRole(ctx)
 		if err != nil {
 			return nil, err
@@ -155,6 +156,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 				continue
 			}
 
+			// TODO: Delete it once the permission check migration is complete.
 			if err := i.ensureUserHasMaintainerRole(ctx, m.ID(), maintainerRole.ID()); err != nil {
 				return nil, err
 			}

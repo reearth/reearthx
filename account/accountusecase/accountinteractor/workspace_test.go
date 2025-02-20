@@ -1321,6 +1321,7 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 	}
 }
 
+// TODO: Delete it once the permission check migration is complete.
 func TestWorkspace_AddMember_Migration(t *testing.T) {
 	// prepare
 	ctx := context.Background()
@@ -1516,6 +1517,7 @@ func TestWorkspace_AddMember_Migration(t *testing.T) {
 	}
 }
 
+// TODO: Delete it once the permission check migration is complete.
 func assertPermittablesAndRoles(t *testing.T, ctx context.Context, repos *accountrepo.Container, expectedUserIDs user.IDList) {
 	// role
 	roles, err := repos.Role.FindAll(ctx)
