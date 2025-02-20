@@ -30,8 +30,8 @@ func (c *Container) Filtered(workspace WorkspaceFilter) *Container {
 		Workspace:   c.Workspace.Filtered(workspace),
 		User:        c.User,
 		Users:       c.Users,
-		Role:        c.Role,
-		Permittable: c.Permittable,
+		Role:        c.Role,        // TODO: Delete this once the permission check migration is complete.
+		Permittable: c.Permittable, // TODO: Delete this once the permission check migration is complete.
 	}
 }
 
