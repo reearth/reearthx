@@ -2,13 +2,18 @@ package accountinteractor
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/account/accountdomain/permittable"
+	"github.com/reearth/reearthx/account/accountdomain/role"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
+	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
 	"golang.org/x/exp/maps"
@@ -140,9 +145,18 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 			}
 		}
 
+		maintainerRole, err := i.getMaintainerRole(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, m := range ul {
 			if m == nil {
 				continue
+			}
+
+			if err := i.ensureUserHasMaintainerRole(ctx, m.ID(), maintainerRole.ID()); err != nil {
+				return nil, err
 			}
 
 			err = ws.Members().Join(m, users[m.ID()], *operator.User)
@@ -395,4 +409,89 @@ func filterWorkspaces(
 	}
 
 	return workspaces, nil
+}
+
+// TEMPORARY: Helper function for role management until migration to reearth-accounts
+func (i *Workspace) getMaintainerRole(ctx context.Context) (*role.Role, error) {
+	// check and create maintainer role
+	roles, err := i.repos.Role.FindAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get roles: %w", err)
+	}
+
+	var maintainerRole *role.Role
+	for _, r := range roles {
+		if r.Name() == "maintainer" {
+			maintainerRole = r
+			log.Info("Found maintainer role")
+			break
+		}
+	}
+
+	if maintainerRole == nil {
+		r, err := role.New().
+			NewID().
+			Name("maintainer").
+			Build()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create maintainer role domain: %w", err)
+		}
+
+		err = i.repos.Role.Save(ctx, *r)
+		if err != nil {
+			return nil, fmt.Errorf("failed to save maintainer role: %w", err)
+		}
+
+		maintainerRole = r
+		log.Info("Created maintainer role")
+	}
+
+	return maintainerRole, nil
+}
+
+// TEMPORARY: Helper function for permittable management until migration to reearth-accounts
+func (i *Workspace) ensureUserHasMaintainerRole(ctx context.Context, userID user.ID, maintainerRoleID accountdomain.RoleID) error {
+	var p *permittable.Permittable
+	var err error
+
+	p, err = i.repos.Permittable.FindByUserID(ctx, userID)
+	if err != nil && err != rerror.ErrNotFound {
+		return err
+	}
+
+	if hasRole(p, maintainerRoleID) {
+		return nil
+	}
+
+	if p == nil {
+		p, err = permittable.New().
+			NewID().
+			UserID(userID).
+			RoleIDs([]accountdomain.RoleID{maintainerRoleID}).
+			Build()
+		if err != nil {
+			return err
+		}
+	} else {
+		p.EditRoleIDs(append(p.RoleIDs(), maintainerRoleID))
+	}
+
+	err = i.repos.Permittable.Save(ctx, *p)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func hasRole(p *permittable.Permittable, roleID role.ID) bool {
+	if p == nil {
+		return false
+	}
+	for _, r := range p.RoleIDs() {
+		if r == roleID {
+			return true
+		}
+	}
+	return false
 }
