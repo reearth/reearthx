@@ -145,7 +145,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 			}
 		}
 
-		// TODO: Delete it once the permission check migration is complete.
+		// TODO: Delete this once the permission check migration is complete.
 		maintainerRole, err := i.getMaintainerRole(ctx)
 		if err != nil {
 			return nil, err
@@ -156,7 +156,7 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 				continue
 			}
 
-			// TODO: Delete it once the permission check migration is complete.
+			// TODO: Delete this once the permission check migration is complete.
 			if err := i.ensureUserHasMaintainerRole(ctx, m.ID(), maintainerRole.ID()); err != nil {
 				return nil, err
 			}
@@ -413,7 +413,7 @@ func filterWorkspaces(
 	return workspaces, nil
 }
 
-// TEMPORARY: Helper function for role management until migration to reearth-accounts
+// TODO: Delete this once the permission check migration is complete.
 func (i *Workspace) getMaintainerRole(ctx context.Context) (*role.Role, error) {
 	// check and create maintainer role
 	roles, err := i.repos.Role.FindAll(ctx)
@@ -451,7 +451,7 @@ func (i *Workspace) getMaintainerRole(ctx context.Context) (*role.Role, error) {
 	return maintainerRole, nil
 }
 
-// TEMPORARY: Helper function for permittable management until migration to reearth-accounts
+// TODO: Delete this once the permission check migration is complete.
 func (i *Workspace) ensureUserHasMaintainerRole(ctx context.Context, userID user.ID, maintainerRoleID accountdomain.RoleID) error {
 	var p *permittable.Permittable
 	var err error
@@ -486,6 +486,7 @@ func (i *Workspace) ensureUserHasMaintainerRole(ctx context.Context, userID user
 	return nil
 }
 
+// TODO: Delete this once the permission check migration is complete.
 func hasRole(p *permittable.Permittable, roleID role.ID) bool {
 	if p == nil {
 		return false
