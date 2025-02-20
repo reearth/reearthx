@@ -9,6 +9,8 @@ func New() *accountrepo.Container {
 	return &accountrepo.Container{
 		User:        NewUser(),
 		Workspace:   NewWorkspace(),
+		Role:        NewRole(),
+		Permittable: NewPermittable(),
 		Transaction: &usecasex.NopTransaction{},
 	}
 }
