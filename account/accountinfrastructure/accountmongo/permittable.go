@@ -7,6 +7,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain/permittable"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
+	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,7 +22,7 @@ type Permittable struct {
 	client *mongox.Collection
 }
 
-func NewPermittable(client *mongox.Client) *Permittable {
+func NewPermittable(client *mongox.Client) accountrepo.Permittable {
 	return &Permittable{
 		client: client.WithCollection("permittable"),
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/role"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmongo/mongodoc"
+	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/mongox"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -19,7 +20,7 @@ type Role struct {
 	client *mongox.Collection
 }
 
-func NewRole(client *mongox.Client) *Role {
+func NewRole(client *mongox.Client) accountrepo.Role {
 	return &Role{
 		client: client.WithCollection("role"),
 	}
