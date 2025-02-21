@@ -59,13 +59,13 @@ func (r *Workspace) FindByIntegration(ctx context.Context, id workspace.Integrat
 }
 
 // FindByIntegrations finds workspace list based on integrations IDs
-func (r *Workspace) FindByIntegrations(ctx context.Context, ids workspace.IntegrationIDList) (workspace.List, error) {
-	if len(ids) == 0 {
+func (r *Workspace) FindByIntegrations(ctx context.Context, integrationIDs workspace.IntegrationIDList) (workspace.List, error) {
+	if len(integrationIDs) == 0 {
 		return nil, nil
 	}
 
-	orConditions := make([]bson.M, len(ids))
-	for i, id := range ids {
+	orConditions := make([]bson.M, len(integrationIDs))
+	for i, id := range integrationIDs {
 		orConditions[i] = bson.M{
 			"integrations." + strings.Replace(id.String(), ".", "", -1): bson.M{
 				"$exists": true,
@@ -73,7 +73,9 @@ func (r *Workspace) FindByIntegrations(ctx context.Context, ids workspace.Integr
 		}
 	}
 
-	return r.find(ctx, bson.M{"$or": orConditions})
+	return r.find(ctx, bson.M{
+		"$or": orConditions,
+	})
 }
 
 func (r *Workspace) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspace.List, error) {
