@@ -2,6 +2,7 @@ package mongox
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -74,6 +75,12 @@ func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer,
 	raw, err := c.collection.FindOne(ctx, filter, options...).Raw()
 	if err != nil {
 		if errors.Is(err, mongo.ErrNilDocument) || errors.Is(err, mongo.ErrNoDocuments) {
+			dbName := c.collection.Database().Name()
+			collectionName := c.collection.Name()
+			fmt.Printf("----------- Database: %s, Collection: %s\n", dbName, collectionName)
+			if filterJSON, err := json.MarshalIndent(filter, "", "  "); err == nil {
+				fmt.Printf("Filter:\n%s\n", string(filterJSON))
+			}
 			return rerror.ErrNotFound
 		}
 		return wrapError(ctx, err)
