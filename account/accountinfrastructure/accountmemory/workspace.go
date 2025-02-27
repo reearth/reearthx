@@ -54,6 +54,30 @@ func (r *Workspace) FindByIntegration(_ context.Context, i workspace.Integration
 	}), rerror.ErrNotFound)
 }
 
+// FindByIntegrations finds workspace list based on integrations IDs
+func (r *Workspace) FindByIntegrations(_ context.Context, ids workspace.IntegrationIDList) (workspace.List, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	res := r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
+		for _, id := range ids {
+			if value.Members().HasIntegration(id) {
+				return true
+			}
+		}
+		return false
+	})
+
+	slices.SortFunc(res, func(a, b *workspace.Workspace) int { return a.ID().Compare(b.ID()) })
+
+	return res, nil
+}
+
 func (r *Workspace) FindByIDs(_ context.Context, ids workspace.IDList) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
