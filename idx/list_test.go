@@ -36,7 +36,7 @@ func TestList_Has(t *testing.T) {
 	l := List[T]{a, b}
 
 	assert.True(t, l.Has(a))
-	assert.True(t, l.Has(a, c))
+	assert.True(t, l.Has(a, b))
 	assert.False(t, l.Has(c))
 	assert.False(t, List[T](nil).Has(a))
 }
@@ -223,10 +223,11 @@ func TestList_Clone(t *testing.T) {
 	a := New[T]()
 	b := New[T]()
 	l := List[T]{a, b}
+	lCloned := l.Clone()
 
 	assert.Nil(t, List[T](nil).Clone())
-	assert.Equal(t, List[T]{a, b}, l.Clone())
-	assert.NotSame(t, l, l.Clone())
+	assert.Equal(t, List[T]{a, b}, lCloned)
+	assert.NotSame(t, &l, &lCloned)
 }
 
 func TestList_Sort(t *testing.T) {
