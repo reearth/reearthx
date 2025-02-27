@@ -15,6 +15,7 @@ func TestNewMembers(t *testing.T) {
 		fixed:        false,
 	}, m)
 }
+
 func TestNewMembersWith(t *testing.T) {
 	uid := NewUserID()
 	m := NewMembersWith(map[UserID]Member{uid: {Role: RoleOwner}}, nil, true)

@@ -51,9 +51,10 @@ func TestSliceConsumer(t *testing.T) {
 
 	c := &SliceConsumer[d]{}
 	assert.NoError(t, c.Consume(raw))
-	assert.Equal(t, []d{{
-		Test: "hoge",
-	},
+	assert.Equal(t, []d{
+		{
+			Test: "hoge",
+		},
 	}, c.Result)
 }
 
