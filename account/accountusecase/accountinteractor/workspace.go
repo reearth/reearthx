@@ -416,6 +416,9 @@ func filterWorkspaces(
 // TODO: Delete this once the permission check migration is complete.
 func (i *Workspace) getMaintainerRole(ctx context.Context) (*role.Role, error) {
 	// check and create maintainer role
+	if i.repos.Role == nil {
+		return nil, fmt.Errorf("repos not found Role %v", i.repos.Role)
+	}
 	roles, err := i.repos.Role.FindAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get roles: %w", err)
