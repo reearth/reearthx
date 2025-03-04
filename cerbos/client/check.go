@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/reearth/reearthx/appx"
@@ -45,6 +46,9 @@ type CheckPermissionResponse struct {
 			Allowed bool `json:"allowed"`
 		} `json:"checkPermission"`
 	} `json:"data"`
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
 }
 
 type GraphQLQuery struct {
@@ -106,10 +110,31 @@ func (c *Client) executeRequest(req *http.Request) (bool, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("server returned non-OK status: %d", resp.StatusCode)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	fmt.Printf("Response body: %s\n", string(bodyBytes))
+
+	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
 	var response CheckPermissionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return false, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return response.Data.CheckPermission.Allowed, nil
+	if len(response.Errors) > 0 {
+		return false, fmt.Errorf("GraphQL error: %s", response.Errors[0].Message)
+	}
+
+	if response.Data.CheckPermission.Allowed {
+		return true, nil
+	}
+
+	return false, nil
 }
