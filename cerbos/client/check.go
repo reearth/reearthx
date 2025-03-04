@@ -35,6 +35,7 @@ func NewClient(dashboardURL string) *Client {
 }
 
 type CheckPermissionInput struct {
+	UserId   string `json:"userId"`
 	Service  string `json:"service"`
 	Resource string `json:"resource"`
 	Action   string `json:"action"`
