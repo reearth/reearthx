@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -103,7 +104,7 @@ func TestClient_CheckPermission(t *testing.T) {
 				Action:   "read",
 			},
 			serverStatus: http.StatusInternalServerError,
-			wantErr:      "failed to decode response",
+			wantErr:      fmt.Sprint("server returned non-OK status: ", http.StatusInternalServerError),
 		},
 	}
 
