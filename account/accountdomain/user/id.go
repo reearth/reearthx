@@ -8,6 +8,8 @@ type ID = accountdomain.UserID
 type IDList = accountdomain.UserIDList
 type WorkspaceID = accountdomain.WorkspaceID
 type WorkspaceIDList = accountdomain.WorkspaceIDList
+type IntegrationID = accountdomain.IntegrationID
+type IntegrationIDList = accountdomain.IntegrationIDList
 
 var NewID = accountdomain.NewUserID
 var MustID = accountdomain.MustUserID
