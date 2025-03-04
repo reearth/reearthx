@@ -80,6 +80,11 @@ func (b *Builder) Personal(p bool) *Builder {
 	return b
 }
 
+func (b *Builder) Location(location string) *Builder {
+	b.w.location = location
+	return b
+}
+
 func (b *Builder) Policy(p *PolicyID) *Builder {
 	b.w.policy = util.CloneRef(p)
 	return b
