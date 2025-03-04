@@ -190,3 +190,67 @@ func TestWorkspace_RemoveAll(t *testing.T) {
 	err = repo.RemoveAll(ctx, accountdomain.WorkspaceIDList{ws1.ID(), ws2.ID()})
 	assert.NoError(t, err)
 }
+
+func TestWorkspace_FindByIntegrations(t *testing.T) {
+	i1 := workspace.NewIntegrationID()
+	i2 := workspace.NewIntegrationID()
+	ws1 := workspace.New().NewID().Name("hoge").Integrations(map[workspace.IntegrationID]workspace.Member{i1: {}}).MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").Integrations(map[workspace.IntegrationID]workspace.Member{i2: {}}).MustBuild()
+
+	tests := []struct {
+		Name    string
+		Input   accountdomain.IntegrationIDList
+		data    workspace.List
+		want    workspace.List
+		wantErr error
+	}{
+		{
+			Name:    "succes find multiple workspaces",
+			Input:   accountdomain.IntegrationIDList{i1, i2},
+			data:    workspace.List{ws1, ws2},
+			want:    workspace.List{ws1, ws2},
+			wantErr: nil,
+		},
+		{
+			Name:    "success find a workspace",
+			Input:   accountdomain.IntegrationIDList{i1},
+			data:    workspace.List{ws1, ws2},
+			want:    workspace.List{ws1},
+			wantErr: nil,
+		},
+		{
+			Name:    "success input no integrations",
+			Input:   accountdomain.IntegrationIDList{},
+			data:    workspace.List{ws1, ws2},
+			want:    workspace.List{},
+			wantErr: nil,
+		},
+		{
+			Name:    "success find no workspaces",
+			Input:   accountdomain.IntegrationIDList{workspace.NewIntegrationID()},
+			want:    workspace.List{},
+			wantErr: nil,
+		},
+	}
+
+	init := mongotest.Connect(t)
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.Name, func(tt *testing.T) {
+			tt.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+
+			repo := NewWorkspace(client)
+			ctx := context.Background()
+			err := repo.SaveAll(ctx, tc.data)
+			assert.NoError(tt, err)
+
+			got, err := repo.FindByIntegrations(ctx, tc.Input)
+			assert.NoError(tt, err)
+			assert.Len(tt, got, 0)
+		})
+	}
+}

@@ -3,6 +3,8 @@ package accountmemory
 import (
 	"context"
 
+	slices0 "slices"
+
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
@@ -65,12 +67,7 @@ func (r *Workspace) FindByIntegrations(_ context.Context, ids workspace.Integrat
 	}
 
 	res := r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
-		for _, id := range ids {
-			if value.Members().HasIntegration(id) {
-				return true
-			}
-		}
-		return false
+		return slices0.ContainsFunc(ids, value.Members().HasIntegration)
 	})
 
 	slices.SortFunc(res, func(a, b *workspace.Workspace) int { return a.ID().Compare(b.ID()) })
