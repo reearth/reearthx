@@ -241,11 +241,11 @@ func TestWorkspace_FindByIntegrations(t *testing.T) {
 	}
 
 	init := mongotest.Connect(t)
-	t.Parallel()
+
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(tt *testing.T) {
-
+			tt.Parallel()
 			client := mongox.NewClientWithDatabase(init(t))
 
 			repo := NewWorkspace(client)
