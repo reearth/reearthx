@@ -251,6 +251,9 @@ func TestWorkspace_FindByIntegrations(t *testing.T) {
 			got, err := repo.FindByIntegrations(ctx, tc.Input)
 			assert.NoError(tt, err)
 			assert.Len(tt, got, 0)
+
+			err = repo.RemoveAll(ctx, accountdomain.WorkspaceIDList{ws1.ID(), ws2.ID()})
+			assert.NoError(t, err)
 		})
 	}
 }
