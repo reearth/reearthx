@@ -244,9 +244,8 @@ func TestWorkspace_FindByIntegrations(t *testing.T) {
 
 	for _, tc := range tests {
 		tc := tc
-
+		t.Parallel()
 		t.Run(tc.Name, func(tt *testing.T) {
-			t.Parallel()
 
 			client := mongox.NewClientWithDatabase(init(t))
 
