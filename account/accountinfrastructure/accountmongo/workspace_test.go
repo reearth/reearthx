@@ -192,10 +192,17 @@ func TestWorkspace_RemoveAll(t *testing.T) {
 }
 
 func TestWorkspace_FindByIntegrations(t *testing.T) {
+	u := user.New().Name("aaa").NewID().Email("aaa@bbb.com").MustBuild()
 	i1 := workspace.NewIntegrationID()
 	i2 := workspace.NewIntegrationID()
-	ws1 := workspace.New().NewID().Name("hoge").Integrations(map[workspace.IntegrationID]workspace.Member{i1: {}}).MustBuild()
-	ws2 := workspace.New().NewID().Name("foo").Integrations(map[workspace.IntegrationID]workspace.Member{i2: {}}).MustBuild()
+	ws1 := workspace.New().NewID().Name("hoge").Integrations(map[workspace.IntegrationID]workspace.Member{i1: {
+		Role:      workspace.RoleOwner,
+		InvitedBy: u.ID(),
+	}}).MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").Integrations(map[workspace.IntegrationID]workspace.Member{i2: {
+		Role:      workspace.RoleOwner,
+		InvitedBy: u.ID(),
+	}}).MustBuild()
 
 	tests := []struct {
 		Name    string

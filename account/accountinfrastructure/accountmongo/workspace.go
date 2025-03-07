@@ -64,13 +64,13 @@ func (r *Workspace) FindByIntegrations(ctx context.Context, integrationIDs works
 		return nil, nil
 	}
 
-	orConditions := make([]bson.M, len(integrationIDs))
-	for i, id := range integrationIDs {
-		orConditions[i] = bson.M{
+	orConditions := make([]bson.M, 0)
+	for _, id := range integrationIDs {
+		orConditions = append(orConditions, bson.M{
 			"integrations." + strings.Replace(id.String(), ".", "", -1): bson.M{
 				"$exists": true,
 			},
-		}
+		})
 	}
 
 	return r.find(ctx, bson.M{
