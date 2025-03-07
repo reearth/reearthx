@@ -235,8 +235,8 @@ func TestWorkspace_FindByIntegrations(t *testing.T) {
 
 	init := mongotest.Connect(t)
 
-	for _, tc := range tests {
-		tc := tc
+	for _, tt := range tests {
+		tc := tt
 
 		t.Run(tc.Name, func(tt *testing.T) {
 			tt.Parallel()
