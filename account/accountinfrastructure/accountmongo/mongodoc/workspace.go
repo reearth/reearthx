@@ -20,6 +20,7 @@ type WorkspaceDocument struct {
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
 	Policy       string `bson:",omitempty"`
+	Location     string `bson:",omitempty"`
 }
 
 func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
@@ -49,6 +50,7 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		Integrations: integrationsDoc,
 		Personal:     ws.IsPersonal(),
 		Policy:       lo.FromPtr(ws.Policy()).String(),
+		Location:     ws.Location(),
 	}, wId
 }
 
@@ -104,6 +106,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		Integrations(integrations).
 		Personal(d.Personal).
 		Policy(policy).
+		Location(d.Location).
 		Build()
 }
 
