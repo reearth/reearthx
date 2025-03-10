@@ -52,7 +52,13 @@ func (p JWTProvider) validator() (JWTValidator, error) {
 		opts = append(opts, jwks.WithCustomJWKSURI(u))
 	}
 	ttl := time.Duration(lo.FromPtrOr(p.TTL, defaultJWTTTL)) * time.Minute
-	provider := jwks.NewCachingProvider(issuerURL, ttl, opts...)
+	interfaceOpts := make([]interface{}, len(opts))
+
+	for i, opt := range opts {
+		interfaceOpts[i] = opt
+	}
+
+	provider := jwks.NewCachingProvider(issuerURL, ttl, interfaceOpts...)
 	algorithm := validator.SignatureAlgorithm(lo.FromPtrOr(p.ALG, jwt.SigningMethodRS256.Name))
 
 	var aud []string
