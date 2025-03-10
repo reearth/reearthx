@@ -18,6 +18,7 @@ type IntegrationID = idx.ID[Integration]
 
 type UserIDList = idx.List[User]
 type WorkspaceIDList = idx.List[Workspace]
+type IntegrationIDList = idx.List[Integration]
 
 var NewUserID = idx.New[User]
 var MustUserID = idx.Must[User]
