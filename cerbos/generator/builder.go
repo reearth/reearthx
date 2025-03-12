@@ -1,5 +1,7 @@
 package generator
 
+import "sort"
+
 type ResourceDefinition struct {
 	Resource string
 	Actions  []ActionDefinition
@@ -42,5 +44,8 @@ func (b *ResourceBuilder) Build() []ResourceDefinition {
 			Actions:  actions,
 		})
 	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Resource < result[j].Resource
+	})
 	return result
 }
