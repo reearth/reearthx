@@ -18,7 +18,7 @@ type Client struct {
 
 func NewClient(database string, c *mongo.Client) *Client {
 	rp := readpref.Nearest()
-	
+
 	sessionOpts := options.Database().SetReadPreference(rp)
 
 	return &Client{

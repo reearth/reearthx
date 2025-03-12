@@ -218,7 +218,8 @@ func TestFragmentToUser(t *testing.T) {
 			},
 			want:    us,
 			wantErr: false,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := FragmentToUser(tt.args.me)
@@ -398,7 +399,8 @@ func TestSimpleUserByIDsNodesUserTo(t *testing.T) {
 				Email: "email",
 			},
 			wantErr: false,
-		}}
+		},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := SimpleUserByIDsNodesUserTo(tt.args.r)
