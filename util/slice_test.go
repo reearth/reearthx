@@ -75,16 +75,6 @@ func TestFilterMap(t *testing.T) {
 	}))
 }
 
-func TestFilterMapOk(t *testing.T) {
-	assert.Nil(t, FilterMapOk[int, bool](nil, nil))
-	assert.Equal(t, []bool{true, false}, FilterMapOk([]int{1, 0, 2}, func(i int) (bool, bool) {
-		if i == 0 {
-			return false, false
-		}
-		return i == 1, true
-	}))
-}
-
 func TestFilterR(t *testing.T) {
 	assert.Nil(t, FilterMapR[int, bool](nil, nil))
 	assert.Equal(t, []*bool{lo.ToPtr(true), lo.ToPtr(false)}, FilterMapR([]int{1, 0, 2}, func(i int) *bool {
@@ -93,16 +83,6 @@ func TestFilterR(t *testing.T) {
 		}
 		return lo.ToPtr(i == 1)
 	}))
-}
-
-func TestAll(t *testing.T) {
-	assert.True(t, All([]int{1, 2, 3}, func(i int) bool { return i < 4 }))
-	assert.False(t, All([]int{1, 2, 3}, func(i int) bool { return i < 3 }))
-}
-
-func TestAny(t *testing.T) {
-	assert.True(t, Any([]int{1, 2, 3}, func(i int) bool { return i == 1 }))
-	assert.False(t, Any([]int{1, 2, 3}, func(i int) bool { return i == 4 }))
 }
 
 func TestFilter(t *testing.T) {
@@ -115,111 +95,4 @@ func TestFilter(t *testing.T) {
 func TestDerefSlice(t *testing.T) {
 	assert.Nil(t, DerefSlice[int](nil))
 	assert.Equal(t, []int{1, 0, 2}, DerefSlice([]*int{lo.ToPtr(1), nil, lo.ToPtr(0), lo.ToPtr(2)}))
-}
-
-func TestSubset(t *testing.T) {
-	tests := []struct {
-		name          string
-		collection    []string
-		subCollection []string
-		want          bool
-	}{
-		{
-			name:          "",
-			collection:    []string{},
-			subCollection: []string{},
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{},
-			subCollection: nil,
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: nil,
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: []string{},
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: []string{"v1"},
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: []string{"v1", "v2"},
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: []string{"v1", "v2", "v3"},
-			want:          true,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: []string{"v4"},
-			want:          false,
-		},
-		{
-			name:          "",
-			collection:    []string{"v1", "v2", "v3"},
-			subCollection: []string{"v1", "v2", "v4"},
-			want:          false,
-		},
-		{
-			name:          "",
-			collection:    nil,
-			subCollection: []string{"v1"},
-			want:          false,
-		},
-		{
-			name:          "",
-			collection:    []string{},
-			subCollection: []string{"v1"},
-			want:          false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, Subset(tt.collection, tt.subCollection))
-		})
-	}
-}
-
-func TestHasDuplicates(t *testing.T) {
-	tests := []struct {
-		name       string
-		collection []string
-		want       bool
-	}{
-		{
-			name:       "has",
-			collection: []string{"123", "321", "123"},
-			want:       true,
-		},
-		{
-			name:       "has not",
-			collection: []string{"123", "321", "1232"},
-			want:       false,
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, HasDuplicates(tt.collection))
-		})
-	}
 }

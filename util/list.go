@@ -21,7 +21,7 @@ type Converter[S any, T any] func(*S) *T
 type ConverterValue[S any, T any] func(S) *T
 
 func (l List[T]) Has(elements ...T) bool {
-	return Any(elements, func(e T) bool {
+	return lo.SomeBy(elements, func(e T) bool {
 		return slices.Contains(l, e)
 	})
 }
