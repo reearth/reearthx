@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"os"
 
 	"go.uber.org/zap/zapcore"
@@ -67,4 +68,17 @@ func isGCP() bool {
 	}
 
 	return false
+}
+
+func GoogleTraceFromTraceID(trace, projectID string) string {
+	if trace == "" {
+		return ""
+	}
+	if projectID == "" {
+		projectID = os.Getenv("GOOGLE_CLOUD_PROJECT")
+	}
+	if projectID == "" {
+		return ""
+	}
+	return fmt.Sprintf("projects/%s/traces/%s", projectID, trace)
 }

@@ -3,8 +3,6 @@ package log
 import (
 	"fmt"
 	"io"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -273,33 +271,4 @@ func fromMap(m map[string]any) (res []any) {
 		res = append(res, v)
 	}
 	return
-}
-
-func GetReqestID(w http.ResponseWriter, r *http.Request) string {
-	if reqid := getHeader(r,
-		"X-Request-ID",
-		"X-Cloud-Trace-Context", // Google Cloud
-		"X-Amzn-Trace-Id",       // AWS
-		"X-ARR-LOG-ID",          // Azure
-	); reqid != "" {
-		return reqid
-	}
-
-	if reqid := w.Header().Get("X-Request-ID"); reqid != "" {
-		return reqid
-	}
-
-	return ""
-}
-
-func getHeader(r *http.Request, keys ...string) string {
-	for _, k := range keys {
-		if v := r.Header.Get(k); v != "" {
-			return v
-		}
-		if v := r.Header.Get(strings.ToLower(k)); v != "" {
-			return v
-		}
-	}
-	return ""
 }

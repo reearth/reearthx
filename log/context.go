@@ -4,6 +4,11 @@ import "context"
 
 type key struct{}
 
+func ContextWith(ctx context.Context, logger *Logger) context.Context {
+	return context.WithValue(ctx, key{}, logger)
+}
+
+// Deprecated: Use ContextWith instead.
 func AttachLoggerToContext(ctx context.Context, logger *Logger) context.Context {
 	return context.WithValue(ctx, key{}, logger)
 }
