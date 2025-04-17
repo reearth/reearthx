@@ -35,6 +35,11 @@ func TestBuilder_Name(t *testing.T) {
 	assert.Equal(t, "xxx", b.Name())
 }
 
+func TestBuilder_DisplayName(t *testing.T) {
+	b := New().NewID().Name("aaa").DisplayName("xxx").Email("aaa@bbb.com").MustBuild()
+	assert.Equal(t, "xxx", b.DisplayName())
+}
+
 func TestBuilder_Workspace(t *testing.T) {
 	tid := NewWorkspaceID()
 	b := New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(tid).MustBuild()
