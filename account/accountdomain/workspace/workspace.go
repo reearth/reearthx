@@ -3,11 +3,12 @@ package workspace
 import "github.com/reearth/reearthx/util"
 
 type Workspace struct {
-	id       ID
-	name     string
-	members  *Members
-	policy   *PolicyID
-	location string
+	id          ID
+	name        string
+	displayName string
+	members     *Members
+	policy      *PolicyID
+	location    string
 }
 
 func (t *Workspace) ID() ID {
@@ -16,6 +17,10 @@ func (t *Workspace) ID() ID {
 
 func (t *Workspace) Name() string {
 	return t.name
+}
+
+func (t *Workspace) DisplayName() string {
+	return t.displayName
 }
 
 func (t *Workspace) Members() *Members {
@@ -39,6 +44,10 @@ func (t *Workspace) LocationOr(def string) string {
 
 func (t *Workspace) Rename(name string) {
 	t.name = name
+}
+
+func (t *Workspace) UpdateDisplayName(displayName string) {
+	t.displayName = displayName
 }
 
 func (w *Workspace) Policy() *PolicyID {
