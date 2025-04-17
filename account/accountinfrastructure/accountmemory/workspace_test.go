@@ -49,6 +49,26 @@ func TestWorkspace_FindByID(t *testing.T) {
 	assert.Same(t, wantErr, r.Save(ctx, ws))
 }
 
+func TestWorkspace_FindByName(t *testing.T) {
+	ctx := context.Background()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+	r := &Workspace{
+		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
+	}
+	r.data.Store(ws.ID(), ws)
+	out, err := r.FindByName(ctx, ws.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, ws, out)
+
+	out2, err := r.FindByName(ctx, "notfound")
+	assert.Nil(t, out2)
+	assert.Same(t, rerror.ErrNotFound, err)
+
+	wantErr := errors.New("test")
+	SetWorkspaceError(r, wantErr)
+	assert.Same(t, wantErr, r.Save(ctx, ws))
+}
+
 func TestWorkspace_FindByIDs(t *testing.T) {
 	ctx := context.Background()
 	ws := workspace.New().NewID().Name("hoge").MustBuild()

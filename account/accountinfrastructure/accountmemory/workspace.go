@@ -97,6 +97,18 @@ func (r *Workspace) FindByID(_ context.Context, v workspace.ID) (*workspace.Work
 	}), rerror.ErrNotFound)
 }
 
+func (r *Workspace) FindByName(_ context.Context, name string) (*workspace.Workspace, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	if name == "" {
+		return nil, rerror.ErrNotFound
+	}
+	return rerror.ErrIfNil(r.data.Find(func(key workspace.ID, value *workspace.Workspace) bool {
+		return value.Name() == name
+	}), rerror.ErrNotFound)
+}
+
 func (r *Workspace) Create(_ context.Context, t *workspace.Workspace) error {
 	if r.err != nil {
 		return r.err
