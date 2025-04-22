@@ -16,6 +16,7 @@ type WorkspaceMemberDocument struct {
 type WorkspaceDocument struct {
 	ID           string
 	Name         string
+	DisplayName  string
 	Members      map[string]WorkspaceMemberDocument
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
@@ -102,6 +103,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 	return workspace.New().
 		ID(tid).
 		Name(d.Name).
+		DisplayName(d.DisplayName).
 		Members(members).
 		Integrations(integrations).
 		Personal(d.Personal).

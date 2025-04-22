@@ -65,6 +65,11 @@ func (b *Builder) Name(name string) *Builder {
 	return b
 }
 
+func (b *Builder) DisplayName(displayName string) *Builder {
+	b.w.displayName = displayName
+	return b
+}
+
 func (b *Builder) Members(members map[UserID]Member) *Builder {
 	b.members = members
 	return b

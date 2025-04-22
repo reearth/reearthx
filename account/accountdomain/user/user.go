@@ -16,6 +16,7 @@ var (
 type User struct {
 	id            ID
 	name          string
+	displayName   string
 	email         string
 	password      EncodedPassword
 	workspace     WorkspaceID
@@ -33,6 +34,13 @@ func (u *User) ID() ID {
 
 func (u *User) Name() string {
 	return u.name
+}
+
+func (u *User) DisplayName() string {
+	if u.displayName == "" {
+		return u.name
+	}
+	return u.displayName
 }
 
 func (u *User) Email() string {
@@ -77,6 +85,10 @@ func (u *User) UpdateLang(lang language.Tag) {
 
 func (u *User) UpdateTheme(t Theme) {
 	u.theme = t
+}
+
+func (u *User) UpdateDisplayName(displayName string) {
+	u.displayName = displayName
 }
 
 func (u *User) Verification() *Verification {
@@ -203,6 +215,7 @@ func (u *User) Clone() *User {
 	return &User{
 		id:            u.id,
 		name:          u.name,
+		displayName:   u.displayName,
 		email:         u.email,
 		password:      u.password,
 		workspace:     u.workspace,
