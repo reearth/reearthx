@@ -16,6 +16,7 @@ type PasswordResetDocument struct {
 type UserDocument struct {
 	ID            string
 	Name          string
+	DisplayName   string
 	Email         string
 	Subs          []string
 	Workspace     string
@@ -61,6 +62,7 @@ func NewUser(user *user.User) (*UserDocument, string) {
 	return &UserDocument{
 		ID:            id,
 		Name:          user.Name(),
+		DisplayName:   user.DisplayName(),
 		Email:         user.Email(),
 		Subs:          authsdoc,
 		Workspace:     user.Workspace().String(),
