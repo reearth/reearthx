@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var nameRegex = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-_@.]{0,61}[a-z0-9])?$`)
+
 // IsValidName
 // Compatible with Auth0's restricted character set (subset only: lowercase letters, numbers, hyphens, underscores, at (@), and dots (.))
 // Regex explanation:
@@ -26,7 +28,6 @@ import (
 func IsValidName(name string) bool {
 	name = strings.ToLower(name)
 	name = strings.TrimSpace(name)
-	nameRegex := regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-_@.]{0,61}[a-z0-9])?$`)
 	chars := []string{"-", "_", ".", "@"}
 
 	for _, c := range chars {

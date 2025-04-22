@@ -1,6 +1,9 @@
 package util
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestValidateName(t *testing.T) {
 	tests := []struct {
@@ -16,6 +19,19 @@ func TestValidateName(t *testing.T) {
 		{"invalid..name", false},
 		{"invalid@@name", false},
 		{"invalid@name.com", false},
+		// Empty string test
+		{"", false},
+		// Whitespace trimming tests
+		{" validname", true},
+		{"validname ", true},
+		{" validname ", true},
+		// Case insensitivity tests
+		{"ValidName", true},
+		{"VALIDNAME", true},
+		// Length boundary tests
+		{"a", true}, // 1 character - minimum
+		{"a" + strings.Repeat("b", 61) + "c", true},  // 63 characters - maximum
+		{"a" + strings.Repeat("b", 62) + "c", false}, // 64 characters - exceeds maximum
 	}
 
 	for _, test := range tests {
