@@ -11,43 +11,47 @@ type Workspace struct {
 	location    string
 }
 
-func (t *Workspace) ID() ID {
-	return t.id
+func (w *Workspace) ID() ID {
+	return w.id
 }
 
-func (t *Workspace) Name() string {
-	return t.name
+func (w *Workspace) Name() string {
+	return w.name
 }
 
-func (t *Workspace) DisplayName() string {
-	return t.displayName
+func (w *Workspace) IsValidName(name string) bool {
+	return util.IsValidName(name)
 }
 
-func (t *Workspace) Members() *Members {
-	return t.members
+func (w *Workspace) DisplayName() string {
+	return w.displayName
 }
 
-func (t *Workspace) IsPersonal() bool {
-	return t.members.Fixed()
+func (w *Workspace) Members() *Members {
+	return w.members
 }
 
-func (t *Workspace) Location() string {
-	return t.location
+func (w *Workspace) IsPersonal() bool {
+	return w.members.Fixed()
 }
 
-func (t *Workspace) LocationOr(def string) string {
-	if t.location == "" {
+func (w *Workspace) Location() string {
+	return w.location
+}
+
+func (w *Workspace) LocationOr(def string) string {
+	if w.location == "" {
 		return def
 	}
-	return t.location
+	return w.location
 }
 
-func (t *Workspace) Rename(name string) {
-	t.name = name
+func (w *Workspace) Rename(name string) {
+	w.name = name
 }
 
-func (t *Workspace) UpdateDisplayName(displayName string) {
-	t.displayName = displayName
+func (w *Workspace) UpdateDisplayName(displayName string) {
+	w.displayName = displayName
 }
 
 func (w *Workspace) Policy() *PolicyID {

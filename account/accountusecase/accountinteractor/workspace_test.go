@@ -29,7 +29,7 @@ func TestWorkspace_Create(t *testing.T) {
 	_ = db.User.Save(ctx, u)
 	workspaceUC := NewWorkspace(db, nil)
 	op := &accountusecase.Operator{User: lo.ToPtr(u.ID())}
-	ws, err := workspaceUC.Create(ctx, "workspace name", u.ID(), op)
+	ws, err := workspaceUC.Create(ctx, "workspace_name", u.ID(), op)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, ws)
@@ -41,11 +41,11 @@ func TestWorkspace_Create(t *testing.T) {
 	assert.NotNil(t, resultWorkspaces)
 	assert.NotEmpty(t, resultWorkspaces)
 	assert.Equal(t, resultWorkspaces[0].ID(), ws.ID())
-	assert.Equal(t, resultWorkspaces[0].Name(), "workspace name")
+	assert.Equal(t, resultWorkspaces[0].Name(), "workspace_name")
 	assert.Equal(t, workspace.IDList{resultWorkspaces[0].ID()}, op.OwningWorkspaces)
 
 	// mock workspace error
-	wantErr := errors.New("test")
+	wantErr := errors.New("invalid name")
 	accountmemory.SetWorkspaceError(db.Workspace, wantErr)
 	workspace2, err := workspaceUC.Create(ctx, "workspace name 2", u.ID(), op)
 	assert.Nil(t, workspace2)

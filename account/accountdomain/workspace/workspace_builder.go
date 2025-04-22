@@ -7,6 +7,7 @@ import (
 )
 
 var ErrMembersRequired = errors.New("members required")
+var ErrInvalidName = errors.New("invalid name")
 
 type Builder struct {
 	w            *Workspace
@@ -61,6 +62,11 @@ func (b *Builder) NewID() *Builder {
 }
 
 func (b *Builder) Name(name string) *Builder {
+	if !b.w.IsValidName(name) {
+		b.err = ErrInvalidName
+		return b
+	}
+
 	b.w.name = name
 	return b
 }
