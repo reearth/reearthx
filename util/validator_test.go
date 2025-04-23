@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestValidateName(t *testing.T) {
+func TestIsSafePathName(t *testing.T) {
 	tests := []struct {
 		name     string
 		expected bool
@@ -36,7 +36,7 @@ func TestValidateName(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := IsValidName(test.name)
+			result := IsSafePathName(test.name)
 			if result != test.expected {
 				t.Errorf("expected %v, got %v", test.expected, result)
 			}

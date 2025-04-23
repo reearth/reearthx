@@ -7,7 +7,7 @@ import (
 
 var nameRegex = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-_@.]{0,61}[a-z0-9])?$`)
 
-// IsValidName
+// IsSafePathName
 // Compatible with Auth0's restricted character set (subset only: lowercase letters, numbers, hyphens, underscores, at (@), and dots (.))
 // Regex explanation:
 // ^                 // Start of string
@@ -25,7 +25,7 @@ var nameRegex = regexp.MustCompile(`^[a-z0-9](?:[a-z0-9-_@.]{0,61}[a-z0-9])?$`)
 // - Does not allow special characters beyond a-z, 0-9, hyphens, underscores, at (@), and dots (.)
 // - Safe for use in subdomains and URL path segments
 // - Does NOT allow consecutive hyphens; add extra logic in Go if needed
-func IsValidName(name string) bool {
+func IsSafePathName(name string) bool {
 	name = strings.ToLower(name)
 	name = strings.TrimSpace(name)
 	chars := []string{"-", "_", ".", "@"}
