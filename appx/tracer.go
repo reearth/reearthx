@@ -25,7 +25,7 @@ type TracerConfig struct {
 	TracerSample float64
 }
 
-func InitTracer(ctx context.Context, conf TracerConfig) io.Closer {
+func InitTracer(ctx context.Context, conf *TracerConfig) io.Closer {
 	if conf.Tracer == TRACER_GCP {
 		initGCPTracer(ctx, conf)
 	} else if conf.Tracer == TRACER_JAEGER {
@@ -34,7 +34,7 @@ func InitTracer(ctx context.Context, conf TracerConfig) io.Closer {
 	return nil
 }
 
-func initGCPTracer(ctx context.Context, conf TracerConfig) {
+func initGCPTracer(ctx context.Context, conf *TracerConfig) {
 	exporter, err := texporter.New()
 	if err != nil {
 		log.Fatalc(ctx, err)
@@ -50,7 +50,7 @@ func initGCPTracer(ctx context.Context, conf TracerConfig) {
 	log.Infofc(ctx, "tracer: initialized cloud trace with sample fraction: %g", conf.TracerSample)
 }
 
-func initJaegerTracer(conf TracerConfig) io.Closer {
+func initJaegerTracer(conf *TracerConfig) io.Closer {
 	cfg := jaegercfg.Configuration{
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,

@@ -108,7 +108,7 @@ func (v *AddIntegrationToWorkspaceAddIntegrationToWorkspaceAddUsersToWorkspacePa
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal AddIntegrationToWorkspaceAddIntegrationToWorkspaceAddUsersToWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal AddIntegrationToWorkspaceAddIntegrationToWorkspaceAddUsersToWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -238,7 +238,7 @@ func (v *AddUsersToWorkspaceAddUsersToWorkspaceAddUsersToWorkspacePayloadWorkspa
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal AddUsersToWorkspaceAddUsersToWorkspaceAddUsersToWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal AddUsersToWorkspaceAddUsersToWorkspaceAddUsersToWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -379,7 +379,7 @@ func (v *CreateWorkspaceCreateWorkspaceCreateWorkspacePayloadWorkspace) __premar
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal CreateWorkspaceCreateWorkspaceCreateWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal CreateWorkspaceCreateWorkspaceCreateWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -535,7 +535,7 @@ func (v *FindByUserFindByUserWorkspace) __premarshalJSON() (*__premarshalFindByU
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal FindByUserFindByUserWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal FindByUserFindByUserWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -790,7 +790,7 @@ func (v *FragmentWorkspace) UnmarshalJSON(b []byte) error {
 					src, dst)
 				if err != nil {
 					return fmt.Errorf(
-						"Unable to unmarshal FragmentWorkspace.Members: %w", err)
+						"unable to unmarshal FragmentWorkspace.Members: %w", err)
 				}
 			}
 		}
@@ -836,7 +836,7 @@ func (v *FragmentWorkspace) __premarshalJSON() (*__premarshalFragmentWorkspace, 
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal FragmentWorkspace.Members: %w", err)
+					"unable to marshal FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -874,17 +874,17 @@ func (v *FragmentWorkspaceMembersWorkspaceIntegrationMember) GetInvitedById() st
 // FragmentWorkspaceMembersWorkspaceMember includes the requested fields of the GraphQL interface WorkspaceMember.
 //
 // FragmentWorkspaceMembersWorkspaceMember is implemented by the following types:
-// FragmentWorkspaceMembersWorkspaceUserMember
 // FragmentWorkspaceMembersWorkspaceIntegrationMember
+// FragmentWorkspaceMembersWorkspaceUserMember
 type FragmentWorkspaceMembersWorkspaceMember interface {
 	implementsGraphQLInterfaceFragmentWorkspaceMembersWorkspaceMember()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() string
 }
 
-func (v *FragmentWorkspaceMembersWorkspaceUserMember) implementsGraphQLInterfaceFragmentWorkspaceMembersWorkspaceMember() {
-}
 func (v *FragmentWorkspaceMembersWorkspaceIntegrationMember) implementsGraphQLInterfaceFragmentWorkspaceMembersWorkspaceMember() {
+}
+func (v *FragmentWorkspaceMembersWorkspaceUserMember) implementsGraphQLInterfaceFragmentWorkspaceMembersWorkspaceMember() {
 }
 
 func __unmarshalFragmentWorkspaceMembersWorkspaceMember(b []byte, v *FragmentWorkspaceMembersWorkspaceMember) error {
@@ -901,11 +901,11 @@ func __unmarshalFragmentWorkspaceMembersWorkspaceMember(b []byte, v *FragmentWor
 	}
 
 	switch tn.TypeName {
-	case "WorkspaceUserMember":
-		*v = new(FragmentWorkspaceMembersWorkspaceUserMember)
-		return json.Unmarshal(b, *v)
 	case "WorkspaceIntegrationMember":
 		*v = new(FragmentWorkspaceMembersWorkspaceIntegrationMember)
+		return json.Unmarshal(b, *v)
+	case "WorkspaceUserMember":
+		*v = new(FragmentWorkspaceMembersWorkspaceUserMember)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -920,20 +920,20 @@ func __marshalFragmentWorkspaceMembersWorkspaceMember(v *FragmentWorkspaceMember
 
 	var typename string
 	switch v := (*v).(type) {
-	case *FragmentWorkspaceMembersWorkspaceUserMember:
-		typename = "WorkspaceUserMember"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*FragmentWorkspaceMembersWorkspaceUserMember
-		}{typename, v}
-		return json.Marshal(result)
 	case *FragmentWorkspaceMembersWorkspaceIntegrationMember:
 		typename = "WorkspaceIntegrationMember"
 
 		result := struct {
 			TypeName string `json:"__typename"`
 			*FragmentWorkspaceMembersWorkspaceIntegrationMember
+		}{typename, v}
+		return json.Marshal(result)
+	case *FragmentWorkspaceMembersWorkspaceUserMember:
+		typename = "WorkspaceUserMember"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*FragmentWorkspaceMembersWorkspaceUserMember
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -1115,7 +1115,7 @@ func (v *RemoveIntegrationFromWorkspaceRemoveIntegrationFromWorkspaceRemoveMembe
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal RemoveIntegrationFromWorkspaceRemoveIntegrationFromWorkspaceRemoveMemberFromWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal RemoveIntegrationFromWorkspaceRemoveIntegrationFromWorkspaceRemoveMemberFromWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -1130,6 +1130,132 @@ type RemoveIntegrationFromWorkspaceResponse struct {
 // GetRemoveIntegrationFromWorkspace returns RemoveIntegrationFromWorkspaceResponse.RemoveIntegrationFromWorkspace, and is useful for accessing the field via an interface.
 func (v *RemoveIntegrationFromWorkspaceResponse) GetRemoveIntegrationFromWorkspace() RemoveIntegrationFromWorkspaceRemoveIntegrationFromWorkspaceRemoveMemberFromWorkspacePayload {
 	return v.RemoveIntegrationFromWorkspace
+}
+
+type RemoveMultipleUsersFromWorkspaceInput struct {
+	WorkspaceId string   `json:"workspaceId"`
+	UserIds     []string `json:"userIds"`
+}
+
+// GetWorkspaceId returns RemoveMultipleUsersFromWorkspaceInput.WorkspaceId, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceInput) GetWorkspaceId() string { return v.WorkspaceId }
+
+// GetUserIds returns RemoveMultipleUsersFromWorkspaceInput.UserIds, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceInput) GetUserIds() []string { return v.UserIds }
+
+// RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayload includes the requested fields of the GraphQL type RemoveMultipleMembersFromWorkspacePayload.
+type RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayload struct {
+	Workspace RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace `json:"workspace"`
+}
+
+// GetWorkspace returns RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayload.Workspace, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayload) GetWorkspace() RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace {
+	return v.Workspace
+}
+
+// RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace includes the requested fields of the GraphQL type Workspace.
+type RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace struct {
+	FragmentWorkspace `json:"-"`
+}
+
+// GetId returns RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace.Id, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) GetId() string {
+	return v.FragmentWorkspace.Id
+}
+
+// GetName returns RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace.Name, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) GetName() string {
+	return v.FragmentWorkspace.Name
+}
+
+// GetPersonal returns RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace.Personal, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) GetPersonal() bool {
+	return v.FragmentWorkspace.Personal
+}
+
+// GetMembers returns RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace.Members, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) GetMembers() []FragmentWorkspaceMembersWorkspaceMember {
+	return v.FragmentWorkspace.Members
+}
+
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.FragmentWorkspace)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalRemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	Personal bool `json:"personal"`
+
+	Members []json.RawMessage `json:"members"`
+}
+
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace) __premarshalJSON() (*__premarshalRemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace, error) {
+	var retval __premarshalRemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace
+
+	retval.Id = v.FragmentWorkspace.Id
+	retval.Name = v.FragmentWorkspace.Name
+	retval.Personal = v.FragmentWorkspace.Personal
+	{
+
+		dst := &retval.Members
+		src := v.FragmentWorkspace.Members
+		*dst = make(
+			[]json.RawMessage,
+			len(src))
+		for i, src := range src {
+			dst := &(*dst)[i]
+			var err error
+			*dst, err = __marshalFragmentWorkspaceMembersWorkspaceMember(
+				&src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+			}
+		}
+	}
+	return &retval, nil
+}
+
+// RemoveMultipleUsersFromWorkspaceResponse is returned by RemoveMultipleUsersFromWorkspace on success.
+type RemoveMultipleUsersFromWorkspaceResponse struct {
+	RemoveMultipleUsersFromWorkspace RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayload `json:"removeMultipleUsersFromWorkspace"`
+}
+
+// GetRemoveMultipleUsersFromWorkspace returns RemoveMultipleUsersFromWorkspaceResponse.RemoveMultipleUsersFromWorkspace, and is useful for accessing the field via an interface.
+func (v *RemoveMultipleUsersFromWorkspaceResponse) GetRemoveMultipleUsersFromWorkspace() RemoveMultipleUsersFromWorkspaceRemoveMultipleUsersFromWorkspaceRemoveMultipleMembersFromWorkspacePayload {
+	return v.RemoveMultipleUsersFromWorkspace
 }
 
 type RemoveMyAuthInput struct {
@@ -1358,7 +1484,7 @@ func (v *RemoveUserFromWorkspaceRemoveUserFromWorkspaceRemoveMemberFromWorkspace
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal RemoveUserFromWorkspaceRemoveUserFromWorkspaceRemoveMemberFromWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal RemoveUserFromWorkspaceRemoveUserFromWorkspaceRemoveMemberFromWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -1386,11 +1512,11 @@ const (
 
 // SearchUserResponse is returned by SearchUser on success.
 type SearchUserResponse struct {
-	SearchUser SearchUserSearchUser `json:"searchUser"`
+	SearchUser []SearchUserSearchUser `json:"searchUser"`
 }
 
 // GetSearchUser returns SearchUserResponse.SearchUser, and is useful for accessing the field via an interface.
-func (v *SearchUserResponse) GetSearchUser() SearchUserSearchUser { return v.SearchUser }
+func (v *SearchUserResponse) GetSearchUser() []SearchUserSearchUser { return v.SearchUser }
 
 // SearchUserSearchUser includes the requested fields of the GraphQL type User.
 type SearchUserSearchUser struct {
@@ -1489,6 +1615,7 @@ type SignUpInput struct {
 	Secret      string `json:"secret"`
 	Lang        string `json:"lang"`
 	Theme       string `json:"theme"`
+	MockAuth    bool   `json:"mockAuth"`
 }
 
 // GetId returns SignUpInput.Id, and is useful for accessing the field via an interface.
@@ -1514,6 +1641,9 @@ func (v *SignUpInput) GetLang() string { return v.Lang }
 
 // GetTheme returns SignUpInput.Theme, and is useful for accessing the field via an interface.
 func (v *SignUpInput) GetTheme() string { return v.Theme }
+
+// GetMockAuth returns SignUpInput.MockAuth, and is useful for accessing the field via an interface.
+func (v *SignUpInput) GetMockAuth() bool { return v.MockAuth }
 
 // SignUpResponse is returned by SignUp on success.
 type SignUpResponse struct {
@@ -1882,7 +2012,7 @@ func (v *UpdateIntegrationOfWorkspaceUpdateIntegrationOfWorkspaceUpdateMemberOfW
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal UpdateIntegrationOfWorkspaceUpdateIntegrationOfWorkspaceUpdateMemberOfWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal UpdateIntegrationOfWorkspaceUpdateIntegrationOfWorkspaceUpdateMemberOfWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -2145,7 +2275,7 @@ func (v *UpdateUserOfWorkspaceUpdateUserOfWorkspaceUpdateMemberOfWorkspacePayloa
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal UpdateUserOfWorkspaceUpdateUserOfWorkspaceUpdateMemberOfWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal UpdateUserOfWorkspaceUpdateUserOfWorkspaceUpdateMemberOfWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -2271,7 +2401,7 @@ func (v *UpdateWorkspaceUpdateWorkspaceUpdateWorkspacePayloadWorkspace) __premar
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal UpdateWorkspaceUpdateWorkspaceUpdateWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal UpdateWorkspaceUpdateWorkspaceUpdateWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -2281,16 +2411,16 @@ func (v *UpdateWorkspaceUpdateWorkspaceUpdateWorkspacePayloadWorkspace) __premar
 // UserByIDsNodesNode includes the requested fields of the GraphQL interface Node.
 //
 // UserByIDsNodesNode is implemented by the following types:
-// UserByIDsNodesWorkspace
 // UserByIDsNodesUser
+// UserByIDsNodesWorkspace
 type UserByIDsNodesNode interface {
 	implementsGraphQLInterfaceUserByIDsNodesNode()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() string
 }
 
-func (v *UserByIDsNodesWorkspace) implementsGraphQLInterfaceUserByIDsNodesNode() {}
 func (v *UserByIDsNodesUser) implementsGraphQLInterfaceUserByIDsNodesNode()      {}
+func (v *UserByIDsNodesWorkspace) implementsGraphQLInterfaceUserByIDsNodesNode() {}
 
 func __unmarshalUserByIDsNodesNode(b []byte, v *UserByIDsNodesNode) error {
 	if string(b) == "null" {
@@ -2306,11 +2436,11 @@ func __unmarshalUserByIDsNodesNode(b []byte, v *UserByIDsNodesNode) error {
 	}
 
 	switch tn.TypeName {
-	case "Workspace":
-		*v = new(UserByIDsNodesWorkspace)
-		return json.Unmarshal(b, *v)
 	case "User":
 		*v = new(UserByIDsNodesUser)
+		return json.Unmarshal(b, *v)
+	case "Workspace":
+		*v = new(UserByIDsNodesWorkspace)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -2325,20 +2455,20 @@ func __marshalUserByIDsNodesNode(v *UserByIDsNodesNode) ([]byte, error) {
 
 	var typename string
 	switch v := (*v).(type) {
-	case *UserByIDsNodesWorkspace:
-		typename = "Workspace"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*UserByIDsNodesWorkspace
-		}{typename, v}
-		return json.Marshal(result)
 	case *UserByIDsNodesUser:
 		typename = "User"
 
 		result := struct {
 			TypeName string `json:"__typename"`
 			*UserByIDsNodesUser
+		}{typename, v}
+		return json.Marshal(result)
+	case *UserByIDsNodesWorkspace:
+		typename = "Workspace"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*UserByIDsNodesWorkspace
 		}{typename, v}
 		return json.Marshal(result)
 	case nil:
@@ -2432,7 +2562,7 @@ func (v *UserByIDsResponse) UnmarshalJSON(b []byte) error {
 					src, dst)
 				if err != nil {
 					return fmt.Errorf(
-						"Unable to unmarshal UserByIDsResponse.Nodes: %w", err)
+						"unable to unmarshal UserByIDsResponse.Nodes: %w", err)
 				}
 			}
 		}
@@ -2469,10 +2599,110 @@ func (v *UserByIDsResponse) __premarshalJSON() (*__premarshalUserByIDsResponse, 
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal UserByIDsResponse.Nodes: %w", err)
+					"unable to marshal UserByIDsResponse.Nodes: %w", err)
 			}
 		}
 	}
+	return &retval, nil
+}
+
+// UserByNameOrEmailResponse is returned by UserByNameOrEmail on success.
+type UserByNameOrEmailResponse struct {
+	UserByNameOrEmail UserByNameOrEmailUserByNameOrEmailUser `json:"userByNameOrEmail"`
+}
+
+// GetUserByNameOrEmail returns UserByNameOrEmailResponse.UserByNameOrEmail, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailResponse) GetUserByNameOrEmail() UserByNameOrEmailUserByNameOrEmailUser {
+	return v.UserByNameOrEmail
+}
+
+// UserByNameOrEmailUserByNameOrEmailUser includes the requested fields of the GraphQL type User.
+type UserByNameOrEmailUserByNameOrEmailUser struct {
+	FragmentUser `json:"-"`
+}
+
+// GetId returns UserByNameOrEmailUserByNameOrEmailUser.Id, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetId() string { return v.FragmentUser.Id }
+
+// GetName returns UserByNameOrEmailUserByNameOrEmailUser.Name, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetName() string { return v.FragmentUser.Name }
+
+// GetEmail returns UserByNameOrEmailUserByNameOrEmailUser.Email, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetEmail() string { return v.FragmentUser.Email }
+
+// GetLang returns UserByNameOrEmailUserByNameOrEmailUser.Lang, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetLang() string { return v.FragmentUser.Lang }
+
+// GetTheme returns UserByNameOrEmailUserByNameOrEmailUser.Theme, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetTheme() string { return v.FragmentUser.Theme }
+
+// GetWorkspace returns UserByNameOrEmailUserByNameOrEmailUser.Workspace, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetWorkspace() string {
+	return v.FragmentUser.Workspace
+}
+
+// GetAuths returns UserByNameOrEmailUserByNameOrEmailUser.Auths, and is useful for accessing the field via an interface.
+func (v *UserByNameOrEmailUserByNameOrEmailUser) GetAuths() []string { return v.FragmentUser.Auths }
+
+func (v *UserByNameOrEmailUserByNameOrEmailUser) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*UserByNameOrEmailUserByNameOrEmailUser
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.UserByNameOrEmailUserByNameOrEmailUser = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.FragmentUser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalUserByNameOrEmailUserByNameOrEmailUser struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	Email string `json:"email"`
+
+	Lang string `json:"lang"`
+
+	Theme string `json:"theme"`
+
+	Workspace string `json:"workspace"`
+
+	Auths []string `json:"auths"`
+}
+
+func (v *UserByNameOrEmailUserByNameOrEmailUser) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *UserByNameOrEmailUserByNameOrEmailUser) __premarshalJSON() (*__premarshalUserByNameOrEmailUserByNameOrEmailUser, error) {
+	var retval __premarshalUserByNameOrEmailUserByNameOrEmailUser
+
+	retval.Id = v.FragmentUser.Id
+	retval.Name = v.FragmentUser.Name
+	retval.Email = v.FragmentUser.Email
+	retval.Lang = v.FragmentUser.Lang
+	retval.Theme = v.FragmentUser.Theme
+	retval.Workspace = v.FragmentUser.Workspace
+	retval.Auths = v.FragmentUser.Auths
 	return &retval, nil
 }
 
@@ -2592,16 +2822,16 @@ func (v *VerifyUserVerifyUserUserPayloadUser) __premarshalJSON() (*__premarshalV
 // WorkspaceByIDsNodesNode includes the requested fields of the GraphQL interface Node.
 //
 // WorkspaceByIDsNodesNode is implemented by the following types:
-// WorkspaceByIDsNodesWorkspace
 // WorkspaceByIDsNodesUser
+// WorkspaceByIDsNodesWorkspace
 type WorkspaceByIDsNodesNode interface {
 	implementsGraphQLInterfaceWorkspaceByIDsNodesNode()
 	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
 	GetTypename() string
 }
 
-func (v *WorkspaceByIDsNodesWorkspace) implementsGraphQLInterfaceWorkspaceByIDsNodesNode() {}
 func (v *WorkspaceByIDsNodesUser) implementsGraphQLInterfaceWorkspaceByIDsNodesNode()      {}
+func (v *WorkspaceByIDsNodesWorkspace) implementsGraphQLInterfaceWorkspaceByIDsNodesNode() {}
 
 func __unmarshalWorkspaceByIDsNodesNode(b []byte, v *WorkspaceByIDsNodesNode) error {
 	if string(b) == "null" {
@@ -2617,11 +2847,11 @@ func __unmarshalWorkspaceByIDsNodesNode(b []byte, v *WorkspaceByIDsNodesNode) er
 	}
 
 	switch tn.TypeName {
-	case "Workspace":
-		*v = new(WorkspaceByIDsNodesWorkspace)
-		return json.Unmarshal(b, *v)
 	case "User":
 		*v = new(WorkspaceByIDsNodesUser)
+		return json.Unmarshal(b, *v)
+	case "Workspace":
+		*v = new(WorkspaceByIDsNodesWorkspace)
 		return json.Unmarshal(b, *v)
 	case "":
 		return fmt.Errorf(
@@ -2636,6 +2866,14 @@ func __marshalWorkspaceByIDsNodesNode(v *WorkspaceByIDsNodesNode) ([]byte, error
 
 	var typename string
 	switch v := (*v).(type) {
+	case *WorkspaceByIDsNodesUser:
+		typename = "User"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*WorkspaceByIDsNodesUser
+		}{typename, v}
+		return json.Marshal(result)
 	case *WorkspaceByIDsNodesWorkspace:
 		typename = "Workspace"
 
@@ -2647,14 +2885,6 @@ func __marshalWorkspaceByIDsNodesNode(v *WorkspaceByIDsNodesNode) ([]byte, error
 			TypeName string `json:"__typename"`
 			*__premarshalWorkspaceByIDsNodesWorkspace
 		}{typename, premarshaled}
-		return json.Marshal(result)
-	case *WorkspaceByIDsNodesUser:
-		typename = "User"
-
-		result := struct {
-			TypeName string `json:"__typename"`
-			*WorkspaceByIDsNodesUser
-		}{typename, v}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
@@ -2761,7 +2991,7 @@ func (v *WorkspaceByIDsNodesWorkspace) __premarshalJSON() (*__premarshalWorkspac
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal WorkspaceByIDsNodesWorkspace.FragmentWorkspace.Members: %w", err)
+					"unable to marshal WorkspaceByIDsNodesWorkspace.FragmentWorkspace.Members: %w", err)
 			}
 		}
 	}
@@ -2807,7 +3037,7 @@ func (v *WorkspaceByIDsResponse) UnmarshalJSON(b []byte) error {
 					src, dst)
 				if err != nil {
 					return fmt.Errorf(
-						"Unable to unmarshal WorkspaceByIDsResponse.Nodes: %w", err)
+						"unable to unmarshal WorkspaceByIDsResponse.Nodes: %w", err)
 				}
 			}
 		}
@@ -2844,7 +3074,7 @@ func (v *WorkspaceByIDsResponse) __premarshalJSON() (*__premarshalWorkspaceByIDs
 				&src)
 			if err != nil {
 				return nil, fmt.Errorf(
-					"Unable to marshal WorkspaceByIDsResponse.Nodes: %w", err)
+					"unable to marshal WorkspaceByIDsResponse.Nodes: %w", err)
 			}
 		}
 	}
@@ -2933,6 +3163,16 @@ func (v *__RemoveIntegrationFromWorkspaceInput) GetInput() RemoveIntegrationFrom
 	return v.Input
 }
 
+// __RemoveMultipleUsersFromWorkspaceInput is used internally by genqlient
+type __RemoveMultipleUsersFromWorkspaceInput struct {
+	Input RemoveMultipleUsersFromWorkspaceInput `json:"input"`
+}
+
+// GetInput returns __RemoveMultipleUsersFromWorkspaceInput.Input, and is useful for accessing the field via an interface.
+func (v *__RemoveMultipleUsersFromWorkspaceInput) GetInput() RemoveMultipleUsersFromWorkspaceInput {
+	return v.Input
+}
+
 // __RemoveMyAuthInput is used internally by genqlient
 type __RemoveMyAuthInput struct {
 	Input RemoveMyAuthInput `json:"input"`
@@ -2951,11 +3191,11 @@ func (v *__RemoveUserFromWorkspaceInput) GetInput() RemoveUserFromWorkspaceInput
 
 // __SearchUserInput is used internally by genqlient
 type __SearchUserInput struct {
-	NameOrEmail string `json:"nameOrEmail"`
+	Keyword string `json:"keyword"`
 }
 
-// GetNameOrEmail returns __SearchUserInput.NameOrEmail, and is useful for accessing the field via an interface.
-func (v *__SearchUserInput) GetNameOrEmail() string { return v.NameOrEmail }
+// GetKeyword returns __SearchUserInput.Keyword, and is useful for accessing the field via an interface.
+func (v *__SearchUserInput) GetKeyword() string { return v.Keyword }
 
 // __SignUpInput is used internally by genqlient
 type __SignUpInput struct {
@@ -3023,6 +3263,14 @@ type __UserByIDsInput struct {
 // GetId returns __UserByIDsInput.Id, and is useful for accessing the field via an interface.
 func (v *__UserByIDsInput) GetId() []string { return v.Id }
 
+// __UserByNameOrEmailInput is used internally by genqlient
+type __UserByNameOrEmailInput struct {
+	NameOrEmail string `json:"nameOrEmail"`
+}
+
+// GetNameOrEmail returns __UserByNameOrEmailInput.NameOrEmail, and is useful for accessing the field via an interface.
+func (v *__UserByNameOrEmailInput) GetNameOrEmail() string { return v.NameOrEmail }
+
 // __VerifyUserInput is used internally by genqlient
 type __VerifyUserInput struct {
 	Input VerifyUserInput `json:"input"`
@@ -3039,14 +3287,8 @@ type __WorkspaceByIDsInput struct {
 // GetId returns __WorkspaceByIDsInput.Id, and is useful for accessing the field via an interface.
 func (v *__WorkspaceByIDsInput) GetId() []string { return v.Id }
 
-func AddIntegrationToWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input AddIntegrationToWorkspaceInput,
-) (*AddIntegrationToWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "AddIntegrationToWorkspace",
-		Query: `
+// The query or mutation executed by AddIntegrationToWorkspace.
+const AddIntegrationToWorkspace_Operation = `
 mutation AddIntegrationToWorkspace ($input: AddIntegrationToWorkspaceInput!) {
 	addIntegrationToWorkspace(input: $input) {
 		workspace {
@@ -3072,7 +3314,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func AddIntegrationToWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input AddIntegrationToWorkspaceInput,
+) (*AddIntegrationToWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "AddIntegrationToWorkspace",
+		Query:  AddIntegrationToWorkspace_Operation,
 		Variables: &__AddIntegrationToWorkspaceInput{
 			Input: input,
 		},
@@ -3091,14 +3342,8 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func AddUsersToWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input AddUsersToWorkspaceInput,
-) (*AddUsersToWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "AddUsersToWorkspace",
-		Query: `
+// The query or mutation executed by AddUsersToWorkspace.
+const AddUsersToWorkspace_Operation = `
 mutation AddUsersToWorkspace ($input: AddUsersToWorkspaceInput!) {
 	addUsersToWorkspace(input: $input) {
 		workspace {
@@ -3124,7 +3369,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func AddUsersToWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input AddUsersToWorkspaceInput,
+) (*AddUsersToWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "AddUsersToWorkspace",
+		Query:  AddUsersToWorkspace_Operation,
 		Variables: &__AddUsersToWorkspaceInput{
 			Input: input,
 		},
@@ -3143,6 +3397,13 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
+// The query or mutation executed by CreateVerification.
+const CreateVerification_Operation = `
+mutation CreateVerification ($input: CreateVerificationInput!) {
+	createVerification(input: $input)
+}
+`
+
 func CreateVerification(
 	ctx context.Context,
 	client graphql.Client,
@@ -3150,11 +3411,7 @@ func CreateVerification(
 ) (*CreateVerificationResponse, error) {
 	req := &graphql.Request{
 		OpName: "CreateVerification",
-		Query: `
-mutation CreateVerification ($input: CreateVerificationInput!) {
-	createVerification(input: $input)
-}
-`,
+		Query:  CreateVerification_Operation,
 		Variables: &__CreateVerificationInput{
 			Input: input,
 		},
@@ -3173,14 +3430,8 @@ mutation CreateVerification ($input: CreateVerificationInput!) {
 	return &data, err
 }
 
-func CreateWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input CreateWorkspaceInput,
-) (*CreateWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "CreateWorkspace",
-		Query: `
+// The query or mutation executed by CreateWorkspace.
+const CreateWorkspace_Operation = `
 mutation CreateWorkspace ($input: CreateWorkspaceInput!) {
 	createWorkspace(input: $input) {
 		workspace {
@@ -3206,7 +3457,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func CreateWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input CreateWorkspaceInput,
+) (*CreateWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "CreateWorkspace",
+		Query:  CreateWorkspace_Operation,
 		Variables: &__CreateWorkspaceInput{
 			Input: input,
 		},
@@ -3225,6 +3485,15 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
+// The query or mutation executed by DeleteMe.
+const DeleteMe_Operation = `
+mutation DeleteMe ($input: DeleteMeInput!) {
+	deleteMe(input: $input) {
+		userId
+	}
+}
+`
+
 func DeleteMe(
 	ctx context.Context,
 	client graphql.Client,
@@ -3232,13 +3501,7 @@ func DeleteMe(
 ) (*DeleteMeResponse, error) {
 	req := &graphql.Request{
 		OpName: "DeleteMe",
-		Query: `
-mutation DeleteMe ($input: DeleteMeInput!) {
-	deleteMe(input: $input) {
-		userId
-	}
-}
-`,
+		Query:  DeleteMe_Operation,
 		Variables: &__DeleteMeInput{
 			Input: input,
 		},
@@ -3257,6 +3520,15 @@ mutation DeleteMe ($input: DeleteMeInput!) {
 	return &data, err
 }
 
+// The query or mutation executed by DeleteWorkspace.
+const DeleteWorkspace_Operation = `
+mutation DeleteWorkspace ($input: DeleteWorkspaceInput!) {
+	deleteWorkspace(input: $input) {
+		workspaceId
+	}
+}
+`
+
 func DeleteWorkspace(
 	ctx context.Context,
 	client graphql.Client,
@@ -3264,13 +3536,7 @@ func DeleteWorkspace(
 ) (*DeleteWorkspaceResponse, error) {
 	req := &graphql.Request{
 		OpName: "DeleteWorkspace",
-		Query: `
-mutation DeleteWorkspace ($input: DeleteWorkspaceInput!) {
-	deleteWorkspace(input: $input) {
-		workspaceId
-	}
-}
-`,
+		Query:  DeleteWorkspace_Operation,
 		Variables: &__DeleteWorkspaceInput{
 			Input: input,
 		},
@@ -3289,14 +3555,8 @@ mutation DeleteWorkspace ($input: DeleteWorkspaceInput!) {
 	return &data, err
 }
 
-func FindByUser(
-	ctx context.Context,
-	client graphql.Client,
-	userId string,
-) (*FindByUserResponse, error) {
-	req := &graphql.Request{
-		OpName: "FindByUser",
-		Query: `
+// The query or mutation executed by FindByUser.
+const FindByUser_Operation = `
 query FindByUser ($userId: ID!) {
 	findByUser(userId: $userId) {
 		... FragmentWorkspace
@@ -3320,7 +3580,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func FindByUser(
+	ctx context.Context,
+	client graphql.Client,
+	userId string,
+) (*FindByUserResponse, error) {
+	req := &graphql.Request{
+		OpName: "FindByUser",
+		Query:  FindByUser_Operation,
 		Variables: &__FindByUserInput{
 			UserId: userId,
 		},
@@ -3339,14 +3608,8 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func FindOrCreate(
-	ctx context.Context,
-	client graphql.Client,
-	input FindOrCreateInput,
-) (*FindOrCreateResponse, error) {
-	req := &graphql.Request{
-		OpName: "FindOrCreate",
-		Query: `
+// The query or mutation executed by FindOrCreate.
+const FindOrCreate_Operation = `
 mutation FindOrCreate ($input: FindOrCreateInput!) {
 	findOrCreate(input: $input) {
 		user {
@@ -3363,7 +3626,16 @@ fragment FragmentUser on User {
 	workspace
 	auths
 }
-`,
+`
+
+func FindOrCreate(
+	ctx context.Context,
+	client graphql.Client,
+	input FindOrCreateInput,
+) (*FindOrCreateResponse, error) {
+	req := &graphql.Request{
+		OpName: "FindOrCreate",
+		Query:  FindOrCreate_Operation,
 		Variables: &__FindOrCreateInput{
 			Input: input,
 		},
@@ -3382,19 +3654,22 @@ fragment FragmentUser on User {
 	return &data, err
 }
 
+// The query or mutation executed by Me.
+const Me_Operation = `
+query Me {
+	me {
+		id
+	}
+}
+`
+
 func Me(
 	ctx context.Context,
 	client graphql.Client,
 ) (*MeResponse, error) {
 	req := &graphql.Request{
 		OpName: "Me",
-		Query: `
-query Me {
-	me {
-		id
-	}
-}
-`,
+		Query:  Me_Operation,
 	}
 	var err error
 
@@ -3410,6 +3685,13 @@ query Me {
 	return &data, err
 }
 
+// The query or mutation executed by PasswordReset.
+const PasswordReset_Operation = `
+mutation PasswordReset ($input: PasswordResetInput!) {
+	passwordReset(input: $input)
+}
+`
+
 func PasswordReset(
 	ctx context.Context,
 	client graphql.Client,
@@ -3417,11 +3699,7 @@ func PasswordReset(
 ) (*PasswordResetResponse, error) {
 	req := &graphql.Request{
 		OpName: "PasswordReset",
-		Query: `
-mutation PasswordReset ($input: PasswordResetInput!) {
-	passwordReset(input: $input)
-}
-`,
+		Query:  PasswordReset_Operation,
 		Variables: &__PasswordResetInput{
 			Input: input,
 		},
@@ -3440,14 +3718,8 @@ mutation PasswordReset ($input: PasswordResetInput!) {
 	return &data, err
 }
 
-func RemoveIntegrationFromWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input RemoveIntegrationFromWorkspaceInput,
-) (*RemoveIntegrationFromWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "RemoveIntegrationFromWorkspace",
-		Query: `
+// The query or mutation executed by RemoveIntegrationFromWorkspace.
+const RemoveIntegrationFromWorkspace_Operation = `
 mutation RemoveIntegrationFromWorkspace ($input: RemoveIntegrationFromWorkspaceInput!) {
 	removeIntegrationFromWorkspace(input: $input) {
 		workspace {
@@ -3473,7 +3745,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func RemoveIntegrationFromWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input RemoveIntegrationFromWorkspaceInput,
+) (*RemoveIntegrationFromWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "RemoveIntegrationFromWorkspace",
+		Query:  RemoveIntegrationFromWorkspace_Operation,
 		Variables: &__RemoveIntegrationFromWorkspaceInput{
 			Input: input,
 		},
@@ -3492,14 +3773,63 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func RemoveMyAuth(
+// The query or mutation executed by RemoveMultipleUsersFromWorkspace.
+const RemoveMultipleUsersFromWorkspace_Operation = `
+mutation RemoveMultipleUsersFromWorkspace ($input: RemoveMultipleUsersFromWorkspaceInput!) {
+	removeMultipleUsersFromWorkspace(input: $input) {
+		workspace {
+			... FragmentWorkspace
+		}
+	}
+}
+fragment FragmentWorkspace on Workspace {
+	id
+	name
+	personal
+	members {
+		__typename
+		... on WorkspaceUserMember {
+			userId
+			role
+		}
+		... on WorkspaceIntegrationMember {
+			integrationId
+			role
+			active
+			invitedById
+		}
+	}
+}
+`
+
+func RemoveMultipleUsersFromWorkspace(
 	ctx context.Context,
 	client graphql.Client,
-	input RemoveMyAuthInput,
-) (*RemoveMyAuthResponse, error) {
+	input RemoveMultipleUsersFromWorkspaceInput,
+) (*RemoveMultipleUsersFromWorkspaceResponse, error) {
 	req := &graphql.Request{
-		OpName: "RemoveMyAuth",
-		Query: `
+		OpName: "RemoveMultipleUsersFromWorkspace",
+		Query:  RemoveMultipleUsersFromWorkspace_Operation,
+		Variables: &__RemoveMultipleUsersFromWorkspaceInput{
+			Input: input,
+		},
+	}
+	var err error
+
+	var data RemoveMultipleUsersFromWorkspaceResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by RemoveMyAuth.
+const RemoveMyAuth_Operation = `
 mutation RemoveMyAuth ($input: RemoveMyAuthInput!) {
 	removeMyAuth(input: $input) {
 		me {
@@ -3516,7 +3846,16 @@ fragment FragmentMe on Me {
 	myWorkspaceId
 	auths
 }
-`,
+`
+
+func RemoveMyAuth(
+	ctx context.Context,
+	client graphql.Client,
+	input RemoveMyAuthInput,
+) (*RemoveMyAuthResponse, error) {
+	req := &graphql.Request{
+		OpName: "RemoveMyAuth",
+		Query:  RemoveMyAuth_Operation,
 		Variables: &__RemoveMyAuthInput{
 			Input: input,
 		},
@@ -3535,14 +3874,8 @@ fragment FragmentMe on Me {
 	return &data, err
 }
 
-func RemoveUserFromWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input RemoveUserFromWorkspaceInput,
-) (*RemoveUserFromWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "RemoveUserFromWorkspace",
-		Query: `
+// The query or mutation executed by RemoveUserFromWorkspace.
+const RemoveUserFromWorkspace_Operation = `
 mutation RemoveUserFromWorkspace ($input: RemoveUserFromWorkspaceInput!) {
 	removeUserFromWorkspace(input: $input) {
 		workspace {
@@ -3568,7 +3901,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func RemoveUserFromWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input RemoveUserFromWorkspaceInput,
+) (*RemoveUserFromWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "RemoveUserFromWorkspace",
+		Query:  RemoveUserFromWorkspace_Operation,
 		Variables: &__RemoveUserFromWorkspaceInput{
 			Input: input,
 		},
@@ -3587,16 +3929,10 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func SearchUser(
-	ctx context.Context,
-	client graphql.Client,
-	nameOrEmail string,
-) (*SearchUserResponse, error) {
-	req := &graphql.Request{
-		OpName: "SearchUser",
-		Query: `
-query SearchUser ($nameOrEmail: String!) {
-	searchUser(nameOrEmail: $nameOrEmail) {
+// The query or mutation executed by SearchUser.
+const SearchUser_Operation = `
+query SearchUser ($keyword: String!) {
+	searchUser(keyword: $keyword) {
 		... FragmentUser
 	}
 }
@@ -3609,9 +3945,18 @@ fragment FragmentUser on User {
 	workspace
 	auths
 }
-`,
+`
+
+func SearchUser(
+	ctx context.Context,
+	client graphql.Client,
+	keyword string,
+) (*SearchUserResponse, error) {
+	req := &graphql.Request{
+		OpName: "SearchUser",
+		Query:  SearchUser_Operation,
 		Variables: &__SearchUserInput{
-			NameOrEmail: nameOrEmail,
+			Keyword: keyword,
 		},
 	}
 	var err error
@@ -3628,14 +3973,8 @@ fragment FragmentUser on User {
 	return &data, err
 }
 
-func SignUp(
-	ctx context.Context,
-	client graphql.Client,
-	input SignUpInput,
-) (*SignUpResponse, error) {
-	req := &graphql.Request{
-		OpName: "SignUp",
-		Query: `
+// The query or mutation executed by SignUp.
+const SignUp_Operation = `
 mutation SignUp ($input: SignUpInput!) {
 	signUp(input: $input) {
 		user {
@@ -3652,7 +3991,16 @@ fragment FragmentUser on User {
 	workspace
 	auths
 }
-`,
+`
+
+func SignUp(
+	ctx context.Context,
+	client graphql.Client,
+	input SignUpInput,
+) (*SignUpResponse, error) {
+	req := &graphql.Request{
+		OpName: "SignUp",
+		Query:  SignUp_Operation,
 		Variables: &__SignUpInput{
 			Input: input,
 		},
@@ -3671,14 +4019,8 @@ fragment FragmentUser on User {
 	return &data, err
 }
 
-func SignupOIDC(
-	ctx context.Context,
-	client graphql.Client,
-	input SignupOIDCInput,
-) (*SignupOIDCResponse, error) {
-	req := &graphql.Request{
-		OpName: "SignupOIDC",
-		Query: `
+// The query or mutation executed by SignupOIDC.
+const SignupOIDC_Operation = `
 mutation SignupOIDC ($input: SignupOIDCInput!) {
 	signUpOIDC(input: $input) {
 		user {
@@ -3695,7 +4037,16 @@ fragment FragmentUser on User {
 	workspace
 	auths
 }
-`,
+`
+
+func SignupOIDC(
+	ctx context.Context,
+	client graphql.Client,
+	input SignupOIDCInput,
+) (*SignupOIDCResponse, error) {
+	req := &graphql.Request{
+		OpName: "SignupOIDC",
+		Query:  SignupOIDC_Operation,
 		Variables: &__SignupOIDCInput{
 			Input: input,
 		},
@@ -3714,6 +4065,13 @@ fragment FragmentUser on User {
 	return &data, err
 }
 
+// The query or mutation executed by StartPasswordReset.
+const StartPasswordReset_Operation = `
+mutation StartPasswordReset ($input: StartPasswordResetInput!) {
+	startPasswordReset(input: $input)
+}
+`
+
 func StartPasswordReset(
 	ctx context.Context,
 	client graphql.Client,
@@ -3721,11 +4079,7 @@ func StartPasswordReset(
 ) (*StartPasswordResetResponse, error) {
 	req := &graphql.Request{
 		OpName: "StartPasswordReset",
-		Query: `
-mutation StartPasswordReset ($input: StartPasswordResetInput!) {
-	startPasswordReset(input: $input)
-}
-`,
+		Query:  StartPasswordReset_Operation,
 		Variables: &__StartPasswordResetInput{
 			Input: input,
 		},
@@ -3744,14 +4098,8 @@ mutation StartPasswordReset ($input: StartPasswordResetInput!) {
 	return &data, err
 }
 
-func UpdateIntegrationOfWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input UpdateIntegrationOfWorkspaceInput,
-) (*UpdateIntegrationOfWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "UpdateIntegrationOfWorkspace",
-		Query: `
+// The query or mutation executed by UpdateIntegrationOfWorkspace.
+const UpdateIntegrationOfWorkspace_Operation = `
 mutation UpdateIntegrationOfWorkspace ($input: UpdateIntegrationOfWorkspaceInput!) {
 	updateIntegrationOfWorkspace(input: $input) {
 		workspace {
@@ -3777,7 +4125,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func UpdateIntegrationOfWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input UpdateIntegrationOfWorkspaceInput,
+) (*UpdateIntegrationOfWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "UpdateIntegrationOfWorkspace",
+		Query:  UpdateIntegrationOfWorkspace_Operation,
 		Variables: &__UpdateIntegrationOfWorkspaceInput{
 			Input: input,
 		},
@@ -3796,14 +4153,8 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func UpdateMe(
-	ctx context.Context,
-	client graphql.Client,
-	input UpdateMeInput,
-) (*UpdateMeResponse, error) {
-	req := &graphql.Request{
-		OpName: "UpdateMe",
-		Query: `
+// The query or mutation executed by UpdateMe.
+const UpdateMe_Operation = `
 mutation UpdateMe ($input: UpdateMeInput!) {
 	updateMe(input: $input) {
 		me {
@@ -3820,7 +4171,16 @@ fragment FragmentMe on Me {
 	myWorkspaceId
 	auths
 }
-`,
+`
+
+func UpdateMe(
+	ctx context.Context,
+	client graphql.Client,
+	input UpdateMeInput,
+) (*UpdateMeResponse, error) {
+	req := &graphql.Request{
+		OpName: "UpdateMe",
+		Query:  UpdateMe_Operation,
 		Variables: &__UpdateMeInput{
 			Input: input,
 		},
@@ -3839,14 +4199,8 @@ fragment FragmentMe on Me {
 	return &data, err
 }
 
-func UpdateUserOfWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input UpdateUserOfWorkspaceInput,
-) (*UpdateUserOfWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "UpdateUserOfWorkspace",
-		Query: `
+// The query or mutation executed by UpdateUserOfWorkspace.
+const UpdateUserOfWorkspace_Operation = `
 mutation UpdateUserOfWorkspace ($input: UpdateUserOfWorkspaceInput!) {
 	updateUserOfWorkspace(input: $input) {
 		workspace {
@@ -3872,7 +4226,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func UpdateUserOfWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input UpdateUserOfWorkspaceInput,
+) (*UpdateUserOfWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "UpdateUserOfWorkspace",
+		Query:  UpdateUserOfWorkspace_Operation,
 		Variables: &__UpdateUserOfWorkspaceInput{
 			Input: input,
 		},
@@ -3891,14 +4254,8 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func UpdateWorkspace(
-	ctx context.Context,
-	client graphql.Client,
-	input UpdateWorkspaceInput,
-) (*UpdateWorkspaceResponse, error) {
-	req := &graphql.Request{
-		OpName: "UpdateWorkspace",
-		Query: `
+// The query or mutation executed by UpdateWorkspace.
+const UpdateWorkspace_Operation = `
 mutation UpdateWorkspace ($input: UpdateWorkspaceInput!) {
 	updateWorkspace(input: $input) {
 		workspace {
@@ -3924,7 +4281,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func UpdateWorkspace(
+	ctx context.Context,
+	client graphql.Client,
+	input UpdateWorkspaceInput,
+) (*UpdateWorkspaceResponse, error) {
+	req := &graphql.Request{
+		OpName: "UpdateWorkspace",
+		Query:  UpdateWorkspace_Operation,
 		Variables: &__UpdateWorkspaceInput{
 			Input: input,
 		},
@@ -3943,14 +4309,8 @@ fragment FragmentWorkspace on Workspace {
 	return &data, err
 }
 
-func UserByIDs(
-	ctx context.Context,
-	client graphql.Client,
-	id []string,
-) (*UserByIDsResponse, error) {
-	req := &graphql.Request{
-		OpName: "UserByIDs",
-		Query: `
+// The query or mutation executed by UserByIDs.
+const UserByIDs_Operation = `
 query UserByIDs ($id: [ID!]!) {
 	nodes(id: $id, type: USER) {
 		__typename
@@ -3965,7 +4325,16 @@ query UserByIDs ($id: [ID!]!) {
 		}
 	}
 }
-`,
+`
+
+func UserByIDs(
+	ctx context.Context,
+	client graphql.Client,
+	id []string,
+) (*UserByIDsResponse, error) {
+	req := &graphql.Request{
+		OpName: "UserByIDs",
+		Query:  UserByIDs_Operation,
 		Variables: &__UserByIDsInput{
 			Id: id,
 		},
@@ -3984,14 +4353,52 @@ query UserByIDs ($id: [ID!]!) {
 	return &data, err
 }
 
-func VerifyUser(
+// The query or mutation executed by UserByNameOrEmail.
+const UserByNameOrEmail_Operation = `
+query UserByNameOrEmail ($nameOrEmail: String!) {
+	userByNameOrEmail(nameOrEmail: $nameOrEmail) {
+		... FragmentUser
+	}
+}
+fragment FragmentUser on User {
+	id
+	name
+	email
+	lang
+	theme
+	workspace
+	auths
+}
+`
+
+func UserByNameOrEmail(
 	ctx context.Context,
 	client graphql.Client,
-	input VerifyUserInput,
-) (*VerifyUserResponse, error) {
+	nameOrEmail string,
+) (*UserByNameOrEmailResponse, error) {
 	req := &graphql.Request{
-		OpName: "VerifyUser",
-		Query: `
+		OpName: "UserByNameOrEmail",
+		Query:  UserByNameOrEmail_Operation,
+		Variables: &__UserByNameOrEmailInput{
+			NameOrEmail: nameOrEmail,
+		},
+	}
+	var err error
+
+	var data UserByNameOrEmailResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by VerifyUser.
+const VerifyUser_Operation = `
 mutation VerifyUser ($input: VerifyUserInput!) {
 	verifyUser(input: $input) {
 		user {
@@ -4008,7 +4415,16 @@ fragment FragmentUser on User {
 	workspace
 	auths
 }
-`,
+`
+
+func VerifyUser(
+	ctx context.Context,
+	client graphql.Client,
+	input VerifyUserInput,
+) (*VerifyUserResponse, error) {
+	req := &graphql.Request{
+		OpName: "VerifyUser",
+		Query:  VerifyUser_Operation,
 		Variables: &__VerifyUserInput{
 			Input: input,
 		},
@@ -4027,14 +4443,8 @@ fragment FragmentUser on User {
 	return &data, err
 }
 
-func WorkspaceByIDs(
-	ctx context.Context,
-	client graphql.Client,
-	id []string,
-) (*WorkspaceByIDsResponse, error) {
-	req := &graphql.Request{
-		OpName: "WorkspaceByIDs",
-		Query: `
+// The query or mutation executed by WorkspaceByIDs.
+const WorkspaceByIDs_Operation = `
 query WorkspaceByIDs ($id: [ID!]!) {
 	nodes(id: $id, type: WORKSPACE) {
 		__typename
@@ -4061,7 +4471,16 @@ fragment FragmentWorkspace on Workspace {
 		}
 	}
 }
-`,
+`
+
+func WorkspaceByIDs(
+	ctx context.Context,
+	client graphql.Client,
+	id []string,
+) (*WorkspaceByIDsResponse, error) {
+	req := &graphql.Request{
+		OpName: "WorkspaceByIDs",
+		Query:  WorkspaceByIDs_Operation,
 		Variables: &__WorkspaceByIDsInput{
 			Id: id,
 		},

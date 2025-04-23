@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	globalLogger = New()
+	globalLogger = New().AddCallerSkip(1)
 )
 
 func SetLevel(l zapcore.Level) {

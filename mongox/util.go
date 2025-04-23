@@ -1,6 +1,11 @@
 package mongox
 
-import "go.mongodb.org/mongo-driver/bson"
+import (
+	"encoding/json"
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson"
+)
 
 func AppendE(f interface{}, elements ...bson.E) interface{} {
 	switch f2 := f.(type) {
@@ -156,4 +161,76 @@ func And(filter interface{}, key string, f interface{}) interface{} {
 		}
 	}
 	return AppendE(filter, bson.E{Key: key, Value: f})
+}
+
+func isEmptyCondition(condition interface{}) bool {
+	switch c := condition.(type) {
+	case bson.M:
+		return len(c) == 0
+	case bson.D:
+		return len(c) == 0
+	case bson.A:
+		return len(c) == 0
+	case []bson.M:
+		return len(c) == 0
+	case []bson.D:
+		return len(c) == 0
+	case []bson.A:
+		return len(c) == 0
+	case []interface{}:
+		return len(c) == 0
+	default:
+		return false
+	}
+}
+
+func AddCondition(filter interface{}, key string, condition interface{}) interface{} {
+	if condition == nil || isEmptyCondition(condition) {
+		return filter
+	}
+
+	filterMap, ok := filter.(bson.M)
+	if !ok || len(filterMap) == 0 {
+		filterMap = bson.M{}
+	}
+
+	var newCondition interface{}
+	if key != "" {
+		if _, exists := filterMap[key]; exists {
+			return filter
+		}
+		newCondition = bson.M{key: condition}
+	} else {
+		newCondition = condition
+	}
+
+	if newConditionMap, ok := newCondition.(bson.M); ok {
+		if existingAnd, ok := filterMap["$and"].(bson.A); ok {
+			filterMap["$and"] = append(existingAnd, newConditionMap)
+		} else if existingAnd, ok := filterMap["$and"].([]bson.M); ok {
+			filterMap["$and"] = append(existingAnd, newConditionMap)
+		} else {
+			existingConditions := make(bson.A, 0)
+			for k, v := range filterMap {
+				if k != "$and" {
+					existingConditions = append(existingConditions, bson.M{k: v})
+				}
+			}
+			filterMap["$and"] = append(existingConditions, newConditionMap)
+		}
+	} else {
+		return filter
+	}
+
+	return filterMap
+}
+
+func IndentPrint(title string, data interface{}) {
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Printf("===== %s =====\n", title)
+		fmt.Println(string(jsonData))
+	}
 }

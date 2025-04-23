@@ -11,6 +11,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
+	"github.com/samber/lo"
 )
 
 type Workspace struct {
@@ -101,6 +102,14 @@ func (w *Workspace) RemoveUserMember(ctx context.Context, id workspace.ID, userI
 		return nil, err
 	}
 	return ToWorkspace(res.RemoveUserFromWorkspace.Workspace.FragmentWorkspace)
+}
+
+func (w *Workspace) RemoveMultipleUserMembers(ctx context.Context, id workspace.ID, userIDs accountdomain.UserIDList, op *accountusecase.Operator) (*workspace.Workspace, error) {
+	res, err := RemoveMultipleUsersFromWorkspace(ctx, w.gql, RemoveMultipleUsersFromWorkspaceInput{WorkspaceId: id.String(), UserIds: lo.Map(userIDs, func(u accountdomain.UserID, _ int) string { return u.String() })})
+	if err != nil {
+		return nil, err
+	}
+	return ToWorkspace(res.RemoveMultipleUsersFromWorkspace.Workspace.FragmentWorkspace)
 }
 
 func (w *Workspace) RemoveIntegration(ctx context.Context, id workspace.ID, integrationID workspace.IntegrationID, op *accountusecase.Operator) (*workspace.Workspace, error) {

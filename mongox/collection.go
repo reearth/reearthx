@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
@@ -320,6 +321,7 @@ func getCursor(raw bson.Raw) (*usecasex.Cursor, error) {
 
 func wrapError(ctx context.Context, err error) error {
 	if IsTransactionError(err) {
+		log.Errorfc(ctx, "transaction error: %v", err)
 		return usecasex.ErrTransaction
 	}
 	return rerror.ErrInternalByWithContext(ctx, err)

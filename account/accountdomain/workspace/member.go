@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"sort"
+	"sync"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/i18n"
@@ -15,6 +16,7 @@ var (
 	ErrCannotModifyPersonalWorkspace = rerror.NewE(i18n.T("personal workspace cannot be modified"))
 	ErrTargetUserNotInTheWorkspace   = rerror.NewE(i18n.T("target user does not exist in the workspace"))
 	ErrInvalidWorkspaceName          = rerror.NewE(i18n.T("invalid workspace name"))
+	ErrNoSpecifiedUsers              = rerror.NewE(i18n.T("no specified users for removal"))
 )
 
 type Member struct {
@@ -28,6 +30,7 @@ type Members struct {
 	users        map[UserID]Member
 	integrations map[IntegrationID]Member
 	fixed        bool
+	mu           sync.Mutex
 }
 
 func NewMembers() *Members {
@@ -220,6 +223,9 @@ func (m *Members) AddIntegration(iid IntegrationID, role Role, i UserID) error {
 }
 
 func (m *Members) Leave(u UserID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	if m.fixed {
 		return ErrCannotModifyPersonalWorkspace
 	}

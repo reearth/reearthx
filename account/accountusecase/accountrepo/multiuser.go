@@ -16,6 +16,18 @@ func NewMultiUser(users ...User) MultiUser {
 
 var _ User = MultiUser{}
 
+func (u MultiUser) FindAll(ctx context.Context) (user.List, error) {
+	res := user.List{}
+	for _, r := range u {
+		if r, err := r.FindAll(ctx); err != nil {
+			return nil, err
+		} else {
+			res = append(res, r...)
+		}
+	}
+	return res, nil
+}
+
 func (u MultiUser) FindByID(ctx context.Context, id user.ID) (*user.User, error) {
 	return u.findOne(func(r User) (*user.User, error) {
 		return r.FindByID(ctx, id)
@@ -56,6 +68,18 @@ func (u MultiUser) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*
 	return u.findOne(func(r User) (*user.User, error) {
 		return r.FindByNameOrEmail(ctx, nameOrEmail)
 	})
+}
+
+func (u MultiUser) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
+	res := user.List{}
+	for _, r := range u {
+		if r, err := r.SearchByKeyword(ctx, keyword); err != nil {
+			return nil, err
+		} else {
+			res = append(res, r...)
+		}
+	}
+	return res, nil
 }
 
 func (u MultiUser) FindByVerification(ctx context.Context, v string) (*user.User, error) {

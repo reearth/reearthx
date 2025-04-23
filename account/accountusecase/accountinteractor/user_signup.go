@@ -98,8 +98,10 @@ func (i *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) 
 		return nil, err
 	}
 
-	if err := i.sendVerificationMail(ctx, u, vr); err != nil {
-		return nil, err
+	if !param.MockAuth {
+		if err := i.sendVerificationMail(ctx, u, vr); err != nil {
+			return nil, err
+		}
 	}
 
 	return u, nil

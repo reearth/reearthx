@@ -16,6 +16,7 @@ import (
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/mailer"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/samber/lo"
 )
 
 type User struct {
@@ -70,8 +71,12 @@ func (i *User) FetchBySub(ctx context.Context, sub string) (*user.User, error) {
 	return i.query.FetchBySub(ctx, sub)
 }
 
-func (i *User) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
-	return i.query.SearchUser(ctx, nameOrEmail)
+func (i *User) FetchByNameOrEmail(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
+	return i.query.FetchByNameOrEmail(ctx, nameOrEmail)
+}
+
+func (i *User) SearchUser(ctx context.Context, keyword string) (user.SimpleList, error) {
+	return i.query.SearchUser(ctx, keyword)
 }
 
 func (i *User) GetUserByCredentials(ctx context.Context, inp accountinterfaces.GetUserByCredentials) (u *user.User, err error) {
@@ -407,7 +412,7 @@ func (q *UserQuery) FetchBySub(ctx context.Context, sub string) (*user.User, err
 	return nil, rerror.ErrNotFound
 }
 
-func (q *UserQuery) SearchUser(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
+func (q *UserQuery) FetchByNameOrEmail(ctx context.Context, nameOrEmail string) (*user.Simple, error) {
 	for _, r := range q.repos {
 		u, err := r.FindByNameOrEmail(ctx, nameOrEmail)
 		if errors.Is(err, rerror.ErrNotFound) {
@@ -417,6 +422,28 @@ func (q *UserQuery) SearchUser(ctx context.Context, nameOrEmail string) (*user.S
 			return nil, err
 		}
 		return user.SimpleFrom(u), nil
+	}
+	return nil, nil
+}
+
+func (q *UserQuery) SearchUser(ctx context.Context, keyword string) (user.SimpleList, error) {
+	for _, r := range q.repos {
+		u, err := r.SearchByKeyword(ctx, keyword)
+		if errors.Is(err, rerror.ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		if len(u) > 0 {
+			return lo.FilterMap(u, func(u *user.User, _ int) (*user.Simple, bool) {
+				su := user.SimpleFrom(u)
+				if su == nil {
+					return nil, false
+				}
+				return su, true
+			}), nil
+		}
 	}
 	return nil, nil
 }
