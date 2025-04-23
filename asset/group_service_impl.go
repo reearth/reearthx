@@ -5,6 +5,8 @@ import (
 	"errors"
 )
 
+var _ GroupService = &groupService{}
+
 type groupService struct {
 	groupRepo GroupRepository
 }

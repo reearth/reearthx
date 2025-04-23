@@ -3,12 +3,13 @@ package asset
 import (
 	"archive/zip"
 	"context"
-	"errors"
 	"io"
 	"path"
 	"path/filepath"
 	"strings"
 )
+
+var _ ZipExtractor = &zipExtractor{}
 
 type zipExtractor struct {
 	assetRepo AssetRepository
@@ -31,11 +32,16 @@ func (e *zipExtractor) Extract(ctx context.Context, assetID AssetID, reader io.R
 		return err
 	}
 	if asset == nil {
-		return errors.New("asset not found")
+		return ErrAssetNotFound
+	}
+
+	if err := e.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusInProgress); err != nil {
+		return err
 	}
 
 	zipReader, err := zip.NewReader(reader, size)
 	if err != nil {
+		e.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
 		return err
 	}
 
@@ -70,6 +76,10 @@ func (e *zipExtractor) Extract(ctx context.Context, assetID AssetID, reader io.R
 		if err != nil {
 			continue
 		}
+	}
+
+	if err := e.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusDone); err != nil {
+		return err
 	}
 
 	return nil

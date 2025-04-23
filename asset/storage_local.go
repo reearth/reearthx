@@ -7,8 +7,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
+
+var _ Storage = &localStorage{}
 
 type localStorage struct {
 	baseDir string
@@ -28,6 +31,20 @@ func NewLocalStorage(baseDir, baseURL string) (Storage, error) {
 
 func (s *localStorage) Save(ctx context.Context, key string, data io.Reader, size int64, contentType string, contentEncoding string) error {
 	fullPath := filepath.Join(s.baseDir, key)
+
+	cleanPath, err := filepath.Abs(fullPath)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	baseAbs, err := filepath.Abs(s.baseDir)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute base directory path: %w", err)
+	}
+
+	if !strings.HasPrefix(cleanPath, baseAbs) {
+		return fmt.Errorf("path traversal attempt detected, path would be outside base directory")
+	}
 
 	dir := filepath.Dir(fullPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {

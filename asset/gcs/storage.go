@@ -11,6 +11,8 @@ import (
 	"google.golang.org/api/option"
 )
 
+var _ asset.Storage = &Storage{}
+
 type Storage struct {
 	client     *storage.Client
 	bucket     *storage.BucketHandle

@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var _ FileProcessor = &fileProcessor{}
+
 type fileProcessor struct{}
 
 func NewFileProcessor() FileProcessor {
@@ -18,7 +20,11 @@ func (p *fileProcessor) DetectContentType(filename string, data []byte) string {
 		if len(data) < detectSize {
 			detectSize = len(data)
 		}
-		return http.DetectContentType(data[:detectSize])
+		contentType := http.DetectContentType(data[:detectSize])
+		if idx := strings.Index(contentType, ";"); idx > 0 {
+			return contentType[:idx]
+		}
+		return contentType
 	}
 
 	ext := strings.ToLower(filepath.Ext(filename))
@@ -68,6 +74,8 @@ func (p *fileProcessor) DetectContentType(filename string, data []byte) string {
 		return "model/gltf-binary"
 	case ".geojson":
 		return "application/geo+json"
+	case ".kml":
+		return "application/vnd.google-earth.kml+xml"
 	case ".csv":
 		return "text/csv"
 	default:
@@ -95,6 +103,10 @@ func (p *fileProcessor) DetectPreviewType(filename string, contentType string) P
 	}
 
 	if ext == ".geojson" || contentType == "application/geo+json" {
+		return PreviewTypeGeo
+	}
+
+	if ext == ".kml" || contentType == "application/vnd.google-earth.kml+xml" {
 		return PreviewTypeGeo
 	}
 

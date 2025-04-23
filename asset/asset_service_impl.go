@@ -20,6 +20,8 @@ var (
 	ErrExtractionFailed  = errors.New("archive extraction failed")
 )
 
+var _ AssetService = &assetService{}
+
 type assetService struct {
 	assetRepo     AssetRepository
 	groupRepo     GroupRepository
@@ -306,7 +308,24 @@ func (s *assetService) handleArchiveExtraction(ctx context.Context, assetID Asse
 }
 
 func shouldExtractArchive(fileName string, contentType string) bool {
-	return strings.HasSuffix(strings.ToLower(fileName), ".zip") ||
-		contentType == "application/zip" ||
-		contentType == "application/x-zip-compressed"
+	lowerFileName := strings.ToLower(fileName)
+
+	// Check file extensions
+	if strings.HasSuffix(lowerFileName, ".zip") ||
+		strings.HasSuffix(lowerFileName, ".tar.gz") ||
+		strings.HasSuffix(lowerFileName, ".tar") ||
+		strings.HasSuffix(lowerFileName, ".7z") {
+		return true
+	}
+
+	// Check content types
+	switch contentType {
+	case "application/zip", "application/x-zip-compressed",
+		"application/gzip", "application/x-gzip",
+		"application/x-tar", "application/tar",
+		"application/x-7z-compressed":
+		return true
+	default:
+		return false
+	}
 }

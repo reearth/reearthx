@@ -5,6 +5,8 @@ import (
 	"errors"
 )
 
+var _ PolicyService = &policyService{}
+
 type policyService struct {
 	policyRepo PolicyRepository
 }
