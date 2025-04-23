@@ -41,7 +41,7 @@ func (e *zipExtractor) Extract(ctx context.Context, assetID AssetID, reader io.R
 
 	zipReader, err := zip.NewReader(reader, size)
 	if err != nil {
-		e.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
+		_ = e.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
 		return err
 	}
 

@@ -2,8 +2,6 @@ module github.com/reearth/reearthx
 
 go 1.23.0
 
-toolchain go1.24.1
-
 require (
 	cloud.google.com/go/storage v1.52.0
 	github.com/99designs/gqlgen v0.17.43

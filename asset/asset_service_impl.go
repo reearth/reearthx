@@ -17,7 +17,6 @@ var (
 	ErrGroupNotFound     = errors.New("group not found")
 	ErrInvalidParameters = errors.New("invalid parameters")
 	ErrStorageFailure    = errors.New("storage operation failed")
-	ErrExtractionFailed  = errors.New("archive extraction failed")
 )
 
 var _ AssetService = &assetService{}
@@ -138,7 +137,9 @@ func (s *assetService) GetAssetFile(ctx context.Context, id AssetID) (*AssetFile
 	if err != nil {
 		return nil, ErrStorageFailure
 	}
-	defer reader.Close()
+	defer func(reader io.ReadCloser) {
+		_ = reader.Close()
+	}(reader)
 
 	assetFile := &AssetFile{
 		Name:            asset.FileName,
@@ -285,14 +286,16 @@ func (s *assetService) handleArchiveExtraction(ctx context.Context, assetID Asse
 
 	reader, err := s.storage.Get(ctx, storageKey)
 	if err != nil {
-		s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
+		_ = s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
 		return
 	}
-	defer reader.Close()
+	defer func(reader io.ReadCloser) {
+		_ = reader.Close()
+	}(reader)
 
 	data, err := io.ReadAll(reader)
 	if err != nil {
-		s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
+		_ = s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
 		return
 	}
 
@@ -300,11 +303,11 @@ func (s *assetService) handleArchiveExtraction(ctx context.Context, assetID Asse
 
 	err = s.zipExtractor.Extract(ctx, assetID, readerAt, int64(len(data)))
 	if err != nil {
-		s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
+		_ = s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusFailed)
 		return
 	}
 
-	s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusDone)
+	_ = s.assetRepo.UpdateExtractionStatus(ctx, assetID, ExtractionStatusDone)
 }
 
 func shouldExtractArchive(fileName string, contentType string) bool {
