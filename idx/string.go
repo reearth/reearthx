@@ -10,11 +10,11 @@ func StringIDFromRef[T Type](id *string) *StringID[T] {
 	return &id2
 }
 
-func (id StringID[T]) Ref() *StringID[T] {
-	if id == "" {
+func (id *StringID[T]) Ref() *StringID[T] {
+	if id == nil || *id == "" {
 		return nil
 	}
-	return &id
+	return id
 }
 
 func (id *StringID[T]) CloneRef() *StringID[T] {
@@ -25,8 +25,11 @@ func (id *StringID[T]) CloneRef() *StringID[T] {
 	return &id2
 }
 
-func (id StringID[_]) String() string {
-	return string(id)
+func (id *StringID[_]) String() string {
+	if id == nil {
+		return ""
+	}
+	return string(*id)
 }
 
 func (id *StringID[_]) StringRef() *string {

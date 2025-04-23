@@ -13,8 +13,11 @@ func TestStringIDFromRef(t *testing.T) {
 }
 
 func TestStringID_Ref(t *testing.T) {
-	assert.Equal(t, lo.ToPtr(StringID[T]("a")), StringID[T]("a").Ref())
-	assert.Nil(t, StringID[T]("").Ref())
+	id := StringID[T]("a")
+	assert.Equal(t, &id, id.Ref())
+
+	empty := StringID[T]("")
+	assert.Nil(t, empty.Ref())
 }
 
 func TestStringID_CloneRef(t *testing.T) {
@@ -26,10 +29,15 @@ func TestStringID_CloneRef(t *testing.T) {
 }
 
 func TestStringID_String(t *testing.T) {
-	assert.Equal(t, "a", StringID[T]("a").String())
+	id := StringID[T]("a")
+	assert.Equal(t, "a", (&id).String())
+
+	var empty *StringID[T]
+	assert.Equal(t, "", empty.String())
 }
 
 func TestStringID_StringRef(t *testing.T) {
-	assert.Equal(t, lo.ToPtr("a"), lo.ToPtr(StringID[T]("a")).StringRef())
+	id := StringID[T]("a")
+	assert.Equal(t, lo.ToPtr("a"), (&id).StringRef())
 	assert.Nil(t, (*StringID[T])(nil).StringRef())
 }

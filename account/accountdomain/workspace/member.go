@@ -82,7 +82,7 @@ func (m *Members) Users() map[UserID]Member {
 func (m *Members) UserIDs() []UserID {
 	users := lo.Keys(m.users)
 	sort.SliceStable(users, func(a, b int) bool {
-		return users[a].Compare(users[b]) > 0
+		return users[a].Compare(&users[b]) > 0
 	})
 	return users
 }
@@ -94,7 +94,7 @@ func (m *Members) Integrations() map[IntegrationID]Member {
 func (m *Members) IntegrationIDs() []IntegrationID {
 	integrations := lo.Keys(m.integrations)
 	sort.SliceStable(integrations, func(a, b int) bool {
-		return integrations[a].Compare(integrations[b]) > 0
+		return integrations[a].Compare(&integrations[b]) > 0
 	})
 	return integrations
 }
@@ -255,7 +255,7 @@ func (m *Members) UsersByRole(role Role) []UserID {
 	}
 
 	sort.SliceStable(users, func(a, b int) bool {
-		return users[a].Compare(users[b]) > 0
+		return users[a].Compare(&users[b]) > 0
 	})
 
 	return users

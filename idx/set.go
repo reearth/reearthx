@@ -2,11 +2,13 @@ package idx
 
 type Set[T Type] struct {
 	l List[T]
-	m map[ID[T]]struct{}
+	m map[string]ID[T]
 }
 
 func NewSet[T Type](id ...ID[T]) *Set[T] {
-	s := &Set[T]{}
+	s := &Set[T]{
+		m: make(map[string]ID[T]),
+	}
 	s.Add(id...)
 	return s
 }
@@ -16,7 +18,10 @@ func (s *Set[T]) Has(id ...ID[T]) bool {
 		return false
 	}
 	for _, i := range id {
-		if _, ok := s.m[i]; ok {
+		if i.nid == nil {
+			continue
+		}
+		if _, ok := s.m[i.String()]; ok {
 			return true
 		}
 	}
@@ -34,7 +39,16 @@ func (s *Set[T]) Clone() *Set[T] {
 	if s == nil {
 		return nil
 	}
-	return NewSet(s.l...)
+
+	ns := &Set[T]{
+		m: make(map[string]ID[T], len(s.m)),
+		l: s.l.Clone(),
+	}
+	for k, v := range s.m {
+		ns.m[k] = v
+	}
+
+	return ns
 }
 
 func (s *Set[T]) Add(id ...ID[T]) {
@@ -42,11 +56,15 @@ func (s *Set[T]) Add(id ...ID[T]) {
 		return
 	}
 	for _, i := range id {
-		if !s.Has(i) {
+		if i.nid == nil {
+			continue
+		}
+		str := i.String()
+		if _, ok := s.m[str]; !ok {
 			if s.m == nil {
-				s.m = map[ID[T]]struct{}{}
+				s.m = map[string]ID[T]{}
 			}
-			s.m[i] = struct{}{}
+			s.m[str] = i
 			s.l = append(s.l, i)
 		}
 	}
@@ -77,9 +95,12 @@ func (s *Set[T]) Delete(id ...ID[T]) {
 		return
 	}
 	for _, i := range id {
+		if i.nid == nil {
+			continue
+		}
 		s.l = s.l.Delete(i)
 		if s.m != nil {
-			delete(s.m, i)
+			delete(s.m, i.String())
 		}
 	}
 }
