@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"time"
 
@@ -23,6 +24,12 @@ func NewEcho() *Echo {
 }
 
 func NewEchoWith(logger *Logger) *Echo {
+	return &Echo{
+		logger: logger.AddCallerSkip(1),
+	}
+}
+
+func NewEchoWithRaw(logger *Logger) *Echo {
 	return &Echo{
 		logger: logger,
 	}
@@ -203,29 +210,54 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			req := c.Request()
 			res := c.Response()
 			start := time.Now()
-			if err := next(c); err != nil {
-				c.Error(err)
-			}
-			stop := time.Now()
 
-			logger := GetLoggerFromContext(c.Request().Context())
-			if logger == nil {
-				logger = l.logger
-			}
-			logger.Infow(
-				"Handled request",
+			reqid := GetReqestID(res, req)
+			args := []any{
+				"time_unix", start.Unix(),
 				"remote_ip", c.RealIP(),
 				"host", req.Host,
 				"uri", req.RequestURI,
 				"method", req.Method,
 				"path", req.URL.Path,
+				"protocol", req.Proto,
 				"referer", req.Referer(),
 				"user_agent", req.UserAgent(),
-				"status", res.Status,
-				"latency", stop.Sub(start).Microseconds(),
-				"latency_human", stop.Sub(start).String(),
 				"bytes_in", req.ContentLength,
+				"request_id", reqid,
+				"route", c.Path(),
+			}
+
+			logger := GetLoggerFromContext(c.Request().Context())
+			if logger == nil {
+				logger = l.logger
+			}
+			logger = logger.WithCaller(false)
+
+			// incoming log
+			logger.Infow(
+				fmt.Sprintf("<-- %s %s", req.Method, req.URL.Path),
+				args...,
+			)
+
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
+
+			res = c.Response()
+			stop := time.Now()
+			latency := stop.Sub(start)
+			latencyHuman := latency.String()
+			args = append(args,
+				"status", res.Status,
 				"bytes_out", res.Size,
+				"letency", latency.Microseconds(),
+				"latency_human", latencyHuman,
+			)
+
+			// outcoming log
+			logger.Infow(
+				fmt.Sprintf("--> %s %d %s %s", req.Method, res.Status, req.URL.Path, latencyHuman),
+				args...,
 			)
 			return nil
 		}

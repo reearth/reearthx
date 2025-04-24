@@ -7,6 +7,7 @@ type IDList = accountdomain.WorkspaceIDList
 type UserID = accountdomain.UserID
 type UserIDList = accountdomain.UserIDList
 type IntegrationID = accountdomain.IntegrationID
+type IntegrationIDList = accountdomain.IntegrationIDList
 
 var NewID = accountdomain.NewWorkspaceID
 var NewUserID = accountdomain.NewUserID

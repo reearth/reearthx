@@ -72,6 +72,11 @@ func (b *Builder) Name(name string) *Builder {
 	return b
 }
 
+func (b *Builder) DisplayName(displayName string) *Builder {
+	b.u.displayName = displayName
+	return b
+}
+
 func (b *Builder) Email(email string) *Builder {
 	b.email = email
 	return b
