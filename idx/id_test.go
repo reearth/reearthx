@@ -20,7 +20,7 @@ var dummyID = TID{nid: nid{id: dummyULID}}
 
 func TestNew(t *testing.T) {
 	id := New[T]()
-	assert.Equal(t, TID{nid: id.nid}, id)
+	assert.Equal(t, TID(id), id)
 	assert.NotZero(t, id.nid)
 }
 
