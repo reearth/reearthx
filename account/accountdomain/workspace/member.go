@@ -1,6 +1,7 @@
 package workspace
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 
@@ -242,6 +243,31 @@ func (m *Members) DeleteIntegration(iid IntegrationID) error {
 		delete(m.integrations, iid)
 	} else {
 		return ErrTargetUserNotInTheWorkspace
+	}
+	return nil
+}
+
+func (m *Members) DeleteIntegrations(iids IntegrationIDList) error {
+	if len(iids) == 0 {
+		return ErrNoSpecifiedUsers
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	var missing []IntegrationID
+	for _, iid := range iids {
+		if _, ok := m.integrations[iid]; !ok {
+			missing = append(missing, iid)
+		}
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("%w: %v", ErrTargetUserNotInTheWorkspace, missing)
+	}
+
+	for _, iid := range iids {
+		delete(m.integrations, iid)
 	}
 	return nil
 }

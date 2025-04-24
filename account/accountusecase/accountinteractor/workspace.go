@@ -280,6 +280,32 @@ func (i *Workspace) RemoveIntegration(ctx context.Context, wId workspace.ID, iId
 	})
 }
 
+func (i *Workspace) RemoveIntegrations(ctx context.Context, wId workspace.ID, iIDs workspace.IntegrationIDList, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+	if operator.User == nil {
+		return nil, accountinterfaces.ErrInvalidOperator
+	}
+
+	return Run1(ctx, operator, i.repos, Usecase().WithOwnableWorkspaces(wId).Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
+		ws, err := i.repos.Workspace.FindByID(ctx, wId)
+		if err != nil {
+			return nil, err
+		}
+
+		err = ws.Members().DeleteIntegrations(iIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		err = i.repos.Workspace.Save(ctx, ws)
+		if err != nil {
+			return nil, err
+		}
+
+		i.applyDefaultPolicy(ws, operator)
+		return ws, nil
+	})
+}
+
 func (i *Workspace) UpdateUserMember(ctx context.Context, id workspace.ID, u workspace.UserID, role workspace.Role, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
