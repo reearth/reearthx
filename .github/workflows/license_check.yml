@@ -1,0 +1,39 @@
+# For now, Server API and Server Subscriber will be commented because
+# Both Server API and Server Subscriber still use non Go Modules
+# and currently, go-licenses does not support non Go Module project
+
+name: License Check
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      modified: ${{ steps.go.outputs.any_modified }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Go changes
+        id: go
+        uses: step-security/changed-files@3dbe17c78367e7d60f00d78ae6781a35be47b4a1 # v45.0.1
+        with:
+          files: |
+            go.mod
+            go.sum
+  go-license-check:
+    name: Go License Check
+    needs: prepare
+    if: needs.prepare.outputs.go == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache-dependency-path: |
+            go.sum
+      - uses: reearth/actions/license-checker/go@ec26fbcf84f0e954a6ba3511859b18e3d2272c18
