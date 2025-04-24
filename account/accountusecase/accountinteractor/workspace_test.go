@@ -6,11 +6,15 @@ import (
 	"testing"
 
 	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/account/accountdomain/permittable"
+	"github.com/reearth/reearthx/account/accountdomain/role"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountinfrastructure/accountmemory"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
+	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
+	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -953,21 +957,21 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	id2 := accountdomain.NewWorkspaceID()
 	w2 := workspace.New().ID(id2).Name("W2").
 		Members(map[user.ID]workspace.Member{
-			userID: {Role: workspace.RoleOwner},
+			userID:  {Role: workspace.RoleOwner},
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(true).MustBuild()
 
 	id3 := accountdomain.NewWorkspaceID()
 	w3 := workspace.New().ID(id3).Name("W3").
 		Members(map[user.ID]workspace.Member{
-			userID: {Role: workspace.RoleOwner},
+			userID:  {Role: workspace.RoleOwner},
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(false).MustBuild()
 
 	id4 := accountdomain.NewWorkspaceID()
 	w4 := workspace.New().ID(id4).Name("W4").
 		Members(map[user.ID]workspace.Member{
-			userID: {Role: workspace.RoleOwner},
+			userID:  {Role: workspace.RoleOwner},
 			userID2: {Role: workspace.RoleReader},
 		}).Personal(false).MustBuild()
 
@@ -1000,7 +1004,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				operator *accountusecase.Operator
 			}{
 				wId:      id1,
-				uIds:      workspace.UserIDList{accountdomain.NewUserID()},
+				uIds:     workspace.UserIDList{accountdomain.NewUserID()},
 				operator: op,
 			},
 			wantErr: workspace.ErrTargetUserNotInTheWorkspace,
@@ -1021,7 +1025,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: nil,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1040,7 +1044,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: accountinterfaces.ErrInvalidOperator,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1053,8 +1057,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 				uIds     workspace.UserIDList
 				operator *accountusecase.Operator
 			}{
-				wId:      id1,
-				uIds:     workspace.UserIDList{userID2},
+				wId:  id1,
+				uIds: workspace.UserIDList{userID2},
 				operator: &accountusecase.Operator{
 					User:               &userID3,
 					ReadableWorkspaces: []workspace.ID{id1},
@@ -1062,7 +1066,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: accountinterfaces.ErrOperationDenied,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID3: {Role: workspace.RoleReader},
 				userID4: {Role: workspace.RoleReader},
 			}, nil, false),
@@ -1082,7 +1086,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1101,7 +1105,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1120,7 +1124,7 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			},
 			wantErr: workspace.ErrNoSpecifiedUsers,
 			want: workspace.NewMembersWith(map[user.ID]workspace.Member{
-				userID: {Role: workspace.RoleOwner},
+				userID:  {Role: workspace.RoleOwner},
 				userID2: {Role: workspace.RoleReader},
 			}, nil, false),
 		},
@@ -1314,5 +1318,237 @@ func TestWorkspace_UpdateMember(t *testing.T) {
 			}
 			assert.Equal(t, tc.want, got.Members())
 		})
+	}
+}
+
+// TODO: Delete this once the permission check migration is complete.
+func TestWorkspace_AddMember_Migration(t *testing.T) {
+	// prepare
+	ctx := context.Background()
+
+	uId1 := user.NewID()
+	uId2 := user.NewID()
+	uId3 := user.NewID()
+	u1 := user.New().ID(uId1).Name("user1").Email("user1@test.com").MustBuild()
+	u2 := user.New().ID(uId2).Name("user2").Email("user2@test.com").MustBuild()
+	u3 := user.New().ID(uId3).Name("user3").Email("user3@test.com").MustBuild()
+
+	roleOwner := workspace.Member{
+		Role:      workspace.RoleOwner,
+		InvitedBy: uId1,
+	}
+
+	wId1 := workspace.NewID()
+	wId2 := workspace.NewID()
+	wId3 := workspace.NewID()
+	wId4 := workspace.NewID()
+	w1 := workspace.New().ID(wId1).
+		Name("w1").
+		Members(map[idx.ID[accountdomain.User]]workspace.Member{
+			uId1: roleOwner,
+		}).
+		MustBuild()
+	w2 := workspace.New().ID(wId2).
+		Name("w2").
+		Members(map[idx.ID[accountdomain.User]]workspace.Member{
+			uId1: roleOwner,
+		}).
+		MustBuild()
+	w3 := workspace.New().ID(wId3).
+		Name("w3").
+		Members(map[idx.ID[accountdomain.User]]workspace.Member{
+			uId1: roleOwner,
+		}).
+		MustBuild()
+	w4 := workspace.New().ID(wId4).
+		Name("w4").
+		Members(map[idx.ID[accountdomain.User]]workspace.Member{
+			uId1: roleOwner,
+		}).
+		MustBuild()
+
+	users := map[user.ID]workspace.Role{
+		uId2: workspace.RoleOwner,
+		uId3: workspace.RoleOwner,
+	}
+
+	op := &accountusecase.Operator{
+		User:               &uId1,
+		ReadableWorkspaces: []workspace.ID{wId1, wId2, wId3, wId4},
+		OwningWorkspaces:   []workspace.ID{wId1, wId2, wId3, wId4},
+	}
+
+	tests := []struct {
+		name    string
+		wId     workspace.ID
+		setup   func(ctx context.Context, repos *accountrepo.Container)
+		assert  func(t *testing.T, ctx context.Context, repos *accountrepo.Container)
+		wantErr bool
+	}{
+		{
+			name: "should create maintainer role and assign it to workspace users",
+			wId:  wId1,
+			setup: func(ctx context.Context, repos *accountrepo.Container) {
+				userRepo := accountrepo.NewMultiUser(accountmemory.NewUserWith(u1, u2, u3))
+				workspaceRepo := accountmemory.NewWorkspaceWith(w1)
+				repos.User = userRepo
+				repos.Workspace = workspaceRepo
+			},
+			assert: func(t *testing.T, ctx context.Context, repos *accountrepo.Container) {
+				assertPermittablesAndRoles(t, ctx, repos, user.IDList{uId2, uId3})
+			},
+		},
+		{
+			name: "should not duplicate maintainer role when it already exists",
+			wId:  wId2,
+			setup: func(ctx context.Context, repos *accountrepo.Container) {
+				existingRole, _ := role.New().NewID().Name("maintainer").Build()
+				err := repos.Role.Save(ctx, *existingRole)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				userRepo := accountrepo.NewMultiUser(accountmemory.NewUserWith(u1, u2, u3))
+				workspaceRepo := accountmemory.NewWorkspaceWith(w2)
+				repos.User = userRepo
+				repos.Workspace = workspaceRepo
+			},
+			assert: func(t *testing.T, ctx context.Context, repos *accountrepo.Container) {
+				assertPermittablesAndRoles(t, ctx, repos, user.IDList{uId2, uId3})
+			},
+		},
+		{
+			name: "should not add maintainer role if user already has it",
+			wId:  wId3,
+			setup: func(ctx context.Context, repos *accountrepo.Container) {
+				existingRole, _ := role.New().NewID().Name("maintainer").Build()
+				err := repos.Role.Save(ctx, *existingRole)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				p, _ := permittable.New().
+					NewID().
+					UserID(uId2).
+					RoleIDs([]accountdomain.RoleID{existingRole.ID()}).
+					Build()
+				err = repos.Permittable.Save(ctx, *p)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				userRepo := accountrepo.NewMultiUser(accountmemory.NewUserWith(u1, u2, u3))
+				workspaceRepo := accountmemory.NewWorkspaceWith(w3)
+				repos.User = userRepo
+				repos.Workspace = workspaceRepo
+			},
+			assert: func(t *testing.T, ctx context.Context, repos *accountrepo.Container) {
+				permittable, err := repos.Permittable.FindByUserID(ctx, uId2)
+				assert.NoError(t, err)
+				assert.Equal(t, 1, len(permittable.RoleIDs()))
+
+				assertPermittablesAndRoles(t, ctx, repos, user.IDList{uId2, uId3})
+			},
+		},
+		{
+			name: "should add maintainer role when user has other roles",
+			wId:  wId4,
+			setup: func(ctx context.Context, repos *accountrepo.Container) {
+				otherRole, _ := role.New().NewID().Name("other_role").Build()
+				err := repos.Role.Save(ctx, *otherRole)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				p, _ := permittable.New().
+					NewID().
+					UserID(uId2).
+					RoleIDs([]accountdomain.RoleID{otherRole.ID()}).
+					Build()
+				err = repos.Permittable.Save(ctx, *p)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				userRepo := accountrepo.NewMultiUser(accountmemory.NewUserWith(u1, u2, u3))
+				workspaceRepo := accountmemory.NewWorkspaceWith(w4)
+				repos.User = userRepo
+				repos.Workspace = workspaceRepo
+			},
+			assert: func(t *testing.T, ctx context.Context, repos *accountrepo.Container) {
+				roles, err := repos.Role.FindAll(ctx)
+				assert.NoError(t, err)
+				assert.Equal(t, 2, len(roles))
+
+				permittable, err := repos.Permittable.FindByUserID(ctx, uId2)
+				assert.NoError(t, err)
+				assert.Equal(t, 2, len(permittable.RoleIDs()))
+
+				assertPermittablesAndRoles(t, ctx, repos, user.IDList{uId2, uId3})
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			memoryRepo := accountmemory.New()
+
+			if tt.setup != nil {
+				tt.setup(ctx, memoryRepo)
+			}
+
+			enforcer := func(_ context.Context, _ *workspace.Workspace, _ user.List, _ *accountusecase.Operator) error {
+				return nil
+			}
+			workspaceUC := NewWorkspace(memoryRepo, enforcer)
+
+			_, err := workspaceUC.AddUserMember(ctx, tt.wId, users, op)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+
+			if tt.assert != nil {
+				tt.assert(t, ctx, memoryRepo)
+			}
+		})
+	}
+}
+
+// TODO: Delete this once the permission check migration is complete.
+func assertPermittablesAndRoles(t *testing.T, ctx context.Context, repos *accountrepo.Container, expectedUserIDs user.IDList) {
+	// role
+	roles, err := repos.Role.FindAll(ctx)
+	assert.NoError(t, err)
+	var maintainerRole *role.Role
+	for _, r := range roles {
+		if r.Name() == "maintainer" {
+			if maintainerRole != nil {
+				t.Fatal("maintainer role already exists")
+			}
+			maintainerRole = r
+		}
+	}
+	assert.NotNil(t, maintainerRole)
+
+	// permittable
+	permittables, err := repos.Permittable.FindByUserIDs(ctx, expectedUserIDs)
+	assert.NoError(t, err)
+	assert.Equal(t, len(expectedUserIDs), len(permittables))
+
+	// userID
+	userIds := make(user.IDList, 0, len(permittables))
+	for _, p := range permittables {
+		userIds = append(userIds, p.UserID())
+	}
+	for _, expectedID := range expectedUserIDs {
+		assert.Contains(t, userIds, expectedID)
+	}
+
+	// role assignment
+	for _, p := range permittables {
+		assert.Contains(t, p.RoleIDs(), maintainerRole.ID())
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/ravilushqa/otelgqlgen"
+	"github.com/reearth/reearthx/log"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
@@ -33,8 +34,10 @@ func GraphQLHandler(c GraphQLHandlerConfig) http.Handler {
 	srv.SetErrorPresenter(
 		// show more detailed error messgage in debug mode
 		func(ctx context.Context, e error) *gqlerror.Error {
+			path := graphql.GetFieldContext(ctx).Path()
+			log.Debugfc(ctx, "gql error: %v: %v", path, e)
 			if c.Dev {
-				return gqlerror.ErrorPathf(graphql.GetFieldContext(ctx).Path(), e.Error())
+				return gqlerror.ErrorPathf(path, "%v", e)
 			}
 			return graphql.DefaultErrorPresenter(ctx, e)
 		},

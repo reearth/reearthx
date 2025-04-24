@@ -31,6 +31,8 @@ func New(ctx context.Context, mc *mongo.Client, databaseName string, useTransact
 		User:        NewUser(client),
 		Transaction: client.Transaction(),
 		Users:       users,
+		Role:        NewRole(client),
+		Permittable: NewPermittable(client),
 	}
 
 	// init
