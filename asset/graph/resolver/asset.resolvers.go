@@ -8,88 +8,745 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/reearth/reearthx/asset"
 	"github.com/reearth/reearthx/asset/graph/generated"
 	"github.com/reearth/reearthx/asset/graph/model"
 )
 
 // CreateAsset is the resolver for the createAsset field.
 func (r *mutationResolver) CreateAsset(ctx context.Context, input model.CreateAssetInput) (*model.CreateAssetPayload, error) {
-	panic(fmt.Errorf("not implemented: CreateAsset - createAsset"))
+	groupID, err := asset.GroupIDFrom(input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		CreateAsset(ctx context.Context, param asset.CreateAssetParam) (*asset.Asset, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	var url string
+	var token string
+	var skipDecompression bool
+
+	if input.URL != nil {
+		url = *input.URL
+	}
+	if input.Token != nil {
+		token = *input.Token
+	}
+	if input.SkipDecompression != nil {
+		skipDecompression = *input.SkipDecompression
+	}
+
+	var contentEncoding string
+	if input.ContentEncoding != nil {
+		contentEncoding = *input.ContentEncoding
+	}
+
+	param := asset.CreateAssetParam{
+		GroupID:           groupID,
+		URL:               url,
+		Token:             token,
+		SkipDecompression: skipDecompression,
+		ContentEncoding:   contentEncoding,
+	}
+
+	if input.File != nil {
+		// File upload is not handled in this implementation
+		return nil, fmt.Errorf("file upload is not implemented")
+	}
+
+	a, err := assetService.CreateAsset(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreateAssetPayload{
+		Asset: &model.Asset{
+			ID:            a.ID.String(),
+			GroupID:       a.GroupID.String(),
+			CreatedAt:     a.CreatedAt,
+			CreatedByType: model.OperatorType(a.CreatedBy.Type),
+			CreatedByID:   a.CreatedBy.ID,
+			Size:          int(a.Size),
+			ContentType:   a.ContentType,
+			ContentEncoding: func() *string {
+				if a.ContentEncoding == "" {
+					return nil
+				}
+				return &a.ContentEncoding
+			}(),
+			PreviewType: func() *model.PreviewType {
+				if a.PreviewType == "" {
+					return nil
+				}
+				pt := model.PreviewType(a.PreviewType)
+				return &pt
+			}(),
+			UUID:     a.UUID,
+			URL:      a.URL,
+			FileName: a.FileName,
+			ArchiveExtractionStatus: func() *model.ArchiveExtractionStatus {
+				if a.ArchiveExtractionStatus == nil {
+					return nil
+				}
+				status := model.ArchiveExtractionStatus(*a.ArchiveExtractionStatus)
+				return &status
+			}(),
+		},
+	}, nil
 }
 
 // UpdateAsset is the resolver for the updateAsset field.
 func (r *mutationResolver) UpdateAsset(ctx context.Context, input model.UpdateAssetInput) (*model.UpdateAssetPayload, error) {
-	panic(fmt.Errorf("not implemented: UpdateAsset - updateAsset"))
+	assetID, err := asset.AssetIDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		UpdateAsset(ctx context.Context, param asset.UpdateAssetParam) (*asset.Asset, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	var previewType *asset.PreviewType
+	if input.PreviewType != nil {
+		pt := asset.PreviewType(*input.PreviewType)
+		previewType = &pt
+	}
+
+	param := asset.UpdateAssetParam{
+		ID:          assetID,
+		PreviewType: previewType,
+	}
+
+	a, err := assetService.UpdateAsset(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.UpdateAssetPayload{
+		Asset: &model.Asset{
+			ID:            a.ID.String(),
+			GroupID:       a.GroupID.String(),
+			CreatedAt:     a.CreatedAt,
+			CreatedByType: model.OperatorType(a.CreatedBy.Type),
+			CreatedByID:   a.CreatedBy.ID,
+			Size:          int(a.Size),
+			ContentType:   a.ContentType,
+			ContentEncoding: func() *string {
+				if a.ContentEncoding == "" {
+					return nil
+				}
+				return &a.ContentEncoding
+			}(),
+			PreviewType: func() *model.PreviewType {
+				if a.PreviewType == "" {
+					return nil
+				}
+				pt := model.PreviewType(a.PreviewType)
+				return &pt
+			}(),
+			UUID:     a.UUID,
+			URL:      a.URL,
+			FileName: a.FileName,
+			ArchiveExtractionStatus: func() *model.ArchiveExtractionStatus {
+				if a.ArchiveExtractionStatus == nil {
+					return nil
+				}
+				status := model.ArchiveExtractionStatus(*a.ArchiveExtractionStatus)
+				return &status
+			}(),
+		},
+	}, nil
 }
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input model.DeleteAssetInput) (*model.DeleteAssetPayload, error) {
-	panic(fmt.Errorf("not implemented: DeleteAsset - deleteAsset"))
+	assetID, err := asset.AssetIDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		DeleteAsset(ctx context.Context, id asset.AssetID) error
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	if err := assetService.DeleteAsset(ctx, assetID); err != nil {
+		return nil, err
+	}
+
+	return &model.DeleteAssetPayload{
+		AssetID: input.ID,
+	}, nil
 }
 
 // DeleteAssets is the resolver for the deleteAssets field.
 func (r *mutationResolver) DeleteAssets(ctx context.Context, input model.DeleteAssetsInput) (*model.DeleteAssetsPayload, error) {
-	panic(fmt.Errorf("not implemented: DeleteAssets - deleteAssets"))
+	assetIDs := make([]asset.AssetID, 0, len(input.Ids))
+	for _, id := range input.Ids {
+		assetID, err := asset.AssetIDFrom(id)
+		if err != nil {
+			return nil, err
+		}
+		assetIDs = append(assetIDs, assetID)
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		DeleteAssets(ctx context.Context, ids []asset.AssetID) error
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	if err := assetService.DeleteAssets(ctx, assetIDs); err != nil {
+		return nil, err
+	}
+
+	return &model.DeleteAssetsPayload{
+		AssetIds: input.Ids,
+	}, nil
 }
 
 // DecompressAsset is the resolver for the decompressAsset field.
 func (r *mutationResolver) DecompressAsset(ctx context.Context, input model.DecompressAssetInput) (*model.DecompressAssetPayload, error) {
-	panic(fmt.Errorf("not implemented: DecompressAsset - decompressAsset"))
+	assetID, err := asset.AssetIDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		DecompressAsset(ctx context.Context, id asset.AssetID) error
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	if err := assetService.DecompressAsset(ctx, assetID); err != nil {
+		return nil, err
+	}
+
+	assetGetService, ok := r.AssetService.(interface {
+		GetAsset(ctx context.Context, id asset.AssetID) (*asset.Asset, error)
+	})
+	if !ok {
+		return &model.DecompressAssetPayload{
+			Asset: &model.Asset{
+				ID: assetID.String(),
+			},
+		}, nil
+	}
+
+	a, err := assetGetService.GetAsset(ctx, assetID)
+	if err != nil {
+		return &model.DecompressAssetPayload{
+			Asset: &model.Asset{
+				ID: assetID.String(),
+			},
+		}, nil
+	}
+
+	return &model.DecompressAssetPayload{
+		Asset: &model.Asset{
+			ID:            a.ID.String(),
+			GroupID:       a.GroupID.String(),
+			CreatedAt:     a.CreatedAt,
+			CreatedByType: model.OperatorType(a.CreatedBy.Type),
+			CreatedByID:   a.CreatedBy.ID,
+			Size:          int(a.Size),
+			ContentType:   a.ContentType,
+			ContentEncoding: func() *string {
+				if a.ContentEncoding == "" {
+					return nil
+				}
+				return &a.ContentEncoding
+			}(),
+			PreviewType: func() *model.PreviewType {
+				if a.PreviewType == "" {
+					return nil
+				}
+				pt := model.PreviewType(a.PreviewType)
+				return &pt
+			}(),
+			UUID:     a.UUID,
+			URL:      a.URL,
+			FileName: a.FileName,
+			ArchiveExtractionStatus: func() *model.ArchiveExtractionStatus {
+				if a.ArchiveExtractionStatus == nil {
+					return nil
+				}
+				status := model.ArchiveExtractionStatus(*a.ArchiveExtractionStatus)
+				return &status
+			}(),
+		},
+	}, nil
 }
 
 // CreateAssetUpload is the resolver for the createAssetUpload field.
 func (r *mutationResolver) CreateAssetUpload(ctx context.Context, input model.CreateAssetUploadInput) (*model.CreateAssetUploadPayload, error) {
-	panic(fmt.Errorf("not implemented: CreateAssetUpload - createAssetUpload"))
+	groupID, err := asset.GroupIDFrom(input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		CreateAssetUpload(ctx context.Context, param asset.CreateAssetUploadParam) (*asset.AssetUploadInfo, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	var contentEncoding string
+	if input.ContentEncoding != nil {
+		contentEncoding = *input.ContentEncoding
+	}
+
+	var cursor string
+	if input.Cursor != nil {
+		cursor = *input.Cursor
+	}
+
+	param := asset.CreateAssetUploadParam{
+		GroupID:         groupID,
+		FileName:        input.FileName,
+		ContentLength:   int64(input.ContentLength),
+		ContentEncoding: contentEncoding,
+		Cursor:          cursor,
+	}
+
+	info, err := assetService.CreateAssetUpload(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+
+	var nextCursor *string
+	if info.Next != "" {
+		nextCursor = &info.Next
+	}
+
+	var encodingPtr *string
+	if info.ContentEncoding != "" {
+		encodingPtr = &info.ContentEncoding
+	}
+
+	return &model.CreateAssetUploadPayload{
+		Token:           info.Token,
+		URL:             info.URL,
+		ContentType:     info.ContentType,
+		ContentLength:   int(info.ContentLength),
+		ContentEncoding: encodingPtr,
+		Next:            nextCursor,
+	}, nil
 }
 
 // CreateGroup is the resolver for the createGroup field.
 func (r *mutationResolver) CreateGroup(ctx context.Context, input model.CreateGroupInput) (*model.CreateGroupPayload, error) {
-	panic(fmt.Errorf("not implemented: CreateGroup - createGroup"))
+	groupService, ok := r.GroupService.(interface {
+		CreateGroup(ctx context.Context, param struct{ Name string }) (*asset.Group, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("group service is not properly implemented")
+	}
+
+	g, err := groupService.CreateGroup(ctx, struct{ Name string }{Name: input.Name})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreateGroupPayload{
+		Group: &model.Group{
+			ID:        g.ID.String(),
+			Name:      g.Name,
+			CreatedAt: g.CreatedAt,
+			UpdatedAt: g.UpdatedAt,
+			Policy: func() *model.Policy {
+				if g.PolicyID == nil {
+					return nil
+				}
+				return &model.Policy{
+					ID: g.PolicyID.String(),
+				}
+			}(),
+		},
+	}, nil
 }
 
 // DeleteGroup is the resolver for the deleteGroup field.
 func (r *mutationResolver) DeleteGroup(ctx context.Context, input model.DeleteGroupInput) (*model.DeleteGroupPayload, error) {
-	panic(fmt.Errorf("not implemented: DeleteGroup - deleteGroup"))
+	groupID, err := asset.GroupIDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	groupService, ok := r.GroupService.(interface {
+		DeleteGroup(ctx context.Context, id asset.GroupID) error
+	})
+	if !ok {
+		return nil, fmt.Errorf("group service is not properly implemented")
+	}
+
+	if err := groupService.DeleteGroup(ctx, groupID); err != nil {
+		return nil, err
+	}
+
+	return &model.DeleteGroupPayload{
+		GroupID: input.ID,
+	}, nil
 }
 
 // AssignPolicy is the resolver for the assignPolicy field.
 func (r *mutationResolver) AssignPolicy(ctx context.Context, input model.AssignPolicyInput) (*model.AssignPolicyPayload, error) {
-	panic(fmt.Errorf("not implemented: AssignPolicy - assignPolicy"))
+	groupID, err := asset.GroupIDFrom(input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	var policyID *asset.PolicyID
+	if input.PolicyID != nil {
+		pid, err := asset.PolicyIDFrom(*input.PolicyID)
+		if err != nil {
+			return nil, err
+		}
+		policyID = &pid
+	}
+
+	groupService, ok := r.GroupService.(interface {
+		AssignPolicy(ctx context.Context, groupID asset.GroupID, policyID *asset.PolicyID) (*asset.Group, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("group service is not properly implemented")
+	}
+
+	g, err := groupService.AssignPolicy(ctx, groupID, policyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AssignPolicyPayload{
+		Group: &model.Group{
+			ID:        g.ID.String(),
+			Name:      g.Name,
+			CreatedAt: g.CreatedAt,
+			UpdatedAt: g.UpdatedAt,
+			Policy: func() *model.Policy {
+				if g.PolicyID == nil {
+					return nil
+				}
+				return &model.Policy{
+					ID: g.PolicyID.String(),
+				}
+			}(),
+		},
+	}, nil
 }
 
 // CreatePolicy is the resolver for the createPolicy field.
 func (r *mutationResolver) CreatePolicy(ctx context.Context, input model.CreatePolicyInput) (*model.CreatePolicyPayload, error) {
-	panic(fmt.Errorf("not implemented: CreatePolicy - createPolicy"))
+	policyService, ok := r.PolicyService.(interface {
+		CreatePolicy(ctx context.Context, param struct {
+			Name         string
+			StorageLimit int64
+		}) (*asset.Policy, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("policy service is not properly implemented")
+	}
+
+	p, err := policyService.CreatePolicy(ctx, struct {
+		Name         string
+		StorageLimit int64
+	}{
+		Name:         input.Name,
+		StorageLimit: int64(input.StorageLimit),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CreatePolicyPayload{
+		Policy: &model.Policy{
+			ID:           p.ID.String(),
+			Name:         p.Name,
+			StorageLimit: int(p.StorageLimit),
+			CreatedAt:    p.CreatedAt,
+			UpdatedAt:    p.UpdatedAt,
+		},
+	}, nil
 }
 
 // DeletePolicy is the resolver for the deletePolicy field.
 func (r *mutationResolver) DeletePolicy(ctx context.Context, input model.DeletePolicyInput) (*model.DeletePolicyPayload, error) {
-	panic(fmt.Errorf("not implemented: DeletePolicy - deletePolicy"))
+	policyID, err := asset.PolicyIDFrom(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	policyService, ok := r.PolicyService.(interface {
+		DeletePolicy(ctx context.Context, id asset.PolicyID) error
+	})
+	if !ok {
+		return nil, fmt.Errorf("policy service is not properly implemented")
+	}
+
+	if err := policyService.DeletePolicy(ctx, policyID); err != nil {
+		return nil, err
+	}
+
+	return &model.DeletePolicyPayload{
+		PolicyID: input.ID,
+	}, nil
 }
 
 // Asset is the resolver for the asset field.
 func (r *queryResolver) Asset(ctx context.Context, id string) (*model.Asset, error) {
-	panic(fmt.Errorf("not implemented: Asset - asset"))
+	assetID, err := asset.AssetIDFrom(id)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		GetAsset(ctx context.Context, id asset.AssetID) (*asset.Asset, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	a, err := assetService.GetAsset(ctx, assetID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Asset{
+		ID:            a.ID.String(),
+		GroupID:       a.GroupID.String(),
+		CreatedAt:     a.CreatedAt,
+		CreatedByType: model.OperatorType(a.CreatedBy.Type),
+		CreatedByID:   a.CreatedBy.ID,
+		Size:          int(a.Size),
+		ContentType:   a.ContentType,
+		ContentEncoding: func() *string {
+			if a.ContentEncoding == "" {
+				return nil
+			}
+			return &a.ContentEncoding
+		}(),
+		PreviewType: func() *model.PreviewType {
+			if a.PreviewType == "" {
+				return nil
+			}
+			pt := model.PreviewType(a.PreviewType)
+			return &pt
+		}(),
+		UUID:     a.UUID,
+		URL:      a.URL,
+		FileName: a.FileName,
+		ArchiveExtractionStatus: func() *model.ArchiveExtractionStatus {
+			if a.ArchiveExtractionStatus == nil {
+				return nil
+			}
+			status := model.ArchiveExtractionStatus(*a.ArchiveExtractionStatus)
+			return &status
+		}(),
+	}, nil
 }
 
 // AssetFile is the resolver for the assetFile field.
 func (r *queryResolver) AssetFile(ctx context.Context, assetID string) (*model.AssetFile, error) {
-	panic(fmt.Errorf("not implemented: AssetFile - assetFile"))
+	aid, err := asset.AssetIDFrom(assetID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		GetAssetFile(ctx context.Context, id asset.AssetID) (*asset.AssetFile, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	file, err := assetService.GetAssetFile(ctx, aid)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AssetFile{
+		Name:        file.Name,
+		Size:        int(file.Size),
+		ContentType: file.ContentType,
+		ContentEncoding: func() *string {
+			if file.ContentEncoding == "" {
+				return nil
+			}
+			return &file.ContentEncoding
+		}(),
+		Data: "", // Data is not returned directly in this implementation
+	}, nil
 }
 
 // Assets is the resolver for the assets field.
 func (r *queryResolver) Assets(ctx context.Context, groupID string, filter *model.AssetFilter, sort *model.AssetSort, pagination model.Pagination) (*model.AssetConnection, error) {
-	panic(fmt.Errorf("not implemented: Assets - assets"))
+	gid, err := asset.GroupIDFrom(groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetService, ok := r.AssetService.(interface {
+		ListAssets(ctx context.Context, groupID asset.GroupID, filter asset.AssetFilter, sort asset.AssetSort, pagination asset.Pagination) ([]*asset.Asset, int64, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("asset service is not properly implemented")
+	}
+
+	// Convert filter
+	var assetFilter asset.AssetFilter
+	if filter != nil && filter.Keyword != nil {
+		assetFilter.Keyword = *filter.Keyword
+	}
+
+	// Convert sort
+	var assetSort asset.AssetSort
+	if sort != nil {
+		switch sort.By {
+		case model.AssetSortTypeName:
+			assetSort.By = asset.AssetSortTypeName
+		case model.AssetSortTypeSize:
+			assetSort.By = asset.AssetSortTypeSize
+		case model.AssetSortTypeDate:
+			assetSort.By = asset.AssetSortTypeDate
+		}
+
+		if sort.Direction == model.SortDirectionDesc {
+			assetSort.Direction = asset.SortDirectionDesc
+		} else {
+			assetSort.Direction = asset.SortDirectionAsc
+		}
+	}
+
+	assetPagination := asset.Pagination{
+		Offset: int64(pagination.Offset),
+		Limit:  int64(pagination.Limit),
+	}
+
+	assets, totalCount, err := assetService.ListAssets(ctx, gid, assetFilter, assetSort, assetPagination)
+	if err != nil {
+		return nil, err
+	}
+
+	nodes := make([]*model.Asset, 0, len(assets))
+	for _, a := range assets {
+		nodes = append(nodes, &model.Asset{
+			ID:            a.ID.String(),
+			GroupID:       a.GroupID.String(),
+			CreatedAt:     a.CreatedAt,
+			CreatedByType: model.OperatorType(a.CreatedBy.Type),
+			CreatedByID:   a.CreatedBy.ID,
+			Size:          int(a.Size),
+			ContentType:   a.ContentType,
+			ContentEncoding: func() *string {
+				if a.ContentEncoding == "" {
+					return nil
+				}
+				return &a.ContentEncoding
+			}(),
+			PreviewType: func() *model.PreviewType {
+				if a.PreviewType == "" {
+					return nil
+				}
+				pt := model.PreviewType(a.PreviewType)
+				return &pt
+			}(),
+			UUID:     a.UUID,
+			URL:      a.URL,
+			FileName: a.FileName,
+			ArchiveExtractionStatus: func() *model.ArchiveExtractionStatus {
+				if a.ArchiveExtractionStatus == nil {
+					return nil
+				}
+				status := model.ArchiveExtractionStatus(*a.ArchiveExtractionStatus)
+				return &status
+			}(),
+		})
+	}
+
+	return &model.AssetConnection{
+		Nodes:      nodes,
+		TotalCount: int(totalCount),
+		PageInfo: &model.PageInfo{
+			HasNextPage:     len(assets) >= pagination.Limit,
+			HasPreviousPage: pagination.Offset > 0,
+		},
+	}, nil
 }
 
 // Group is the resolver for the group field.
 func (r *queryResolver) Group(ctx context.Context, id string) (*model.Group, error) {
-	panic(fmt.Errorf("not implemented: Group - group"))
+	groupID, err := asset.GroupIDFrom(id)
+	if err != nil {
+		return nil, err
+	}
+
+	groupService, ok := r.GroupService.(interface {
+		GetGroup(ctx context.Context, id asset.GroupID) (*asset.Group, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("group service is not properly implemented")
+	}
+
+	g, err := groupService.GetGroup(ctx, groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Group{
+		ID:        g.ID.String(),
+		Name:      g.Name,
+		CreatedAt: g.CreatedAt,
+		UpdatedAt: g.UpdatedAt,
+		Policy: func() *model.Policy {
+			if g.PolicyID == nil {
+				return nil
+			}
+			return &model.Policy{
+				ID: g.PolicyID.String(),
+			}
+		}(),
+	}, nil
 }
 
 // Policy is the resolver for the policy field.
 func (r *queryResolver) Policy(ctx context.Context, id string) (*model.Policy, error) {
-	panic(fmt.Errorf("not implemented: Policy - policy"))
+	policyID, err := asset.PolicyIDFrom(id)
+	if err != nil {
+		return nil, err
+	}
+
+	policyService, ok := r.PolicyService.(interface {
+		GetPolicy(ctx context.Context, id asset.PolicyID) (*asset.Policy, error)
+	})
+	if !ok {
+		return nil, fmt.Errorf("policy service is not properly implemented")
+	}
+
+	p, err := policyService.GetPolicy(ctx, policyID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.Policy{
+		ID:           p.ID.String(),
+		Name:         p.Name,
+		StorageLimit: int(p.StorageLimit),
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
