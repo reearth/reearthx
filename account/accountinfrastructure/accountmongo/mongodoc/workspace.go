@@ -14,14 +14,15 @@ type WorkspaceMemberDocument struct {
 }
 
 type WorkspaceDocument struct {
-	ID           string
-	Name         string
-	DisplayName  string
-	Members      map[string]WorkspaceMemberDocument
-	Integrations map[string]WorkspaceMemberDocument
-	Personal     bool
-	Policy       string `bson:",omitempty"`
-	Location     string `bson:",omitempty"`
+	ID             string
+	Name           string
+	DisplayName    string
+	Members        map[string]WorkspaceMemberDocument
+	Integrations   map[string]WorkspaceMemberDocument
+	Personal       bool
+	Policy         string `bson:",omitempty"`
+	Location       string `bson:",omitempty"`
+	StripeClientID string
 }
 
 func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
@@ -45,13 +46,14 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 
 	wId := ws.ID().String()
 	return &WorkspaceDocument{
-		ID:           wId,
-		Name:         ws.Name(),
-		Members:      membersDoc,
-		Integrations: integrationsDoc,
-		Personal:     ws.IsPersonal(),
-		Policy:       lo.FromPtr(ws.Policy()).String(),
-		Location:     ws.Location(),
+		ID:             wId,
+		Name:           ws.Name(),
+		Members:        membersDoc,
+		Integrations:   integrationsDoc,
+		Personal:       ws.IsPersonal(),
+		Policy:         lo.FromPtr(ws.Policy()).String(),
+		Location:       ws.Location(),
+		StripeClientID: ws.StripeClientID(),
 	}, wId
 }
 
@@ -109,6 +111,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		Personal(d.Personal).
 		Policy(policy).
 		Location(d.Location).
+		StripeClientID(d.StripeClientID).
 		Build()
 }
 

@@ -94,3 +94,8 @@ func (b *Builder) Policy(p *PolicyID) *Builder {
 	b.w.policy = util.CloneRef(p)
 	return b
 }
+
+func (b *Builder) StripeClientID(stripeClientID string) *Builder {
+	b.w.stripeClientID = stripeClientID
+	return b
+}
