@@ -1,5 +1,7 @@
 package asset
 
+//go:generate go run ./tools/gqlgen/main.go
+
 import (
 	"time"
 )
