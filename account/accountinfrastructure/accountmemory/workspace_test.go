@@ -49,6 +49,26 @@ func TestWorkspace_FindByID(t *testing.T) {
 	assert.Same(t, wantErr, r.Save(ctx, ws))
 }
 
+func TestWorkspace_FindByName(t *testing.T) {
+	ctx := context.Background()
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+	r := &Workspace{
+		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
+	}
+	r.data.Store(ws.ID(), ws)
+	out, err := r.FindByName(ctx, ws.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, ws, out)
+
+	out2, err := r.FindByName(ctx, "notfound")
+	assert.Nil(t, out2)
+	assert.Same(t, rerror.ErrNotFound, err)
+
+	wantErr := errors.New("test")
+	SetWorkspaceError(r, wantErr)
+	assert.Same(t, wantErr, r.Save(ctx, ws))
+}
+
 func TestWorkspace_FindByIDs(t *testing.T) {
 	ctx := context.Background()
 	ws := workspace.New().NewID().Name("hoge").MustBuild()
@@ -68,6 +88,57 @@ func TestWorkspace_FindByIDs(t *testing.T) {
 	wantErr := errors.New("test")
 	SetWorkspaceError(r, wantErr)
 	assert.Same(t, wantErr, r.Save(ctx, ws))
+}
+
+func TestWorkspace_FindByIntegrations(t *testing.T) {
+	ctx := context.Background()
+	i1 := workspace.NewIntegrationID()
+	i2 := workspace.NewIntegrationID()
+	ws := workspace.New().NewID().Name("hoge").Integrations(map[workspace.IntegrationID]workspace.Member{i1: {}}).MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").Integrations(map[workspace.IntegrationID]workspace.Member{i2: {}}).MustBuild()
+	r := &Workspace{
+		data: &util.SyncMap[accountdomain.WorkspaceID, *workspace.Workspace]{},
+	}
+	r.data.Store(ws.ID(), ws)
+	r.data.Store(ws2.ID(), ws2)
+
+	type args struct {
+		ids workspace.IntegrationIDList
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    workspace.List
+		wantErr error
+	}{
+		{
+			name:    "Success",
+			args:    args{ids: workspace.IntegrationIDList{i2}},
+			want:    workspace.List{ws2},
+			wantErr: nil,
+		},
+		{
+			name:    "Success with multiple integrations",
+			args:    args{ids: workspace.IntegrationIDList{i1, i2}},
+			want:    workspace.List{ws, ws2},
+			wantErr: nil,
+		},
+		{
+			name:    "Success with empty integrations",
+			args:    args{ids: workspace.IntegrationIDList{}},
+			want:    nil,
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		tc := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			out, err := r.FindByIntegrations(ctx, tc.args.ids)
+			assert.Equal(t, tc.wantErr, err)
+			assert.Equal(t, tc.want, out)
+		})
+	}
 }
 
 func TestWorkspace_FindByUser(t *testing.T) {

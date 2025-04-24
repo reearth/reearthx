@@ -58,6 +58,26 @@ func (r *Workspace) FindByIntegration(ctx context.Context, id workspace.Integrat
 	})
 }
 
+// FindByIntegrations finds workspace list based on integrations IDs
+func (r *Workspace) FindByIntegrations(ctx context.Context, integrationIDs workspace.IntegrationIDList) (workspace.List, error) {
+	if len(integrationIDs) == 0 {
+		return nil, nil
+	}
+
+	orConditions := make([]bson.M, 0)
+	for _, id := range integrationIDs {
+		orConditions = append(orConditions, bson.M{
+			"integrations." + strings.Replace(id.String(), ".", "", -1): bson.M{
+				"$exists": true,
+			},
+		})
+	}
+
+	return r.find(ctx, bson.M{
+		"$or": orConditions,
+	})
+}
+
 func (r *Workspace) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspace.List, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -84,6 +104,23 @@ func (r *Workspace) FindByID(ctx context.Context, id accountdomain.WorkspaceID) 
 	}
 
 	return r.findOne(ctx, bson.M{"id": id.String()})
+}
+
+func (r *Workspace) FindByName(ctx context.Context, name string) (*workspace.Workspace, error) {
+	if name == "" {
+		return nil, rerror.ErrNotFound
+	}
+
+	w, err := r.findOne(ctx, bson.M{"name": name})
+	if err != nil {
+		return nil, err
+	}
+
+	if !r.f.CanRead(w.ID()) {
+		return nil, rerror.ErrNotFound
+	}
+
+	return w, nil
 }
 
 func (r *Workspace) Create(ctx context.Context, workspace *workspace.Workspace) error {
