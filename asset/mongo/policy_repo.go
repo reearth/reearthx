@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var _ asset.PolicyRepository = &PolicyRepository{}
+
 type PolicyRepository struct {
 	client *mongox.Collection
 }

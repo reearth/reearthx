@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var _ asset.AssetRepository = &AssetRepository{}
+
 type AssetRepository struct {
 	client *mongox.Collection
 }

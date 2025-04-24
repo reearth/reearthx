@@ -313,7 +313,6 @@ func (s *assetService) handleArchiveExtraction(ctx context.Context, assetID Asse
 func shouldExtractArchive(fileName string, contentType string) bool {
 	lowerFileName := strings.ToLower(fileName)
 
-	// Check file extensions
 	if strings.HasSuffix(lowerFileName, ".zip") ||
 		strings.HasSuffix(lowerFileName, ".tar.gz") ||
 		strings.HasSuffix(lowerFileName, ".tar") ||
@@ -321,7 +320,6 @@ func shouldExtractArchive(fileName string, contentType string) bool {
 		return true
 	}
 
-	// Check content types
 	switch contentType {
 	case "application/zip", "application/x-zip-compressed",
 		"application/gzip", "application/x-gzip",

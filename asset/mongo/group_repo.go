@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var _ asset.GroupRepository = &GroupRepository{}
+
 type GroupRepository struct {
 	client *mongox.Collection
 }

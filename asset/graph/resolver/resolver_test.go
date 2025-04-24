@@ -142,7 +142,6 @@ func (m *MockPolicyService) DeletePolicy(ctx context.Context, id asset.PolicyID)
 	return args.Error(0)
 }
 
-// Setup test client
 func setupClient(t *testing.T) (*client.Client, *MockAssetService, *MockGroupService, *MockPolicyService) {
 	t.Helper()
 	mockAssetService := new(MockAssetService)
@@ -162,12 +161,9 @@ func setupClient(t *testing.T) (*client.Client, *MockAssetService, *MockGroupSer
 	return gqlClient, mockAssetService, mockGroupService, mockPolicyService
 }
 
-// Tests
 func TestQueryAsset(t *testing.T) {
-	// Setup
 	c, mockAssetService, _, _ := setupClient(t)
 
-	// Mock data
 	assetID := asset.NewAssetID()
 	groupID := asset.NewGroupID()
 	now := time.Now()
@@ -182,10 +178,8 @@ func TestQueryAsset(t *testing.T) {
 		FileName:    "test.jpg",
 	}
 
-	// Setup expectations
 	mockAssetService.On("GetAsset", mock.Anything, assetID).Return(mockAsset, nil)
 
-	// Query
 	var resp struct {
 		Asset struct {
 			ID        string
