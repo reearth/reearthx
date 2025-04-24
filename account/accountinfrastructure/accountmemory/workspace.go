@@ -3,6 +3,8 @@ package accountmemory
 import (
 	"context"
 
+	slices0 "slices"
+
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
@@ -54,6 +56,25 @@ func (r *Workspace) FindByIntegration(_ context.Context, i workspace.Integration
 	}), rerror.ErrNotFound)
 }
 
+// FindByIntegrations finds workspace list based on integrations IDs
+func (r *Workspace) FindByIntegrations(_ context.Context, ids workspace.IntegrationIDList) (workspace.List, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	res := r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
+		return slices0.ContainsFunc(ids, value.Members().HasIntegration)
+	})
+
+	slices.SortFunc(res, func(a, b *workspace.Workspace) int { return a.ID().Compare(b.ID()) })
+
+	return res, nil
+}
+
 func (r *Workspace) FindByIDs(_ context.Context, ids workspace.IDList) (workspace.List, error) {
 	if r.err != nil {
 		return nil, r.err
@@ -73,6 +94,18 @@ func (r *Workspace) FindByID(_ context.Context, v workspace.ID) (*workspace.Work
 
 	return rerror.ErrIfNil(r.data.Find(func(key workspace.ID, value *workspace.Workspace) bool {
 		return key == v
+	}), rerror.ErrNotFound)
+}
+
+func (r *Workspace) FindByName(_ context.Context, name string) (*workspace.Workspace, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	if name == "" {
+		return nil, rerror.ErrNotFound
+	}
+	return rerror.ErrIfNil(r.data.Find(func(key workspace.ID, value *workspace.Workspace) bool {
+		return value.Name() == name
 	}), rerror.ErrNotFound)
 }
 

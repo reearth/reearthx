@@ -2,7 +2,6 @@ package idx
 
 import (
 	"errors"
-
 	"github.com/oklog/ulid"
 	"github.com/samber/lo"
 )
@@ -78,7 +77,10 @@ func (id *ID[T]) CloneRef() *ID[T] {
 
 func (ID[T]) Type() string {
 	var t T
-	return t.Type()
+	if typ, ok := any(t).(Type); ok {
+		return typ.Type()
+	}
+	return "_"
 }
 
 // GoString implements fmt.GoStringer interface.
