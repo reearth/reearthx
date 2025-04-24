@@ -176,7 +176,26 @@ func TestResourceBuilder_Build(t *testing.T) {
 				resources:   tt.resources,
 			}
 			result := builder.Build()
-			assert.Equal(t, tt.expected, result)
+
+			assert.Equal(t, len(tt.expected), len(result))
+
+			expectedMap := make(map[string]ResourceDefinition)
+			for _, res := range tt.expected {
+				expectedMap[res.Resource] = res
+			}
+
+			resultMap := make(map[string]ResourceDefinition)
+			for _, res := range result {
+				resultMap[res.Resource] = res
+			}
+
+			for resource, expectedDef := range expectedMap {
+				resultDef, exists := resultMap[resource]
+				assert.True(t, exists)
+				if exists {
+					assert.ElementsMatch(t, expectedDef.Actions, resultDef.Actions)
+				}
+			}
 		})
 	}
 }

@@ -58,7 +58,10 @@ func newLogger(w io.Writer, atom zap.AtomicLevel, name string) *zap.SugaredLogge
 			zapcore.Lock(zapcore.AddSync(w)),
 			atom,
 		),
-	).Sugar().Named(name)
+	).Sugar().Named(name).WithOptions(
+		zap.AddCaller(),
+		zap.AddCallerSkip(1),
+	)
 }
 
 func encoder() zapcore.Encoder {
@@ -71,6 +74,44 @@ func encoder() zapcore.Encoder {
 		}
 		return zapcore.NewConsoleEncoder(conf)
 	}
+}
+
+func (l *Logger) AppendPrefixMessage(prefix string) *Logger {
+	return l.AppendDynamicPrefix(func() Format {
+		return Format{Format: prefix}
+	})
+}
+
+func (l *Logger) AppendSuffixMessage(suffix string) *Logger {
+	return l.AppendDynamicSuffix(func() Format {
+		return Format{Format: suffix}
+	})
+}
+
+func (l *Logger) AppendDynamicPrefix(prefix func() Format) *Logger {
+	if l.dynPrefix == nil {
+		return l.SetDynamicPrefix(prefix)
+	}
+
+	return l.SetDynamicPrefix(func() Format {
+		if l.dynPrefix == nil {
+			return prefix()
+		}
+		return l.dynPrefix().Append(prefix())
+	})
+}
+
+func (l *Logger) AppendDynamicSuffix(suffix func() Format) *Logger {
+	if l.dynSuffix == nil {
+		return l.SetDynamicSuffix(suffix)
+	}
+
+	return l.SetDynamicSuffix(func() Format {
+		if l.dynSuffix == nil {
+			return suffix()
+		}
+		return l.dynSuffix().Append(suffix())
+	})
 }
 
 func (l *Logger) SetDynamicPrefix(prefix func() Format) *Logger {
@@ -133,6 +174,36 @@ func (l *Logger) ClearPrefix() *Logger {
 		logger: l.logger.Named(""),
 		atom:   l.atom,
 		prefix: "",
+	}
+}
+
+func (l *Logger) With(args ...any) *Logger {
+	return &Logger{
+		logger:    l.logger.With(args...),
+		atom:      l.atom,
+		prefix:    l.prefix,
+		dynPrefix: l.dynPrefix,
+		dynSuffix: l.dynSuffix,
+	}
+}
+
+func (l *Logger) WithCaller(enabled bool) *Logger {
+	return &Logger{
+		logger:    l.logger.WithOptions(zap.WithCaller(enabled)),
+		atom:      l.atom,
+		prefix:    l.prefix,
+		dynPrefix: l.dynPrefix,
+		dynSuffix: l.dynSuffix,
+	}
+}
+
+func (l *Logger) AddCallerSkip(skip int) *Logger {
+	return &Logger{
+		logger:    l.logger.WithOptions(zap.AddCallerSkip(skip)),
+		atom:      l.atom,
+		prefix:    l.prefix,
+		dynPrefix: l.dynPrefix,
+		dynSuffix: l.dynSuffix,
 	}
 }
 

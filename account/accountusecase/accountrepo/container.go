@@ -12,6 +12,8 @@ import (
 type Container struct {
 	User        User
 	Workspace   Workspace
+	Role        Role        // TODO: Delete this once the permission check migration is complete.
+	Permittable Permittable // TODO: Delete this once the permission check migration is complete.
 	Transaction usecasex.Transaction
 	Users       []User
 }
@@ -25,9 +27,12 @@ func (c *Container) Filtered(workspace WorkspaceFilter) *Container {
 		return c
 	}
 	return &Container{
-		Workspace: c.Workspace.Filtered(workspace),
-		User:      c.User,
-		Users:     c.Users,
+		Workspace:   c.Workspace.Filtered(workspace),
+		User:        c.User,
+		Users:       c.Users,
+		Role:        c.Role,        // TODO: Delete this once the permission check migration is complete.
+		Permittable: c.Permittable, // TODO: Delete this once the permission check migration is complete.
+		Transaction: c.Transaction,
 	}
 }
 
