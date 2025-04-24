@@ -3,7 +3,7 @@ package appx
 import (
 	"context"
 	"net/http"
-	"strings"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/log"
@@ -12,15 +12,15 @@ import (
 type requestIDKey struct{}
 
 func ContextMiddleware(key, value any) func(http.Handler) http.Handler {
-	return ContextMiddlewareBy(func(r *http.Request) context.Context {
+	return ContextMiddlewareBy(func(w http.ResponseWriter, r *http.Request) context.Context {
 		return context.WithValue(r.Context(), key, value)
 	})
 }
 
-func ContextMiddlewareBy(c func(*http.Request) context.Context) func(http.Handler) http.Handler {
+func ContextMiddlewareBy(c func(http.ResponseWriter, *http.Request) context.Context) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ctx := c(r); ctx == nil {
+			if ctx := c(w, r); ctx == nil {
 				next.ServeHTTP(w, r)
 			} else {
 				next.ServeHTTP(w, r.WithContext(ctx))
@@ -30,43 +30,38 @@ func ContextMiddlewareBy(c func(*http.Request) context.Context) func(http.Handle
 }
 
 func RequestIDMiddleware() func(http.Handler) http.Handler {
-	return ContextMiddlewareBy(func(r *http.Request) context.Context {
+	googleCloudProject := os.Getenv("GOOGLE_CLOUD_PROJECT")
+
+	return ContextMiddlewareBy(func(w http.ResponseWriter, r *http.Request) context.Context {
 		ctx := r.Context()
-		reqid := getHeader(r,
-			"X-Request-ID",
-			"X-Amzn-Trace-Id",       // AWS
-			"X-Cloud-Trace-Context", // GCP
-			"X-ARR-LOG-ID",          // Azure
-		)
+		reqid := log.GetReqestID(w, r)
 		if reqid == "" {
 			reqid = uuid.NewString()
 		}
 		ctx = context.WithValue(ctx, requestIDKey{}, reqid)
-
 		logger := log.GetLoggerFromContextOrDefault(ctx).SetPrefix(reqid)
-		ctx = log.AttachLoggerToContext(ctx, logger)
+
+		// https://cloud.google.com/run/docs/logging#correlate-logs
+		if googleTrace := log.GoogleTraceFromTraceID(
+			log.TraceIDFrom(reqid),
+			googleCloudProject,
+		); googleTrace != "" {
+			logger = logger.With("logging.googleapis.com/trace", googleTrace)
+		} else {
+			w.Header().Set("X-Request-ID", reqid)
+		}
+
+		ctx = log.ContextWith(ctx, logger)
 		return ctx
 	})
 }
 
-func GetRequestID(ctx context.Context) string {
+func GetRequestIDFromContext(ctx context.Context) string {
 	if ctx == nil {
 		return ""
 	}
 	if reqid, ok := ctx.Value(requestIDKey{}).(string); ok {
 		return reqid
-	}
-	return ""
-}
-
-func getHeader(r *http.Request, keys ...string) string {
-	for _, k := range keys {
-		if v := r.Header.Get(k); v != "" {
-			return v
-		}
-		if v := r.Header.Get(strings.ToLower(k)); v != "" {
-			return v
-		}
 	}
 	return ""
 }
