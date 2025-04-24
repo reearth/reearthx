@@ -16,8 +16,9 @@ func TestContextLogger(t *testing.T) {
 		SetOutput(DefaultOutput)
 	})
 
-	l := NewWithOutput(w).SetPrefix("test")
+	l := NewWithOutput(w).SetPrefix("prefix")
 	ctx := AttachLoggerToContext(context.Background(), l)
+
 	Infofc(ctx, "hoge %s", "fuga")
 	Infofc(context.Background(), "hoge %s", "fuga2")
 	//nolint:staticcheck // test context.TODO() instead of nil context
@@ -25,12 +26,12 @@ func TestContextLogger(t *testing.T) {
 
 	scanner := bufio.NewScanner(w)
 	assert.True(t, scanner.Scan())
-	assert.Contains(t, scanner.Text(), "test\thoge fuga")
+	assert.Contains(t, scanner.Text(), "\tprefix\t")
 	assert.True(t, scanner.Scan())
 	assert.Contains(t, scanner.Text(), "hoge fuga2")
-	assert.NotContains(t, scanner.Text(), "test")
+	assert.NotContains(t, scanner.Text(), "\tprefix\t")
 	assert.True(t, scanner.Scan())
 	assert.Contains(t, scanner.Text(), "hoge fuga3")
-	assert.NotContains(t, scanner.Text(), "test")
+	assert.NotContains(t, scanner.Text(), "\tprefix\t")
 	assert.False(t, scanner.Scan())
 }
