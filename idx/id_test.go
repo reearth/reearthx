@@ -15,8 +15,10 @@ type T struct{}
 
 func (T) Type() string { return "_" }
 
-var dummyULID = mustParseID("01fzxycwmq7n84q8kessktvb8z")
-var dummyID = TID{nid: nid{id: dummyULID}}
+var (
+	dummyULID = mustParseID("01fzxycwmq7n84q8kessktvb8z")
+	dummyID   = TID{nid: nid{id: dummyULID}}
+)
 
 func TestNew(t *testing.T) {
 	id := New[T]()
@@ -56,17 +58,19 @@ func TestFromRef(t *testing.T) {
 
 func TestID_Ref(t *testing.T) {
 	assert.Equal(t, &dummyID, dummyID.Ref())
-	assert.NotSame(t, dummyID, *dummyID.Ref())
+	assert.NotSame(t, &dummyID, dummyID.Ref())
 }
 
 func TestID_Clone(t *testing.T) {
+	clone := dummyID.Clone()
 	assert.Equal(t, dummyID, dummyID.Clone())
-	assert.NotSame(t, dummyID, dummyID.Clone())
+	assert.NotSame(t, &dummyID, &clone)
 }
 
 func TestID_CloneRef(t *testing.T) {
-	assert.Equal(t, &dummyID, dummyID.CloneRef())
-	assert.NotSame(t, dummyID, *dummyID.CloneRef())
+	cloneRef := dummyID.CloneRef()
+	assert.Equal(t, &dummyID, cloneRef)
+	assert.NotSame(t, &dummyID, cloneRef)
 	assert.Nil(t, (*TID)(nil).CloneRef())
 }
 
