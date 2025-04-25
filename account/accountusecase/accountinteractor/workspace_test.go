@@ -3,6 +3,7 @@ package accountinteractor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/reearth/reearthx/account/accountdomain"
@@ -1550,5 +1551,143 @@ func assertPermittablesAndRoles(t *testing.T, ctx context.Context, repos *accoun
 	// role assignment
 	for _, p := range permittables {
 		assert.Contains(t, p.RoleIDs(), maintainerRole.ID())
+	}
+}
+
+func TestWorkspace_RemoveIntegrations(t *testing.T) {
+	userID := accountdomain.NewUserID()
+	id1 := accountdomain.NewWorkspaceID()
+	iid1 := accountdomain.NewIntegrationID()
+	iid2 := accountdomain.NewIntegrationID()
+	iid3 := accountdomain.NewIntegrationID()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).
+		Integrations(map[workspace.IntegrationID]workspace.Member{
+			iid1: {Role: workspace.RoleOwner},
+		}).MustBuild()
+	id2 := accountdomain.NewWorkspaceID()
+	w2 := workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).
+		Integrations(map[workspace.IntegrationID]workspace.Member{
+			iid1: {Role: workspace.RoleReader},
+			iid2: {Role: workspace.RoleMaintainer},
+		}).MustBuild()
+	w3 := workspace.New().ID(id2).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).
+		Integrations(map[workspace.IntegrationID]workspace.Member{
+			iid1: {Role: workspace.RoleReader},
+			iid2: {Role: workspace.RoleMaintainer},
+		}).MustBuild()
+	id3 := accountdomain.NewWorkspaceID()
+	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
+
+	op := &accountusecase.Operator{
+		User:               &userID,
+		ReadableWorkspaces: []workspace.ID{id1, id2},
+		OwningWorkspaces:   []workspace.ID{id1, id2, id3},
+	}
+
+	opEmpty := &accountusecase.Operator{}
+
+	type args struct {
+		ctx  context.Context
+		wId  workspace.ID
+		iIds workspace.IntegrationIDList
+		op   *accountusecase.Operator
+	}
+
+	type seeds struct {
+		wList []*workspace.Workspace
+		uList []*user.User
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		seeds   seeds
+		want    *workspace.Workspace
+		wantErr error
+	}{
+		{
+			name: "Remove integration from workspace",
+			args: args{
+				ctx:  context.Background(),
+				wId:  id1,
+				iIds: workspace.IntegrationIDList{iid1},
+				op:   op,
+			},
+			seeds: seeds{
+				wList: []*workspace.Workspace{w1},
+				uList: []*user.User{u},
+			},
+			want:    workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Integrations(map[workspace.IntegrationID]workspace.Member{}).MustBuild(),
+			wantErr: nil,
+		},
+		{
+			name: "Remove multiple integrations from workspace",
+			args: args{
+				ctx:  context.Background(),
+				wId:  id2,
+				iIds: workspace.IntegrationIDList{iid1, iid2},
+				op:   op,
+			},
+			seeds: seeds{
+				wList: []*workspace.Workspace{w2},
+				uList: []*user.User{u},
+			},
+			want: workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).
+				Integrations(map[workspace.IntegrationID]workspace.Member{}).MustBuild(),
+			wantErr: nil,
+		},
+		{
+			name: "Partial remove integrations from workspace not allowed",
+			args: args{
+				ctx:  context.Background(),
+				wId:  id2,
+				iIds: workspace.IntegrationIDList{iid1, iid2, iid3},
+				op:   op,
+			},
+			seeds: seeds{
+				wList: []*workspace.Workspace{w3},
+				uList: []*user.User{u},
+			},
+			want:    w3,
+			wantErr: fmt.Errorf("%w: %v", workspace.ErrTargetUserNotInTheWorkspace, []workspace.IntegrationID{iid3}),
+		},
+		{
+			name: "invalid operator",
+			args: args{
+				ctx:  context.Background(),
+				wId:  id1,
+				iIds: workspace.IntegrationIDList{iid1},
+				op:   opEmpty,
+			},
+			want:    nil,
+			wantErr: accountinterfaces.ErrInvalidOperator,
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			db := accountmemory.New()
+			for _, p := range tc.seeds.wList {
+				err := db.Workspace.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+			for _, p := range tc.seeds.uList {
+				err := db.User.Save(ctx, p)
+				assert.NoError(t, err)
+			}
+
+			workspaceUC := NewWorkspace(db, nil)
+
+			got, err := workspaceUC.RemoveIntegrations(ctx, tc.args.wId, tc.args.iIds, tc.args.op)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr, err)
+				return
+			}
+			assert.Equal(t, tc.want, got)
+			assert.Equal(t, tc.wantErr, err)
+		})
 	}
 }
