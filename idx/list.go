@@ -147,6 +147,10 @@ func (l List[T]) Clone() List[T] {
 	}))
 }
 
+func (l List[T]) Copy() List[T] {
+	return l.Clone()
+}
+
 func (l List[T]) Sort() List[T] {
 	sort.Sort(l)
 	return l

@@ -73,10 +73,11 @@ func TestList_Copy(t *testing.T) {
 	l := List[*T]{a, b}
 
 	assert.Nil(t, List[*T](nil).Copy())
-	assert.Equal(t, List[*T]{a, b}, l.Copy())
-	assert.NotSame(t, l, l.Copy())
-	assert.Same(t, a, l.Copy()[0])
-	assert.Same(t, b, l.Copy()[1])
+	copied := l.Copy()
+	assert.Equal(t, List[*T]{a, b}, copied)
+	assert.False(t, &l == &copied, "expected copied list to have a different address")
+	assert.Same(t, a, copied[0])
+	assert.Same(t, b, copied[1])
 }
 
 func TestList_Ref(t *testing.T) {
