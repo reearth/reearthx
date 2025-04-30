@@ -83,7 +83,6 @@ func Run3[A, B, C any](ctx context.Context, op *accountusecase.Operator, r *acco
 	if e.tx {
 		tr = r.Transaction
 	}
-
 	return usecasex.Run3(ctx, f, usecasex.TxUsecase{Transaction: tr}.UseTx(), e.EnsurePermission(op))
 }
 
