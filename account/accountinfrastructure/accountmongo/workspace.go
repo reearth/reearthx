@@ -11,6 +11,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -48,6 +49,16 @@ func (r *Workspace) FindByUser(ctx context.Context, id user.ID) (workspace.List,
 			"$exists": true,
 		},
 	})
+}
+
+func (r *Workspace) FindByUserWithPagination(ctx context.Context, id user.ID, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error) {
+	filter := bson.M{
+		"members." + strings.Replace(id.String(), ".", "", -1): bson.M{
+			"$exists": true,
+		},
+	}
+
+	return r.paginate(ctx, filter, pagination)
 }
 
 func (r *Workspace) FindByIntegration(ctx context.Context, id workspace.IntegrationID) (workspace.List, error) {
@@ -199,4 +210,13 @@ func (r *Workspace) findOne(ctx context.Context, filter any) (*workspace.Workspa
 
 func filterWorkspaces(ids []accountdomain.WorkspaceID, rows workspace.List) workspace.List {
 	return rows.FilterByID(ids...)
+}
+
+func (r *Workspace) paginate(ctx context.Context, filter bson.M, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error) {
+	c := mongodoc.NewWorkspaceConsumer()
+	pageInfo, err := r.client.Paginate(ctx, filter, nil, pagination, c)
+	if err != nil {
+		return nil, nil, rerror.ErrInternalBy(err)
+	}
+	return c.Result, pageInfo, nil
 }
