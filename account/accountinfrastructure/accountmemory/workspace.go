@@ -2,13 +2,14 @@ package accountmemory
 
 import (
 	"context"
-
 	slices0 "slices"
 
 	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"github.com/reearth/reearthx/util"
 	"golang.org/x/exp/slices"
 )
@@ -33,7 +34,10 @@ func NewWorkspaceWith(workspaces ...*workspace.Workspace) *Workspace {
 }
 
 func (r *Workspace) Filtered(f accountrepo.WorkspaceFilter) accountrepo.Workspace {
-	return r // TODO
+	return &Workspace{
+		data: r.data,
+		err:  r.err,
+	}
 }
 
 func (r *Workspace) FindByUser(_ context.Context, i accountdomain.UserID) (workspace.List, error) {
@@ -44,6 +48,34 @@ func (r *Workspace) FindByUser(_ context.Context, i accountdomain.UserID) (works
 	return rerror.ErrIfNil(r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
 		return value.Members().HasUser(i)
 	}), rerror.ErrNotFound)
+}
+
+func (r *Workspace) FindByUserWithPagination(ctx context.Context, id user.ID, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error) {
+	if r.err != nil {
+		return nil, nil, r.err
+	}
+
+	if pagination == nil {
+		pagination = &usecasex.Pagination{}
+	}
+
+	workspaces := workspace.List(r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
+		return value.Members().HasUser(id)
+	}))
+
+	if len(workspaces) == 0 {
+		return nil, nil, rerror.ErrNotFound
+	}
+
+	startCursor, endCursor := usecasex.Cursor(workspaces[0].ID().String()), usecasex.Cursor(workspaces[len(workspaces)-1].ID().String())
+
+	return workspaces, usecasex.NewPageInfo(
+		int64(len(workspaces)),
+		&startCursor,
+		&endCursor,
+		true,
+		true,
+	), nil
 }
 
 func (r *Workspace) FindByIntegration(_ context.Context, i workspace.IntegrationID) (workspace.List, error) {

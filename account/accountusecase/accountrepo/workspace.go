@@ -5,6 +5,7 @@ import (
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
+	"github.com/reearth/reearthx/usecasex"
 )
 
 type Workspace interface {
@@ -13,6 +14,7 @@ type Workspace interface {
 	FindByName(context.Context, string) (*workspace.Workspace, error)
 	FindByIDs(context.Context, workspace.IDList) (workspace.List, error)
 	FindByUser(context.Context, user.ID) (workspace.List, error)
+	FindByUserWithPagination(ctx context.Context, id user.ID, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error)
 	FindByIntegration(context.Context, workspace.IntegrationID) (workspace.List, error)
 	// FindByIntegrations finds workspace list based on integrations IDs
 	FindByIntegrations(context.Context, workspace.IntegrationIDList) (workspace.List, error)
