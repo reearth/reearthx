@@ -55,10 +55,6 @@ func (r *Workspace) FindByUserWithPagination(ctx context.Context, id user.ID, pa
 		return nil, nil, r.err
 	}
 
-	if pagination == nil {
-		pagination = &usecasex.Pagination{}
-	}
-
 	workspaces := workspace.List(r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
 		return value.Members().HasUser(id)
 	}))
