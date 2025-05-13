@@ -29,5 +29,6 @@ type Workspace interface {
 	RemoveUserMember(context.Context, workspace.ID, user.ID, *accountusecase.Operator) (*workspace.Workspace, error)
 	RemoveMultipleUserMembers(context.Context, workspace.ID, user.IDList, *accountusecase.Operator) (*workspace.Workspace, error)
 	RemoveIntegration(context.Context, workspace.ID, workspace.IntegrationID, *accountusecase.Operator) (*workspace.Workspace, error)
+	RemoveIntegrations(context.Context, workspace.ID, workspace.IntegrationIDList, *accountusecase.Operator) (*workspace.Workspace, error)
 	Remove(context.Context, workspace.ID, *accountusecase.Operator) error
 }

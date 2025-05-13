@@ -1132,6 +1132,132 @@ func (v *RemoveIntegrationFromWorkspaceResponse) GetRemoveIntegrationFromWorkspa
 	return v.RemoveIntegrationFromWorkspace
 }
 
+type RemoveIntegrationsFromWorkspaceInput struct {
+	WorkspaceId    string   `json:"workspaceId"`
+	IntegrationIds []string `json:"integrationIds"`
+}
+
+// GetWorkspaceId returns RemoveIntegrationsFromWorkspaceInput.WorkspaceId, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceInput) GetWorkspaceId() string { return v.WorkspaceId }
+
+// GetIntegrationIds returns RemoveIntegrationsFromWorkspaceInput.IntegrationIds, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceInput) GetIntegrationIds() []string { return v.IntegrationIds }
+
+// RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayload includes the requested fields of the GraphQL type RemoveIntegrationsFromWorkspacePayload.
+type RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayload struct {
+	Workspace RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace `json:"workspace"`
+}
+
+// GetWorkspace returns RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayload.Workspace, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayload) GetWorkspace() RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace {
+	return v.Workspace
+}
+
+// RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace includes the requested fields of the GraphQL type Workspace.
+type RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace struct {
+	FragmentWorkspace `json:"-"`
+}
+
+// GetId returns RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace.Id, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) GetId() string {
+	return v.FragmentWorkspace.Id
+}
+
+// GetName returns RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace.Name, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) GetName() string {
+	return v.FragmentWorkspace.Name
+}
+
+// GetPersonal returns RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace.Personal, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) GetPersonal() bool {
+	return v.FragmentWorkspace.Personal
+}
+
+// GetMembers returns RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace.Members, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) GetMembers() []FragmentWorkspaceMembersWorkspaceMember {
+	return v.FragmentWorkspace.Members
+}
+
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(
+		b, &v.FragmentWorkspace)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type __premarshalRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace struct {
+	Id string `json:"id"`
+
+	Name string `json:"name"`
+
+	Personal bool `json:"personal"`
+
+	Members []json.RawMessage `json:"members"`
+}
+
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace) __premarshalJSON() (*__premarshalRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace, error) {
+	var retval __premarshalRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace
+
+	retval.Id = v.FragmentWorkspace.Id
+	retval.Name = v.FragmentWorkspace.Name
+	retval.Personal = v.FragmentWorkspace.Personal
+	{
+
+		dst := &retval.Members
+		src := v.FragmentWorkspace.Members
+		*dst = make(
+			[]json.RawMessage,
+			len(src))
+		for i, src := range src {
+			dst := &(*dst)[i]
+			var err error
+			*dst, err = __marshalFragmentWorkspaceMembersWorkspaceMember(
+				&src)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"unable to marshal RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayloadWorkspace.FragmentWorkspace.Members: %w", err)
+			}
+		}
+	}
+	return &retval, nil
+}
+
+// RemoveIntegrationsFromWorkspaceResponse is returned by RemoveIntegrationsFromWorkspace on success.
+type RemoveIntegrationsFromWorkspaceResponse struct {
+	RemoveIntegrationsFromWorkspace RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayload `json:"removeIntegrationsFromWorkspace"`
+}
+
+// GetRemoveIntegrationsFromWorkspace returns RemoveIntegrationsFromWorkspaceResponse.RemoveIntegrationsFromWorkspace, and is useful for accessing the field via an interface.
+func (v *RemoveIntegrationsFromWorkspaceResponse) GetRemoveIntegrationsFromWorkspace() RemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspaceRemoveIntegrationsFromWorkspacePayload {
+	return v.RemoveIntegrationsFromWorkspace
+}
+
 type RemoveMultipleUsersFromWorkspaceInput struct {
 	WorkspaceId string   `json:"workspaceId"`
 	UserIds     []string `json:"userIds"`
@@ -1509,6 +1635,13 @@ const (
 	RoleOwner      Role = "OWNER"
 	RoleMaintainer Role = "MAINTAINER"
 )
+
+var AllRole = []Role{
+	RoleReader,
+	RoleWriter,
+	RoleOwner,
+	RoleMaintainer,
+}
 
 // SearchUserResponse is returned by SearchUser on success.
 type SearchUserResponse struct {
@@ -3163,6 +3296,16 @@ func (v *__RemoveIntegrationFromWorkspaceInput) GetInput() RemoveIntegrationFrom
 	return v.Input
 }
 
+// __RemoveIntegrationsFromWorkspaceInput is used internally by genqlient
+type __RemoveIntegrationsFromWorkspaceInput struct {
+	Input RemoveIntegrationsFromWorkspaceInput `json:"input"`
+}
+
+// GetInput returns __RemoveIntegrationsFromWorkspaceInput.Input, and is useful for accessing the field via an interface.
+func (v *__RemoveIntegrationsFromWorkspaceInput) GetInput() RemoveIntegrationsFromWorkspaceInput {
+	return v.Input
+}
+
 // __RemoveMultipleUsersFromWorkspaceInput is used internally by genqlient
 type __RemoveMultipleUsersFromWorkspaceInput struct {
 	Input RemoveMultipleUsersFromWorkspaceInput `json:"input"`
@@ -3287,7 +3430,7 @@ type __WorkspaceByIDsInput struct {
 // GetId returns __WorkspaceByIDsInput.Id, and is useful for accessing the field via an interface.
 func (v *__WorkspaceByIDsInput) GetId() []string { return v.Id }
 
-// The query or mutation executed by AddIntegrationToWorkspace.
+// The mutation executed by AddIntegrationToWorkspace.
 const AddIntegrationToWorkspace_Operation = `
 mutation AddIntegrationToWorkspace ($input: AddIntegrationToWorkspaceInput!) {
 	addIntegrationToWorkspace(input: $input) {
@@ -3317,32 +3460,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func AddIntegrationToWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input AddIntegrationToWorkspaceInput,
-) (*AddIntegrationToWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *AddIntegrationToWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "AddIntegrationToWorkspace",
 		Query:  AddIntegrationToWorkspace_Operation,
 		Variables: &__AddIntegrationToWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data AddIntegrationToWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &AddIntegrationToWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by AddUsersToWorkspace.
+// The mutation executed by AddUsersToWorkspace.
 const AddUsersToWorkspace_Operation = `
 mutation AddUsersToWorkspace ($input: AddUsersToWorkspaceInput!) {
 	addUsersToWorkspace(input: $input) {
@@ -3372,32 +3514,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func AddUsersToWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input AddUsersToWorkspaceInput,
-) (*AddUsersToWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *AddUsersToWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "AddUsersToWorkspace",
 		Query:  AddUsersToWorkspace_Operation,
 		Variables: &__AddUsersToWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data AddUsersToWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &AddUsersToWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by CreateVerification.
+// The mutation executed by CreateVerification.
 const CreateVerification_Operation = `
 mutation CreateVerification ($input: CreateVerificationInput!) {
 	createVerification(input: $input)
@@ -3405,32 +3546,31 @@ mutation CreateVerification ($input: CreateVerificationInput!) {
 `
 
 func CreateVerification(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input CreateVerificationInput,
-) (*CreateVerificationResponse, error) {
-	req := &graphql.Request{
+) (data_ *CreateVerificationResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "CreateVerification",
 		Query:  CreateVerification_Operation,
 		Variables: &__CreateVerificationInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data CreateVerificationResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &CreateVerificationResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by CreateWorkspace.
+// The mutation executed by CreateWorkspace.
 const CreateWorkspace_Operation = `
 mutation CreateWorkspace ($input: CreateWorkspaceInput!) {
 	createWorkspace(input: $input) {
@@ -3460,32 +3600,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func CreateWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input CreateWorkspaceInput,
-) (*CreateWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *CreateWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "CreateWorkspace",
 		Query:  CreateWorkspace_Operation,
 		Variables: &__CreateWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data CreateWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &CreateWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by DeleteMe.
+// The mutation executed by DeleteMe.
 const DeleteMe_Operation = `
 mutation DeleteMe ($input: DeleteMeInput!) {
 	deleteMe(input: $input) {
@@ -3495,32 +3634,31 @@ mutation DeleteMe ($input: DeleteMeInput!) {
 `
 
 func DeleteMe(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input DeleteMeInput,
-) (*DeleteMeResponse, error) {
-	req := &graphql.Request{
+) (data_ *DeleteMeResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "DeleteMe",
 		Query:  DeleteMe_Operation,
 		Variables: &__DeleteMeInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data DeleteMeResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &DeleteMeResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by DeleteWorkspace.
+// The mutation executed by DeleteWorkspace.
 const DeleteWorkspace_Operation = `
 mutation DeleteWorkspace ($input: DeleteWorkspaceInput!) {
 	deleteWorkspace(input: $input) {
@@ -3530,32 +3668,31 @@ mutation DeleteWorkspace ($input: DeleteWorkspaceInput!) {
 `
 
 func DeleteWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input DeleteWorkspaceInput,
-) (*DeleteWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *DeleteWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "DeleteWorkspace",
 		Query:  DeleteWorkspace_Operation,
 		Variables: &__DeleteWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data DeleteWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &DeleteWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by FindByUser.
+// The query executed by FindByUser.
 const FindByUser_Operation = `
 query FindByUser ($userId: ID!) {
 	findByUser(userId: $userId) {
@@ -3583,32 +3720,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func FindByUser(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	userId string,
-) (*FindByUserResponse, error) {
-	req := &graphql.Request{
+) (data_ *FindByUserResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "FindByUser",
 		Query:  FindByUser_Operation,
 		Variables: &__FindByUserInput{
 			UserId: userId,
 		},
 	}
-	var err error
 
-	var data FindByUserResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &FindByUserResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by FindOrCreate.
+// The mutation executed by FindOrCreate.
 const FindOrCreate_Operation = `
 mutation FindOrCreate ($input: FindOrCreateInput!) {
 	findOrCreate(input: $input) {
@@ -3629,32 +3765,31 @@ fragment FragmentUser on User {
 `
 
 func FindOrCreate(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input FindOrCreateInput,
-) (*FindOrCreateResponse, error) {
-	req := &graphql.Request{
+) (data_ *FindOrCreateResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "FindOrCreate",
 		Query:  FindOrCreate_Operation,
 		Variables: &__FindOrCreateInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data FindOrCreateResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &FindOrCreateResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by Me.
+// The query executed by Me.
 const Me_Operation = `
 query Me {
 	me {
@@ -3664,28 +3799,27 @@ query Me {
 `
 
 func Me(
-	ctx context.Context,
-	client graphql.Client,
-) (*MeResponse, error) {
-	req := &graphql.Request{
+	ctx_ context.Context,
+	client_ graphql.Client,
+) (data_ *MeResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "Me",
 		Query:  Me_Operation,
 	}
-	var err error
 
-	var data MeResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &MeResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by PasswordReset.
+// The mutation executed by PasswordReset.
 const PasswordReset_Operation = `
 mutation PasswordReset ($input: PasswordResetInput!) {
 	passwordReset(input: $input)
@@ -3693,32 +3827,31 @@ mutation PasswordReset ($input: PasswordResetInput!) {
 `
 
 func PasswordReset(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input PasswordResetInput,
-) (*PasswordResetResponse, error) {
-	req := &graphql.Request{
+) (data_ *PasswordResetResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "PasswordReset",
 		Query:  PasswordReset_Operation,
 		Variables: &__PasswordResetInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data PasswordResetResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &PasswordResetResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by RemoveIntegrationFromWorkspace.
+// The mutation executed by RemoveIntegrationFromWorkspace.
 const RemoveIntegrationFromWorkspace_Operation = `
 mutation RemoveIntegrationFromWorkspace ($input: RemoveIntegrationFromWorkspaceInput!) {
 	removeIntegrationFromWorkspace(input: $input) {
@@ -3748,32 +3881,85 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func RemoveIntegrationFromWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input RemoveIntegrationFromWorkspaceInput,
-) (*RemoveIntegrationFromWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *RemoveIntegrationFromWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "RemoveIntegrationFromWorkspace",
 		Query:  RemoveIntegrationFromWorkspace_Operation,
 		Variables: &__RemoveIntegrationFromWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data RemoveIntegrationFromWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &RemoveIntegrationFromWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by RemoveMultipleUsersFromWorkspace.
+// The mutation executed by RemoveIntegrationsFromWorkspace.
+const RemoveIntegrationsFromWorkspace_Operation = `
+mutation RemoveIntegrationsFromWorkspace ($input: RemoveIntegrationsFromWorkspaceInput!) {
+	removeIntegrationsFromWorkspace(input: $input) {
+		workspace {
+			... FragmentWorkspace
+		}
+	}
+}
+fragment FragmentWorkspace on Workspace {
+	id
+	name
+	personal
+	members {
+		__typename
+		... on WorkspaceUserMember {
+			userId
+			role
+		}
+		... on WorkspaceIntegrationMember {
+			integrationId
+			role
+			active
+			invitedById
+		}
+	}
+}
+`
+
+func RemoveIntegrationsFromWorkspace(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	input RemoveIntegrationsFromWorkspaceInput,
+) (data_ *RemoveIntegrationsFromWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "RemoveIntegrationsFromWorkspace",
+		Query:  RemoveIntegrationsFromWorkspace_Operation,
+		Variables: &__RemoveIntegrationsFromWorkspaceInput{
+			Input: input,
+		},
+	}
+
+	data_ = &RemoveIntegrationsFromWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The mutation executed by RemoveMultipleUsersFromWorkspace.
 const RemoveMultipleUsersFromWorkspace_Operation = `
 mutation RemoveMultipleUsersFromWorkspace ($input: RemoveMultipleUsersFromWorkspaceInput!) {
 	removeMultipleUsersFromWorkspace(input: $input) {
@@ -3803,32 +3989,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func RemoveMultipleUsersFromWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input RemoveMultipleUsersFromWorkspaceInput,
-) (*RemoveMultipleUsersFromWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *RemoveMultipleUsersFromWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "RemoveMultipleUsersFromWorkspace",
 		Query:  RemoveMultipleUsersFromWorkspace_Operation,
 		Variables: &__RemoveMultipleUsersFromWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data RemoveMultipleUsersFromWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &RemoveMultipleUsersFromWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by RemoveMyAuth.
+// The mutation executed by RemoveMyAuth.
 const RemoveMyAuth_Operation = `
 mutation RemoveMyAuth ($input: RemoveMyAuthInput!) {
 	removeMyAuth(input: $input) {
@@ -3849,32 +4034,31 @@ fragment FragmentMe on Me {
 `
 
 func RemoveMyAuth(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input RemoveMyAuthInput,
-) (*RemoveMyAuthResponse, error) {
-	req := &graphql.Request{
+) (data_ *RemoveMyAuthResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "RemoveMyAuth",
 		Query:  RemoveMyAuth_Operation,
 		Variables: &__RemoveMyAuthInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data RemoveMyAuthResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &RemoveMyAuthResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by RemoveUserFromWorkspace.
+// The mutation executed by RemoveUserFromWorkspace.
 const RemoveUserFromWorkspace_Operation = `
 mutation RemoveUserFromWorkspace ($input: RemoveUserFromWorkspaceInput!) {
 	removeUserFromWorkspace(input: $input) {
@@ -3904,32 +4088,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func RemoveUserFromWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input RemoveUserFromWorkspaceInput,
-) (*RemoveUserFromWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *RemoveUserFromWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "RemoveUserFromWorkspace",
 		Query:  RemoveUserFromWorkspace_Operation,
 		Variables: &__RemoveUserFromWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data RemoveUserFromWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &RemoveUserFromWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by SearchUser.
+// The query executed by SearchUser.
 const SearchUser_Operation = `
 query SearchUser ($keyword: String!) {
 	searchUser(keyword: $keyword) {
@@ -3948,32 +4131,31 @@ fragment FragmentUser on User {
 `
 
 func SearchUser(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	keyword string,
-) (*SearchUserResponse, error) {
-	req := &graphql.Request{
+) (data_ *SearchUserResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "SearchUser",
 		Query:  SearchUser_Operation,
 		Variables: &__SearchUserInput{
 			Keyword: keyword,
 		},
 	}
-	var err error
 
-	var data SearchUserResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &SearchUserResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by SignUp.
+// The mutation executed by SignUp.
 const SignUp_Operation = `
 mutation SignUp ($input: SignUpInput!) {
 	signUp(input: $input) {
@@ -3994,32 +4176,31 @@ fragment FragmentUser on User {
 `
 
 func SignUp(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input SignUpInput,
-) (*SignUpResponse, error) {
-	req := &graphql.Request{
+) (data_ *SignUpResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "SignUp",
 		Query:  SignUp_Operation,
 		Variables: &__SignUpInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data SignUpResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &SignUpResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by SignupOIDC.
+// The mutation executed by SignupOIDC.
 const SignupOIDC_Operation = `
 mutation SignupOIDC ($input: SignupOIDCInput!) {
 	signUpOIDC(input: $input) {
@@ -4040,32 +4221,31 @@ fragment FragmentUser on User {
 `
 
 func SignupOIDC(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input SignupOIDCInput,
-) (*SignupOIDCResponse, error) {
-	req := &graphql.Request{
+) (data_ *SignupOIDCResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "SignupOIDC",
 		Query:  SignupOIDC_Operation,
 		Variables: &__SignupOIDCInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data SignupOIDCResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &SignupOIDCResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by StartPasswordReset.
+// The mutation executed by StartPasswordReset.
 const StartPasswordReset_Operation = `
 mutation StartPasswordReset ($input: StartPasswordResetInput!) {
 	startPasswordReset(input: $input)
@@ -4073,32 +4253,31 @@ mutation StartPasswordReset ($input: StartPasswordResetInput!) {
 `
 
 func StartPasswordReset(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input StartPasswordResetInput,
-) (*StartPasswordResetResponse, error) {
-	req := &graphql.Request{
+) (data_ *StartPasswordResetResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "StartPasswordReset",
 		Query:  StartPasswordReset_Operation,
 		Variables: &__StartPasswordResetInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data StartPasswordResetResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &StartPasswordResetResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by UpdateIntegrationOfWorkspace.
+// The mutation executed by UpdateIntegrationOfWorkspace.
 const UpdateIntegrationOfWorkspace_Operation = `
 mutation UpdateIntegrationOfWorkspace ($input: UpdateIntegrationOfWorkspaceInput!) {
 	updateIntegrationOfWorkspace(input: $input) {
@@ -4128,32 +4307,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func UpdateIntegrationOfWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input UpdateIntegrationOfWorkspaceInput,
-) (*UpdateIntegrationOfWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *UpdateIntegrationOfWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "UpdateIntegrationOfWorkspace",
 		Query:  UpdateIntegrationOfWorkspace_Operation,
 		Variables: &__UpdateIntegrationOfWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data UpdateIntegrationOfWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &UpdateIntegrationOfWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by UpdateMe.
+// The mutation executed by UpdateMe.
 const UpdateMe_Operation = `
 mutation UpdateMe ($input: UpdateMeInput!) {
 	updateMe(input: $input) {
@@ -4174,32 +4352,31 @@ fragment FragmentMe on Me {
 `
 
 func UpdateMe(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input UpdateMeInput,
-) (*UpdateMeResponse, error) {
-	req := &graphql.Request{
+) (data_ *UpdateMeResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "UpdateMe",
 		Query:  UpdateMe_Operation,
 		Variables: &__UpdateMeInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data UpdateMeResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &UpdateMeResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by UpdateUserOfWorkspace.
+// The mutation executed by UpdateUserOfWorkspace.
 const UpdateUserOfWorkspace_Operation = `
 mutation UpdateUserOfWorkspace ($input: UpdateUserOfWorkspaceInput!) {
 	updateUserOfWorkspace(input: $input) {
@@ -4229,32 +4406,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func UpdateUserOfWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input UpdateUserOfWorkspaceInput,
-) (*UpdateUserOfWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *UpdateUserOfWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "UpdateUserOfWorkspace",
 		Query:  UpdateUserOfWorkspace_Operation,
 		Variables: &__UpdateUserOfWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data UpdateUserOfWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &UpdateUserOfWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by UpdateWorkspace.
+// The mutation executed by UpdateWorkspace.
 const UpdateWorkspace_Operation = `
 mutation UpdateWorkspace ($input: UpdateWorkspaceInput!) {
 	updateWorkspace(input: $input) {
@@ -4284,32 +4460,31 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func UpdateWorkspace(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input UpdateWorkspaceInput,
-) (*UpdateWorkspaceResponse, error) {
-	req := &graphql.Request{
+) (data_ *UpdateWorkspaceResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "UpdateWorkspace",
 		Query:  UpdateWorkspace_Operation,
 		Variables: &__UpdateWorkspaceInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data UpdateWorkspaceResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &UpdateWorkspaceResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by UserByIDs.
+// The query executed by UserByIDs.
 const UserByIDs_Operation = `
 query UserByIDs ($id: [ID!]!) {
 	nodes(id: $id, type: USER) {
@@ -4328,32 +4503,31 @@ query UserByIDs ($id: [ID!]!) {
 `
 
 func UserByIDs(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	id []string,
-) (*UserByIDsResponse, error) {
-	req := &graphql.Request{
+) (data_ *UserByIDsResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "UserByIDs",
 		Query:  UserByIDs_Operation,
 		Variables: &__UserByIDsInput{
 			Id: id,
 		},
 	}
-	var err error
 
-	var data UserByIDsResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &UserByIDsResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by UserByNameOrEmail.
+// The query executed by UserByNameOrEmail.
 const UserByNameOrEmail_Operation = `
 query UserByNameOrEmail ($nameOrEmail: String!) {
 	userByNameOrEmail(nameOrEmail: $nameOrEmail) {
@@ -4372,32 +4546,31 @@ fragment FragmentUser on User {
 `
 
 func UserByNameOrEmail(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	nameOrEmail string,
-) (*UserByNameOrEmailResponse, error) {
-	req := &graphql.Request{
+) (data_ *UserByNameOrEmailResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "UserByNameOrEmail",
 		Query:  UserByNameOrEmail_Operation,
 		Variables: &__UserByNameOrEmailInput{
 			NameOrEmail: nameOrEmail,
 		},
 	}
-	var err error
 
-	var data UserByNameOrEmailResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &UserByNameOrEmailResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by VerifyUser.
+// The mutation executed by VerifyUser.
 const VerifyUser_Operation = `
 mutation VerifyUser ($input: VerifyUserInput!) {
 	verifyUser(input: $input) {
@@ -4418,32 +4591,31 @@ fragment FragmentUser on User {
 `
 
 func VerifyUser(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	input VerifyUserInput,
-) (*VerifyUserResponse, error) {
-	req := &graphql.Request{
+) (data_ *VerifyUserResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "VerifyUser",
 		Query:  VerifyUser_Operation,
 		Variables: &__VerifyUserInput{
 			Input: input,
 		},
 	}
-	var err error
 
-	var data VerifyUserResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &VerifyUserResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }
 
-// The query or mutation executed by WorkspaceByIDs.
+// The query executed by WorkspaceByIDs.
 const WorkspaceByIDs_Operation = `
 query WorkspaceByIDs ($id: [ID!]!) {
 	nodes(id: $id, type: WORKSPACE) {
@@ -4474,27 +4646,26 @@ fragment FragmentWorkspace on Workspace {
 `
 
 func WorkspaceByIDs(
-	ctx context.Context,
-	client graphql.Client,
+	ctx_ context.Context,
+	client_ graphql.Client,
 	id []string,
-) (*WorkspaceByIDsResponse, error) {
-	req := &graphql.Request{
+) (data_ *WorkspaceByIDsResponse, err_ error) {
+	req_ := &graphql.Request{
 		OpName: "WorkspaceByIDs",
 		Query:  WorkspaceByIDs_Operation,
 		Variables: &__WorkspaceByIDsInput{
 			Id: id,
 		},
 	}
-	var err error
 
-	var data WorkspaceByIDsResponse
-	resp := &graphql.Response{Data: &data}
+	data_ = &WorkspaceByIDsResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
-	err = client.MakeRequest(
-		ctx,
-		req,
-		resp,
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
 	)
 
-	return &data, err
+	return data_, err_
 }

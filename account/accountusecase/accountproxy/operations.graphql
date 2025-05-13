@@ -185,6 +185,12 @@ mutation RemoveIntegrationFromWorkspace($input: RemoveIntegrationFromWorkspaceIn
     }
 }
 
+mutation RemoveIntegrationsFromWorkspace($input: RemoveIntegrationsFromWorkspaceInput!) {
+    removeIntegrationsFromWorkspace(input: $input) {
+        workspace{...FragmentWorkspace}
+    }
+}
+
 mutation UpdateUserOfWorkspace($input: UpdateUserOfWorkspaceInput!) {
     updateUserOfWorkspace(input: $input) {
         workspace{...FragmentWorkspace}
