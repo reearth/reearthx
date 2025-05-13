@@ -260,3 +260,94 @@ func TestMembers_UpdateIntegrationRole(t *testing.T) {
 	assert.Equal(t, ErrTargetUserNotInTheWorkspace, m.UpdateIntegrationRole(uid2, RoleOwner))
 	assert.Equal(t, map[IntegrationID]Member{uid: {Role: RoleOwner}}, m.integrations)
 }
+
+func TestMembers_DeleteIntegrations(t *testing.T) {
+	uid1 := NewIntegrationID()
+	uid2 := NewIntegrationID()
+	uid3 := NewIntegrationID() // not in map
+	uid4 := NewIntegrationID()
+
+	tests := []struct {
+		name          string
+		initial       map[IntegrationID]Member
+		input         []IntegrationID
+		wantErr       error
+		wantErrText   string
+		expectedState map[IntegrationID]Member
+	}{
+		{
+			name: "delete multiple existing integrations",
+			initial: map[IntegrationID]Member{
+				uid1: {Role: RoleOwner},
+				uid2: {Role: RoleMaintainer},
+				uid4: {Role: RoleReader},
+			},
+			input:   []IntegrationID{uid1, uid2},
+			wantErr: nil,
+			expectedState: map[IntegrationID]Member{
+				uid4: {Role: RoleReader},
+			},
+		},
+		{
+			name: "empty input slice",
+			initial: map[IntegrationID]Member{
+				uid1: {Role: RoleOwner},
+			},
+			input:         []IntegrationID{},
+			wantErr:       ErrNoSpecifiedUsers,
+			expectedState: map[IntegrationID]Member{uid1: {Role: RoleOwner}},
+		},
+		{
+			name: "some IDs not found",
+			initial: map[IntegrationID]Member{
+				uid1: {Role: RoleOwner},
+				uid2: {Role: RoleReader},
+			},
+			input:         []IntegrationID{uid1, uid3}, // uid3 doesn't exist
+			wantErr:       ErrTargetUserNotInTheWorkspace,
+			wantErrText:   uid3.String(), // make sure it's included in error string
+			expectedState: map[IntegrationID]Member{uid1: {Role: RoleOwner}, uid2: {Role: RoleReader}},
+		},
+		{
+			name: "all IDs missing",
+			initial: map[IntegrationID]Member{
+				uid1: {Role: RoleOwner},
+			},
+			input:         []IntegrationID{uid3},
+			wantErr:       ErrTargetUserNotInTheWorkspace,
+			wantErrText:   uid3.String(),
+			expectedState: map[IntegrationID]Member{uid1: {Role: RoleOwner}},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			m := &Members{
+				integrations: copyIntegrationMap(tt.initial),
+			}
+			err := m.DeleteIntegrations(tt.input)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.wantErr)
+				if tt.wantErrText != "" {
+					assert.Contains(t, err.Error(), tt.wantErrText)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.expectedState, m.integrations)
+		})
+	}
+}
+
+func copyIntegrationMap(src map[IntegrationID]Member) map[IntegrationID]Member {
+	dst := make(map[IntegrationID]Member, len(src))
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}

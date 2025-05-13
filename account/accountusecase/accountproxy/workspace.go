@@ -120,6 +120,14 @@ func (w *Workspace) RemoveIntegration(ctx context.Context, id workspace.ID, inte
 	return ToWorkspace(res.RemoveIntegrationFromWorkspace.Workspace.FragmentWorkspace)
 }
 
+func (w *Workspace) RemoveIntegrations(ctx context.Context, id workspace.ID, integrationIDs workspace.IntegrationIDList, op *accountusecase.Operator) (*workspace.Workspace, error) {
+	res, err := RemoveIntegrationsFromWorkspace(ctx, w.gql, RemoveIntegrationsFromWorkspaceInput{WorkspaceId: id.String(), IntegrationIds: lo.Map(integrationIDs, func(i workspace.IntegrationID, _ int) string { return i.String() })})
+	if err != nil {
+		return nil, err
+	}
+	return ToWorkspace(res.RemoveIntegrationsFromWorkspace.Workspace.FragmentWorkspace)
+}
+
 func (w *Workspace) Remove(ctx context.Context, id workspace.ID, op *accountusecase.Operator) error {
 	_, err := DeleteWorkspace(ctx, w.gql, DeleteWorkspaceInput{WorkspaceId: id.String()})
 	if err != nil {
