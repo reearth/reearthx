@@ -1,0 +1,113 @@
+type Asset {
+  id: ID!
+  name: String!
+  size: Int!
+  contentType: String!
+  url: String
+  status: AssetStatus!
+  error: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+enum AssetStatus {
+  PENDING
+  ACTIVE
+  EXTRACTING
+  ERROR
+}
+
+scalar Time
+scalar Upload
+
+type Query {
+  # Get a single asset by ID
+  asset(id: ID!): Asset!
+  # List all assets
+  assets: [Asset!]!
+}
+
+type Mutation {
+  # Direct upload mutation
+  uploadAsset(input: UploadAssetInput!): UploadAssetPayload!
+  
+  # Get signed URL for upload
+  getAssetUploadURL(input: GetAssetUploadURLInput!): GetAssetUploadURLPayload!
+  
+  # Update asset metadata after signed URL upload
+  updateAssetMetadata(input: UpdateAssetMetadataInput!): UpdateAssetMetadataPayload!
+
+  # Delete a single asset
+  deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
+
+  # Delete multiple assets
+  deleteAssets(input: DeleteAssetsInput!): DeleteAssetsPayload!
+
+  # Move asset to another workspace/project
+  moveAsset(input: MoveAssetInput!): MoveAssetPayload!
+
+  # Delete all assets in a group
+  deleteAssetsInGroup(input: DeleteAssetsInGroupInput!): DeleteAssetsInGroupPayload!
+}
+
+input UploadAssetInput {
+  id: ID!
+  file: Upload!
+}
+
+type UploadAssetPayload {
+  asset: Asset!
+}
+
+input GetAssetUploadURLInput {
+  id: ID!
+}
+
+type GetAssetUploadURLPayload {
+  uploadURL: String!
+}
+
+input UpdateAssetMetadataInput {
+  id: ID!
+  name: String!
+  size: Int!
+  contentType: String!
+}
+
+type UpdateAssetMetadataPayload {
+  asset: Asset!
+}
+
+input DeleteAssetInput {
+  id: ID!
+}
+
+type DeleteAssetPayload {
+  assetId: ID!
+}
+
+input DeleteAssetsInput {
+  ids: [ID!]!
+}
+
+type DeleteAssetsPayload {
+  assetIds: [ID!]!
+}
+
+input MoveAssetInput {
+  id: ID!
+  toWorkspaceId: ID
+  toProjectId: ID
+}
+
+type MoveAssetPayload {
+  asset: Asset!
+}
+
+input DeleteAssetsInGroupInput {
+  groupId: ID!
+}
+
+type DeleteAssetsInGroupPayload {
+  groupId: ID!
+} 
