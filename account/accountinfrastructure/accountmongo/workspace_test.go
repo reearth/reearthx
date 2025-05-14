@@ -216,6 +216,56 @@ func TestWorkspace_FindByUser(t *testing.T) {
 	}
 }
 
+func TestWorkspace_FindByUserWithPagination(t *testing.T) {
+	u := user.New().Name("aaa").NewID().Email("test@mail.com").MustBuild()
+	ws1 := workspace.New().NewID().Name("hoge").Members(map[user.ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, InvitedBy: u.ID()}}).MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").Members(map[user.ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, InvitedBy: u.ID()}}).MustBuild()
+	ws3 := workspace.New().NewID().Name("xxx").Members(map[user.ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, InvitedBy: u.ID()}}).MustBuild()
+	tests := []struct {
+		Name     string
+		Input    accountdomain.UserID
+		RepoData workspace.List
+		Expected workspace.List
+	}{
+		{
+			Name:     "must find a workspace",
+			Input:    u.ID(),
+			RepoData: workspace.List{ws1, ws2, ws3},
+			Expected: workspace.List{ws1, ws2, ws3},
+		},
+		{
+			Name:     "must not find any workspace",
+			Input:    user.NewID(),
+			RepoData: workspace.List{ws1, ws2, ws3},
+			Expected: workspace.List{},
+		},
+	}
+	init := mongotest.Connect(t)
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.Name, func(tt *testing.T) {
+			tt.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+
+			repo := NewWorkspace(client)
+			ctx := context.Background()
+			err := repo.SaveAll(ctx, tc.RepoData)
+			assert.NoError(tt, err)
+
+			got, _, err := repo.FindByUserWithPagination(ctx, tc.Input, nil)
+			assert.NoError(tt, err)
+			for k, ws := range got {
+				if ws != nil {
+					assert.Equal(tt, tc.Expected[k].ID(), ws.ID())
+					assert.Equal(tt, tc.Expected[k].Name(), ws.Name())
+				}
+			}
+		})
+	}
+}
+
 func TestWorkspace_Remove(t *testing.T) {
 	ws := workspace.New().NewID().Name("hoge").MustBuild()
 
