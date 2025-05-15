@@ -9,6 +9,25 @@ import (
 	"github.com/reearth/reearthx/log"
 )
 
+type authInfoKey struct{}
+
+func GetAuthInfoFromContext(ctx context.Context) *AuthInfo {
+	if ctx == nil {
+		return nil
+	}
+	if authInfo, ok := ctx.Value(authInfoKey{}).(AuthInfo); ok {
+		return &authInfo
+	}
+	return nil
+}
+
+func ContextWithAuthInfo(ctx context.Context, authInfo AuthInfo) context.Context {
+	if ctx == nil {
+		return nil
+	}
+	return context.WithValue(ctx, authInfoKey{}, authInfo)
+}
+
 type requestIDKey struct{}
 
 func ContextMiddleware(key, value any) func(http.Handler) http.Handler {
