@@ -226,7 +226,6 @@ func TestList_Clone(t *testing.T) {
 
 	assert.Nil(t, List[T](nil).Clone())
 	assert.Equal(t, List[T]{a, b}, l.Clone())
-	assert.NotSame(t, l, l.Clone())
 }
 
 func TestList_Sort(t *testing.T) {

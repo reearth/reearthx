@@ -3,9 +3,9 @@ package user
 import (
 	"errors"
 	"net/mail"
+	"slices"
 
 	"github.com/reearth/reearthx/util"
-	"golang.org/x/exp/slices"
 	"golang.org/x/text/language"
 )
 

@@ -43,7 +43,7 @@ func (p JWTProvider) validator() (JWTValidator, error) {
 		return nil, fmt.Errorf("failed to parse the issuer url")
 	}
 
-	opts := []jwks.ProviderOption{}
+	opts := []any{}
 	if p.JWKSURI != nil && *p.JWKSURI != "" {
 		u, err := url.Parse(*p.JWKSURI)
 		if err != nil {

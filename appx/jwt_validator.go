@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/util"
-	"golang.org/x/exp/slices"
 )
 
 type JWTValidator interface {

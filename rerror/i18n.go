@@ -3,9 +3,9 @@ package rerror
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/reearth/reearthx/i18n"
-	"golang.org/x/exp/slices"
 )
 
 type Localizable interface {

@@ -1,8 +1,9 @@
 package util
 
 import (
+	"slices"
+
 	"github.com/samber/lo"
-	"golang.org/x/exp/slices"
 )
 
 type List[T comparable] []T
@@ -154,7 +155,7 @@ func ExtractIDs[ID comparable, T Identifiable[ID]](list []*T) []ID {
 		return nil
 	}
 	ids := make([]ID, 0, len(list))
-	for _, item := range Deref[T](list, false) {
+	for _, item := range Deref(list, false) {
 		ids = append(ids, item.ID())
 	}
 	return ids
@@ -167,7 +168,7 @@ func Pick[ID comparable, T Identifiable[ID]](list []*T, idList IDLister[ID]) []*
 
 	layers := make([]*T, 0, idList.LayerCount())
 	for _, lid := range idList.Layers() {
-		if l := Find[ID, T](list, lid); l != nil {
+		if l := Find(list, lid); l != nil {
 			layers = append(layers, l)
 		}
 	}
@@ -219,7 +220,7 @@ func MapAdd[ID comparable, T Identifiable[ID]](m map[ID]*T, items ...*T) map[ID]
 
 func ListMap[ID comparable, T Identifiable[ID]](list []*T) map[ID]*T {
 	m := make(map[ID]*T, len(list))
-	MapAdd[ID, T](m, list...)
+	MapAdd(m, list...)
 	return m
 }
 
@@ -239,14 +240,14 @@ func MapWithIDFunc[ID comparable, T any](list []*T, idFunc func(*T) ID, checkNil
 
 func Merge[ID comparable, T Identifiable[ID]](m map[ID]*T, m2 map[ID]*T) map[ID]*T {
 	if m == nil {
-		return Clone[ID, T](m2)
+		return Clone(m2)
 	}
-	m3 := Clone[ID, T](m)
+	m3 := Clone(m)
 	if m2 == nil {
 		return m3
 	}
 
-	return MapAdd[ID, T](m3, MapList[ID, T](m2, false)...)
+	return MapAdd(m3, MapList(m2, false)...)
 }
 
 func ListMerge[T comparable](list []T, list2 []T, getClone func(T) T, duplicateSkip bool) []T {
@@ -258,7 +259,7 @@ func ListMerge[T comparable](list []T, list2 []T, getClone func(T) T, duplicateS
 
 	for _, item := range list2 {
 		if duplicateSkip {
-			if !Contains[T](result, item) {
+			if !Contains(result, item) {
 				result = append(result, getClone(item))
 			}
 		} else {
@@ -335,7 +336,7 @@ func AddUnique[ID comparable, T Identifiable[ID]](list []*T, newList []*T) []*T 
 		if l == nil {
 			continue
 		}
-		if Find[ID, T](res, (*l).ID()) != nil {
+		if Find(res, (*l).ID()) != nil {
 			continue
 		}
 		res = append(res, l)
@@ -421,7 +422,7 @@ func RemoveByIds[ID comparable, T any](list []*T, getId func(*T) ID, ids ...ID) 
 	result := make([]*T, 0, len(list))
 	for _, item := range list {
 		itemID := getId(item)
-		if !Contains[ID](ids, itemID) {
+		if !Contains(ids, itemID) {
 			result = append(result, item)
 		}
 	}

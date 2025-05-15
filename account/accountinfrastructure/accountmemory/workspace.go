@@ -2,7 +2,7 @@ package accountmemory
 
 import (
 	"context"
-	slices0 "slices"
+	"slices"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
@@ -11,7 +11,6 @@ import (
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"github.com/reearth/reearthx/util"
-	"golang.org/x/exp/slices"
 )
 
 type Workspace struct {
@@ -95,7 +94,7 @@ func (r *Workspace) FindByIntegrations(_ context.Context, ids workspace.Integrat
 	}
 
 	res := r.data.FindAll(func(key workspace.ID, value *workspace.Workspace) bool {
-		return slices0.ContainsFunc(ids, value.Members().HasIntegration)
+		return slices.ContainsFunc(ids, value.Members().HasIntegration)
 	})
 
 	slices.SortFunc(res, func(a, b *workspace.Workspace) int { return a.ID().Compare(b.ID()) })

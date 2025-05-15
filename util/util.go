@@ -2,10 +2,10 @@ package util
 
 import (
 	"net/url"
+	"slices"
 
 	"github.com/samber/lo"
 	"golang.org/x/exp/constraints"
-	"golang.org/x/exp/slices"
 )
 
 func ToPtrIfNotEmpty[T comparable](t T) *T {
