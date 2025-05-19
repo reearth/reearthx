@@ -8,20 +8,19 @@ import (
 
 type Asset struct {
 	ID                      AssetID
-	GroupID                 GroupID // projectID in visualizer and cms, workspaceID in flow
-	CreatedAt               time.Time
+	GroupID                 GroupID   // projectID in visualizer and cms, workspaceID in flow
+	CreatedAt               time.Time //
 	CreatedBy               OperatorInfo
 	Size                    int64
-	ContentType             string
+	ContentType             string // visualizer && flow
 	ContentEncoding         string
-	PreviewType             PreviewType
+	PreviewType             PreviewType       // cms
 	UUID                    string            //cms
-	URL                     string            //same as cms visualizer and flow
+	URL                     string            //cms && visualizer && flow
 	FileName                string            //cms
 	ArchiveExtractionStatus *ExtractionStatus //cms
 	FlatFiles               bool              //cms
 	//Thread ThreadID //cms
-	//Integration IntegrationID //cms
 }
 
 type PreviewType string
@@ -50,8 +49,8 @@ const (
 type OperatorType string
 
 const (
-	OperatorTypeUser        OperatorType = "USER"
-	OperatorTypeIntegration OperatorType = "INTEGRATION"
+	OperatorTypeUser        OperatorType = "USER"        //cms
+	OperatorTypeIntegration OperatorType = "INTEGRATION" //cms
 )
 
 type OperatorInfo struct {
