@@ -39,9 +39,9 @@ func TestBuilder_Name(t *testing.T) {
 	assert.Equal(t, "xxx", w.w.name)
 }
 
-func TestBuilder_DisplayName(t *testing.T) {
-	w := New().DisplayName("xxx")
-	assert.Equal(t, "xxx", w.w.displayName)
+func TestBuilder_Alias(t *testing.T) {
+	w := New().Alias("xxx")
+	assert.Equal(t, "xxx", w.w.alias)
 }
 
 func TestBuilder_Build(t *testing.T) {

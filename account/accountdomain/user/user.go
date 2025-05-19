@@ -16,8 +16,10 @@ var (
 type User struct {
 	id            ID
 	name          string
-	displayName   string
+	alias         string
+	description   string
 	email         string
+	website       string
 	password      EncodedPassword
 	workspace     WorkspaceID
 	auths         []Auth
@@ -36,15 +38,24 @@ func (u *User) Name() string {
 	return u.name
 }
 
-func (u *User) DisplayName() string {
-	if u.displayName == "" {
+func (u *User) Alias() string {
+	if u.alias == "" {
 		return u.name
 	}
-	return u.displayName
+
+	return u.alias
+}
+
+func (u *User) Description() string {
+	return u.description
 }
 
 func (u *User) Email() string {
 	return u.email
+}
+
+func (u *User) Website() string {
+	return u.website
 }
 
 func (u *User) Workspace() WorkspaceID {
@@ -67,12 +78,24 @@ func (u *User) UpdateName(name string) {
 	u.name = name
 }
 
+func (u *User) UpdateAlias(alias string) {
+	u.alias = alias
+}
+
+func (u *User) UpdateDescription(description string) {
+	u.description = description
+}
+
 func (u *User) UpdateEmail(email string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return ErrInvalidEmail
 	}
 	u.email = email
 	return nil
+}
+
+func (u *User) UpdateWebsite(website string) {
+	u.website = website
 }
 
 func (u *User) UpdateWorkspace(workspace WorkspaceID) {
@@ -85,10 +108,6 @@ func (u *User) UpdateLang(lang language.Tag) {
 
 func (u *User) UpdateTheme(t Theme) {
 	u.theme = t
-}
-
-func (u *User) UpdateDisplayName(displayName string) {
-	u.displayName = displayName
 }
 
 func (u *User) Verification() *Verification {
@@ -215,8 +234,10 @@ func (u *User) Clone() *User {
 	return &User{
 		id:            u.id,
 		name:          u.name,
-		displayName:   u.displayName,
+		alias:         u.alias,
+		description:   u.description,
 		email:         u.email,
+		website:       u.website,
 		password:      u.password,
 		workspace:     u.workspace,
 		auths:         slices.Clone(u.auths),

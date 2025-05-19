@@ -24,7 +24,7 @@ func TestUser(t *testing.T) {
 
 	assert.Equal(t, u.id, u.ID())
 	assert.Equal(t, "xxx", u.Name())
-	assert.Equal(t, "xxx", u.DisplayName())
+	assert.Equal(t, "xxx", u.Alias())
 	assert.Equal(t, u.workspace, u.Workspace())
 	assert.Equal(t, Auths([]Auth{{
 		Provider: "aaa",
@@ -36,8 +36,8 @@ func TestUser(t *testing.T) {
 
 	u.UpdateName("a")
 	assert.Equal(t, "a", u.name)
-	assert.Equal(t, "", u.displayName)
-	assert.Equal(t, "a", u.DisplayName())
+	assert.Equal(t, "", u.alias)
+	assert.Equal(t, "a", u.Alias())
 	assert.ErrorContains(t, u.UpdateEmail("ab"), "invalid email")
 	assert.NoError(t, u.UpdateEmail("a@example.com"))
 	assert.Equal(t, "a@example.com", u.email)
@@ -45,8 +45,8 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, language.Und, u.lang)
 	u.UpdateTheme(ThemeLight)
 	assert.Equal(t, ThemeLight, u.theme)
-	u.UpdateDisplayName("displayName")
-	assert.Equal(t, "displayName", u.displayName)
+	u.UpdateAlias("alias")
+	assert.Equal(t, "alias", u.alias)
 
 	wid := NewWorkspaceID()
 	u.UpdateWorkspace(wid)

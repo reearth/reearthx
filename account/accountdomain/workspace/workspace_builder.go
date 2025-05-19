@@ -65,8 +65,8 @@ func (b *Builder) Name(name string) *Builder {
 	return b
 }
 
-func (b *Builder) DisplayName(displayName string) *Builder {
-	b.w.displayName = displayName
+func (b *Builder) Alias(alias string) *Builder {
+	b.w.alias = alias
 	return b
 }
 
