@@ -8,17 +8,20 @@ import (
 
 type Asset struct {
 	ID                      AssetID
-	GroupID                 GroupID
+	GroupID                 GroupID // projectID in visualizer and cms, workspaceID in flow
 	CreatedAt               time.Time
 	CreatedBy               OperatorInfo
 	Size                    int64
 	ContentType             string
 	ContentEncoding         string
 	PreviewType             PreviewType
-	UUID                    string
-	URL                     string
-	FileName                string
-	ArchiveExtractionStatus *ExtractionStatus
+	UUID                    string            //cms
+	URL                     string            //same as cms visualizer and flow
+	FileName                string            //cms
+	ArchiveExtractionStatus *ExtractionStatus //cms
+	FlatFiles               bool              //cms
+	//Thread ThreadID //cms
+	//Integration IntegrationID //cms
 }
 
 type PreviewType string
