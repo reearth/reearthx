@@ -2,13 +2,11 @@ package mongotest
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -31,18 +29,11 @@ func Connect(t *testing.T) func(*testing.T) *mongo.Database {
 		return nil
 	}
 
-	monitor := &event.CommandMonitor{
-		Started: func(ctx context.Context, evt *event.CommandStartedEvent) {
-			fmt.Printf("[MongoDB Command] %s: %v\n", evt.CommandName, evt.Command)
-		},
-	}
-
 	c, _ := mongo.Connect(
 		context.Background(),
 		options.Client().
 			ApplyURI(db).
-			SetConnectTimeout(time.Second*10).
-			SetMonitor(monitor),
+			SetConnectTimeout(time.Second*10),
 	)
 
 	return func(t *testing.T) *mongo.Database {
