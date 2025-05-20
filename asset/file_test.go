@@ -91,6 +91,7 @@ func TestFile_Files(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			flatten := tt.files.FlattenChildren()
@@ -243,6 +244,7 @@ func Test_File_RootPath(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			result := tt.file.RootPath(tt.uuid)
@@ -287,6 +289,7 @@ func Test_Clone(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			cloned := tt.file.Clone()
