@@ -136,6 +136,18 @@ func (r *Workspace) FindByName(_ context.Context, name string) (*workspace.Works
 	}), rerror.ErrNotFound)
 }
 
+func (r *Workspace) FindByAlias(_ context.Context, alias string) (*workspace.Workspace, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	if alias == "" {
+		return nil, rerror.ErrNotFound
+	}
+	return rerror.ErrIfNil(r.data.Find(func(key workspace.ID, value *workspace.Workspace) bool {
+		return value.Alias() == alias
+	}), rerror.ErrNotFound)
+}
+
 func (r *Workspace) Create(_ context.Context, t *workspace.Workspace) error {
 	if r.err != nil {
 		return r.err

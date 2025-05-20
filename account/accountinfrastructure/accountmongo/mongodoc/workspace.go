@@ -17,6 +17,10 @@ type WorkspaceDocument struct {
 	ID           string
 	Name         string
 	Alias        string
+	Description  string
+	Website      string
+	Email        string
+	BillingEmail string
 	Members      map[string]WorkspaceMemberDocument
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
@@ -47,6 +51,11 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 	return &WorkspaceDocument{
 		ID:           wId,
 		Name:         ws.Name(),
+		Alias:        ws.Alias(),
+		Description:  ws.Description(),
+		Website:      ws.Website(),
+		Email:        ws.Email(),
+		BillingEmail: ws.BillingEmail(),
 		Members:      membersDoc,
 		Integrations: integrationsDoc,
 		Personal:     ws.IsPersonal(),
@@ -104,6 +113,10 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		ID(tid).
 		Name(d.Name).
 		Alias(d.Alias).
+		Description(d.Description).
+		Website(d.Website).
+		Email(d.Email).
+		BillingEmail(d.BillingEmail).
 		Members(members).
 		Integrations(integrations).
 		Personal(d.Personal).

@@ -70,6 +70,26 @@ func (b *Builder) Alias(alias string) *Builder {
 	return b
 }
 
+func (b *Builder) Description(description string) *Builder {
+	b.w.description = description
+	return b
+}
+
+func (b *Builder) Website(website string) *Builder {
+	b.w.website = website
+	return b
+}
+
+func (b *Builder) Email(email string) *Builder {
+	b.w.email = email
+	return b
+}
+
+func (b *Builder) BillingEmail(billingEmail string) *Builder {
+	b.w.billingEmail = billingEmail
+	return b
+}
+
 func (b *Builder) Members(members map[UserID]Member) *Builder {
 	b.members = members
 	return b
