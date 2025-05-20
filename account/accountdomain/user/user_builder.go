@@ -8,6 +8,7 @@ import (
 )
 
 var ErrInvalidName = rerror.NewE(i18n.T("invalid user name"))
+var ErrInvalidAlias = rerror.NewE(i18n.T("invalid alias"))
 
 type Builder struct {
 	u            *User
@@ -29,6 +30,9 @@ func (b *Builder) Build() (*User, error) {
 	}
 	if b.u.name == "" {
 		return nil, ErrInvalidName
+	}
+	if b.u.alias == "" {
+		return nil, ErrInvalidAlias
 	}
 	if !b.u.theme.Valid() {
 		b.u.theme = ThemeDefault

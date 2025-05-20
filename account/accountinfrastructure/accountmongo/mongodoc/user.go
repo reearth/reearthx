@@ -108,6 +108,7 @@ func (d *UserDocument) Model() (*user.User, error) {
 		ID(uid).
 		Name(d.Name).
 		Email(d.Email).
+		Alias(d.Alias).
 		Auths(auths).
 		Workspace(tid).
 		LangFrom(d.Lang).

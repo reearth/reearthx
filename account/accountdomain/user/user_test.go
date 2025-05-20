@@ -10,21 +10,30 @@ import (
 
 func TestUser(t *testing.T) {
 	u := &User{
-		id:        NewID(),
-		workspace: NewWorkspaceID(),
-		name:      "xxx",
-		lang:      language.Make("en"),
-		email:     "ff@xx.zz",
+		id:          NewID(),
+		name:        "xxx",
+		alias:       "xxx",
+		description: "desc",
+		email:       "ff@xx.zz",
+		website:     "https://example.com",
+		password:    nil,
+		workspace:   NewWorkspaceID(),
 		auths: []Auth{{
 			Provider: "aaa",
 			Sub:      "sss",
 		}},
-		theme: ThemeDark,
+		lang:          language.Make("en"),
+		theme:         ThemeDark,
+		verification:  nil,
+		passwordReset: nil,
+		host:          "",
 	}
 
 	assert.Equal(t, u.id, u.ID())
 	assert.Equal(t, "xxx", u.Name())
 	assert.Equal(t, "xxx", u.Alias())
+	assert.Equal(t, "desc", u.Description())
+	assert.Equal(t, "https://example.com", u.Website())
 	assert.Equal(t, u.workspace, u.Workspace())
 	assert.Equal(t, Auths([]Auth{{
 		Provider: "aaa",
@@ -36,8 +45,6 @@ func TestUser(t *testing.T) {
 
 	u.UpdateName("a")
 	assert.Equal(t, "a", u.name)
-	assert.Equal(t, "", u.alias)
-	assert.Equal(t, "a", u.Alias())
 	assert.ErrorContains(t, u.UpdateEmail("ab"), "invalid email")
 	assert.NoError(t, u.UpdateEmail("a@example.com"))
 	assert.Equal(t, "a@example.com", u.email)
@@ -47,6 +54,10 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, ThemeLight, u.theme)
 	u.UpdateAlias("alias")
 	assert.Equal(t, "alias", u.alias)
+	u.UpdateDescription("desc")
+	assert.Equal(t, "desc", u.description)
+	u.UpdateWebsite("https://example.com")
+	assert.Equal(t, "https://example.com", u.website)
 
 	wid := NewWorkspaceID()
 	u.UpdateWorkspace(wid)
