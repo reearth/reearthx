@@ -31,9 +31,6 @@ func (b *Builder) Build() (*User, error) {
 	if b.u.name == "" {
 		return nil, ErrInvalidName
 	}
-	if b.u.alias == "" {
-		return nil, ErrInvalidAlias
-	}
 	if !b.u.theme.Valid() {
 		b.u.theme = ThemeDefault
 	}
