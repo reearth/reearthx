@@ -20,11 +20,12 @@ type Asset struct {
 	FileName                string            //cms
 	ArchiveExtractionStatus *ExtractionStatus //cms
 	FlatFiles               bool              //cms
-	//Thread ThreadID //cms
+	Integration             IntegrationID
 }
 
 type PreviewType string
 
+// CMS
 const (
 	PreviewTypeImage      PreviewType = "IMAGE"
 	PreviewTypeImageSVG   PreviewType = "IMAGE_SVG"

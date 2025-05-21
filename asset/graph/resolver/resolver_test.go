@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"io"
 	"testing"
 	"time"
 
@@ -35,12 +36,12 @@ func (m *MockAssetService) GetAsset(ctx context.Context, id asset.AssetID) (*ass
 	return args.Get(0).(*asset.Asset), args.Error(1)
 }
 
-func (m *MockAssetService) GetAssetFile(ctx context.Context, id asset.AssetID) (*asset.AssetFile, error) {
+func (m *MockAssetService) GetAssetFile(ctx context.Context, id asset.AssetID) (*asset.File, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*asset.AssetFile), args.Error(1)
+	return args.Get(0).(*asset.File), args.Error(1)
 }
 
 func (m *MockAssetService) ListAssets(ctx context.Context, groupID asset.GroupID, filter asset.AssetFilter, sort asset.AssetSort, pagination asset.Pagination) ([]*asset.Asset, int64, error) {
@@ -77,6 +78,142 @@ func (m *MockAssetService) CreateAssetUpload(ctx context.Context, param asset.Cr
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*asset.AssetUploadInfo), args.Error(1)
+}
+
+func (m *MockAssetService) BatchDelete(ctx context.Context, ids asset.AssetIDList, operator *asset.Operator) ([]asset.AssetID, error) {
+	args := m.Called(ctx, ids, operator)
+	return args.Get(0).([]asset.AssetID), args.Error(1)
+}
+
+func (m *MockAssetService) Create(ctx context.Context, param asset.CreateAssetParam, operator *asset.Operator) (*asset.Asset, *asset.File, error) {
+	args := m.Called(ctx, param, operator)
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	if args.Get(1) == nil {
+		return args.Get(0).(*asset.Asset), nil, args.Error(2)
+	}
+	return args.Get(0).(*asset.Asset), args.Get(1).(*asset.File), args.Error(2)
+}
+
+func (m *MockAssetService) FindByID(ctx context.Context, id asset.AssetID, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, id, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) FindByUUID(ctx context.Context, uuid string, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, uuid, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) FindByIDs(ctx context.Context, ids []asset.AssetID, operator *asset.Operator) ([]*asset.Asset, error) {
+	args := m.Called(ctx, ids, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) FindByProject(ctx context.Context, projectID asset.ProjectID, filter asset.AssetFilter, operator *asset.Operator) ([]*asset.Asset, *asset.PageInfo, error) {
+	args := m.Called(ctx, projectID, filter, operator)
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	if args.Get(1) == nil {
+		return args.Get(0).([]*asset.Asset), nil, args.Error(2)
+	}
+	return args.Get(0).([]*asset.Asset), args.Get(1).(*asset.PageInfo), args.Error(2)
+}
+
+func (m *MockAssetService) FindFileByID(ctx context.Context, id asset.AssetID, operator *asset.Operator) (*asset.File, error) {
+	args := m.Called(ctx, id, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.File), args.Error(1)
+}
+
+func (m *MockAssetService) FindFilesByIDs(ctx context.Context, ids asset.AssetIDList, operator *asset.Operator) (map[asset.AssetID]*asset.File, error) {
+	args := m.Called(ctx, ids, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[asset.AssetID]*asset.File), args.Error(1)
+}
+
+func (m *MockAssetService) DownloadByID(ctx context.Context, id asset.AssetID, headers map[string]string, operator *asset.Operator) (io.ReadCloser, map[string]string, error) {
+	args := m.Called(ctx, id, headers, operator)
+	if args.Get(0) == nil {
+		return nil, nil, args.Error(2)
+	}
+	if args.Get(1) == nil {
+		return args.Get(0).(io.ReadCloser), nil, args.Error(2)
+	}
+	return args.Get(0).(io.ReadCloser), args.Get(1).(map[string]string), args.Error(2)
+}
+
+func (m *MockAssetService) Update(ctx context.Context, param asset.UpdateAssetParam, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, param, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) UpdateFiles(ctx context.Context, id asset.AssetID, status *asset.ExtractionStatus, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, id, status, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) Delete(ctx context.Context, id asset.AssetID, operator *asset.Operator) (asset.AssetID, error) {
+	args := m.Called(ctx, id, operator)
+	return args.Get(0).(asset.AssetID), args.Error(1)
+}
+
+func (m *MockAssetService) Decompress(ctx context.Context, id asset.AssetID, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, id, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) Publish(ctx context.Context, id asset.AssetID, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, id, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) Unpublish(ctx context.Context, id asset.AssetID, operator *asset.Operator) (*asset.Asset, error) {
+	args := m.Called(ctx, id, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.Asset), args.Error(1)
+}
+
+func (m *MockAssetService) CreateUpload(ctx context.Context, param asset.CreateAssetUploadParam, operator *asset.Operator) (*asset.AssetUpload, error) {
+	args := m.Called(ctx, param, operator)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*asset.AssetUpload), args.Error(1)
+}
+
+func (m *MockAssetService) RetryDecompression(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
 }
 
 type MockGroupService struct {

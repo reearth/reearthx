@@ -12,6 +12,20 @@ func (AssetIDType) Type() string {
 
 type AssetID = idx.ID[AssetIDType]
 
+type IntegrationIDType struct{}
+
+func (IntegrationIDType) Type() string {
+	return "integration"
+}
+
+type IntegrationID = idx.ID[IntegrationIDType]
+
+type OperatorIDType struct{}
+
+func (OperatorIDType) Type() string {
+	return "operator"
+}
+
 func NewAssetID() AssetID {
 	return idx.New[AssetIDType]()
 }
@@ -31,6 +45,8 @@ func (GroupIDType) Type() string {
 }
 
 type GroupID = idx.ID[GroupIDType]
+
+type GroupIDList = idx.List[GroupIDType]
 
 func NewGroupID() GroupID {
 	return idx.New[GroupIDType]()

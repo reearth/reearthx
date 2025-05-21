@@ -109,3 +109,35 @@ func (s *localStorage) GenerateUploadURL(ctx context.Context, key string, size i
 
 	return uploadURL, nil
 }
+
+func (s *localStorage) ListFiles(ctx context.Context, prefix string) ([]string, error) {
+	fullPath := filepath.Join(s.baseDir, prefix)
+
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return []string{}, nil
+	}
+
+	var files []string
+	err := filepath.Walk(fullPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			relPath, err := filepath.Rel(s.baseDir, path)
+			if err != nil {
+				return err
+			}
+
+			relPath = filepath.ToSlash(relPath)
+			files = append(files, relPath)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to list files: %w", err)
+	}
+
+	return files, nil
+}

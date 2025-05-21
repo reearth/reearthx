@@ -124,6 +124,28 @@ func (s *Storage) GenerateUploadURL(ctx context.Context, key string, size int64,
 	return url, nil
 }
 
+func (s *Storage) ListFiles(ctx context.Context, prefix string) ([]string, error) {
+	var files []string
+
+	it := s.bucket.Objects(ctx, &storage.Query{
+		Prefix: prefix,
+	})
+
+	for {
+		attrs, err := it.Next()
+		if err == storage.ErrObjectNotExist || err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to list GCS objects: %w", err)
+		}
+
+		files = append(files, attrs.Name)
+	}
+
+	return files, nil
+}
+
 func (s *Storage) Close() error {
 	return s.client.Close()
 }

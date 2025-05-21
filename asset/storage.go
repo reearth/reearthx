@@ -12,4 +12,5 @@ type Storage interface {
 	Delete(ctx context.Context, key string) error
 	GenerateURL(ctx context.Context, key string, expires time.Duration) (string, error)
 	GenerateUploadURL(ctx context.Context, key string, size int64, contentType string, contentEncoding string, expires time.Duration) (string, error)
+	ListFiles(ctx context.Context, prefix string) ([]string, error)
 }
