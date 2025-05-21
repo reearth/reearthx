@@ -10,14 +10,12 @@ import (
 
 func TestUser(t *testing.T) {
 	u := &User{
-		id:          NewID(),
-		name:        "xxx",
-		alias:       "xxx",
-		description: "desc",
-		email:       "ff@xx.zz",
-		website:     "https://example.com",
-		password:    nil,
-		workspace:   NewWorkspaceID(),
+		id:        NewID(),
+		name:      "xxx",
+		alias:     "xxx",
+		email:     "ff@xx.zz",
+		password:  nil,
+		workspace: NewWorkspaceID(),
 		auths: []Auth{{
 			Provider: "aaa",
 			Sub:      "sss",
@@ -32,8 +30,6 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, u.id, u.ID())
 	assert.Equal(t, "xxx", u.Name())
 	assert.Equal(t, "xxx", u.Alias())
-	assert.Equal(t, "desc", u.Description())
-	assert.Equal(t, "https://example.com", u.Website())
 	assert.Equal(t, u.workspace, u.Workspace())
 	assert.Equal(t, Auths([]Auth{{
 		Provider: "aaa",
@@ -54,10 +50,8 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, ThemeLight, u.theme)
 	u.UpdateAlias("alias")
 	assert.Equal(t, "alias", u.alias)
-	u.UpdateDescription("desc")
-	assert.Equal(t, "desc", u.description)
-	u.UpdateWebsite("https://example.com")
-	assert.Equal(t, "https://example.com", u.website)
+	u.SetMetadata(MetadataFrom("description", "website"))
+	assert.Equal(t, u.metadata, u.Metadata())
 
 	wid := NewWorkspaceID()
 	u.UpdateWorkspace(wid)

@@ -17,9 +17,8 @@ type User struct {
 	id            ID
 	name          string
 	alias         string
-	description   string
 	email         string
-	website       string
+	metadata      *Metadata
 	password      EncodedPassword
 	workspace     WorkspaceID
 	auths         []Auth
@@ -46,16 +45,8 @@ func (u *User) Alias() string {
 	return u.alias
 }
 
-func (u *User) Description() string {
-	return u.description
-}
-
 func (u *User) Email() string {
 	return u.email
-}
-
-func (u *User) Website() string {
-	return u.website
 }
 
 func (u *User) Workspace() WorkspaceID {
@@ -82,20 +73,12 @@ func (u *User) UpdateAlias(alias string) {
 	u.alias = alias
 }
 
-func (u *User) UpdateDescription(description string) {
-	u.description = description
-}
-
 func (u *User) UpdateEmail(email string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return ErrInvalidEmail
 	}
 	u.email = email
 	return nil
-}
-
-func (u *User) UpdateWebsite(website string) {
-	u.website = website
 }
 
 func (u *User) UpdateWorkspace(workspace WorkspaceID) {
@@ -112,6 +95,10 @@ func (u *User) UpdateTheme(t Theme) {
 
 func (u *User) Verification() *Verification {
 	return u.verification
+}
+
+func (u *User) Metadata() *Metadata {
+	return u.metadata
 }
 
 func (u *User) Auths() Auths {
@@ -226,6 +213,10 @@ func (u *User) SetVerification(v *Verification) {
 	u.verification = v
 }
 
+func (u *User) SetMetadata(m *Metadata) {
+	u.metadata = m
+}
+
 func (u *User) Host() string {
 	return u.host
 }
@@ -235,9 +226,8 @@ func (u *User) Clone() *User {
 		id:            u.id,
 		name:          u.name,
 		alias:         u.alias,
-		description:   u.description,
 		email:         u.email,
-		website:       u.website,
+		metadata:      u.metadata,
 		password:      u.password,
 		workspace:     u.workspace,
 		auths:         slices.Clone(u.auths),
