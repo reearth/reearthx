@@ -122,6 +122,7 @@ func TestBuilder_Build(t *testing.T) {
 		Name, Lang, Email string
 		ID                ID
 		Workspace         WorkspaceID
+		Metadata          *Metadata
 		Auths             []Auth
 		PasswordBin       []byte
 	}
@@ -158,7 +159,40 @@ func TestBuilder_Build(t *testing.T) {
 				lang:      language.English,
 				theme:     ThemeDefault,
 			},
-		}, {
+		},
+		{
+			Name: "Success build user with metadata",
+			Args: args{
+				Name:        "xxx",
+				Email:       "xx@yy.zz",
+				Lang:        "en",
+				ID:          uid,
+				Workspace:   wid,
+				Metadata:    MetadataFrom("description", "website"),
+				PasswordBin: pass,
+				Auths: []Auth{
+					{
+						Provider: "ppp",
+						Sub:      "sss",
+					},
+				},
+			},
+			Expected: &User{
+				id:        uid,
+				workspace: wid,
+				email:     "xx@yy.zz",
+				name:      "xxx",
+				password:  pass,
+				auths:     []Auth{{Provider: "ppp", Sub: "sss"}},
+				lang:      language.English,
+				theme:     ThemeDefault,
+				metadata: &Metadata{
+					description: "description",
+					website:     "website",
+				},
+			},
+		},
+		{
 			Name:     "failed invalid id",
 			Expected: nil,
 			Err:      ErrInvalidID,
@@ -173,6 +207,7 @@ func TestBuilder_Build(t *testing.T) {
 				ID(tt.Args.ID).
 				EncodedPassword(pass).
 				Name(tt.Args.Name).
+				Metadata(tt.Args.Metadata).
 				Auths(tt.Args.Auths).
 				LangFrom(tt.Args.Lang).
 				Email(tt.Args.Email).

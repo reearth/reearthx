@@ -39,6 +39,9 @@ func (b *Builder) Build() (*User, error) {
 			return nil, err
 		}
 	}
+	if b.u.metadata != nil {
+		b.u.SetMetadata(b.u.metadata)
+	}
 	if err := b.u.UpdateEmail(b.email); err != nil {
 		return nil, err
 	}
@@ -131,5 +134,10 @@ func (b *Builder) PasswordReset(pr *PasswordReset) *Builder {
 
 func (b *Builder) Verification(v *Verification) *Builder {
 	b.u.verification = v
+	return b
+}
+
+func (b *Builder) Metadata(m *Metadata) *Builder {
+	b.u.metadata = m
 	return b
 }

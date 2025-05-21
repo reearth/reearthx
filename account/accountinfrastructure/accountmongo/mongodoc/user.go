@@ -37,7 +37,6 @@ type UserVerificationDoc struct {
 
 type MetadataDoc struct {
 	Description string
-	Email       string
 	Website     string
 }
 
