@@ -205,12 +205,12 @@ func TestCreateAsset(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotNil(t, asset)
-	assert.Equal(t, groupID, asset.GroupID)
-	assert.Equal(t, fileName, asset.FileName)
-	assert.Equal(t, fileSize, asset.Size)
-	assert.Equal(t, contentType, asset.ContentType)
-	assert.Equal(t, PreviewTypeUnknown, asset.PreviewType)
-	assert.Equal(t, "https://example.com/test.txt", asset.URL)
+	assert.Equal(t, groupID, asset.GroupID())
+	assert.Equal(t, fileName, asset.FileName())
+	assert.Equal(t, fileSize, asset.Size())
+	assert.Equal(t, contentType, asset.ContentType())
+	assert.Equal(t, PreviewTypeUnknown, asset.PreviewType())
+	assert.Equal(t, "https://example.com/test.txt", asset.URL())
 
 	groupRepo.AssertExpectations(t)
 	fileProcessor.AssertExpectations(t)
@@ -231,16 +231,10 @@ func TestGetAsset(t *testing.T) {
 	assetID := NewAssetID()
 	groupID := NewGroupID()
 
-	expectedAsset := &Asset{
-		ID:          assetID,
-		GroupID:     groupID,
-		CreatedAt:   time.Now(),
-		Size:        1024,
-		ContentType: "text/plain",
-		UUID:        uuid.New().String(),
-		FileName:    "test.txt",
-		PreviewType: PreviewTypeUnknown,
-	}
+	expectedAsset := NewAsset(assetID, groupID, time.Now(), 1024, "text/plain")
+	expectedAsset.SetUUID(uuid.New().String())
+	expectedAsset.SetFileName("test.txt")
+	expectedAsset.SetPreviewType(PreviewTypeUnknown)
 
 	assetRepo.On("FindByID", ctx, assetID).Return(expectedAsset, nil)
 
@@ -290,28 +284,17 @@ func TestListAssets(t *testing.T) {
 	sort := AssetSort{By: AssetSortTypeDate, Direction: SortDirectionDesc}
 	pagination := Pagination{Offset: 0, Limit: 10}
 
-	expectedAssets := []*Asset{
-		{
-			ID:          NewAssetID(),
-			GroupID:     groupID,
-			CreatedAt:   time.Now(),
-			Size:        1024,
-			ContentType: "text/plain",
-			UUID:        uuid.New().String(),
-			FileName:    "test1.txt",
-			PreviewType: PreviewTypeUnknown,
-		},
-		{
-			ID:          NewAssetID(),
-			GroupID:     groupID,
-			CreatedAt:   time.Now().Add(-time.Hour),
-			Size:        2048,
-			ContentType: "text/plain",
-			UUID:        uuid.New().String(),
-			FileName:    "test2.txt",
-			PreviewType: PreviewTypeUnknown,
-		},
-	}
+	asset1 := NewAsset(NewAssetID(), groupID, time.Now(), 1024, "text/plain")
+	asset1.SetUUID(uuid.New().String())
+	asset1.SetFileName("test1.txt")
+	asset1.SetPreviewType(PreviewTypeUnknown)
+
+	asset2 := NewAsset(NewAssetID(), groupID, time.Now().Add(-time.Hour), 2048, "text/plain")
+	asset2.SetUUID(uuid.New().String())
+	asset2.SetFileName("test2.txt")
+	asset2.SetPreviewType(PreviewTypeUnknown)
+
+	expectedAssets := []*Asset{asset1, asset2}
 
 	expectedTotal := int64(2)
 
@@ -341,13 +324,9 @@ func TestDeleteAsset(t *testing.T) {
 	uuid := uuid.New().String()
 	fileName := "test.txt"
 
-	asset := &Asset{
-		ID:          assetID,
-		GroupID:     groupID,
-		UUID:        uuid,
-		FileName:    fileName,
-		ContentType: "text/plain",
-	}
+	asset := NewAsset(assetID, groupID, time.Now(), 1024, "text/plain")
+	asset.SetUUID(uuid)
+	asset.SetFileName(fileName)
 
 	storageKey := groupID.String() + "/" + uuid + "/" + fileName
 
@@ -379,14 +358,10 @@ func TestArchiveExtraction(t *testing.T) {
 	fileName := "test.zip"
 
 	// Set up the asset
-	asset := &Asset{
-		ID:                      assetID,
-		GroupID:                 groupID,
-		UUID:                    uuid,
-		FileName:                fileName,
-		ContentType:             "application/zip",
-		ArchiveExtractionStatus: toPtr(ExtractionStatusPending),
-	}
+	asset := NewAsset(assetID, groupID, time.Now(), 1024, "application/zip")
+	asset.SetUUID(uuid)
+	asset.SetFileName(fileName)
+	asset.SetArchiveExtractionStatus(toPtr(ExtractionStatusPending))
 
 	// Setup file content
 	fileContent := "mock zip file content"
@@ -413,7 +388,7 @@ func TestArchiveExtraction(t *testing.T) {
 
 	// Should update the asset with the new preview type
 	assetRepo.On("Save", ctx, mock.MatchedBy(func(a *Asset) bool {
-		return a.ID == assetID && a.PreviewType == PreviewTypeGeo3DTiles
+		return a.ID() == assetID && a.PreviewType() == PreviewTypeGeo3DTiles
 	})).Return(nil)
 
 	// Mock zip extractor
@@ -429,7 +404,7 @@ func TestArchiveExtraction(t *testing.T) {
 	mockReader.AssertExpectations(t)
 
 	// Verify the asset was updated with the correct preview type
-	assert.Equal(t, PreviewTypeGeo3DTiles, asset.PreviewType)
+	assert.Equal(t, PreviewTypeGeo3DTiles, asset.PreviewType())
 }
 
 func TestRetryDecompression(t *testing.T) {
@@ -447,43 +422,28 @@ func TestRetryDecompression(t *testing.T) {
 	uuid := "test-uuid"
 	fileName := "test.zip"
 
-	// Asset with failed extraction status
-	asset := &Asset{
-		ID:                      assetID,
-		GroupID:                 groupID,
-		UUID:                    uuid,
-		FileName:                fileName,
-		ContentType:             "application/zip",
-		ArchiveExtractionStatus: toPtr(ExtractionStatusFailed),
-	}
+	asset := NewAsset(assetID, groupID, time.Now(), 1024, "application/zip")
+	asset.SetUUID(uuid)
+	asset.SetFileName(fileName)
+	asset.SetArchiveExtractionStatus(toPtr(ExtractionStatusFailed))
 
-	// Mock repository calls
 	assetRepo.On("FindByID", ctx, assetID).Return(asset, nil)
 	assetRepo.On("UpdateExtractionStatus", ctx, assetID, ExtractionStatusPending).Return(nil)
 
-	// Call the method
 	err := service.RetryDecompression(ctx, assetID.String())
 
-	// Assert success
 	assert.NoError(t, err)
 	assetRepo.AssertExpectations(t)
 
-	// Test with wrong status
-	assetWithWrongStatus := &Asset{
-		ID:                      assetID,
-		GroupID:                 groupID,
-		UUID:                    uuid,
-		FileName:                fileName,
-		ContentType:             "application/zip",
-		ArchiveExtractionStatus: toPtr(ExtractionStatusDone),
-	}
+	assetWithWrongStatus := NewAsset(assetID, groupID, time.Now(), 1024, "application/zip")
+	assetWithWrongStatus.SetUUID(uuid)
+	assetWithWrongStatus.SetFileName(fileName)
+	assetWithWrongStatus.SetArchiveExtractionStatus(toPtr(ExtractionStatusDone))
 
-	// Reset and setup mock for second test case
 	assetRepo = new(MockAssetRepository)
 	service = NewAssetService(assetRepo, groupRepo, storage, fileProcessor, zipExtractor)
 	assetRepo.On("FindByID", ctx, assetID).Return(assetWithWrongStatus, nil)
 
-	// Call should fail because status is not Failed
 	err = service.RetryDecompression(ctx, assetID.String())
 	assert.Error(t, err)
 	assetRepo.AssertExpectations(t)

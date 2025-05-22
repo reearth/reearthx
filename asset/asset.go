@@ -7,19 +7,134 @@ import (
 )
 
 type Asset struct {
-	ID                      AssetID
-	GroupID                 GroupID   // projectID in visualizer and cms, workspaceID in flow
-	CreatedAt               time.Time //
-	Size                    int64
-	ContentType             string // visualizer && flow
-	ContentEncoding         string
-	PreviewType             PreviewType       // cms
-	UUID                    string            //cms
-	URL                     string            //cms && visualizer && flow
-	FileName                string            //cms
-	ArchiveExtractionStatus *ExtractionStatus //cms
-	FlatFiles               bool              //cms
-	Integration             IntegrationID
+	id                      AssetID
+	groupID                 GroupID   // projectID in visualizer and cms, workspaceID in flow
+	createdAt               time.Time //
+	size                    int64
+	contentType             string // visualizer && flow
+	contentEncoding         string
+	previewType             PreviewType       // cms
+	uuid                    string            //cms
+	url                     string            //cms && visualizer && flow
+	fileName                string            //cms
+	archiveExtractionStatus *ExtractionStatus //cms
+	flatFiles               bool              //cms
+	integration             IntegrationID
+}
+
+func NewAsset(id AssetID, groupID GroupID, createdAt time.Time, size int64, contentType string) *Asset {
+	return &Asset{
+		id:          id,
+		groupID:     groupID,
+		createdAt:   createdAt,
+		size:        size,
+		contentType: contentType,
+	}
+}
+
+func (a *Asset) ID() AssetID {
+	return a.id
+}
+
+func (a *Asset) GroupID() GroupID {
+	return a.groupID
+}
+
+func (a *Asset) CreatedAt() time.Time {
+	return a.createdAt
+}
+
+func (a *Asset) Size() int64 {
+	return a.size
+}
+
+func (a *Asset) ContentType() string {
+	return a.contentType
+}
+
+func (a *Asset) ContentEncoding() string {
+	return a.contentEncoding
+}
+
+func (a *Asset) PreviewType() PreviewType {
+	return a.previewType
+}
+
+func (a *Asset) UUID() string {
+	return a.uuid
+}
+
+func (a *Asset) URL() string {
+	return a.url
+}
+
+func (a *Asset) FileName() string {
+	return a.fileName
+}
+
+func (a *Asset) ArchiveExtractionStatus() *ExtractionStatus {
+	return a.archiveExtractionStatus
+}
+
+func (a *Asset) FlatFiles() bool {
+	return a.flatFiles
+}
+
+func (a *Asset) Integration() IntegrationID {
+	return a.integration
+}
+
+// Setter methods for modifying private fields
+func (a *Asset) SetID(id AssetID) {
+	a.id = id
+}
+
+func (a *Asset) SetGroupID(groupID GroupID) {
+	a.groupID = groupID
+}
+
+func (a *Asset) SetCreatedAt(createdAt time.Time) {
+	a.createdAt = createdAt
+}
+
+func (a *Asset) SetSize(size int64) {
+	a.size = size
+}
+
+func (a *Asset) SetContentType(contentType string) {
+	a.contentType = contentType
+}
+
+func (a *Asset) SetContentEncoding(contentEncoding string) {
+	a.contentEncoding = contentEncoding
+}
+
+func (a *Asset) SetPreviewType(previewType PreviewType) {
+	a.previewType = previewType
+}
+
+func (a *Asset) SetUUID(uuid string) {
+	a.uuid = uuid
+}
+
+func (a *Asset) SetURL(url string) {
+	a.url = url
+}
+
+func (a *Asset) SetFileName(fileName string) {
+	a.fileName = fileName
+}
+
+func (a *Asset) SetArchiveExtractionStatus(status *ExtractionStatus) {
+	a.archiveExtractionStatus = status
+}
+
+func (a *Asset) SetFlatFiles(flatFiles bool) {
+	a.flatFiles = flatFiles
+}
+
+func (a *Asset) AddIntegration(integrationID IntegrationID) {
+	a.integration = integrationID
 }
 
 type PreviewType string

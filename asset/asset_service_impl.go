@@ -70,18 +70,11 @@ func (s *assetService) CreateAsset(ctx context.Context, param CreateAssetParam) 
 
 	storageKey := path.Join(param.GroupID.String(), assetUUID, param.FileName)
 
-	asset := &Asset{
-		ID:              NewAssetID(),
-		GroupID:         param.GroupID,
-		CreatedAt:       time.Now(),
-		Size:            param.Size,
-		ContentType:     param.ContentType,
-		ContentEncoding: param.ContentEncoding,
-		UUID:            assetUUID,
-		FileName:        param.FileName,
-	}
-
-	asset.PreviewType = s.fileProcessor.DetectPreviewType(param.FileName, param.ContentType)
+	asset := NewAsset(NewAssetID(), param.GroupID, time.Now(), param.Size, param.ContentType)
+	asset.SetContentEncoding(param.ContentEncoding)
+	asset.SetUUID(assetUUID)
+	asset.SetFileName(param.FileName)
+	asset.SetPreviewType(s.fileProcessor.DetectPreviewType(param.FileName, param.ContentType))
 
 	if param.File != nil {
 		err = s.storage.Save(ctx, storageKey, param.File, param.Size, param.ContentType, param.ContentEncoding)
@@ -93,27 +86,27 @@ func (s *assetService) CreateAsset(ctx context.Context, param CreateAssetParam) 
 		if err != nil {
 			return nil, ErrStorageFailure
 		}
-		asset.URL = url
+		asset.SetURL(url)
 	} else if param.URL != "" && param.Token != "" {
-		asset.URL = param.URL
+		asset.SetURL(param.URL)
 	} else {
 		return nil, ErrInvalidParameters
 	}
 
 	if shouldExtractArchive(param.FileName, param.ContentType) && !param.SkipDecompression {
 		status := ExtractionStatusPending
-		asset.ArchiveExtractionStatus = &status
+		asset.SetArchiveExtractionStatus(&status)
 	} else {
 		status := ExtractionStatusSkipped
-		asset.ArchiveExtractionStatus = &status
+		asset.SetArchiveExtractionStatus(&status)
 	}
 
 	if err := s.assetRepo.Save(ctx, asset); err != nil {
 		return nil, err
 	}
 
-	if *asset.ArchiveExtractionStatus == ExtractionStatusPending {
-		go s.handleArchiveExtraction(context.Background(), asset.ID, storageKey)
+	if *asset.ArchiveExtractionStatus() == ExtractionStatusPending {
+		go s.handleArchiveExtraction(context.Background(), asset.ID(), storageKey)
 	}
 
 	return asset, nil
@@ -139,7 +132,7 @@ func (s *assetService) GetAssetFile(ctx context.Context, id AssetID) (*File, err
 		return nil, ErrAssetNotFound
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 
 	reader, err := s.storage.Get(ctx, storageKey)
 	if err != nil {
@@ -150,11 +143,11 @@ func (s *assetService) GetAssetFile(ctx context.Context, id AssetID) (*File, err
 	}(reader)
 
 	file := &File{}
-	file.SetName(asset.FileName)
-	if asset.Size > 0 {
-		file.size = uint64(asset.Size)
+	file.SetName(asset.FileName())
+	if asset.Size() > 0 {
+		file.size = uint64(asset.Size())
 	}
-	file.contentType = asset.ContentType
+	file.contentType = asset.ContentType()
 	file.path = storageKey
 
 	return file, nil
@@ -174,7 +167,7 @@ func (s *assetService) UpdateAsset(ctx context.Context, param UpdateAssetParam) 
 	}
 
 	if param.PreviewType != nil {
-		asset.PreviewType = *param.PreviewType
+		asset.SetPreviewType(*param.PreviewType)
 	}
 
 	if err := s.assetRepo.Save(ctx, asset); err != nil {
@@ -193,7 +186,7 @@ func (s *assetService) DeleteAsset(ctx context.Context, id AssetID) error {
 		return ErrAssetNotFound
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 
 	if err := s.storage.Delete(ctx, storageKey); err != nil {
 		return ErrStorageFailure
@@ -209,7 +202,7 @@ func (s *assetService) DeleteAssets(ctx context.Context, ids []AssetID) error {
 	}
 
 	for _, asset := range assets {
-		storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+		storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 		if err := s.storage.Delete(ctx, storageKey); err != nil {
 			continue
 		}
@@ -227,17 +220,17 @@ func (s *assetService) DecompressAsset(ctx context.Context, id AssetID) error {
 		return ErrAssetNotFound
 	}
 
-	if !shouldExtractArchive(asset.FileName, asset.ContentType) {
+	if !shouldExtractArchive(asset.FileName(), asset.ContentType()) {
 		return errors.New("asset is not an extractable archive")
 	}
 
 	status := ExtractionStatusPending
-	asset.ArchiveExtractionStatus = &status
+	asset.SetArchiveExtractionStatus(&status)
 	if err := s.assetRepo.UpdateExtractionStatus(ctx, id, status); err != nil {
 		return err
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 	go s.handleArchiveExtraction(context.Background(), id, storageKey)
 
 	return nil
@@ -480,7 +473,7 @@ func (s *assetService) FindByUUID(ctx context.Context, uuid string, operator *As
 	}
 
 	for _, asset := range assets {
-		if asset.UUID == uuid {
+		if asset.UUID() == uuid {
 			return asset, nil
 		}
 	}
@@ -548,7 +541,7 @@ func (s *assetService) DownloadByID(ctx context.Context, id AssetID, headers map
 		return nil, nil, ErrAssetNotFound
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 
 	reader, err := s.storage.Get(ctx, storageKey)
 	if err != nil {
@@ -556,13 +549,13 @@ func (s *assetService) DownloadByID(ctx context.Context, id AssetID, headers map
 	}
 
 	responseHeaders := map[string]string{
-		"Content-Type":        asset.ContentType,
-		"Content-Disposition": "attachment; filename=" + asset.FileName,
-		"Content-Length":      fmt.Sprint(asset.Size),
+		"Content-Type":        asset.ContentType(),
+		"Content-Disposition": "attachment; filename=" + asset.FileName(),
+		"Content-Length":      fmt.Sprint(asset.Size()),
 	}
 
-	if asset.ContentEncoding != "" {
-		responseHeaders["Content-Encoding"] = asset.ContentEncoding
+	if asset.ContentEncoding() != "" {
+		responseHeaders["Content-Encoding"] = asset.ContentEncoding()
 	}
 
 	return reader, responseHeaders, nil
@@ -579,7 +572,7 @@ func (s *assetService) Create(ctx context.Context, param CreateAssetParam, opera
 		return nil, nil, err
 	}
 
-	file, err := s.GetAssetFile(ctx, asset.ID)
+	file, err := s.GetAssetFile(ctx, asset.ID())
 	if err != nil {
 		return asset, nil, err
 	}
@@ -601,7 +594,7 @@ func (s *assetService) UpdateFiles(ctx context.Context, id AssetID, status *Extr
 	}
 
 	if status != nil {
-		asset.ArchiveExtractionStatus = status
+		asset.SetArchiveExtractionStatus(status)
 		if err := s.assetRepo.UpdateExtractionStatus(ctx, id, *status); err != nil {
 			return nil, err
 		}
@@ -653,14 +646,14 @@ func (s *assetService) Publish(ctx context.Context, id AssetID, operator *AssetO
 		return nil, ErrAssetNotFound
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 
 	publicURL, err := s.storage.GenerateURL(ctx, storageKey, 10*365*24*time.Hour)
 	if err != nil {
 		return nil, ErrStorageFailure
 	}
 
-	asset.URL = publicURL
+	asset.SetURL(publicURL)
 
 	if err := s.assetRepo.Save(ctx, asset); err != nil {
 		return nil, err
@@ -678,14 +671,14 @@ func (s *assetService) Unpublish(ctx context.Context, id AssetID, operator *Asse
 		return nil, ErrAssetNotFound
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 
 	temporaryURL, err := s.storage.GenerateURL(ctx, storageKey, 24*time.Hour)
 	if err != nil {
 		return nil, ErrStorageFailure
 	}
 
-	asset.URL = temporaryURL
+	asset.SetURL(temporaryURL)
 
 	if err := s.assetRepo.Save(ctx, asset); err != nil {
 		return nil, err
@@ -726,8 +719,8 @@ func (s *assetService) RetryDecompression(ctx context.Context, id string) error 
 		return ErrAssetNotFound
 	}
 
-	if asset.ArchiveExtractionStatus == nil || *asset.ArchiveExtractionStatus != ExtractionStatusFailed {
-		return fmt.Errorf("cannot retry decompression, current status: %v", asset.ArchiveExtractionStatus)
+	if asset.ArchiveExtractionStatus() == nil || *asset.ArchiveExtractionStatus() != ExtractionStatusFailed {
+		return fmt.Errorf("cannot retry decompression, current status: %v", asset.ArchiveExtractionStatus())
 	}
 
 	status := ExtractionStatusPending
@@ -735,14 +728,14 @@ func (s *assetService) RetryDecompression(ctx context.Context, id string) error 
 		return err
 	}
 
-	storageKey := path.Join(asset.GroupID.String(), asset.UUID, asset.FileName)
+	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
 	go s.handleArchiveExtraction(context.Background(), assetID, storageKey)
 
 	return nil
 }
 
 func detectAndUpdatePreviewType(ctx context.Context, s *assetService, asset *Asset) {
-	files, err := s.storage.ListFiles(ctx, path.Join(asset.GroupID.String(), asset.UUID))
+	files, err := s.storage.ListFiles(ctx, path.Join(asset.GroupID().String(), asset.UUID()))
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to list extracted files", "error", err)
 		return
@@ -769,9 +762,9 @@ func detectAndUpdatePreviewType(ctx context.Context, s *assetService, asset *Ass
 		}
 	}
 
-	if previewType != "" && previewType != asset.PreviewType {
-		slog.InfoContext(ctx, "Updating asset preview type", "assetID", asset.ID, "from", asset.PreviewType, "to", previewType)
-		asset.PreviewType = previewType
+	if previewType != "" && previewType != asset.PreviewType() {
+		slog.InfoContext(ctx, "Updating asset preview type", "assetID", asset.ID(), "from", asset.PreviewType(), "to", previewType)
+		asset.SetPreviewType(previewType)
 		if err := s.assetRepo.Save(ctx, asset); err != nil {
 			slog.ErrorContext(ctx, "Failed to update asset preview type", "error", err)
 		}

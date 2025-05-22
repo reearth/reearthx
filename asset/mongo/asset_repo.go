@@ -29,7 +29,7 @@ func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
 
 	_, err := r.client.Client().UpdateOne(
 		ctx,
-		bson.M{"id": asset.ID.String()},
+		bson.M{"id": asset.ID().String()},
 		bson.M{"$set": doc},
 		options.Update().SetUpsert(true),
 	)
@@ -188,24 +188,24 @@ type assetDocument struct {
 
 func assetToDoc(a *asset.Asset) *assetDocument {
 	doc := &assetDocument{
-		ID:            a.ID.String(),
-		GroupID:       a.GroupID.String(),
-		CreatedAt:     a.CreatedAt,
-		Size:          a.Size,
-		ContentType:   a.ContentType,
-		PreviewType:   string(a.PreviewType),
-		UUID:          a.UUID,
-		URL:           a.URL,
-		FileName:      a.FileName,
-		IntegrationID: a.Integration.String(),
+		ID:            a.ID().String(),
+		GroupID:       a.GroupID().String(),
+		CreatedAt:     a.CreatedAt(),
+		Size:          a.Size(),
+		ContentType:   a.ContentType(),
+		PreviewType:   string(a.PreviewType()),
+		UUID:          a.UUID(),
+		URL:           a.URL(),
+		FileName:      a.FileName(),
+		IntegrationID: a.Integration().String(),
 	}
 
-	if a.ContentEncoding != "" {
-		doc.ContentEncoding = a.ContentEncoding
+	if a.ContentEncoding() != "" {
+		doc.ContentEncoding = a.ContentEncoding()
 	}
 
-	if a.ArchiveExtractionStatus != nil {
-		doc.ArchiveExtractionStatus = string(*a.ArchiveExtractionStatus)
+	if a.ArchiveExtractionStatus() != nil {
+		doc.ArchiveExtractionStatus = string(*a.ArchiveExtractionStatus())
 	}
 
 	return doc
@@ -230,23 +230,17 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 		}
 	}
 
-	a := &asset.Asset{
-		ID:              assetID,
-		GroupID:         groupID,
-		CreatedAt:       doc.CreatedAt,
-		Size:            doc.Size,
-		ContentType:     doc.ContentType,
-		ContentEncoding: doc.ContentEncoding,
-		PreviewType:     asset.PreviewType(doc.PreviewType),
-		UUID:            doc.UUID,
-		URL:             doc.URL,
-		FileName:        doc.FileName,
-		Integration:     integration,
-	}
+	a := asset.NewAsset(assetID, groupID, doc.CreatedAt, doc.Size, doc.ContentType)
+	a.SetContentEncoding(doc.ContentEncoding)
+	a.SetPreviewType(asset.PreviewType(doc.PreviewType))
+	a.SetUUID(doc.UUID)
+	a.SetURL(doc.URL)
+	a.SetFileName(doc.FileName)
+	a.AddIntegration(integration)
 
 	if doc.ArchiveExtractionStatus != "" {
 		status := asset.ExtractionStatus(doc.ArchiveExtractionStatus)
-		a.ArchiveExtractionStatus = &status
+		a.SetArchiveExtractionStatus(&status)
 	}
 
 	return a, nil

@@ -38,13 +38,9 @@ func TestZipExtractorExtract(t *testing.T) {
 	extractor := NewZipExtractor(assetRepo, storage)
 
 	t.Run("Successful extraction", func(t *testing.T) {
-		asset := &Asset{
-			ID:        assetID,
-			GroupID:   NewGroupID(),
-			CreatedAt: time.Now(),
-			UUID:      "test-uuid",
-			FileName:  "test.zip",
-		}
+		asset := NewAsset(assetID, NewGroupID(), time.Now(), 1024, "application/zip")
+		asset.SetUUID("test-uuid")
+		asset.SetFileName("test.zip")
 
 		assetRepo.On("FindByID", ctx, assetID).Return(asset, nil)
 		assetRepo.On("UpdateExtractionStatus", ctx, assetID, ExtractionStatusInProgress).Return(nil)
@@ -74,13 +70,9 @@ func TestZipExtractorExtract(t *testing.T) {
 		assetRepo.ExpectedCalls = nil
 		storage.ExpectedCalls = nil
 
-		asset := &Asset{
-			ID:        assetID,
-			GroupID:   NewGroupID(),
-			CreatedAt: time.Now(),
-			UUID:      "test-uuid",
-			FileName:  "test.zip",
-		}
+		asset := NewAsset(assetID, NewGroupID(), time.Now(), 1024, "application/zip")
+		asset.SetUUID("test-uuid")
+		asset.SetFileName("test.zip")
 
 		assetRepo.On("FindByID", ctx, assetID).Return(asset, nil)
 		assetRepo.On("UpdateExtractionStatus", ctx, assetID, ExtractionStatusInProgress).Return(nil)

@@ -45,7 +45,7 @@ func (e *zipExtractor) Extract(ctx context.Context, assetID AssetID, reader io.R
 		return err
 	}
 
-	baseDir := path.Join(asset.GroupID.String(), asset.UUID, "extracted")
+	baseDir := path.Join(asset.GroupID().String(), asset.UUID(), "extracted")
 
 	for _, zipFile := range zipReader.File {
 		if !isValidZipPath(zipFile.Name) {
