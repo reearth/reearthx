@@ -17,22 +17,22 @@ type AssetService interface {
 	CreateAssetUpload(ctx context.Context, param CreateAssetUploadParam) (*AssetUploadInfo, error)
 
 	// CMS
-	FindByID(ctx context.Context, id AssetID, operator *Operator) (*Asset, error)
-	FindByUUID(ctx context.Context, uuid string, operator *Operator) (*Asset, error)
-	FindByIDs(ctx context.Context, ids []AssetID, operator *Operator) ([]*Asset, error)
-	FindByProject(ctx context.Context, projectID ProjectID, filter AssetFilter, operator *Operator) ([]*Asset, *PageInfo, error)
-	FindFileByID(ctx context.Context, id AssetID, operator *Operator) (*File, error)
-	FindFilesByIDs(ctx context.Context, ids AssetIDList, operator *Operator) (map[AssetID]*File, error)
-	DownloadByID(ctx context.Context, id AssetID, headers map[string]string, operator *Operator) (io.ReadCloser, map[string]string, error)
-	Create(ctx context.Context, param CreateAssetParam, operator *Operator) (*Asset, *File, error)
-	Update(ctx context.Context, param UpdateAssetParam, operator *Operator) (*Asset, error)
-	UpdateFiles(ctx context.Context, id AssetID, status *ExtractionStatus, operator *Operator) (*Asset, error)
-	Delete(ctx context.Context, id AssetID, operator *Operator) (AssetID, error)
-	BatchDelete(ctx context.Context, ids AssetIDList, operator *Operator) ([]AssetID, error)
-	Decompress(ctx context.Context, id AssetID, operator *Operator) (*Asset, error)
-	Publish(ctx context.Context, id AssetID, operator *Operator) (*Asset, error)
-	Unpublish(ctx context.Context, id AssetID, operator *Operator) (*Asset, error)
-	CreateUpload(ctx context.Context, param CreateAssetUploadParam, operator *Operator) (*AssetUpload, error)
+	FindByID(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
+	FindByUUID(ctx context.Context, uuid string, operator *AssetOperator) (*Asset, error)
+	FindByIDs(ctx context.Context, ids []AssetID, operator *AssetOperator) ([]*Asset, error)
+	FindByProject(ctx context.Context, groupID GroupID, filter AssetFilter, operator *AssetOperator) ([]*Asset, *PageInfo, error)
+	FindFileByID(ctx context.Context, id AssetID, operator *AssetOperator) (*File, error)
+	FindFilesByIDs(ctx context.Context, ids AssetIDList, operator *AssetOperator) (map[AssetID]*File, error)
+	DownloadByID(ctx context.Context, id AssetID, headers map[string]string, operator *AssetOperator) (io.ReadCloser, map[string]string, error)
+	Create(ctx context.Context, param CreateAssetParam, operator *AssetOperator) (*Asset, *File, error)
+	Update(ctx context.Context, param UpdateAssetParam, operator *AssetOperator) (*Asset, error)
+	UpdateFiles(ctx context.Context, id AssetID, status *ExtractionStatus, operator *AssetOperator) (*Asset, error)
+	Delete(ctx context.Context, id AssetID, operator *AssetOperator) (AssetID, error)
+	BatchDelete(ctx context.Context, ids AssetIDList, operator *AssetOperator) ([]AssetID, error)
+	Decompress(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
+	Publish(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
+	Unpublish(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
+	CreateUpload(ctx context.Context, param CreateAssetUploadParam, operator *AssetOperator) (*AssetUpload, error)
 	RetryDecompression(ctx context.Context, id string) error
 }
 
@@ -68,16 +68,6 @@ type AssetUploadInfo struct {
 	ContentLength   int64
 	ContentEncoding string
 	Next            string
-}
-
-type Operator struct {
-	Type OperatorType
-	ID   string
-}
-
-type ProjectID interface {
-	String() string
-	IsNil() bool
 }
 
 type PageInfo struct {

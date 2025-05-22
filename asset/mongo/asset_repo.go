@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/reearth/reearthx/asset"
+	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/mongox"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -174,8 +175,6 @@ type assetDocument struct {
 	ID                      string    `bson:"id"`
 	GroupID                 string    `bson:"groupid"`
 	CreatedAt               time.Time `bson:"createdat"`
-	CreatedByType           string    `bson:"createdbytype"`
-	CreatedByID             string    `bson:"createdbyid"`
 	Size                    int64     `bson:"size"`
 	ContentType             string    `bson:"contenttype"`
 	ContentEncoding         string    `bson:"contentencoding,omitempty"`
@@ -184,6 +183,7 @@ type assetDocument struct {
 	URL                     string    `bson:"url"`
 	FileName                string    `bson:"filename"`
 	ArchiveExtractionStatus string    `bson:"archiveextractionstatus,omitempty"`
+	IntegrationID           string    `bson:"integrationid"`
 }
 
 func assetToDoc(a *asset.Asset) *assetDocument {
@@ -191,14 +191,13 @@ func assetToDoc(a *asset.Asset) *assetDocument {
 		ID:            a.ID.String(),
 		GroupID:       a.GroupID.String(),
 		CreatedAt:     a.CreatedAt,
-		CreatedByType: string(a.CreatedBy.Type),
-		CreatedByID:   a.CreatedBy.ID,
 		Size:          a.Size,
 		ContentType:   a.ContentType,
 		PreviewType:   string(a.PreviewType),
 		UUID:          a.UUID,
 		URL:           a.URL,
 		FileName:      a.FileName,
+		IntegrationID: a.Integration.String(),
 	}
 
 	if a.ContentEncoding != "" {
@@ -223,14 +222,18 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 		return nil, err
 	}
 
+	var integration asset.IntegrationID
+	if doc.IntegrationID != "" {
+		integration, err = idx.From[asset.IntegrationIDType](doc.IntegrationID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	a := &asset.Asset{
-		ID:        assetID,
-		GroupID:   groupID,
-		CreatedAt: doc.CreatedAt,
-		CreatedBy: asset.OperatorInfo{
-			Type: asset.OperatorType(doc.CreatedByType),
-			ID:   doc.CreatedByID,
-		},
+		ID:              assetID,
+		GroupID:         groupID,
+		CreatedAt:       doc.CreatedAt,
 		Size:            doc.Size,
 		ContentType:     doc.ContentType,
 		ContentEncoding: doc.ContentEncoding,
@@ -238,6 +241,7 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 		UUID:            doc.UUID,
 		URL:             doc.URL,
 		FileName:        doc.FileName,
+		Integration:     integration,
 	}
 
 	if doc.ArchiveExtractionStatus != "" {

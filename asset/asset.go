@@ -10,7 +10,6 @@ type Asset struct {
 	ID                      AssetID
 	GroupID                 GroupID   // projectID in visualizer and cms, workspaceID in flow
 	CreatedAt               time.Time //
-	CreatedBy               OperatorInfo
 	Size                    int64
 	ContentType             string // visualizer && flow
 	ContentEncoding         string
@@ -46,24 +45,3 @@ const (
 	ExtractionStatusDone       ExtractionStatus = "DONE"
 	ExtractionStatusFailed     ExtractionStatus = "FAILED"
 )
-
-type OperatorType string
-
-const (
-	OperatorTypeUser        OperatorType = "USER"        //cms
-	OperatorTypeIntegration OperatorType = "INTEGRATION" //cms
-)
-
-type OperatorInfo struct {
-	Type OperatorType
-	ID   string
-}
-
-type AssetFile struct {
-	Name            string
-	Size            int64
-	ContentType     string
-	ContentEncoding string
-	Path            string
-	FilePaths       []string
-}
