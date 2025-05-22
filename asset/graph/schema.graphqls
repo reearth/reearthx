@@ -3,7 +3,6 @@ type Asset implements Node {
   group: Group!
   groupId: ID!
   createdAt: DateTime!
-  createdByType: OperatorType!
   createdById: ID!
   size: Int!
   contentType: String!
@@ -13,6 +12,7 @@ type Asset implements Node {
   url: String!
   fileName: String!
   archiveExtractionStatus: ArchiveExtractionStatus
+  integration: Integration!
 }
 
 enum PreviewType {
@@ -34,17 +34,14 @@ enum ArchiveExtractionStatus {
   FAILED
 }
 
-enum OperatorType {
-  USER
-  INTEGRATION
-}
 
-type AssetFile {
-  name: String!
-  size: Int!
-  contentType: String!
-  contentEncoding: String
-  data: String!
+type File struct {
+	name        string
+	size        uint64
+	contentType string
+	path        string
+	children    []*File
+	files       []*File
 }
 
 type Group implements Node {

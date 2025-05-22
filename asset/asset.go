@@ -19,7 +19,7 @@ type Asset struct {
 	FileName                string            //cms
 	ArchiveExtractionStatus *ExtractionStatus //cms
 	FlatFiles               bool              //cms
-	Integration             IntegrationID
+	Integration             IntegrationID     //cms
 }
 
 type PreviewType string
