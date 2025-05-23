@@ -168,7 +168,7 @@ func TestBuilder_Build(t *testing.T) {
 				Lang:        "en",
 				ID:          uid,
 				Workspace:   wid,
-				Metadata:    MetadataFrom("description", "website"),
+				Metadata:    MetadataFrom("photo url", "description", "website"),
 				PasswordBin: pass,
 				Auths: []Auth{
 					{
@@ -187,6 +187,7 @@ func TestBuilder_Build(t *testing.T) {
 				lang:      language.English,
 				theme:     ThemeDefault,
 				metadata: &Metadata{
+					photoURL:    "photo url",
 					description: "description",
 					website:     "website",
 				},

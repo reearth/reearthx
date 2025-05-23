@@ -14,6 +14,7 @@ func TestUser(t *testing.T) {
 		name:      "xxx",
 		alias:     "xxx",
 		email:     "ff@xx.zz",
+		metadata:  NewMetadata(),
 		password:  nil,
 		workspace: NewWorkspaceID(),
 		auths: []Auth{{
@@ -50,7 +51,9 @@ func TestUser(t *testing.T) {
 	assert.Equal(t, ThemeLight, u.theme)
 	u.UpdateAlias("alias")
 	assert.Equal(t, "alias", u.alias)
-	u.SetMetadata(MetadataFrom("description", "website"))
+	u.Metadata().SetPhotoURL("photo url")
+	u.Metadata().SetDescription("description")
+	u.Metadata().SetWebsite("website")
 	assert.Equal(t, u.metadata, u.Metadata())
 
 	wid := NewWorkspaceID()

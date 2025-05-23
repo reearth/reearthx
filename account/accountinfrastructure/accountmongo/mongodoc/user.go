@@ -36,6 +36,7 @@ type UserVerificationDoc struct {
 }
 
 type MetadataDoc struct {
+	PhotoURL    string
 	Description string
 	Website     string
 }
@@ -115,10 +116,16 @@ func (d *UserDocument) Model() (*user.User, error) {
 		v = user.VerificationFrom(d.Verification.Code, d.Verification.Expiration, d.Verification.Verified)
 	}
 
+	var metadata *user.Metadata
+	if d.Metadata != nil {
+		metadata = user.MetadataFrom(d.Metadata.PhotoURL, d.Metadata.Description, d.Metadata.Website)
+	}
+
 	u, err := user.New().
 		ID(uid).
 		Name(d.Name).
 		Email(d.Email).
+		Metadata(metadata).
 		Alias(d.Alias).
 		Auths(auths).
 		Workspace(tid).

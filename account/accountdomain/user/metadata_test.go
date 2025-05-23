@@ -12,7 +12,8 @@ func TestNewMetadata(t *testing.T) {
 }
 
 func TestMetadataFrom(t *testing.T) {
-	metadata := MetadataFrom("description", "website")
+	metadata := MetadataFrom("photo url", "description", "website")
+	assert.Equal(t, "photo url", metadata.PhotoURL())
 	assert.Equal(t, "description", metadata.Description())
 	assert.Equal(t, "website", metadata.Website())
 }
