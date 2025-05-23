@@ -26,7 +26,7 @@ type UserDocument struct {
 	Password      []byte
 	PasswordReset *PasswordResetDocument
 	Verification  *UserVerificationDoc
-	Metadata      *MetadataDoc
+	Metadata      *UserMetadataDoc
 }
 
 type UserVerificationDoc struct {
@@ -35,7 +35,7 @@ type UserVerificationDoc struct {
 	Verified   bool
 }
 
-type MetadataDoc struct {
+type UserMetadataDoc struct {
 	PhotoURL    string
 	Description string
 	Website     string
@@ -66,9 +66,9 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		}
 	}
 
-	var metadataDoc *MetadataDoc
+	var metadataDoc *UserMetadataDoc
 	if user.Metadata() != nil {
-		metadataDoc = &MetadataDoc{
+		metadataDoc = &UserMetadataDoc{
 			Description: user.Metadata().Description(),
 			Website:     user.Metadata().Website(),
 		}

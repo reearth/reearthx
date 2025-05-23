@@ -227,12 +227,12 @@ func (u *User) Clone() *User {
 		name:          u.name,
 		alias:         u.alias,
 		email:         u.email,
-		metadata:      u.metadata,
 		password:      u.password,
 		workspace:     u.workspace,
 		auths:         slices.Clone(u.auths),
 		lang:          u.lang,
 		theme:         u.theme,
+		metadata:      util.CloneRef(u.metadata),
 		verification:  util.CloneRef(u.verification),
 		passwordReset: util.CloneRef(u.passwordReset),
 	}

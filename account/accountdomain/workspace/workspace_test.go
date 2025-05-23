@@ -44,18 +44,6 @@ func TestWorkspace_UpdateAlias(t *testing.T) {
 	assert.Equal(t, "a", w.alias)
 }
 
-func TestWorkspace_UpdateDescription(t *testing.T) {
-	w := &Workspace{}
-	w.UpdateDescription("a")
-	assert.Equal(t, "a", w.description)
-}
-
-func TestWorkspace_UpdateWebsite(t *testing.T) {
-	w := &Workspace{}
-	w.UpdateWebsite("a")
-	assert.Equal(t, "a", w.website)
-}
-
 func TestWorkspace_UpdateEmail(t *testing.T) {
 	w := &Workspace{}
 	w.UpdateEmail("a")

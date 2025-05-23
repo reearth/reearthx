@@ -112,3 +112,37 @@ func TestBuilder_Policy(t *testing.T) {
 		},
 	}, New().Policy(&pid))
 }
+
+func TestBuilder_Location(t *testing.T) {
+	loc := "location"
+	assert.Equal(t, &Builder{
+		w: &Workspace{
+			location: loc,
+		},
+	}, New().Location(loc))
+}
+
+func TestBuilder_Email(t *testing.T) {
+	assert.Equal(t, &Builder{
+		w: &Workspace{
+			email: "test@mail.com",
+		},
+	}, New().Email("test@mail.com"))
+}
+
+func TestBuilder_BillingEmail(t *testing.T) {
+	assert.Equal(t, &Builder{
+		w: &Workspace{
+			billingEmail: "test@mail.com",
+		},
+	}, New().BillingEmail("test@mail.com"))
+}
+
+func TestBuilder_Metadata(t *testing.T) {
+	md := MetadataFrom("description", "https://example.com")
+	assert.Equal(t, &Builder{
+		w: &Workspace{
+			metadata: md,
+		},
+	}, New().Metadata(md))
+}

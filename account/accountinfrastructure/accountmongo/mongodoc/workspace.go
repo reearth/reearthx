@@ -13,14 +13,18 @@ type WorkspaceMemberDocument struct {
 	Disabled  bool
 }
 
+type WorkspaceMetadataDocument struct {
+	Description string
+	Website     string
+}
+
 type WorkspaceDocument struct {
 	ID           string
 	Name         string
 	Alias        string
-	Description  string
-	Website      string
 	Email        string
 	BillingEmail string
+	Metadata     *WorkspaceMetadataDocument
 	Members      map[string]WorkspaceMemberDocument
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
@@ -47,15 +51,22 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		}
 	}
 
+	var metadataDoc *WorkspaceMetadataDocument
+	if ws.Metadata() != nil {
+		metadataDoc = &WorkspaceMetadataDocument{
+			Description: ws.Metadata().Description(),
+			Website:     ws.Metadata().Website(),
+		}
+	}
+
 	wId := ws.ID().String()
 	return &WorkspaceDocument{
 		ID:           wId,
 		Name:         ws.Name(),
 		Alias:        ws.Alias(),
-		Description:  ws.Description(),
-		Website:      ws.Website(),
 		Email:        ws.Email(),
 		BillingEmail: ws.BillingEmail(),
+		Metadata:     metadataDoc,
 		Members:      membersDoc,
 		Integrations: integrationsDoc,
 		Personal:     ws.IsPersonal(),
@@ -109,14 +120,18 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		policy = workspace.PolicyID(d.Policy).Ref()
 	}
 
+	var metadata *workspace.Metadata
+	if d.Metadata != nil {
+		metadata = workspace.MetadataFrom(d.Metadata.Description, d.Metadata.Website)
+	}
+
 	return workspace.New().
 		ID(tid).
 		Name(d.Name).
 		Alias(d.Alias).
-		Description(d.Description).
-		Website(d.Website).
 		Email(d.Email).
 		BillingEmail(d.BillingEmail).
+		Metadata(metadata).
 		Members(members).
 		Integrations(integrations).
 		Personal(d.Personal).
