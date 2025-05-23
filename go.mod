@@ -14,7 +14,9 @@ require (
 	github.com/goccy/go-yaml v1.17.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/gddo v0.0.0-20210115222349-20d68f94ee1f
+	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/gorilla/mux v1.8.1
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jarcoal/httpmock v1.4.0
@@ -40,6 +42,7 @@ require (
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.38.0
+	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	golang.org/x/text v0.25.0
 	gopkg.in/go-jose/go-jose.v2 v2.6.3
 	gopkg.in/square/go-jose.v2 v2.6.0
