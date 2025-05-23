@@ -2,21 +2,38 @@ package mongo
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/reearth/reearthx/asset"
+	"github.com/reearth/reearthx/asset/mongo/mongodoc"
 	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/mongox"
+	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+var (
+	assetIndexes = []string{
+		"groupid,!createdat,!id",
+		"groupid,createdat,id",
+		"groupid,!size,!id",
+		"groupid,size,id",
+		"!createdat,!id",
+	}
+	assetUniqueIndexes = []string{"id", "uuid"}
 )
 
 var _ asset.AssetRepository = &AssetRepository{}
 
 type AssetRepository struct {
 	client *mongox.Collection
+	f      asset.ProjectFilter
 }
 
 func NewAssetRepository(db *mongo.Database) *AssetRepository {
@@ -25,7 +42,27 @@ func NewAssetRepository(db *mongo.Database) *AssetRepository {
 	}
 }
 
+func (r *AssetRepository) Init() error {
+	return createIndexes(
+		context.Background(),
+		r.client,
+		assetIndexes,
+		assetUniqueIndexes,
+	)
+}
+
+func (r *AssetRepository) Filtered(filter asset.ProjectFilter) asset.AssetRepository {
+	return &AssetRepository{
+		client: r.client,
+		f:      filter,
+	}
+}
+
 func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
+	if !r.f.CanWrite(asset.GroupID()) {
+		return rerror.ErrInvalidParams
+	}
+
 	doc := assetToDoc(asset)
 
 	_, err := r.client.Client().UpdateOne(
@@ -35,68 +72,68 @@ func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
 		options.Update().SetUpsert(true),
 	)
 
-	return err
+	if err != nil {
+		return rerror.ErrInternalBy(err)
+	}
+
+	return nil
 }
 
 func (r *AssetRepository) FindByID(ctx context.Context, id asset.AssetID) (*asset.Asset, error) {
-	var doc assetDocument
-
-	err := r.client.FindOne(ctx, bson.M{"id": id.String()}, mongox.FuncConsumer(func(raw bson.Raw) error {
-		return bson.Unmarshal(raw, &doc)
-	}))
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return docToAsset(&doc)
+	return r.findOne(ctx, bson.M{
+		"id": id.String(),
+	})
 }
 
 func (r *AssetRepository) FindByUUID(ctx context.Context, uuid string) (*asset.Asset, error) {
-	var doc assetDocument
-
-	err := r.client.FindOne(ctx, bson.M{"uuid": uuid}, mongox.FuncConsumer(func(raw bson.Raw) error {
-		return bson.Unmarshal(raw, &doc)
-	}))
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return docToAsset(&doc)
+	return r.findOne(ctx, bson.M{
+		"uuid": uuid,
+	})
 }
 
 func (r *AssetRepository) FindByIDs(ctx context.Context, ids []asset.AssetID) ([]*asset.Asset, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
 	idStrings := make([]string, len(ids))
 	for i, id := range ids {
 		idStrings[i] = id.String()
 	}
 
-	consumer := mongox.NewSliceFuncConsumer(func(doc assetDocument) (*assetDocument, error) {
-		return &doc, nil
-	})
+	filter := bson.M{
+		"id": bson.M{"$in": idStrings},
+	}
 
-	err := r.client.Find(ctx, bson.M{"id": bson.M{"$in": idStrings}}, consumer)
+	res, err := r.find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
-
-	assets := make([]*asset.Asset, 0, len(consumer.Result))
-	for _, doc := range consumer.Result {
-		a, err := docToAsset(doc)
-		if err != nil {
-			continue
-		}
-		assets = append(assets, a)
+	if len(res) == 0 {
+		return nil, nil
 	}
 
-	return assets, nil
+	return filterAssets(ids, res), nil
+}
+
+func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDList) (asset.List, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	filter := bson.M{
+		"id": bson.M{"$in": ids.Strings()},
+	}
+
+	res, err := r.find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, nil
+	}
+
+	return asset.List(res), nil
 }
 
 func (r *AssetRepository) FindByGroup(
@@ -106,10 +143,19 @@ func (r *AssetRepository) FindByGroup(
 	sort asset.AssetSort,
 	pagination asset.Pagination,
 ) ([]*asset.Asset, int64, error) {
+	if !r.f.CanRead(groupID) {
+		return nil, 0, nil
+	}
+
 	query := bson.M{"groupid": groupID.String()}
 
 	if filter.Keyword != "" {
-		query["filename"] = bson.M{"$regex": filter.Keyword, "$options": "i"}
+		query["filename"] = bson.M{
+			"$regex": primitive.Regex{
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(filter.Keyword)),
+				Options: "i",
+			},
+		}
 	}
 
 	sortOptions := bson.D{}
@@ -136,9 +182,9 @@ func (r *AssetRepository) FindByGroup(
 		sortOptions = append(sortOptions, bson.E{Key: "createdat", Value: -1})
 	}
 
-	count, err := r.client.Count(ctx, query)
+	count, err := r.client.Count(ctx, r.readFilter(query))
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, rerror.ErrInternalBy(err)
 	}
 
 	findOptions := options.Find().
@@ -150,9 +196,9 @@ func (r *AssetRepository) FindByGroup(
 		return &doc, nil
 	})
 
-	err = r.client.Find(ctx, query, consumer, findOptions)
+	err = r.client.Find(ctx, r.readFilter(query), consumer, findOptions)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, rerror.ErrInternalBy(err)
 	}
 
 	assets := make([]*asset.Asset, 0, len(consumer.Result))
@@ -167,8 +213,30 @@ func (r *AssetRepository) FindByGroup(
 	return assets, count, nil
 }
 
+func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.GroupID, filter asset.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+	if !r.f.CanRead(groupID) {
+		return nil, usecasex.EmptyPageInfo(), nil
+	}
+
+	var query interface{} = bson.M{"groupid": groupID.String()}
+
+	if filter.Keyword != "" {
+		query = mongox.And(query, "", bson.M{
+			"filename": bson.M{
+				"$regex": primitive.Regex{
+					Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(filter.Keyword)),
+					Options: "i",
+				},
+			},
+		})
+	}
+
+	return r.paginate(ctx, query, nil, nil)
+}
+
 func (r *AssetRepository) Delete(ctx context.Context, id asset.AssetID) error {
-	return r.client.RemoveOne(ctx, bson.M{"id": id.String()})
+	filter := r.writeFilter(bson.M{"id": id.String()})
+	return r.client.RemoveOne(ctx, filter)
 }
 
 func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset.AssetID) error {
@@ -177,31 +245,64 @@ func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset.AssetID) e
 		idStrings[i] = id.String()
 	}
 
-	return r.client.RemoveAll(ctx, bson.M{"id": bson.M{"$in": idStrings}})
+	filter := r.writeFilter(bson.M{
+		"id": bson.M{"$in": idStrings},
+	})
+
+	return r.client.RemoveAll(ctx, filter)
+}
+
+func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.AssetIDList) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	filter := r.writeFilter(bson.M{
+		"id": bson.M{"$in": ids.Strings()},
+	})
+
+	return r.client.RemoveAll(ctx, filter)
 }
 
 func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset.AssetID, status asset.ExtractionStatus) error {
+	filter := r.writeFilter(bson.M{"id": id.String()})
 	_, err := r.client.Client().UpdateOne(
 		ctx,
-		bson.M{"id": id.String()},
+		filter,
 		bson.M{"$set": bson.M{"archiveextractionstatus": string(status)}},
 	)
-	return err
+	if err != nil {
+		return rerror.ErrInternalBy(err)
+	}
+	return nil
 }
 
-func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDList) (asset.List, error) {
-	idStrings := ids.Strings()
+// Helper methods for filtering
+func (r *AssetRepository) readFilter(filter interface{}) interface{} {
+	if r.f.Readable == nil {
+		return filter
+	}
+	return applyGroupFilter(filter, r.f.Readable)
+}
 
+func (r *AssetRepository) writeFilter(filter interface{}) interface{} {
+	if r.f.Writable == nil {
+		return filter
+	}
+	return applyGroupFilter(filter, r.f.Writable)
+}
+
+// Helper methods for document operations
+func (r *AssetRepository) find(ctx context.Context, filter interface{}) ([]*asset.Asset, error) {
 	consumer := mongox.NewSliceFuncConsumer(func(doc assetDocument) (*assetDocument, error) {
 		return &doc, nil
 	})
 
-	err := r.client.Find(ctx, bson.M{"id": bson.M{"$in": idStrings}}, consumer)
-	if err != nil {
-		return nil, err
+	if err := r.client.Find(ctx, r.readFilter(filter), consumer); err != nil {
+		return nil, rerror.ErrInternalBy(err)
 	}
 
-	assets := make(asset.List, 0, len(consumer.Result))
+	assets := make([]*asset.Asset, 0, len(consumer.Result))
 	for _, doc := range consumer.Result {
 		a, err := docToAsset(doc)
 		if err != nil {
@@ -213,55 +314,58 @@ func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDLis
 	return assets, nil
 }
 
-func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.GroupID, filter asset.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
-	query := bson.M{"groupid": groupID.String()}
+func (r *AssetRepository) findOne(ctx context.Context, filter interface{}) (*asset.Asset, error) {
+	var doc assetDocument
 
-	if filter.Keyword != "" {
-		query["filename"] = bson.M{"$regex": filter.Keyword, "$options": "i"}
+	err := r.client.FindOne(ctx, r.readFilter(filter), mongox.FuncConsumer(func(raw bson.Raw) error {
+		return bson.Unmarshal(raw, &doc)
+	}))
+
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
 	}
-
-	count, err := r.client.Count(ctx, query)
 	if err != nil {
-		return nil, nil, err
+		return nil, rerror.ErrInternalBy(err)
 	}
 
-	consumer := mongox.NewSliceFuncConsumer(func(doc assetDocument) (*assetDocument, error) {
-		return &doc, nil
-	})
+	return docToAsset(&doc)
+}
 
-	err = r.client.Find(ctx, query, consumer)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	assets := make(asset.List, 0, len(consumer.Result))
-	for _, doc := range consumer.Result {
-		a, err := docToAsset(doc)
-		if err != nil {
-			continue
+func filterAssets(ids []asset.AssetID, rows []*asset.Asset) []*asset.Asset {
+	res := make([]*asset.Asset, 0, len(ids))
+	for _, id := range ids {
+		var r2 *asset.Asset
+		for _, r := range rows {
+			if r.ID() == id {
+				r2 = r
+				break
+			}
 		}
-		assets = append(assets, a)
+		res = append(res, r2)
 	}
-
-	pageInfo := &usecasex.PageInfo{
-		TotalCount:      count,
-		StartCursor:     nil,
-		EndCursor:       nil,
-		HasNextPage:     false, // TODO: implement proper pagination
-		HasPreviousPage: false,
-	}
-
-	return assets, pageInfo, nil
+	return res
 }
 
-func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.AssetIDList) error {
-	idStrings := ids.Strings()
-	return r.client.RemoveAll(ctx, bson.M{"id": bson.M{"$in": idStrings}})
+func applyGroupFilter(filter interface{}, groups []asset.GroupID) interface{} {
+	if len(groups) == 0 {
+		return filter
+	}
+
+	groupStrings := make([]string, len(groups))
+	for i, g := range groups {
+		groupStrings[i] = g.String()
+	}
+
+	groupFilter := bson.M{
+		"groupid": bson.M{"$in": groupStrings},
+	}
+
+	return mongox.And(filter, "", groupFilter)
 }
 
-func (r *AssetRepository) Filtered(filter asset.ProjectFilter) asset.AssetRepository {
-	// TODO: implement project filtering
-	return r
+func createIndexes(ctx context.Context, c *mongox.Collection, indexes, uniqueIndexes []string) error {
+	_, _, err := c.Indexes(ctx, indexes, uniqueIndexes)
+	return err
 }
 
 type assetDocument struct {
@@ -340,4 +444,15 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 	}
 
 	return a, nil
+}
+
+func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort *usecasex.Sort, pagination *usecasex.Pagination) (asset.List, *usecasex.PageInfo, error) {
+	c := mongodoc.NewAssetConsumer()
+
+	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), sort, pagination, c, options.Find().SetProjection(bson.M{"file": 0}))
+	if err != nil {
+		return nil, nil, rerror.ErrInternalBy(err)
+	}
+
+	return c.Result, pageInfo, nil
 }

@@ -50,6 +50,14 @@ type ProjectFilter struct {
 	Writable GroupIDList
 }
 
+func (f ProjectFilter) CanRead(id GroupID) bool {
+	return f.Readable == nil || f.Readable.Has(id) || f.CanWrite(id)
+}
+
+func (f ProjectFilter) CanWrite(id GroupID) bool {
+	return f.Writable == nil || f.Writable.Has(id)
+}
+
 func (a *Asset) ID() AssetID {
 	return a.id
 }
