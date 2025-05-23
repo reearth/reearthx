@@ -11,29 +11,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var _ asset.AssetFileRepository = &AssetFileRepository{}
+var _ asset.AssetFile = &AssetFile{}
 
-type AssetFileRepository struct {
+type AssetFile struct {
 	client           *mongox.Collection
 	assetFilesClient *mongox.Collection
 }
 
-func NewAssetFileRepository(db *mongo.Database) asset.AssetFileRepository {
-	return &AssetFileRepository{
+func NewAssetFile(db *mongo.Database) asset.AssetFile {
+	return &AssetFile{
 		client:           mongox.NewCollection(db.Collection("assets")),
 		assetFilesClient: mongox.NewCollection(db.Collection("asset_files")),
 	}
 }
 
-func (r *AssetFileRepository) Init(ctx context.Context) error {
-	return createIndexes(
-		ctx,
-		r.assetFilesClient,
-		mongox.IndexFromKey("assetid,page", true),
-	)
-}
-
-func (r *AssetFileRepository) FindByID(ctx context.Context, id asset.AssetID) (*asset.File, error) {
+func (r *AssetFile) FindByID(ctx context.Context, id asset.AssetID) (*asset.File, error) {
 	c := &mongodoc.AssetAndFileConsumer{}
 	if err := r.client.FindOne(ctx, bson.M{
 		"id": id.String(),
@@ -77,13 +69,10 @@ func (r *AssetFileRepository) FindByID(ctx context.Context, id asset.AssetID) (*
 	return f, nil
 }
 
-func (r *AssetFileRepository) FindByIDs(ctx context.Context, ids []asset.AssetID) (map[asset.AssetID]*asset.File, error) {
+func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.AssetIDList) (map[asset.AssetID]*asset.File, error) {
 	filesMap := make(map[asset.AssetID]*asset.File)
 
-	idStrings := make([]string, len(ids))
-	for i, id := range ids {
-		idStrings[i] = id.String()
-	}
+	idStrings := ids.Strings()
 
 	c := &mongodoc.AssetAndFileConsumer{}
 	if err := r.client.Find(ctx, bson.M{
@@ -128,7 +117,7 @@ func (r *AssetFileRepository) FindByIDs(ctx context.Context, ids []asset.AssetID
 	return filesMap, nil
 }
 
-func (r *AssetFileRepository) Save(ctx context.Context, id asset.AssetID, file *asset.File) error {
+func (r *AssetFile) Save(ctx context.Context, id asset.AssetID, file *asset.File) error {
 	doc := mongodoc.NewFile(file)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),
@@ -139,13 +128,10 @@ func (r *AssetFileRepository) Save(ctx context.Context, id asset.AssetID, file *
 		},
 	}, options.Update().SetUpsert(true))
 
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func (r *AssetFileRepository) SaveFlat(ctx context.Context, id asset.AssetID, parent *asset.File, files []*asset.File) error {
+func (r *AssetFile) SaveFlat(ctx context.Context, id asset.AssetID, parent *asset.File, files []*asset.File) error {
 	doc := mongodoc.NewFile(parent)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),
@@ -182,34 +168,4 @@ func (r *AssetFileRepository) SaveFlat(ctx context.Context, id asset.AssetID, pa
 	}
 
 	return nil
-}
-
-func (r *AssetFileRepository) Delete(ctx context.Context, id asset.AssetID) error {
-	_, err := r.client.Client().UpdateOne(ctx, bson.M{
-		"id": id.String(),
-	}, bson.M{
-		"$unset": bson.M{
-			"file":      "",
-			"flatfiles": "",
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	return r.assetFilesClient.RemoveAll(ctx, bson.M{"assetid": id.String()})
-}
-
-func createIndexes(ctx context.Context, c *mongox.Collection, indexes ...mongox.Index) error {
-	if len(indexes) == 0 {
-		return nil
-	}
-
-	models := make([]mongo.IndexModel, 0, len(indexes))
-	for _, idx := range indexes {
-		models = append(models, idx.Model())
-	}
-
-	_, err := c.Client().Indexes().CreateMany(ctx, models)
-	return err
 }

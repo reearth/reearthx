@@ -3,8 +3,6 @@ package asset
 import (
 	"context"
 	"io"
-
-	"github.com/reearth/reearthx/usecasex"
 )
 
 type AssetService interface {
@@ -17,22 +15,6 @@ type AssetService interface {
 	DeleteAssets(ctx context.Context, ids []AssetID) error
 	DecompressAsset(ctx context.Context, id AssetID) error
 	CreateAssetUpload(ctx context.Context, param CreateAssetUploadParam) (*AssetUploadInfo, error)
-
-	Filtered(ProjectFilter) AssetService
-	FindByProject(context.Context, GroupID, AssetFilter) (List, *usecasex.PageInfo, error)
-	FindByID(context.Context, AssetID) (*Asset, error)
-	FindByUUID(context.Context, string) (*Asset, error)
-	FindByIDs(context.Context, AssetIDList) (List, error)
-	Save(context.Context, *Asset) error
-	Delete(context.Context, AssetID) error
-	BatchDelete(context.Context, AssetIDList) error
-}
-
-type AssetFile interface {
-	FindByID(context.Context, AssetID) (*File, error)
-	FindByIDs(context.Context, AssetIDList) (map[AssetID]*File, error)
-	Save(context.Context, AssetID, *File) error
-	SaveFlat(context.Context, AssetID, *File, []*File) error
 }
 
 type CreateAssetParam struct {
@@ -72,12 +54,6 @@ type AssetUploadInfo struct {
 type PageInfo struct {
 	TotalCount int64
 	HasNext    bool
-}
-
-type AssetIDList []AssetID
-
-func (l AssetIDList) Add(id AssetID) AssetIDList {
-	return append(l, id)
 }
 
 type AssetUpload struct {

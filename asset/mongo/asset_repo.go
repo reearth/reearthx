@@ -7,6 +7,7 @@ import (
 	"github.com/reearth/reearthx/asset"
 	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/mongox"
+	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,7 +19,7 @@ type AssetRepository struct {
 	client *mongox.Collection
 }
 
-func NewAssetRepository(db *mongo.Database) asset.AssetRepository {
+func NewAssetRepository(db *mongo.Database) *AssetRepository {
 	return &AssetRepository{
 		client: mongox.NewCollection(db.Collection("assets")),
 	}
@@ -186,6 +187,81 @@ func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset.A
 		bson.M{"$set": bson.M{"archiveextractionstatus": string(status)}},
 	)
 	return err
+}
+
+func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDList) (asset.List, error) {
+	idStrings := ids.Strings()
+
+	consumer := mongox.NewSliceFuncConsumer(func(doc assetDocument) (*assetDocument, error) {
+		return &doc, nil
+	})
+
+	err := r.client.Find(ctx, bson.M{"id": bson.M{"$in": idStrings}}, consumer)
+	if err != nil {
+		return nil, err
+	}
+
+	assets := make(asset.List, 0, len(consumer.Result))
+	for _, doc := range consumer.Result {
+		a, err := docToAsset(doc)
+		if err != nil {
+			continue
+		}
+		assets = append(assets, a)
+	}
+
+	return assets, nil
+}
+
+func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.GroupID, filter asset.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+	query := bson.M{"groupid": groupID.String()}
+
+	if filter.Keyword != "" {
+		query["filename"] = bson.M{"$regex": filter.Keyword, "$options": "i"}
+	}
+
+	count, err := r.client.Count(ctx, query)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	consumer := mongox.NewSliceFuncConsumer(func(doc assetDocument) (*assetDocument, error) {
+		return &doc, nil
+	})
+
+	err = r.client.Find(ctx, query, consumer)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	assets := make(asset.List, 0, len(consumer.Result))
+	for _, doc := range consumer.Result {
+		a, err := docToAsset(doc)
+		if err != nil {
+			continue
+		}
+		assets = append(assets, a)
+	}
+
+	pageInfo := &usecasex.PageInfo{
+		TotalCount:      count,
+		StartCursor:     nil,
+		EndCursor:       nil,
+		HasNextPage:     false, // TODO: implement proper pagination
+		HasPreviousPage: false,
+	}
+
+	return assets, pageInfo, nil
+}
+
+func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.AssetIDList) error {
+	idStrings := ids.Strings()
+	return r.client.RemoveAll(ctx, bson.M{"id": bson.M{"$in": idStrings}})
+}
+
+func (r *AssetRepository) Filtered(filter asset.ProjectFilter) asset.AssetRepository {
+	// TODO: implement project filtering
+	return r
 }
 
 type assetDocument struct {
