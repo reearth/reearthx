@@ -1,7 +1,5 @@
 package asset
 
-// copy from cms
-
 import (
 	"path"
 	"strings"
@@ -11,13 +9,16 @@ import (
 )
 
 type File struct {
-	name        string
-	size        uint64
-	contentType string
-	path        string
-	children    []*File
-	files       []*File
+	name            string
+	size            uint64
+	contentType     string
+	contentEncoding string
+	path            string
+	children        []*File
+	files           []*File
 }
+
+// getters
 
 func (f *File) Name() string {
 	if f == nil {
@@ -44,6 +45,13 @@ func (f *File) ContentType() string {
 	return f.contentType
 }
 
+func (f *File) ContentEncoding() string {
+	if f == nil {
+		return ""
+	}
+	return f.contentEncoding
+}
+
 func (f *File) Path() string {
 	if f == nil {
 		return ""
@@ -62,12 +70,6 @@ func (f *File) Files() []*File {
 	return slices.Clone(f.files)
 }
 
-func (f *File) SetFiles(s []*File) {
-	f.files = lo.Filter(s, func(af *File, _ int) bool {
-		return af.Path() != f.Path()
-	})
-}
-
 func (f *File) FilePaths() []string {
 	return lo.Map(f.files, func(f *File, _ int) string { return f.path })
 }
@@ -75,6 +77,16 @@ func (f *File) FilePaths() []string {
 func (f *File) IsDir() bool {
 	return f != nil && f.children != nil
 }
+
+// setters
+
+func (f *File) SetFiles(s []*File) {
+	f.files = lo.Filter(s, func(af *File, _ int) bool {
+		return af.Path() != f.Path()
+	})
+}
+
+// methods
 
 func (f *File) AppendChild(c *File) {
 	if f == nil {
@@ -94,14 +106,17 @@ func (f *File) Clone() *File {
 	}
 
 	return &File{
-		name:        f.name,
-		size:        f.size,
-		contentType: f.contentType,
-		path:        f.path,
-		children:    children,
+		name:            f.name,
+		size:            f.size,
+		contentType:     f.contentType,
+		path:            f.path,
+		children:        children,
+		contentEncoding: f.contentEncoding,
 	}
 }
 
+// FlattenChildren recursively collects all children of the File object into a flat slice.
+// It returns a slice of File objects containing all children in a flattened structure.
 func (f *File) FlattenChildren() (res []*File) {
 	if f == nil {
 		return nil

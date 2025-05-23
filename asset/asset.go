@@ -24,6 +24,7 @@ type Asset struct {
 	archiveExtractionStatus *ExtractionStatus //cms
 	flatFiles               bool              //cms
 	integration             IntegrationID
+	public                  bool                //cms
 	accessInfoResolver      *AccessInfoResolver // cms
 }
 
@@ -68,6 +69,7 @@ func (a *Asset) Clone() *Asset {
 		archiveExtractionStatus: a.archiveExtractionStatus,
 		flatFiles:               a.flatFiles,
 		integration:             a.integration,
+		public:                  a.public,
 		accessInfoResolver:      a.accessInfoResolver,
 	}
 }
@@ -118,6 +120,18 @@ func (a *Asset) FlatFiles() bool {
 
 func (a *Asset) Integration() IntegrationID {
 	return a.integration
+}
+
+func (a *Asset) User() *accountdomain.UserID {
+	return a.user
+}
+
+func (a *Asset) Thread() *ThreadID {
+	return a.thread
+}
+
+func (a *Asset) Public() bool {
+	return a.public
 }
 
 // Setter methods for modifying private fields
@@ -179,6 +193,18 @@ func (a *Asset) SetFlatFiles(flatFiles bool) {
 
 func (a *Asset) AddIntegration(integrationID IntegrationID) {
 	a.integration = integrationID
+}
+
+func (a *Asset) SetUser(user *accountdomain.UserID) {
+	a.user = user
+}
+
+func (a *Asset) SetThread(thread *ThreadID) {
+	a.thread = thread
+}
+
+func (a *Asset) SetPublic(public bool) {
+	a.public = public
 }
 
 type PreviewType string
