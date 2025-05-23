@@ -14,6 +14,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/reearth/reearthx/usecasex"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 	ErrGroupNotFound     = errors.New("group not found")
 	ErrInvalidParameters = errors.New("invalid parameters")
 	ErrStorageFailure    = errors.New("storage operation failed")
+	ErrOperationDenied   = errors.New("operation denied")
 )
 
 const (
@@ -35,6 +37,7 @@ type assetService struct {
 	storage       Storage
 	fileProcessor FileProcessor
 	zipExtractor  ZipExtractor
+	filter        *ProjectFilter
 }
 
 func NewAssetService(
@@ -58,12 +61,9 @@ func (s *assetService) CreateAsset(ctx context.Context, param CreateAssetParam) 
 		return nil, ErrInvalidParameters
 	}
 
-	group, err := s.groupRepo.FindByID(ctx, param.GroupID)
-	if err != nil {
-		return nil, err
-	}
-	if group == nil {
-		return nil, ErrGroupNotFound
+	// Check write permissions for the group
+	if !s.canWrite(param.GroupID) {
+		return nil, ErrOperationDenied
 	}
 
 	assetUUID := uuid.New().String()
@@ -77,7 +77,7 @@ func (s *assetService) CreateAsset(ctx context.Context, param CreateAssetParam) 
 	asset.SetPreviewType(s.fileProcessor.DetectPreviewType(param.FileName, param.ContentType))
 
 	if param.File != nil {
-		err = s.storage.Save(ctx, storageKey, param.File, param.Size, param.ContentType, param.ContentEncoding)
+		err := s.storage.Save(ctx, storageKey, param.File, param.Size, param.ContentType, param.ContentEncoding)
 		if err != nil {
 			return nil, ErrStorageFailure
 		}
@@ -154,6 +154,11 @@ func (s *assetService) GetAssetFile(ctx context.Context, id AssetID) (*File, err
 }
 
 func (s *assetService) ListAssets(ctx context.Context, groupID GroupID, filter AssetFilter, sort AssetSort, pagination Pagination) ([]*Asset, int64, error) {
+	// Check read permissions for the group
+	if !s.canRead(groupID) {
+		return nil, 0, ErrOperationDenied
+	}
+
 	return s.assetRepo.FindByGroup(ctx, groupID, filter, sort, pagination)
 }
 
@@ -164,6 +169,11 @@ func (s *assetService) UpdateAsset(ctx context.Context, param UpdateAssetParam) 
 	}
 	if asset == nil {
 		return nil, ErrAssetNotFound
+	}
+
+	// Check write permissions for the asset's group
+	if !s.canWrite(asset.GroupID()) {
+		return nil, ErrOperationDenied
 	}
 
 	if param.PreviewType != nil {
@@ -307,7 +317,6 @@ func (s *assetService) CreateAssetUpload(ctx context.Context, param CreateAssetU
 			Cursor:        cursor.Cursor,
 		}
 	} else {
-		// New upload
 		uploadParam = struct {
 			UUID          string
 			FileName      string
@@ -435,276 +444,6 @@ func shouldExtractArchive(fileName string, contentType string) bool {
 	}
 }
 
-func (s *assetService) FindByID(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error) {
-	asset, err := s.assetRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if asset == nil {
-		return nil, ErrAssetNotFound
-	}
-	return asset, nil
-}
-
-func (s *assetService) FindByUUID(ctx context.Context, uuid string, operator *AssetOperator) (*Asset, error) {
-	if uuid == "" {
-		return nil, ErrInvalidParameters
-	}
-
-	emptyGroupID := GroupID{}
-
-	filter := AssetFilter{
-		Keyword: uuid,
-	}
-
-	pagination := Pagination{
-		Offset: 0,
-		Limit:  1,
-	}
-
-	sort := AssetSort{
-		By:        AssetSortTypeDate,
-		Direction: SortDirectionDesc,
-	}
-
-	assets, _, err := s.assetRepo.FindByGroup(ctx, emptyGroupID, filter, sort, pagination)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, asset := range assets {
-		if asset.UUID() == uuid {
-			return asset, nil
-		}
-	}
-
-	return nil, ErrAssetNotFound
-}
-
-func (s *assetService) FindByIDs(ctx context.Context, ids []AssetID, operator *AssetOperator) ([]*Asset, error) {
-	assets, err := s.assetRepo.FindByIDs(ctx, ids)
-	if err != nil {
-		return nil, err
-	}
-	return assets, nil
-}
-
-func (s *assetService) FindByProject(ctx context.Context, groupID GroupID, filter AssetFilter, operator *AssetOperator) ([]*Asset, *PageInfo, error) {
-
-	pagination := Pagination{
-		Offset: 0,
-		Limit:  DefaultPaginationLimit,
-	}
-
-	sort := AssetSort{
-		By:        AssetSortTypeDate,
-		Direction: SortDirectionDesc,
-	}
-
-	assets, totalCount, err := s.assetRepo.FindByGroup(ctx, groupID, filter, sort, pagination)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	pageInfo := &PageInfo{
-		TotalCount: totalCount,
-		HasNext:    totalCount > int64(len(assets)),
-	}
-
-	return assets, pageInfo, nil
-}
-
-func (s *assetService) FindFileByID(ctx context.Context, id AssetID, operator *AssetOperator) (*File, error) {
-	return s.GetAssetFile(ctx, id)
-}
-
-func (s *assetService) FindFilesByIDs(ctx context.Context, ids AssetIDList, operator *AssetOperator) (map[AssetID]*File, error) {
-	result := make(map[AssetID]*File)
-
-	for _, id := range ids {
-		file, err := s.GetAssetFile(ctx, id)
-		if err != nil {
-			continue
-		}
-		result[id] = file
-	}
-
-	return result, nil
-}
-
-func (s *assetService) DownloadByID(ctx context.Context, id AssetID, headers map[string]string, operator *AssetOperator) (io.ReadCloser, map[string]string, error) {
-	asset, err := s.assetRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, nil, err
-	}
-	if asset == nil {
-		return nil, nil, ErrAssetNotFound
-	}
-
-	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
-
-	reader, err := s.storage.Get(ctx, storageKey)
-	if err != nil {
-		return nil, nil, ErrStorageFailure
-	}
-
-	responseHeaders := map[string]string{
-		"Content-Type":        asset.ContentType(),
-		"Content-Disposition": "attachment; filename=" + asset.FileName(),
-		"Content-Length":      fmt.Sprint(asset.Size()),
-	}
-
-	if asset.ContentEncoding() != "" {
-		responseHeaders["Content-Encoding"] = asset.ContentEncoding()
-	}
-
-	return reader, responseHeaders, nil
-}
-
-func (s *assetService) Create(ctx context.Context, param CreateAssetParam, operator *AssetOperator) (*Asset, *File, error) {
-
-	if operator.AcOperator.User == nil && operator.Integration == (IntegrationID{}) {
-		return nil, nil, errors.New("invalid operator")
-	}
-
-	asset, err := s.CreateAsset(ctx, param)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	file, err := s.GetAssetFile(ctx, asset.ID())
-	if err != nil {
-		return asset, nil, err
-	}
-
-	return asset, file, nil
-}
-
-func (s *assetService) Update(ctx context.Context, param UpdateAssetParam, operator *AssetOperator) (*Asset, error) {
-	return s.UpdateAsset(ctx, param)
-}
-
-func (s *assetService) UpdateFiles(ctx context.Context, id AssetID, status *ExtractionStatus, operator *AssetOperator) (*Asset, error) {
-	asset, err := s.assetRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if asset == nil {
-		return nil, ErrAssetNotFound
-	}
-
-	if status != nil {
-		asset.SetArchiveExtractionStatus(status)
-		if err := s.assetRepo.UpdateExtractionStatus(ctx, id, *status); err != nil {
-			return nil, err
-		}
-	}
-
-	return asset, nil
-}
-
-func (s *assetService) Delete(ctx context.Context, id AssetID, operator *AssetOperator) (AssetID, error) {
-	err := s.DeleteAsset(ctx, id)
-	if err != nil {
-		return AssetID{}, err
-	}
-	return id, nil
-}
-
-func (s *assetService) BatchDelete(ctx context.Context, ids AssetIDList, operator *AssetOperator) ([]AssetID, error) {
-	idArray := []AssetID(ids)
-	err := s.DeleteAssets(ctx, idArray)
-	if err != nil {
-		return nil, err
-	}
-	return idArray, nil
-}
-
-func (s *assetService) Decompress(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error) {
-	err := s.DecompressAsset(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-
-	asset, err := s.assetRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if asset == nil {
-		return nil, ErrAssetNotFound
-	}
-
-	return asset, nil
-}
-
-func (s *assetService) Publish(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error) {
-	asset, err := s.assetRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if asset == nil {
-		return nil, ErrAssetNotFound
-	}
-
-	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
-
-	publicURL, err := s.storage.GenerateURL(ctx, storageKey, 10*365*24*time.Hour)
-	if err != nil {
-		return nil, ErrStorageFailure
-	}
-
-	asset.SetURL(publicURL)
-
-	if err := s.assetRepo.Save(ctx, asset); err != nil {
-		return nil, err
-	}
-
-	return asset, nil
-}
-
-func (s *assetService) Unpublish(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error) {
-	asset, err := s.assetRepo.FindByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	if asset == nil {
-		return nil, ErrAssetNotFound
-	}
-
-	storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
-
-	temporaryURL, err := s.storage.GenerateURL(ctx, storageKey, 24*time.Hour)
-	if err != nil {
-		return nil, ErrStorageFailure
-	}
-
-	asset.SetURL(temporaryURL)
-
-	if err := s.assetRepo.Save(ctx, asset); err != nil {
-		return nil, err
-	}
-
-	return asset, nil
-}
-
-func (s *assetService) CreateUpload(ctx context.Context, param CreateAssetUploadParam, operator *AssetOperator) (*AssetUpload, error) {
-	info, err := s.CreateAssetUpload(ctx, param)
-	if err != nil {
-		return nil, err
-	}
-
-	upload := &AssetUpload{
-		Token:           info.Token,
-		URL:             info.URL,
-		ContentType:     info.ContentType,
-		ContentLength:   info.ContentLength,
-		ContentEncoding: info.ContentEncoding,
-		Next:            info.Next,
-	}
-
-	return upload, nil
-}
-
 func (s *assetService) RetryDecompression(ctx context.Context, id string) error {
 	assetID, err := AssetIDFrom(id)
 	if err != nil {
@@ -762,11 +501,112 @@ func detectAndUpdatePreviewType(ctx context.Context, s *assetService, asset *Ass
 		}
 	}
 
-	if previewType != "" && previewType != asset.PreviewType() {
+	if previewType != "" && (asset.PreviewType() == nil || previewType != *asset.PreviewType()) {
 		slog.InfoContext(ctx, "Updating asset preview type", "assetID", asset.ID(), "from", asset.PreviewType(), "to", previewType)
 		asset.SetPreviewType(previewType)
 		if err := s.assetRepo.Save(ctx, asset); err != nil {
 			slog.ErrorContext(ctx, "Failed to update asset preview type", "error", err)
 		}
 	}
+}
+
+func (s *assetService) BatchDelete(ctx context.Context, ids AssetIDList) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	assets, err := s.assetRepo.FindByIDs(ctx, []AssetID(ids))
+	if err != nil {
+		return err
+	}
+
+	for _, asset := range assets {
+		if asset != nil {
+			storageKey := path.Join(asset.GroupID().String(), asset.UUID(), asset.FileName())
+			if err := s.storage.Delete(ctx, storageKey); err != nil {
+				continue
+			}
+		}
+	}
+
+	return s.assetRepo.DeleteMany(ctx, []AssetID(ids))
+}
+
+func (s *assetService) canRead(groupID GroupID) bool {
+	if s.filter == nil || s.filter.Readable == nil {
+		return true
+	}
+	return s.filter.Readable.Has(groupID)
+}
+
+func (s *assetService) canWrite(groupID GroupID) bool {
+	if s.filter == nil || s.filter.Writable == nil {
+		return true
+	}
+	return s.filter.Writable.Has(groupID)
+}
+
+func (s *assetService) Filtered(filter ProjectFilter) AssetService {
+	return &assetService{
+		assetRepo:     s.assetRepo,
+		groupRepo:     s.groupRepo,
+		storage:       s.storage,
+		fileProcessor: s.fileProcessor,
+		zipExtractor:  s.zipExtractor,
+		filter:        &filter,
+	}
+}
+
+func (s *assetService) FindByProject(ctx context.Context, groupID GroupID, filter AssetFilter) (List, *usecasex.PageInfo, error) {
+	if !s.canRead(groupID) {
+		return nil, nil, ErrOperationDenied
+	}
+
+	assets, totalCount, err := s.assetRepo.FindByGroup(ctx, groupID, filter, AssetSort{}, Pagination{Limit: DefaultPaginationLimit})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	list := make(List, len(assets))
+	copy(list, assets)
+
+	pageInfo := &usecasex.PageInfo{
+		TotalCount:      totalCount,
+		HasNextPage:     int64(len(assets)) >= DefaultPaginationLimit,
+		HasPreviousPage: false,
+	}
+
+	return list, pageInfo, nil
+}
+
+func (s *assetService) FindByID(ctx context.Context, id AssetID) (*Asset, error) {
+	return s.GetAsset(ctx, id)
+}
+
+func (s *assetService) FindByUUID(ctx context.Context, uuid string) (*Asset, error) {
+	if uuid == "" {
+		return nil, ErrInvalidParameters
+	}
+
+	return s.assetRepo.FindByUUID(ctx, uuid)
+}
+
+func (s *assetService) FindByIDs(ctx context.Context, ids AssetIDList) (List, error) {
+	assets, err := s.assetRepo.FindByIDs(ctx, []AssetID(ids))
+	if err != nil {
+		return nil, err
+	}
+
+	list := make(List, len(assets))
+	copy(list, assets)
+
+	return list, nil
+}
+
+func (s *assetService) Save(ctx context.Context, asset *Asset) error {
+	return s.assetRepo.Save(ctx, asset)
+}
+
+func (s *assetService) Delete(ctx context.Context, id AssetID) error {
+	return s.DeleteAsset(ctx, id)
 }

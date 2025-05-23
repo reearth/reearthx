@@ -4,22 +4,34 @@ package asset
 
 import (
 	"time"
+
+	"github.com/reearth/reearthx/account/accountdomain"
 )
 
 type Asset struct {
 	id                      AssetID
-	groupID                 GroupID   // projectID in visualizer and cms, workspaceID in flow
-	createdAt               time.Time //
+	groupID                 GroupID // projectID in visualizer and cms, workspaceID in flow
+	createdAt               time.Time
+	user                    *accountdomain.UserID
 	size                    int64
+	thread                  *ThreadID
 	contentType             string // visualizer && flow
 	contentEncoding         string
-	previewType             PreviewType       // cms
+	previewType             *PreviewType      // cms
 	uuid                    string            //cms
 	url                     string            //cms && visualizer && flow
 	fileName                string            //cms
 	archiveExtractionStatus *ExtractionStatus //cms
 	flatFiles               bool              //cms
 	integration             IntegrationID
+	accessInfoResolver      *AccessInfoResolver // cms
+}
+
+type AccessInfoResolver = func(*Asset) *AccessInfo
+
+type AccessInfo struct {
+	Url    string
+	Public bool
 }
 
 func NewAsset(id AssetID, groupID GroupID, createdAt time.Time, size int64, contentType string) *Asset {
@@ -32,8 +44,32 @@ func NewAsset(id AssetID, groupID GroupID, createdAt time.Time, size int64, cont
 	}
 }
 
+type ProjectFilter struct {
+	Readable GroupIDList
+	Writable GroupIDList
+}
+
 func (a *Asset) ID() AssetID {
 	return a.id
+}
+
+func (a *Asset) Clone() *Asset {
+	return &Asset{
+		id:                      a.id,
+		groupID:                 a.groupID,
+		createdAt:               a.createdAt,
+		size:                    a.size,
+		contentType:             a.contentType,
+		contentEncoding:         a.contentEncoding,
+		previewType:             a.previewType,
+		uuid:                    a.uuid,
+		url:                     a.url,
+		fileName:                a.fileName,
+		archiveExtractionStatus: a.archiveExtractionStatus,
+		flatFiles:               a.flatFiles,
+		integration:             a.integration,
+		accessInfoResolver:      a.accessInfoResolver,
+	}
 }
 
 func (a *Asset) GroupID() GroupID {
@@ -56,7 +92,7 @@ func (a *Asset) ContentEncoding() string {
 	return a.contentEncoding
 }
 
-func (a *Asset) PreviewType() PreviewType {
+func (a *Asset) PreviewType() *PreviewType {
 	return a.previewType
 }
 
@@ -97,6 +133,14 @@ func (a *Asset) SetCreatedAt(createdAt time.Time) {
 	a.createdAt = createdAt
 }
 
+func (a *Asset) SetAccessInfoResolver(resolver AccessInfoResolver) {
+	if resolver == nil {
+		a.accessInfoResolver = nil
+		return
+	}
+	a.accessInfoResolver = &resolver
+}
+
 func (a *Asset) SetSize(size int64) {
 	a.size = size
 }
@@ -110,7 +154,7 @@ func (a *Asset) SetContentEncoding(contentEncoding string) {
 }
 
 func (a *Asset) SetPreviewType(previewType PreviewType) {
-	a.previewType = previewType
+	a.previewType = &previewType
 }
 
 func (a *Asset) SetUUID(uuid string) {

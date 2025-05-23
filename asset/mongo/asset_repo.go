@@ -54,6 +54,23 @@ func (r *AssetRepository) FindByID(ctx context.Context, id asset.AssetID) (*asse
 	return docToAsset(&doc)
 }
 
+func (r *AssetRepository) FindByUUID(ctx context.Context, uuid string) (*asset.Asset, error) {
+	var doc assetDocument
+
+	err := r.client.FindOne(ctx, bson.M{"uuid": uuid}, mongox.FuncConsumer(func(raw bson.Raw) error {
+		return bson.Unmarshal(raw, &doc)
+	}))
+
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return docToAsset(&doc)
+}
+
 func (r *AssetRepository) FindByIDs(ctx context.Context, ids []asset.AssetID) ([]*asset.Asset, error) {
 	idStrings := make([]string, len(ids))
 	for i, id := range ids {
@@ -193,11 +210,14 @@ func assetToDoc(a *asset.Asset) *assetDocument {
 		CreatedAt:     a.CreatedAt(),
 		Size:          a.Size(),
 		ContentType:   a.ContentType(),
-		PreviewType:   string(a.PreviewType()),
 		UUID:          a.UUID(),
 		URL:           a.URL(),
 		FileName:      a.FileName(),
 		IntegrationID: a.Integration().String(),
+	}
+
+	if a.PreviewType() != nil {
+		doc.PreviewType = string(*a.PreviewType())
 	}
 
 	if a.ContentEncoding() != "" {

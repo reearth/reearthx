@@ -26,6 +26,14 @@ func (OperatorIDType) Type() string {
 	return "operator"
 }
 
+type ThreadIDType struct{}
+
+func (ThreadIDType) Type() string {
+	return "thread"
+}
+
+type ThreadID = idx.ID[ThreadIDType]
+
 func NewAssetID() AssetID {
 	return idx.New[AssetIDType]()
 }

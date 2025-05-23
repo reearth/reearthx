@@ -3,6 +3,8 @@ package asset
 import (
 	"context"
 	"io"
+
+	"github.com/reearth/reearthx/usecasex"
 )
 
 type AssetService interface {
@@ -16,24 +18,21 @@ type AssetService interface {
 	DecompressAsset(ctx context.Context, id AssetID) error
 	CreateAssetUpload(ctx context.Context, param CreateAssetUploadParam) (*AssetUploadInfo, error)
 
-	// CMS
-	FindByID(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
-	FindByUUID(ctx context.Context, uuid string, operator *AssetOperator) (*Asset, error)
-	FindByIDs(ctx context.Context, ids []AssetID, operator *AssetOperator) ([]*Asset, error)
-	FindByProject(ctx context.Context, groupID GroupID, filter AssetFilter, operator *AssetOperator) ([]*Asset, *PageInfo, error)
-	FindFileByID(ctx context.Context, id AssetID, operator *AssetOperator) (*File, error)
-	FindFilesByIDs(ctx context.Context, ids AssetIDList, operator *AssetOperator) (map[AssetID]*File, error)
-	DownloadByID(ctx context.Context, id AssetID, headers map[string]string, operator *AssetOperator) (io.ReadCloser, map[string]string, error)
-	Create(ctx context.Context, param CreateAssetParam, operator *AssetOperator) (*Asset, *File, error)
-	Update(ctx context.Context, param UpdateAssetParam, operator *AssetOperator) (*Asset, error)
-	UpdateFiles(ctx context.Context, id AssetID, status *ExtractionStatus, operator *AssetOperator) (*Asset, error)
-	Delete(ctx context.Context, id AssetID, operator *AssetOperator) (AssetID, error)
-	BatchDelete(ctx context.Context, ids AssetIDList, operator *AssetOperator) ([]AssetID, error)
-	Decompress(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
-	Publish(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
-	Unpublish(ctx context.Context, id AssetID, operator *AssetOperator) (*Asset, error)
-	CreateUpload(ctx context.Context, param CreateAssetUploadParam, operator *AssetOperator) (*AssetUpload, error)
-	RetryDecompression(ctx context.Context, id string) error
+	Filtered(ProjectFilter) AssetService
+	FindByProject(context.Context, GroupID, AssetFilter) (List, *usecasex.PageInfo, error)
+	FindByID(context.Context, AssetID) (*Asset, error)
+	FindByUUID(context.Context, string) (*Asset, error)
+	FindByIDs(context.Context, AssetIDList) (List, error)
+	Save(context.Context, *Asset) error
+	Delete(context.Context, AssetID) error
+	BatchDelete(context.Context, AssetIDList) error
+}
+
+type AssetFile interface {
+	FindByID(context.Context, AssetID) (*File, error)
+	FindByIDs(context.Context, AssetIDList) (map[AssetID]*File, error)
+	Save(context.Context, AssetID, *File) error
+	SaveFlat(context.Context, AssetID, *File, []*File) error
 }
 
 type CreateAssetParam struct {
@@ -76,6 +75,10 @@ type PageInfo struct {
 }
 
 type AssetIDList []AssetID
+
+func (l AssetIDList) Add(id AssetID) AssetIDList {
+	return append(l, id)
+}
 
 type AssetUpload struct {
 	Token           string

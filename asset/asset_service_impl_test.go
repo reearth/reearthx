@@ -35,6 +35,14 @@ func (m *MockAssetRepository) FindByID(ctx context.Context, id AssetID) (*Asset,
 	return args.Get(0).(*Asset), args.Error(1)
 }
 
+func (m *MockAssetRepository) FindByUUID(ctx context.Context, uuid string) (*Asset, error) {
+	args := m.Called(ctx, uuid)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*Asset), args.Error(1)
+}
+
 func (m *MockAssetRepository) FindByIDs(ctx context.Context, ids []AssetID) ([]*Asset, error) {
 	args := m.Called(ctx, ids)
 	if args.Get(0) == nil {

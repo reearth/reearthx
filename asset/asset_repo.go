@@ -7,6 +7,7 @@ import (
 type AssetRepository interface {
 	Save(ctx context.Context, asset *Asset) error
 	FindByID(ctx context.Context, id AssetID) (*Asset, error)
+	FindByUUID(ctx context.Context, uuid string) (*Asset, error)
 	FindByIDs(ctx context.Context, ids []AssetID) ([]*Asset, error)
 	FindByGroup(ctx context.Context, groupID GroupID, filter AssetFilter, sort AssetSort, pagination Pagination) ([]*Asset, int64, error)
 	Delete(ctx context.Context, id AssetID) error
