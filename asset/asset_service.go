@@ -18,7 +18,7 @@ type AssetService interface {
 }
 
 type CreateAssetParam struct {
-	GroupID           GroupID
+	GroupID           *GroupID
 	File              io.Reader
 	FileName          string
 	Size              int64

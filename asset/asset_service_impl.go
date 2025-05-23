@@ -62,7 +62,7 @@ func (s *assetService) CreateAsset(ctx context.Context, param CreateAssetParam) 
 	}
 
 	// Check write permissions for the group
-	if !s.canWrite(param.GroupID) {
+	if !s.canWrite(*param.GroupID) {
 		return nil, ErrOperationDenied
 	}
 
@@ -172,7 +172,7 @@ func (s *assetService) UpdateAsset(ctx context.Context, param UpdateAssetParam) 
 	}
 
 	// Check write permissions for the asset's group
-	if !s.canWrite(asset.GroupID()) {
+	if !s.canWrite(*asset.GroupID()) {
 		return nil, ErrOperationDenied
 	}
 

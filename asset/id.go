@@ -68,6 +68,28 @@ func MustGroupID(id string) GroupID {
 	return idx.Must[GroupIDType](id)
 }
 
+type WorkspaceIDType struct{}
+
+func (WorkspaceIDType) Type() string {
+	return "workspace"
+}
+
+type WorkspaceID = idx.ID[WorkspaceIDType]
+
+type WorkspaceIDList = idx.List[WorkspaceIDType]
+
+func NewWorkspaceID() WorkspaceID {
+	return idx.New[WorkspaceIDType]()
+}
+
+func WorkspaceIDFrom(id string) (WorkspaceID, error) {
+	return idx.From[WorkspaceIDType](id)
+}
+
+func MustWorkspaceID(id string) WorkspaceID {
+	return idx.Must[WorkspaceIDType](id)
+}
+
 type PolicyIDType struct{}
 
 func (PolicyIDType) Type() string {

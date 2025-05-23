@@ -10,7 +10,8 @@ import (
 
 type Asset struct {
 	id                      AssetID
-	groupID                 GroupID // projectID in visualizer and cms, workspaceID in flow
+	groupID                 *GroupID // projectID in visualizer and cms, workspaceID in flow
+	workspaceID             *WorkspaceID
 	createdAt               time.Time
 	user                    *accountdomain.UserID
 	size                    int64
@@ -35,7 +36,7 @@ type AccessInfo struct {
 	Public bool
 }
 
-func NewAsset(id AssetID, groupID GroupID, createdAt time.Time, size int64, contentType string) *Asset {
+func NewAsset(id AssetID, groupID *GroupID, createdAt time.Time, size int64, contentType string) *Asset {
 	return &Asset{
 		id:          id,
 		groupID:     groupID,
@@ -82,7 +83,7 @@ func (a *Asset) Clone() *Asset {
 	}
 }
 
-func (a *Asset) GroupID() GroupID {
+func (a *Asset) GroupID() *GroupID {
 	return a.groupID
 }
 
@@ -147,7 +148,7 @@ func (a *Asset) SetID(id AssetID) {
 	a.id = id
 }
 
-func (a *Asset) SetGroupID(groupID GroupID) {
+func (a *Asset) SetGroupID(groupID *GroupID) {
 	a.groupID = groupID
 }
 

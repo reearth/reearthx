@@ -3,6 +3,7 @@ package asset
 import (
 	"context"
 
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/usecasex"
 )
 
@@ -20,6 +21,10 @@ type AssetRepository interface {
 	UpdateExtractionStatus(ctx context.Context, id AssetID, status ExtractionStatus) error
 
 	Filtered(ProjectFilter) AssetRepository
+
+	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error)
+	RemoveByProjectWithFile(context.Context, GroupID, any) error
+	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *GroupID, AssetFilter) ([]*Asset, *usecasex.PageInfo, error)
 }
 
 type AssetFile interface {
@@ -30,7 +35,9 @@ type AssetFile interface {
 }
 
 type AssetFilter struct {
-	Keyword string
+	Sort       *usecasex.Sort
+	Keyword    *string
+	Pagination *usecasex.Pagination
 }
 
 type AssetSortType string

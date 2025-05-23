@@ -147,7 +147,6 @@ func (r *AssetFile) SaveFlat(ctx context.Context, id asset.AssetID, parent *asse
 		return err
 	}
 
-	// Remove existing asset files
 	if err := r.assetFilesClient.RemoveAll(ctx, bson.M{"assetid": id.String()}); err != nil {
 		return err
 	}
@@ -156,7 +155,6 @@ func (r *AssetFile) SaveFlat(ctx context.Context, id asset.AssetID, parent *asse
 		return nil
 	}
 
-	// Insert new files in pages
 	filesDoc := mongodoc.NewFiles(id, files)
 	writeModels := make([]mongo.WriteModel, 0, len(filesDoc))
 	for _, pageDoc := range filesDoc {

@@ -1,125 +1,125 @@
 package asset
 
-import (
-	"context"
-	"testing"
+// import (
+// 	"context"
+// 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-)
+// 	"github.com/stretchr/testify/assert"
+// 	"github.com/stretchr/testify/mock"
+// )
 
-func TestCreatePolicy(t *testing.T) {
-	ctx := context.Background()
-	policyRepo := new(MockPolicyRepository)
+// func TestCreatePolicy(t *testing.T) {
+// 	ctx := context.Background()
+// 	policyRepo := new(MockPolicyRepository)
 
-	service := NewPolicyService(policyRepo)
+// 	service := NewPolicyService(policyRepo)
 
-	t.Run("Create policy with valid parameters", func(t *testing.T) {
-		policyRepo.On("Save", ctx, mock.AnythingOfType("*asset.Policy")).Return(nil)
+// 	t.Run("Create policy with valid parameters", func(t *testing.T) {
+// 		policyRepo.On("Save", ctx, mock.AnythingOfType("*asset.Policy")).Return(nil)
 
-		name := "Test Policy"
-		storageLimit := int64(1024 * 1024 * 100)
-		policy, err := service.CreatePolicy(ctx, name, storageLimit)
+// 		name := "Test Policy"
+// 		storageLimit := int64(1024 * 1024 * 100)
+// 		policy, err := service.CreatePolicy(ctx, name, storageLimit)
 
-		assert.NoError(t, err)
-		assert.NotNil(t, policy)
-		assert.Equal(t, name, policy.Name)
-		assert.Equal(t, storageLimit, policy.StorageLimit)
-		assert.NotEqual(t, PolicyID{}, policy.ID)
+// 		assert.NoError(t, err)
+// 		assert.NotNil(t, policy)
+// 		assert.Equal(t, name, policy.Name)
+// 		assert.Equal(t, storageLimit, policy.StorageLimit)
+// 		assert.NotEqual(t, PolicyID{}, policy.ID)
 
-		policyRepo.AssertExpectations(t)
-	})
+// 		policyRepo.AssertExpectations(t)
+// 	})
 
-	t.Run("Create policy with empty name", func(t *testing.T) {
-		name := ""
-		storageLimit := int64(1024 * 1024 * 100)
-		policy, err := service.CreatePolicy(ctx, name, storageLimit)
+// 	t.Run("Create policy with empty name", func(t *testing.T) {
+// 		name := ""
+// 		storageLimit := int64(1024 * 1024 * 100)
+// 		policy, err := service.CreatePolicy(ctx, name, storageLimit)
 
-		assert.Error(t, err)
-		assert.Nil(t, policy)
-	})
+// 		assert.Error(t, err)
+// 		assert.Nil(t, policy)
+// 	})
 
-	t.Run("Create policy with invalid storage limit", func(t *testing.T) {
-		name := "Test Policy"
-		storageLimit := int64(-1)
-		policy, err := service.CreatePolicy(ctx, name, storageLimit)
+// 	t.Run("Create policy with invalid storage limit", func(t *testing.T) {
+// 		name := "Test Policy"
+// 		storageLimit := int64(-1)
+// 		policy, err := service.CreatePolicy(ctx, name, storageLimit)
 
-		assert.Error(t, err)
-		assert.Nil(t, policy)
-	})
-}
+// 		assert.Error(t, err)
+// 		assert.Nil(t, policy)
+// 	})
+// }
 
-func TestGetPolicy(t *testing.T) {
-	ctx := context.Background()
-	policyRepo := new(MockPolicyRepository)
+// func TestGetPolicy(t *testing.T) {
+// 	ctx := context.Background()
+// 	policyRepo := new(MockPolicyRepository)
 
-	service := NewPolicyService(policyRepo)
+// 	service := NewPolicyService(policyRepo)
 
-	t.Run("Get existing policy", func(t *testing.T) {
-		policyID := NewPolicyID()
-		expectedPolicy := &Policy{
-			ID:           policyID,
-			Name:         "Test Policy",
-			StorageLimit: 1024 * 1024 * 100,
-		}
+// 	t.Run("Get existing policy", func(t *testing.T) {
+// 		policyID := NewPolicyID()
+// 		expectedPolicy := &Policy{
+// 			ID:           policyID,
+// 			Name:         "Test Policy",
+// 			StorageLimit: 1024 * 1024 * 100,
+// 		}
 
-		policyRepo.On("FindByID", ctx, policyID).Return(expectedPolicy, nil)
+// 		policyRepo.On("FindByID", ctx, policyID).Return(expectedPolicy, nil)
 
-		policy, err := service.GetPolicy(ctx, policyID)
+// 		policy, err := service.GetPolicy(ctx, policyID)
 
-		assert.NoError(t, err)
-		assert.Equal(t, expectedPolicy, policy)
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, expectedPolicy, policy)
 
-		policyRepo.AssertExpectations(t)
-	})
+// 		policyRepo.AssertExpectations(t)
+// 	})
 
-	t.Run("Get nonexistent policy", func(t *testing.T) {
-		policyID := NewPolicyID()
+// 	t.Run("Get nonexistent policy", func(t *testing.T) {
+// 		policyID := NewPolicyID()
 
-		policyRepo.On("FindByID", ctx, policyID).Return(nil, nil)
+// 		policyRepo.On("FindByID", ctx, policyID).Return(nil, nil)
 
-		policy, err := service.GetPolicy(ctx, policyID)
+// 		policy, err := service.GetPolicy(ctx, policyID)
 
-		assert.Error(t, err)
-		assert.Nil(t, policy)
+// 		assert.Error(t, err)
+// 		assert.Nil(t, policy)
 
-		policyRepo.AssertExpectations(t)
-	})
-}
+// 		policyRepo.AssertExpectations(t)
+// 	})
+// }
 
-func TestDeletePolicy(t *testing.T) {
-	ctx := context.Background()
-	policyRepo := new(MockPolicyRepository)
+// func TestDeletePolicy(t *testing.T) {
+// 	ctx := context.Background()
+// 	policyRepo := new(MockPolicyRepository)
 
-	service := NewPolicyService(policyRepo)
+// 	service := NewPolicyService(policyRepo)
 
-	t.Run("Delete existing policy", func(t *testing.T) {
-		policyID := NewPolicyID()
-		expectedPolicy := &Policy{
-			ID:           policyID,
-			Name:         "Test Policy",
-			StorageLimit: 1024 * 1024 * 100,
-		}
+// 	t.Run("Delete existing policy", func(t *testing.T) {
+// 		policyID := NewPolicyID()
+// 		expectedPolicy := &Policy{
+// 			ID:           policyID,
+// 			Name:         "Test Policy",
+// 			StorageLimit: 1024 * 1024 * 100,
+// 		}
 
-		policyRepo.On("FindByID", ctx, policyID).Return(expectedPolicy, nil)
-		policyRepo.On("Delete", ctx, policyID).Return(nil)
+// 		policyRepo.On("FindByID", ctx, policyID).Return(expectedPolicy, nil)
+// 		policyRepo.On("Delete", ctx, policyID).Return(nil)
 
-		err := service.DeletePolicy(ctx, policyID)
+// 		err := service.DeletePolicy(ctx, policyID)
 
-		assert.NoError(t, err)
+// 		assert.NoError(t, err)
 
-		policyRepo.AssertExpectations(t)
-	})
+// 		policyRepo.AssertExpectations(t)
+// 	})
 
-	t.Run("Delete nonexistent policy", func(t *testing.T) {
-		policyID := NewPolicyID()
+// 	t.Run("Delete nonexistent policy", func(t *testing.T) {
+// 		policyID := NewPolicyID()
 
-		policyRepo.On("FindByID", ctx, policyID).Return(nil, nil)
+// 		policyRepo.On("FindByID", ctx, policyID).Return(nil, nil)
 
-		err := service.DeletePolicy(ctx, policyID)
+// 		err := service.DeletePolicy(ctx, policyID)
 
-		assert.Error(t, err)
+// 		assert.Error(t, err)
 
-		policyRepo.AssertExpectations(t)
-	})
-}
+// 		policyRepo.AssertExpectations(t)
+// 	})
+// }

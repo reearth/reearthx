@@ -3,9 +3,12 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/asset"
 	"github.com/reearth/reearthx/asset/mongo/mongodoc"
 	"github.com/reearth/reearthx/idx"
@@ -59,7 +62,11 @@ func (r *AssetRepository) Filtered(filter asset.ProjectFilter) asset.AssetReposi
 }
 
 func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
-	if !r.f.CanWrite(asset.GroupID()) {
+	groupID := asset.GroupID()
+	if groupID == nil {
+		return rerror.ErrInvalidParams
+	}
+	if !r.f.CanWrite(*groupID) {
 		return rerror.ErrInvalidParams
 	}
 
@@ -149,10 +156,10 @@ func (r *AssetRepository) FindByGroup(
 
 	query := bson.M{"groupid": groupID.String()}
 
-	if filter.Keyword != "" {
+	if filter.Keyword != nil {
 		query["filename"] = bson.M{
 			"$regex": primitive.Regex{
-				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(filter.Keyword)),
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword)),
 				Options: "i",
 			},
 		}
@@ -220,11 +227,11 @@ func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.Group
 
 	var query interface{} = bson.M{"groupid": groupID.String()}
 
-	if filter.Keyword != "" {
+	if filter.Keyword != nil {
 		query = mongox.And(query, "", bson.M{
 			"filename": bson.M{
 				"$regex": primitive.Regex{
-					Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(filter.Keyword)),
+					Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword)),
 					Options: "i",
 				},
 			},
@@ -232,6 +239,48 @@ func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.Group
 	}
 
 	return r.paginate(ctx, query, nil, nil)
+}
+
+func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *asset.GroupID, filter asset.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+	if !r.f.CanRead(asset.GroupID(workspaceID)) {
+		return nil, usecasex.EmptyPageInfo(), nil
+	}
+
+	query := bson.M{
+		"coresupport": true,
+	}
+
+	if groupID != nil {
+		query["groupid"] = groupID.String()
+	} else {
+		query["groupid"] = workspaceID.String()
+	}
+
+	if filter.Keyword != nil {
+		keyword := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword))
+		query["filename"] = bson.M{"$regex": primitive.Regex{Pattern: keyword, Options: "i"}}
+	}
+
+	if filter.Keyword != nil {
+		keyword := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword))
+		query["filename"] = bson.M{"$regex": primitive.Regex{Pattern: keyword, Options: "i"}}
+	}
+
+	bucketPattern := "localhost"
+	if strings.Contains(bucketPattern, "localhost") {
+		bucketPattern = "localhost"
+	} else {
+		bucketPattern = "visualizer"
+	}
+
+	if andFilter, ok := mongox.And(query, "url", bson.M{
+		"$regex": primitive.Regex{Pattern: bucketPattern, Options: "i"},
+	}).(bson.M); ok {
+		query = andFilter
+	}
+
+	return r.paginate(ctx, query, filter.Sort, filter.Pagination)
+
 }
 
 func (r *AssetRepository) Delete(ctx context.Context, id asset.AssetID) error {
@@ -274,6 +323,78 @@ func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset.A
 	if err != nil {
 		return rerror.ErrInternalBy(err)
 	}
+	return nil
+}
+
+// TotalSizeByWorkspace calculates the total size of assets in a workspace
+func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
+	if !r.f.CanRead(asset.GroupID(wid)) {
+		return 0, rerror.ErrInvalidParams
+	}
+
+	// Use MongoDB aggregation to sum up asset sizes for the workspace
+	pipeline := []bson.M{
+		{"$match": bson.M{"groupid": wid.String()}},
+		{"$group": bson.M{"_id": nil, "totalSize": bson.M{"$sum": "$size"}}},
+	}
+
+	cursor, err := r.client.Client().Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, rerror.ErrInternalBy(err)
+	}
+	defer cursor.Close(ctx)
+
+	type result struct {
+		TotalSize int64 `bson:"totalSize"`
+	}
+
+	if cursor.Next(ctx) {
+		var res result
+		if err := cursor.Decode(&res); err != nil {
+			return 0, rerror.ErrInternalBy(err)
+		}
+		return res.TotalSize, nil
+	}
+
+	return 0, nil
+}
+
+type FileRemover interface {
+	RemoveAsset(context.Context, *url.URL) error
+}
+
+func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID asset.GroupID, fileInterface any) error {
+	if !r.f.CanWrite(groupID) {
+		return rerror.ErrInvalidParams
+	}
+
+	assets, err := r.find(ctx, bson.M{"groupid": groupID.String()})
+	if err != nil {
+		return err
+	}
+
+	var fileRemover FileRemover
+	if fr, ok := fileInterface.(FileRemover); ok {
+		fileRemover = fr
+	}
+
+	for _, a := range assets {
+		if fileRemover != nil && a.URL() != "" {
+			assetURL, err := url.Parse(a.URL())
+			if err != nil {
+				continue
+			}
+
+			if err := fileRemover.RemoveAsset(ctx, assetURL); err != nil {
+				continue
+			}
+		}
+
+		if err := r.Delete(ctx, a.ID()); err != nil {
+			continue
+		}
+	}
+
 	return nil
 }
 
@@ -430,7 +551,7 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 		}
 	}
 
-	a := asset.NewAsset(assetID, groupID, doc.CreatedAt, doc.Size, doc.ContentType)
+	a := asset.NewAsset(assetID, &groupID, doc.CreatedAt, doc.Size, doc.ContentType)
 	a.SetContentEncoding(doc.ContentEncoding)
 	a.SetPreviewType(asset.PreviewType(doc.PreviewType))
 	a.SetUUID(doc.UUID)

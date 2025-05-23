@@ -135,7 +135,7 @@ func (d *AssetDocument) Model() (*asset.Asset, error) {
 	}
 
 	// Create asset using the constructor
-	a := asset.NewAsset(aid, groupID, d.CreatedAt, int64(d.Size), "")
+	a := asset.NewAsset(aid, &groupID, d.CreatedAt, int64(d.Size), "")
 
 	// Set optional fields
 	a.SetFileName(d.FileName)
