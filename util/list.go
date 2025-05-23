@@ -129,6 +129,7 @@ func (l List[T]) MoveAt(from, to int) List[T] {
 }
 
 func (l List[T]) Reverse() List[T] {
+	//nolint:staticcheck
 	return lo.Reverse(l.Copy())
 }
 

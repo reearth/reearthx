@@ -16,7 +16,7 @@ type PasswordResetDocument struct {
 type UserDocument struct {
 	ID            string
 	Name          string
-	DisplayName   string
+	Alias         string
 	Email         string
 	Subs          []string
 	Workspace     string
@@ -26,12 +26,19 @@ type UserDocument struct {
 	Password      []byte
 	PasswordReset *PasswordResetDocument
 	Verification  *UserVerificationDoc
+	Metadata      *UserMetadataDoc
 }
 
 type UserVerificationDoc struct {
 	Code       string
 	Expiration time.Time
 	Verified   bool
+}
+
+type UserMetadataDoc struct {
+	PhotoURL    string
+	Description string
+	Website     string
 }
 
 func NewUser(user *user.User) (*UserDocument, string) {
@@ -59,10 +66,18 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		}
 	}
 
+	var metadataDoc *UserMetadataDoc
+	if user.Metadata() != nil {
+		metadataDoc = &UserMetadataDoc{
+			Description: user.Metadata().Description(),
+			Website:     user.Metadata().Website(),
+		}
+	}
+
 	return &UserDocument{
 		ID:            id,
 		Name:          user.Name(),
-		DisplayName:   user.DisplayName(),
+		Alias:         user.Alias(),
 		Email:         user.Email(),
 		Subs:          authsdoc,
 		Workspace:     user.Workspace().String(),
@@ -71,6 +86,7 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		Verification:  v,
 		Password:      user.Password(),
 		PasswordReset: pwdResetDoc,
+		Metadata:      metadataDoc,
 	}, id
 }
 
@@ -100,10 +116,17 @@ func (d *UserDocument) Model() (*user.User, error) {
 		v = user.VerificationFrom(d.Verification.Code, d.Verification.Expiration, d.Verification.Verified)
 	}
 
+	var metadata *user.Metadata
+	if d.Metadata != nil {
+		metadata = user.MetadataFrom(d.Metadata.PhotoURL, d.Metadata.Description, d.Metadata.Website)
+	}
+
 	u, err := user.New().
 		ID(uid).
 		Name(d.Name).
 		Email(d.Email).
+		Metadata(metadata).
+		Alias(d.Alias).
 		Auths(auths).
 		Workspace(tid).
 		LangFrom(d.Lang).

@@ -3,51 +3,78 @@ package workspace
 import "github.com/reearth/reearthx/util"
 
 type Workspace struct {
-	id          ID
-	name        string
-	displayName string
-	members     *Members
-	policy      *PolicyID
-	location    string
+	id           ID
+	name         string
+	alias        string
+	email        string
+	billingEmail string
+	metadata     *Metadata
+	members      *Members
+	policy       *PolicyID
+	location     string
 }
 
-func (t *Workspace) ID() ID {
-	return t.id
+func (w *Workspace) ID() ID {
+	return w.id
 }
 
-func (t *Workspace) Name() string {
-	return t.name
+func (w *Workspace) Name() string {
+	return w.name
 }
 
-func (t *Workspace) DisplayName() string {
-	return t.displayName
+func (w *Workspace) Alias() string {
+	return w.alias
 }
 
-func (t *Workspace) Members() *Members {
-	return t.members
+func (w *Workspace) Email() string {
+	return w.email
 }
 
-func (t *Workspace) IsPersonal() bool {
-	return t.members.Fixed()
+func (w *Workspace) BillingEmail() string {
+	return w.billingEmail
 }
 
-func (t *Workspace) Location() string {
-	return t.location
+func (w *Workspace) Metadata() *Metadata {
+	return w.metadata
 }
 
-func (t *Workspace) LocationOr(def string) string {
-	if t.location == "" {
+func (w *Workspace) Members() *Members {
+	return w.members
+}
+
+func (w *Workspace) IsPersonal() bool {
+	return w.members.Fixed()
+}
+
+func (w *Workspace) Location() string {
+	return w.location
+}
+
+func (w *Workspace) LocationOr(def string) string {
+	if w.location == "" {
 		return def
 	}
-	return t.location
+	return w.location
 }
 
-func (t *Workspace) Rename(name string) {
-	t.name = name
+func (w *Workspace) Rename(name string) {
+	w.name = name
 }
 
-func (t *Workspace) UpdateDisplayName(displayName string) {
-	t.displayName = displayName
+func (w *Workspace) UpdateAlias(alias string) {
+	w.alias = alias
+}
+
+func (w *Workspace) UpdateEmail(email string) {
+	w.email = email
+}
+
+func (w *Workspace) UpdateBillingEmail(billingEmail string) {
+	w.billingEmail = billingEmail
+}
+
+func (w *Workspace) SetMetadata(metadata *Metadata) {
+	w.metadata = util.CloneRef(metadata)
 }
 
 func (w *Workspace) Policy() *PolicyID {

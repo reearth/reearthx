@@ -103,6 +103,10 @@ func (r *User) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*user
 	})
 }
 
+func (r *User) FindByAlias(ctx context.Context, alias string) (*user.User, error) {
+	return r.findOne(ctx, bson.M{"alias": alias})
+}
+
 func (r *User) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
 	if len(keyword) < 3 {
 		return nil, nil

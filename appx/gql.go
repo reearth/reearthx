@@ -20,6 +20,7 @@ type GraphQLHandlerConfig struct {
 }
 
 func GraphQLHandler(c GraphQLHandlerConfig) http.Handler {
+	//nolint:staticcheck
 	srv := handler.NewDefaultServer(c.Schema)
 	srv.Use(otelgqlgen.Middleware())
 
