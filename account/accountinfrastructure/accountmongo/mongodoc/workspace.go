@@ -14,8 +14,11 @@ type WorkspaceMemberDocument struct {
 }
 
 type WorkspaceMetadataDocument struct {
-	Description string
-	Website     string
+	Description  string
+	Website      string
+	Location     string
+	BillingEmail string
+	PhotoURL     string
 }
 
 type WorkspaceDocument struct {
@@ -23,13 +26,11 @@ type WorkspaceDocument struct {
 	Name         string
 	Alias        string
 	Email        string
-	BillingEmail string
 	Metadata     *WorkspaceMetadataDocument
 	Members      map[string]WorkspaceMemberDocument
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
 	Policy       string `bson:",omitempty"`
-	Location     string `bson:",omitempty"`
 }
 
 func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
@@ -54,8 +55,10 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 	var metadataDoc *WorkspaceMetadataDocument
 	if ws.Metadata() != nil {
 		metadataDoc = &WorkspaceMetadataDocument{
-			Description: ws.Metadata().Description(),
-			Website:     ws.Metadata().Website(),
+			Description:  ws.Metadata().Description(),
+			Website:      ws.Metadata().Website(),
+			Location:     ws.Metadata().Location(),
+			BillingEmail: ws.Metadata().BillingEmail(),
 		}
 	}
 
@@ -65,13 +68,11 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		Name:         ws.Name(),
 		Alias:        ws.Alias(),
 		Email:        ws.Email(),
-		BillingEmail: ws.BillingEmail(),
 		Metadata:     metadataDoc,
 		Members:      membersDoc,
 		Integrations: integrationsDoc,
 		Personal:     ws.IsPersonal(),
 		Policy:       lo.FromPtr(ws.Policy()).String(),
-		Location:     ws.Location(),
 	}, wId
 }
 
@@ -122,7 +123,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 
 	var metadata *workspace.Metadata
 	if d.Metadata != nil {
-		metadata = workspace.MetadataFrom(d.Metadata.Description, d.Metadata.Website)
+		metadata = workspace.MetadataFrom(d.Metadata.Description, d.Metadata.Website, d.Metadata.Location, d.Metadata.BillingEmail, d.Metadata.PhotoURL)
 	}
 
 	return workspace.New().
@@ -130,13 +131,11 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		Name(d.Name).
 		Alias(d.Alias).
 		Email(d.Email).
-		BillingEmail(d.BillingEmail).
 		Metadata(metadata).
 		Members(members).
 		Integrations(integrations).
 		Personal(d.Personal).
 		Policy(policy).
-		Location(d.Location).
 		Build()
 }
 

@@ -79,11 +79,6 @@ func (b *Builder) Email(email string) *Builder {
 	return b
 }
 
-func (b *Builder) BillingEmail(billingEmail string) *Builder {
-	b.w.billingEmail = billingEmail
-	return b
-}
-
 func (b *Builder) Metadata(metadata *Metadata) *Builder {
 	b.w.metadata = metadata
 	return b
@@ -101,11 +96,6 @@ func (b *Builder) Integrations(integrations map[IntegrationID]Member) *Builder {
 
 func (b *Builder) Personal(p bool) *Builder {
 	b.personal = p
-	return b
-}
-
-func (b *Builder) Location(location string) *Builder {
-	b.w.location = location
 	return b
 }
 

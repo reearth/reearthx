@@ -3,15 +3,13 @@ package workspace
 import "github.com/reearth/reearthx/util"
 
 type Workspace struct {
-	id           ID
-	name         string
-	alias        string
-	email        string
-	billingEmail string
-	metadata     *Metadata
-	members      *Members
-	policy       *PolicyID
-	location     string
+	id       ID
+	name     string
+	alias    string
+	email    string
+	metadata *Metadata
+	members  *Members
+	policy   *PolicyID
 }
 
 func (w *Workspace) ID() ID {
@@ -30,10 +28,6 @@ func (w *Workspace) Email() string {
 	return w.email
 }
 
-func (w *Workspace) BillingEmail() string {
-	return w.billingEmail
-}
-
 func (w *Workspace) Metadata() *Metadata {
 	return w.metadata
 }
@@ -46,17 +40,6 @@ func (w *Workspace) IsPersonal() bool {
 	return w.members.Fixed()
 }
 
-func (w *Workspace) Location() string {
-	return w.location
-}
-
-func (w *Workspace) LocationOr(def string) string {
-	if w.location == "" {
-		return def
-	}
-	return w.location
-}
-
 func (w *Workspace) Rename(name string) {
 	w.name = name
 }
@@ -67,10 +50,6 @@ func (w *Workspace) UpdateAlias(alias string) {
 
 func (w *Workspace) UpdateEmail(email string) {
 	w.email = email
-}
-
-func (w *Workspace) UpdateBillingEmail(billingEmail string) {
-	w.billingEmail = billingEmail
 }
 
 func (w *Workspace) SetMetadata(metadata *Metadata) {

@@ -50,12 +50,6 @@ func TestWorkspace_UpdateEmail(t *testing.T) {
 	assert.Equal(t, "a", w.email)
 }
 
-func TestWorkspace_UpdateBillingEmail(t *testing.T) {
-	w := &Workspace{}
-	w.UpdateBillingEmail("a")
-	assert.Equal(t, "a", w.billingEmail)
-}
-
 func TestWorkspace_Policy(t *testing.T) {
 	w := &Workspace{}
 	w.SetPolicy(PolicyID("ccc").Ref())
