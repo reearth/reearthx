@@ -12,19 +12,22 @@ import (
 )
 
 type AssetDocument struct {
-	ID                      string
-	Project                 string
-	CreatedAt               time.Time
-	User                    *string
-	Integration             *string
-	FileName                string
-	Size                    uint64
-	PreviewType             string
-	UUID                    string
-	Thread                  *string
-	ArchiveExtractionStatus string
-	FlatFiles               bool
-	Public                  bool
+	ID                      string    `bson:"id"`
+	Project                 string    `bson:"groupid"`
+	CreatedAt               time.Time `bson:"createdat"`
+	User                    *string   `bson:"user,omitempty"`
+	Integration             *string   `bson:"integrationid,omitempty"`
+	FileName                string    `bson:"filename"`
+	Size                    uint64    `bson:"size"`
+	ContentType             string    `bson:"contenttype"`
+	ContentEncoding         string    `bson:"contentencoding,omitempty"`
+	PreviewType             string    `bson:"previewtype,omitempty"`
+	UUID                    string    `bson:"uuid"`
+	URL                     string    `bson:"url"`
+	Thread                  *string   `bson:"thread,omitempty"`
+	ArchiveExtractionStatus string    `bson:"archiveextractionstatus,omitempty"`
+	FlatFiles               bool      `bson:"flatfiles"`
+	Public                  bool      `bson:"public"`
 }
 
 type AssetAndFileDocument struct {
@@ -100,8 +103,11 @@ func NewAsset(a *asset.Asset) (*AssetDocument, string) {
 		Integration:             iid,
 		FileName:                a.FileName(),
 		Size:                    uint64(a.Size()),
+		ContentType:             a.ContentType(),
+		ContentEncoding:         a.ContentEncoding(),
 		PreviewType:             previewType,
 		UUID:                    a.UUID(),
+		URL:                     a.URL(),
 		Thread:                  tid,
 		ArchiveExtractionStatus: archiveExtractionStatus,
 		FlatFiles:               a.FlatFiles(),
@@ -119,12 +125,12 @@ func (d *AssetDocument) Model() (*asset.Asset, error) {
 		return nil, err
 	}
 
-	// Create asset using the constructor
-	a := asset.NewAsset(aid, &groupID, d.CreatedAt, int64(d.Size), "")
+	a := asset.NewAsset(aid, &groupID, d.CreatedAt, int64(d.Size), d.ContentType)
 
-	// Set optional fields
 	a.SetFileName(d.FileName)
 	a.SetUUID(d.UUID)
+	a.SetURL(d.URL)
+	a.SetContentEncoding(d.ContentEncoding)
 	a.SetFlatFiles(d.FlatFiles)
 	a.SetPublic(d.Public)
 

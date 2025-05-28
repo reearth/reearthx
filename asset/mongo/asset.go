@@ -43,6 +43,7 @@ type AssetRepository struct {
 func NewAssetRepository(db *mongo.Database) *AssetRepository {
 	return &AssetRepository{
 		client: mongox.NewCollection(db.Collection("assets")),
+		f:      &asset.GroupFilter{},
 	}
 }
 
@@ -62,7 +63,7 @@ func (r *AssetRepository) Filtered(filter asset.GroupFilter) asset.AssetReposito
 	}
 }
 
-func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
+func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset.Asset) error {
 	if !r.f.CanWrite(*asset.GroupID()) {
 		return errors.New("operation denied")
 	}
@@ -85,7 +86,7 @@ func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter 
 	}
 
 	filters := bson.M{
-		"project": pID.String(),
+		"groupid": pID.String(),
 	}
 
 	if filter.Keyword != nil && *filter.Keyword != "" {
@@ -95,12 +96,24 @@ func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter 
 	}
 
 	if len(filter.ContentTypes) > 0 {
-		filters["file.contenttype"] = bson.M{
+		filters["contenttype"] = bson.M{
 			"$in": filter.ContentTypes,
 		}
 	}
 
-	return r.paginate(ctx, filters, filter.Sort, filter.Pagination)
+	pagination := filter.Pagination
+	if pagination == nil {
+		pagination = &usecasex.Pagination{
+			Offset: &usecasex.OffsetPagination{
+				Offset: 0,
+				Limit:  50,
+			},
+		}
+	}
+
+	result, pageInfo, err := r.paginate(ctx, filters, filter.Sort, pagination)
+
+	return result, pageInfo, err
 }
 
 func (r *AssetRepository) FindByID(ctx context.Context, id asset.AssetID) (*asset.Asset, error) {
@@ -260,7 +273,17 @@ func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.Group
 		})
 	}
 
-	return r.paginate(ctx, query, nil, nil)
+	pagination := filter.Pagination
+	if pagination == nil {
+		pagination = &usecasex.Pagination{
+			Offset: &usecasex.OffsetPagination{
+				Offset: 0,
+				Limit:  50,
+			},
+		}
+	}
+
+	return r.paginate(ctx, query, filter.Sort, pagination)
 }
 
 func (r *AssetRepository) Delete(ctx context.Context, id asset.AssetID) error {
@@ -448,7 +471,9 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort *usecasex.Sort, pagination *usecasex.Pagination) (asset.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewAssetConsumer()
 
-	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), sort, pagination, c, options.Find().SetProjection(bson.M{"file": 0}))
+	actualFilter := r.readFilter(filter)
+
+	pageInfo, err := r.client.Paginate(ctx, actualFilter, sort, pagination, c, options.Find().SetProjection(bson.M{"file": 0}))
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
@@ -457,14 +482,14 @@ func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort
 }
 
 func (r *AssetRepository) readFilter(filter any) any {
-	if r.f.Readable == nil {
+	if r.f == nil || r.f.Readable == nil {
 		return filter
 	}
 	return applyGroupFilter(filter, r.f.Readable)
 }
 
 func (r *AssetRepository) writeFilter(filter any) any {
-	if r.f.Writable == nil {
+	if r.f == nil || r.f.Writable == nil {
 		return filter
 	}
 	return applyGroupFilter(filter, r.f.Writable)
@@ -516,11 +541,20 @@ func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceI
 		query = andFilter
 	}
 
-	return r.paginate(ctx, query, filter.Sort, filter.Pagination)
+	pagination := filter.Pagination
+	if pagination == nil {
+		pagination = &usecasex.Pagination{
+			Offset: &usecasex.OffsetPagination{
+				Offset: 0,
+				Limit:  50,
+			},
+		}
+	}
 
+	return r.paginate(ctx, query, filter.Sort, pagination)
 }
 
-// viz
+// viz and flow
 func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
 	if !r.f.CanRead(asset.GroupID(wid)) {
 		return 0, rerror.ErrInvalidParams
@@ -570,6 +604,11 @@ func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID a
 	}
 
 	for _, a := range assets {
+
+		if !r.f.CanWrite(*a.GroupID()) {
+			return errors.New("operation denied")
+		}
+
 		if fileRemover != nil && a.URL() != "" {
 			assetURL, err := url.Parse(a.URL())
 			if err != nil {
@@ -589,8 +628,8 @@ func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID a
 	return nil
 }
 
-// viz
-func (r *AssetRepository) SaveViz(ctx context.Context, asset *asset.Asset) error {
+// viz and flow
+func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
 	if !r.f.CanWrite(*asset.GroupID()) {
 		return errors.New("operation denied")
 	}
