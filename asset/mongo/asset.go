@@ -152,9 +152,9 @@ func (r *AssetRepository) UpdateProject(ctx context.Context, from, to asset.Grou
 	}
 
 	return r.client.UpdateMany(ctx, bson.M{
-		"project": from.String(),
+		"groupid": from.String(),
 	}, bson.M{
-		"project": to.String(),
+		"groupid": to.String(),
 	})
 }
 
