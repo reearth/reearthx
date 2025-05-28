@@ -44,22 +44,7 @@ type AssetFileDocument struct {
 
 type AssetConsumer = mongox.SliceFuncConsumer[*AssetDocument, *asset.Asset]
 
-type AssetAndFileConsumer struct {
-	items []*AssetAndFileDocument
-}
-
-func (c *AssetAndFileConsumer) Consume(raw bson.Raw) error {
-	var doc AssetAndFileDocument
-	if err := bson.Unmarshal(raw, &doc); err != nil {
-		return err
-	}
-	c.items = append(c.items, &doc)
-	return nil
-}
-
-func (c *AssetAndFileConsumer) Result() []*AssetAndFileDocument {
-	return c.items
-}
+type AssetAndFileConsumer = mongox.SliceConsumer[*AssetAndFileDocument]
 
 type AssetFilesConsumer struct {
 	c mongox.SliceConsumer[*AssetFilesPageDocument]

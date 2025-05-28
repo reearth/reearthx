@@ -37,7 +37,7 @@ type assetService struct {
 	storage       Storage
 	fileProcessor FileProcessor
 	zipExtractor  ZipExtractor
-	filter        *ProjectFilter
+	filter        *GroupFilter
 }
 
 func NewAssetService(
@@ -546,7 +546,7 @@ func (s *assetService) canWrite(groupID GroupID) bool {
 	return s.filter.Writable.Has(groupID)
 }
 
-func (s *assetService) Filtered(filter ProjectFilter) AssetService {
+func (s *assetService) Filtered(filter GroupFilter) AssetService {
 	return &assetService{
 		assetRepo:     s.assetRepo,
 		groupRepo:     s.groupRepo,

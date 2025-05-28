@@ -18,9 +18,9 @@ type Asset struct {
 	thread                  *ThreadID
 	contentType             string // visualizer && flow
 	contentEncoding         string
-	previewType             *PreviewType      // cms
-	uuid                    string            //cms
-	url                     string            //cms && visualizer && flow
+	previewType             *PreviewType // cms
+	uuid                    string       //cms
+	url                     string
 	fileName                string            //cms
 	archiveExtractionStatus *ExtractionStatus //cms
 	flatFiles               bool              //cms
@@ -29,8 +29,10 @@ type Asset struct {
 	accessInfoResolver      *AccessInfoResolver // cms
 }
 
+// cms
 type AccessInfoResolver = func(*Asset) *AccessInfo
 
+// cms
 type AccessInfo struct {
 	Url    string
 	Public bool
@@ -46,17 +48,39 @@ func NewAsset(id AssetID, groupID *GroupID, createdAt time.Time, size int64, con
 	}
 }
 
-type ProjectFilter struct {
+type GroupFilter struct {
 	Readable GroupIDList
 	Writable GroupIDList
 }
 
-func (f ProjectFilter) CanRead(id GroupID) bool {
+func (f *GroupFilter) CanRead(id GroupID) bool {
 	return f.Readable == nil || f.Readable.Has(id) || f.CanWrite(id)
 }
 
-func (f ProjectFilter) CanWrite(id GroupID) bool {
+func (f *GroupFilter) CanWrite(id GroupID) bool {
 	return f.Writable == nil || f.Writable.Has(id)
+}
+
+func (f *GroupFilter) Merge(g *GroupFilter) *GroupFilter {
+	var r, w GroupIDList
+	if f.Readable != nil || g.Readable != nil {
+		if f.Readable == nil {
+			r = g.Readable.Clone()
+		} else {
+			r = append(f.Readable, g.Readable...)
+		}
+	}
+	if f.Writable != nil || g.Writable != nil {
+		if f.Writable == nil {
+			w = g.Writable.Clone()
+		} else {
+			w = append(f.Writable, g.Writable...)
+		}
+	}
+	return &GroupFilter{
+		Readable: r,
+		Writable: w,
+	}
 }
 
 func (a *Asset) ID() AssetID {

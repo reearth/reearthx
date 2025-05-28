@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -36,7 +37,7 @@ var _ asset.AssetRepository = &AssetRepository{}
 
 type AssetRepository struct {
 	client *mongox.Collection
-	f      asset.ProjectFilter
+	f      *asset.GroupFilter
 }
 
 func NewAssetRepository(db *mongo.Database) *AssetRepository {
@@ -54,36 +55,52 @@ func (r *AssetRepository) Init() error {
 	)
 }
 
-func (r *AssetRepository) Filtered(filter asset.ProjectFilter) asset.AssetRepository {
+func (r *AssetRepository) Filtered(filter asset.GroupFilter) asset.AssetRepository {
 	return &AssetRepository{
 		client: r.client,
-		f:      filter,
+		f:      r.f.Merge(&filter),
 	}
 }
 
 func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
-	groupID := asset.GroupID()
-	if groupID == nil {
-		return rerror.ErrInvalidParams
-	}
-	if !r.f.CanWrite(*groupID) {
-		return rerror.ErrInvalidParams
+	if !r.f.CanWrite(*asset.GroupID()) {
+		return errors.New("operation denied")
 	}
 
-	doc := assetToDoc(asset)
-
-	_, err := r.client.Client().UpdateOne(
-		ctx,
-		bson.M{"id": asset.ID().String()},
-		bson.M{"$set": doc},
-		options.Update().SetUpsert(true),
-	)
-
+	doc, id := mongodoc.NewAsset(asset)
+	_, err := r.client.Client().UpdateOne(ctx, bson.M{
+		"id": id,
+	}, bson.M{
+		"$set": doc,
+	}, options.Update().SetUpsert(true))
 	if err != nil {
 		return rerror.ErrInternalBy(err)
 	}
-
 	return nil
+}
+
+func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter asset.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+	if !r.f.CanRead(pID) {
+		return nil, usecasex.EmptyPageInfo(), nil
+	}
+
+	filters := bson.M{
+		"project": pID.String(),
+	}
+
+	if filter.Keyword != nil && *filter.Keyword != "" {
+		filters["filename"] = bson.M{
+			"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword)), Options: "i"},
+		}
+	}
+
+	if len(filter.ContentTypes) > 0 {
+		filters["file.contenttype"] = bson.M{
+			"$in": filter.ContentTypes,
+		}
+	}
+
+	return r.paginate(ctx, filters, filter.Sort, filter.Pagination)
 }
 
 func (r *AssetRepository) FindByID(ctx context.Context, id asset.AssetID) (*asset.Asset, error) {
@@ -98,20 +115,14 @@ func (r *AssetRepository) FindByUUID(ctx context.Context, uuid string) (*asset.A
 	})
 }
 
-func (r *AssetRepository) FindByIDs(ctx context.Context, ids []asset.AssetID) ([]*asset.Asset, error) {
+func (r *AssetRepository) FindByIDs(ctx context.Context, ids asset.AssetIDList) ([]*asset.Asset, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 
-	idStrings := make([]string, len(ids))
-	for i, id := range ids {
-		idStrings[i] = id.String()
-	}
-
 	filter := bson.M{
-		"id": bson.M{"$in": idStrings},
+		"id": bson.M{"$in": ids.Strings()},
 	}
-
 	res, err := r.find(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -119,8 +130,19 @@ func (r *AssetRepository) FindByIDs(ctx context.Context, ids []asset.AssetID) ([
 	if len(res) == 0 {
 		return nil, nil
 	}
-
 	return filterAssets(ids, res), nil
+}
+
+func (r *AssetRepository) UpdateProject(ctx context.Context, from, to asset.GroupID) error {
+	if !r.f.CanWrite(from) || !r.f.CanWrite(to) {
+		return errors.New("operation denied")
+	}
+
+	return r.client.UpdateMany(ctx, bson.M{
+		"project": from.String(),
+	}, bson.M{
+		"project": to.String(),
+	})
 }
 
 func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDList) (asset.List, error) {
@@ -241,51 +263,10 @@ func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.Group
 	return r.paginate(ctx, query, nil, nil)
 }
 
-func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *asset.GroupID, filter asset.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
-	if !r.f.CanRead(asset.GroupID(workspaceID)) {
-		return nil, usecasex.EmptyPageInfo(), nil
-	}
-
-	query := bson.M{
-		"coresupport": true,
-	}
-
-	if groupID != nil {
-		query["groupid"] = groupID.String()
-	} else {
-		query["groupid"] = workspaceID.String()
-	}
-
-	if filter.Keyword != nil {
-		keyword := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword))
-		query["filename"] = bson.M{"$regex": primitive.Regex{Pattern: keyword, Options: "i"}}
-	}
-
-	if filter.Keyword != nil {
-		keyword := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword))
-		query["filename"] = bson.M{"$regex": primitive.Regex{Pattern: keyword, Options: "i"}}
-	}
-
-	bucketPattern := "localhost"
-	if strings.Contains(bucketPattern, "localhost") {
-		bucketPattern = "localhost"
-	} else {
-		bucketPattern = "visualizer"
-	}
-
-	if andFilter, ok := mongox.And(query, "url", bson.M{
-		"$regex": primitive.Regex{Pattern: bucketPattern, Options: "i"},
-	}).(bson.M); ok {
-		query = andFilter
-	}
-
-	return r.paginate(ctx, query, filter.Sort, filter.Pagination)
-
-}
-
 func (r *AssetRepository) Delete(ctx context.Context, id asset.AssetID) error {
-	filter := r.writeFilter(bson.M{"id": id.String()})
-	return r.client.RemoveOne(ctx, filter)
+	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{
+		"id": id.String(),
+	}))
 }
 
 func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset.AssetID) error {
@@ -326,132 +307,28 @@ func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset.A
 	return nil
 }
 
-// TotalSizeByWorkspace calculates the total size of assets in a workspace
-func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
-	if !r.f.CanRead(asset.GroupID(wid)) {
-		return 0, rerror.ErrInvalidParams
-	}
-
-	// Use MongoDB aggregation to sum up asset sizes for the workspace
-	pipeline := []bson.M{
-		{"$match": bson.M{"groupid": wid.String()}},
-		{"$group": bson.M{"_id": nil, "totalSize": bson.M{"$sum": "$size"}}},
-	}
-
-	cursor, err := r.client.Client().Aggregate(ctx, pipeline)
-	if err != nil {
-		return 0, rerror.ErrInternalBy(err)
-	}
-	defer cursor.Close(ctx)
-
-	type result struct {
-		TotalSize int64 `bson:"totalSize"`
-	}
-
-	if cursor.Next(ctx) {
-		var res result
-		if err := cursor.Decode(&res); err != nil {
-			return 0, rerror.ErrInternalBy(err)
-		}
-		return res.TotalSize, nil
-	}
-
-	return 0, nil
-}
-
 type FileRemover interface {
 	RemoveAsset(context.Context, *url.URL) error
 }
 
-func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID asset.GroupID, fileInterface any) error {
-	if !r.f.CanWrite(groupID) {
-		return rerror.ErrInvalidParams
-	}
-
-	assets, err := r.find(ctx, bson.M{"groupid": groupID.String()})
-	if err != nil {
-		return err
-	}
-
-	var fileRemover FileRemover
-	if fr, ok := fileInterface.(FileRemover); ok {
-		fileRemover = fr
-	}
-
-	for _, a := range assets {
-		if fileRemover != nil && a.URL() != "" {
-			assetURL, err := url.Parse(a.URL())
-			if err != nil {
-				continue
-			}
-
-			if err := fileRemover.RemoveAsset(ctx, assetURL); err != nil {
-				continue
-			}
-		}
-
-		if err := r.Delete(ctx, a.ID()); err != nil {
-			continue
-		}
-	}
-
-	return nil
-}
-
-// Helper methods for filtering
-func (r *AssetRepository) readFilter(filter interface{}) interface{} {
-	if r.f.Readable == nil {
-		return filter
-	}
-	return applyGroupFilter(filter, r.f.Readable)
-}
-
-func (r *AssetRepository) writeFilter(filter interface{}) interface{} {
-	if r.f.Writable == nil {
-		return filter
-	}
-	return applyGroupFilter(filter, r.f.Writable)
-}
-
 // Helper methods for document operations
-func (r *AssetRepository) find(ctx context.Context, filter interface{}) ([]*asset.Asset, error) {
-	consumer := mongox.NewSliceFuncConsumer(func(doc assetDocument) (*assetDocument, error) {
-		return &doc, nil
-	})
-
-	if err := r.client.Find(ctx, r.readFilter(filter), consumer); err != nil {
+func (r *AssetRepository) find(ctx context.Context, filter any) ([]*asset.Asset, error) {
+	c := mongodoc.NewAssetConsumer()
+	if err := r.client.Find(ctx, r.readFilter(filter), c, options.Find().SetProjection(bson.M{"file": 0})); err != nil {
 		return nil, rerror.ErrInternalBy(err)
 	}
-
-	assets := make([]*asset.Asset, 0, len(consumer.Result))
-	for _, doc := range consumer.Result {
-		a, err := docToAsset(doc)
-		if err != nil {
-			continue
-		}
-		assets = append(assets, a)
-	}
-
-	return assets, nil
+	return c.Result, nil
 }
 
-func (r *AssetRepository) findOne(ctx context.Context, filter interface{}) (*asset.Asset, error) {
-	var doc assetDocument
-
-	err := r.client.FindOne(ctx, r.readFilter(filter), mongox.FuncConsumer(func(raw bson.Raw) error {
-		return bson.Unmarshal(raw, &doc)
-	}))
-
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
+func (r *AssetRepository) findOne(ctx context.Context, filter any) (*asset.Asset, error) {
+	c := mongodoc.NewAssetConsumer()
+	if err := r.client.FindOne(ctx, r.readFilter(filter), c, options.FindOne().SetProjection(bson.M{"file": 0})); err != nil {
+		return nil, err
 	}
-	if err != nil {
-		return nil, rerror.ErrInternalBy(err)
-	}
-
-	return docToAsset(&doc)
+	return c.Result[0], nil
 }
 
+// cms
 func filterAssets(ids []asset.AssetID, rows []*asset.Asset) []*asset.Asset {
 	res := make([]*asset.Asset, 0, len(ids))
 	for _, id := range ids {
@@ -504,33 +381,33 @@ type assetDocument struct {
 	IntegrationID           string    `bson:"integrationid"`
 }
 
-func assetToDoc(a *asset.Asset) *assetDocument {
-	doc := &assetDocument{
-		ID:            a.ID().String(),
-		GroupID:       a.GroupID().String(),
-		CreatedAt:     a.CreatedAt(),
-		Size:          a.Size(),
-		ContentType:   a.ContentType(),
-		UUID:          a.UUID(),
-		URL:           a.URL(),
-		FileName:      a.FileName(),
-		IntegrationID: a.Integration().String(),
-	}
+// func assetToDoc(a *asset.Asset) *assetDocument {
+// 	doc := &assetDocument{
+// 		ID:            a.ID().String(),
+// 		GroupID:       a.GroupID().String(),
+// 		CreatedAt:     a.CreatedAt(),
+// 		Size:          a.Size(),
+// 		ContentType:   a.ContentType(),
+// 		UUID:          a.UUID(),
+// 		URL:           a.URL(),
+// 		FileName:      a.FileName(),
+// 		IntegrationID: a.Integration().String(),
+// 	}
 
-	if a.PreviewType() != nil {
-		doc.PreviewType = string(*a.PreviewType())
-	}
+// 	if a.PreviewType() != nil {
+// 		doc.PreviewType = string(*a.PreviewType())
+// 	}
 
-	if a.ContentEncoding() != "" {
-		doc.ContentEncoding = a.ContentEncoding()
-	}
+// 	if a.ContentEncoding() != "" {
+// 		doc.ContentEncoding = a.ContentEncoding()
+// 	}
 
-	if a.ArchiveExtractionStatus() != nil {
-		doc.ArchiveExtractionStatus = string(*a.ArchiveExtractionStatus())
-	}
+// 	if a.ArchiveExtractionStatus() != nil {
+// 		doc.ArchiveExtractionStatus = string(*a.ArchiveExtractionStatus())
+// 	}
 
-	return doc
-}
+// 	return doc
+// }
 
 func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 	assetID, err := asset.AssetIDFrom(doc.ID)
@@ -567,6 +444,7 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 	return a, nil
 }
 
+// cms
 func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort *usecasex.Sort, pagination *usecasex.Pagination) (asset.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewAssetConsumer()
 
@@ -576,4 +454,146 @@ func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort
 	}
 
 	return c.Result, pageInfo, nil
+}
+
+func (r *AssetRepository) readFilter(filter any) any {
+	if r.f.Readable == nil {
+		return filter
+	}
+	return applyGroupFilter(filter, r.f.Readable)
+}
+
+func (r *AssetRepository) writeFilter(filter any) any {
+	if r.f.Writable == nil {
+		return filter
+	}
+	return applyGroupFilter(filter, r.f.Writable)
+}
+
+// viz
+func (r *AssetRepository) FindByURL(ctx context.Context, path string) (*asset.Asset, error) {
+	return r.findOne(ctx, bson.M{
+		"url": path,
+	})
+}
+
+// viz
+func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *asset.GroupID, filter asset.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+	if !r.f.CanRead(asset.GroupID(workspaceID)) {
+		return nil, usecasex.EmptyPageInfo(), nil
+	}
+
+	query := bson.M{
+		"coresupport": true,
+	}
+
+	if groupID != nil {
+		query["groupid"] = groupID.String()
+	} else {
+		query["groupid"] = workspaceID.String()
+	}
+
+	if filter.Keyword != nil {
+		keyword := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword))
+		query["filename"] = bson.M{"$regex": primitive.Regex{Pattern: keyword, Options: "i"}}
+	}
+
+	if filter.Keyword != nil {
+		keyword := fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword))
+		query["filename"] = bson.M{"$regex": primitive.Regex{Pattern: keyword, Options: "i"}}
+	}
+
+	bucketPattern := "localhost"
+	if strings.Contains(bucketPattern, "localhost") {
+		bucketPattern = "localhost"
+	} else {
+		bucketPattern = "visualizer"
+	}
+
+	if andFilter, ok := mongox.And(query, "url", bson.M{
+		"$regex": primitive.Regex{Pattern: bucketPattern, Options: "i"},
+	}).(bson.M); ok {
+		query = andFilter
+	}
+
+	return r.paginate(ctx, query, filter.Sort, filter.Pagination)
+
+}
+
+// viz
+func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
+	if !r.f.CanRead(asset.GroupID(wid)) {
+		return 0, rerror.ErrInvalidParams
+	}
+
+	// Use MongoDB aggregation to sum up asset sizes for the workspace
+	pipeline := []bson.M{
+		{"$match": bson.M{"groupid": wid.String()}},
+		{"$group": bson.M{"_id": nil, "totalSize": bson.M{"$sum": "$size"}}},
+	}
+
+	cursor, err := r.client.Client().Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, rerror.ErrInternalBy(err)
+	}
+	defer cursor.Close(ctx)
+
+	type result struct {
+		TotalSize int64 `bson:"totalSize"`
+	}
+
+	if cursor.Next(ctx) {
+		var res result
+		if err := cursor.Decode(&res); err != nil {
+			return 0, rerror.ErrInternalBy(err)
+		}
+		return res.TotalSize, nil
+	}
+
+	return 0, nil
+}
+
+// viz
+func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID asset.GroupID, fileInterface any) error {
+	if !r.f.CanWrite(groupID) {
+		return rerror.ErrInvalidParams
+	}
+
+	assets, err := r.find(ctx, bson.M{"groupid": groupID.String()})
+	if err != nil {
+		return err
+	}
+
+	var fileRemover FileRemover
+	if fr, ok := fileInterface.(FileRemover); ok {
+		fileRemover = fr
+	}
+
+	for _, a := range assets {
+		if fileRemover != nil && a.URL() != "" {
+			assetURL, err := url.Parse(a.URL())
+			if err != nil {
+				continue
+			}
+
+			if err := fileRemover.RemoveAsset(ctx, assetURL); err != nil {
+				continue
+			}
+		}
+
+		if err := r.Delete(ctx, a.ID()); err != nil {
+			continue
+		}
+	}
+
+	return nil
+}
+
+// viz
+func (r *AssetRepository) SaveViz(ctx context.Context, asset *asset.Asset) error {
+	if !r.f.CanWrite(*asset.GroupID()) {
+		return errors.New("operation denied")
+	}
+	doc, id := mongodoc.NewAsset(asset)
+	return r.client.SaveOne(ctx, id, doc)
 }

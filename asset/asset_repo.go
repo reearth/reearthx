@@ -11,22 +11,25 @@ type AssetRepository interface {
 	Save(ctx context.Context, asset *Asset) error
 	FindByID(ctx context.Context, id AssetID) (*Asset, error)
 	FindByUUID(ctx context.Context, uuid string) (*Asset, error)
-	FindByIDs(ctx context.Context, ids []AssetID) ([]*Asset, error)
+	FindByIDs(ctx context.Context, ids AssetIDList) ([]*Asset, error)
 	FindByIDList(ctx context.Context, ids AssetIDList) (List, error)
 	FindByGroup(ctx context.Context, groupID GroupID, filter AssetFilter, sort AssetSort, pagination Pagination) ([]*Asset, int64, error)
 	FindByProject(ctx context.Context, groupID GroupID, filter AssetFilter) (List, *usecasex.PageInfo, error)
+	Search(context.Context, GroupID, AssetFilter) (List, *usecasex.PageInfo, error) // cms
 	Delete(ctx context.Context, id AssetID) error
 	DeleteMany(ctx context.Context, ids []AssetID) error
 	BatchDelete(ctx context.Context, ids AssetIDList) error
 	UpdateExtractionStatus(ctx context.Context, id AssetID, status ExtractionStatus) error
+	Filtered(GroupFilter) AssetRepository                      // cms
+	UpdateProject(ctx context.Context, from, to GroupID) error // cms
 
-	Filtered(ProjectFilter) AssetRepository
-
-	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error)
+	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error) //viz
 	RemoveByProjectWithFile(context.Context, GroupID, any) error
 	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *GroupID, AssetFilter) ([]*Asset, *usecasex.PageInfo, error)
+	SaveViz(ctx context.Context, asset *Asset) error // viz
 }
 
+// cms
 type AssetFile interface {
 	FindByID(context.Context, AssetID) (*File, error)
 	FindByIDs(context.Context, AssetIDList) (map[AssetID]*File, error)
@@ -35,9 +38,10 @@ type AssetFile interface {
 }
 
 type AssetFilter struct {
-	Sort       *usecasex.Sort
-	Keyword    *string
-	Pagination *usecasex.Pagination
+	Sort         *usecasex.Sort
+	Keyword      *string
+	Pagination   *usecasex.Pagination
+	ContentTypes []string
 }
 
 type AssetSortType string
