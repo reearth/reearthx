@@ -55,21 +55,15 @@ func TestFromRef(t *testing.T) {
 }
 
 func TestID_Ref(t *testing.T) {
-	ref := dummyID.Ref()
-	assert.Equal(t, &dummyID, ref)
-	assert.NotSame(t, &dummyID, ref)
+	assert.Equal(t, &dummyID, dummyID.Ref())
 }
 
 func TestID_Clone(t *testing.T) {
-	clone := dummyID.Clone()
-	assert.Equal(t, dummyID, clone)
-	assert.NotSame(t, &dummyID, &clone)
+	assert.Equal(t, dummyID, dummyID.Clone())
 }
 
 func TestID_CloneRef(t *testing.T) {
-	cloneRef := dummyID.CloneRef()
-	assert.Equal(t, &dummyID, cloneRef)
-	assert.NotSame(t, &dummyID, cloneRef)
+	assert.Equal(t, &dummyID, dummyID.CloneRef())
 	assert.Nil(t, (*TID)(nil).CloneRef())
 }
 

@@ -1,12 +1,12 @@
 package util
 
 import (
+	"slices"
 	"sort"
 	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 func TestSyncMapFrom(t *testing.T) {

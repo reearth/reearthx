@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 	"gopkg.in/square/go-jose.v2"
 )
 

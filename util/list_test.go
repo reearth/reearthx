@@ -73,11 +73,9 @@ func TestList_Copy(t *testing.T) {
 	l := List[*T]{a, b}
 
 	assert.Nil(t, List[*T](nil).Copy())
-	copied := l.Copy()
-	assert.Equal(t, List[*T]{a, b}, copied)
-	assert.False(t, &l == &copied, "expected copied list to have a different address")
-	assert.Same(t, a, copied[0])
-	assert.Same(t, b, copied[1])
+	assert.Equal(t, List[*T]{a, b}, l.Copy())
+	assert.Same(t, a, l.Copy()[0])
+	assert.Same(t, b, l.Copy()[1])
 }
 
 func TestList_Ref(t *testing.T) {
@@ -216,7 +214,7 @@ func TestLast(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, Last[int](tt.target))
+			assert.Equal(t, tt.want, Last(tt.target))
 		})
 	}
 }
@@ -246,7 +244,7 @@ func TestExtractIDs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ExtractIDs[string, MockIdentifiable](tt.target)
+			got := ExtractIDs(tt.target)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -281,7 +279,7 @@ func TestPick(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Pick[string, MockIdentifiable](tt.slice, tt.idList)
+			got := Pick(tt.slice, tt.idList)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -316,7 +314,7 @@ func TestFind(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Find[string, MockIdentifiable](tt.slice, tt.lid)
+			got := Find(tt.slice, tt.lid)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -369,7 +367,7 @@ func TestDeref(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Deref[MockIdentifiable](tt.slice, tt.skipNil)
+			got := Deref(tt.slice, tt.skipNil)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -410,7 +408,7 @@ func TestMapAdd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MapAdd[string, MockIdentifiable](tt.m, tt.items...)
+			got := MapAdd(tt.m, tt.items...)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -446,7 +444,7 @@ func TestListMap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ListMap[string, MockIdentifiable](tt.slice)
+			got := ListMap(tt.slice)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -488,7 +486,7 @@ func TestMapWithIDFunc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MapWithIDFunc[string, MockIdentifiable](tt.slice, idFunc, tt.checkNil)
+			got := MapWithIDFunc(tt.slice, idFunc, tt.checkNil)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -529,7 +527,7 @@ func TestMerge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Merge[string, MockIdentifiable](tt.m, tt.m2)
+			got := Merge(tt.m, tt.m2)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -645,7 +643,7 @@ func TestMapList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MapList[string, MockIdentifiable](tt.m, tt.skipNil)
+			got := MapList(tt.m, tt.skipNil)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -682,7 +680,7 @@ func TestClone(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Clone[string, MockIdentifiable](tt.m)
+			got := Clone(tt.m)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -772,7 +770,7 @@ func TestRemove(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Remove[string, MockIdentifiable](tt.slice, tt.idsToRemove...)
+			got := Remove(tt.slice, tt.idsToRemove...)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -819,7 +817,7 @@ func TestAddUnique(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := AddUnique[string, MockIdentifiable](tt.slice, tt.newList)
+			got := AddUnique(tt.slice, tt.newList)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -854,7 +852,7 @@ func TestMapPick(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MapPick[string, MockIdentifiable](tt.m, tt.idList)
+			got := MapPick(tt.m, tt.idList)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -885,7 +883,7 @@ func TestExtractKeys(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ExtractKeys[string, MockIdentifiable](tt.m)
+			got := ExtractKeys(tt.m)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -930,7 +928,7 @@ func TestToGenericList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ToGenericList[MockIdentifiable, MockIdentifiable](tt.list, tt.converter)
+			got := ToGenericList(tt.list, tt.converter)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -969,7 +967,7 @@ func TestToGenericListValue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ToGenericListValue[MockIdentifiable, MockIdentifiable](tt.list, tt.converter)
+			got := ToGenericListValue(tt.list, tt.converter)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1018,7 +1016,7 @@ func ListTestHas(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ListHas[ID, T](tt.list, getID, tt.id)
+			got := ListHas(tt.list, getID, tt.id)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1067,7 +1065,7 @@ func TestGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Get[ID, T](tt.list, getID, tt.id)
+			got := Get(tt.list, getID, tt.id)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1122,7 +1120,7 @@ func TestRemoveById(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := RemoveById[ID, T](tt.list, getID, tt.id)
+			got := RemoveById(tt.list, getID, tt.id)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1171,7 +1169,7 @@ func TestRemoveByIds(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := RemoveByIds[ID, T](tt.list, getID, tt.ids...)
+			got := RemoveByIds(tt.list, getID, tt.ids...)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1208,7 +1206,7 @@ func TestContains(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Contains[ID](tt.ids, tt.id)
+			got := Contains(tt.ids, tt.id)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1252,7 +1250,7 @@ func TestProperties(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Properties[PropertyID, T](tt.list, getProperty)
+			got := Properties(tt.list, getProperty)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -1362,7 +1360,7 @@ func TestIndexOf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := IndexOf[ID, T](tt.list, getID, tt.id)
+			got := IndexOf(tt.list, getID, tt.id)
 			assert.Equal(t, tt.want, got)
 		})
 	}

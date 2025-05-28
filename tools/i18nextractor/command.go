@@ -4,16 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/samber/lo"
 	"github.com/spf13/afero"
-	"golang.org/x/exp/maps"
 )
 
 type Config struct {
@@ -202,7 +203,9 @@ func merge(a, b any) any {
 		return nil
 	}
 
-	unusedKeys, newKeys := lo.Difference(maps.Keys(am), maps.Keys(bm))
+	keysa := slices.Collect(maps.Keys(am))
+	keysb := slices.Collect(maps.Keys(bm))
+	unusedKeys, newKeys := lo.Difference(keysa, keysb)
 	if len(newKeys) == 0 && len(unusedKeys) == 0 {
 		return nil
 	}

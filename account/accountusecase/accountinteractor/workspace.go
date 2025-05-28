@@ -3,6 +3,8 @@ package accountinteractor
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/reearth/reearthx/account/accountdomain"
@@ -16,7 +18,6 @@ import (
 	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
-	"golang.org/x/exp/maps"
 )
 
 type WorkspaceMemberCountEnforcer func(context.Context, *workspace.Workspace, user.List, *accountusecase.Operator) error
@@ -124,7 +125,8 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
 
-	ul, err := i.userquery.FetchByID(ctx, maps.Keys(users))
+	keys := slices.Collect(maps.Keys(users))
+	ul, err := i.userquery.FetchByID(ctx, keys)
 	if err != nil {
 		return nil, err
 	}

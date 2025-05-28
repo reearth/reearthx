@@ -1,9 +1,8 @@
 package util
 
 import (
+	"slices"
 	"sync"
-
-	"golang.org/x/exp/slices"
 )
 
 type SyncMap[K comparable, V any] struct {

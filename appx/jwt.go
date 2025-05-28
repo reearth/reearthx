@@ -34,6 +34,10 @@ type JWTProvider struct {
 	TTL     *int
 }
 
+func (p JWTProvider) IsEmpty() bool {
+	return p.ISS == "" && p.JWKSURI == nil && p.AUD == nil && p.ALG == nil && p.TTL == nil
+}
+
 func (p JWTProvider) validator() (JWTValidator, error) {
 	issuerURL, err := url.Parse(p.ISS)
 	if err != nil {
@@ -43,7 +47,7 @@ func (p JWTProvider) validator() (JWTValidator, error) {
 		return nil, fmt.Errorf("failed to parse the issuer url")
 	}
 
-	opts := []jwks.ProviderOption{}
+	opts := []any{}
 	if p.JWKSURI != nil && *p.JWKSURI != "" {
 		u, err := url.Parse(*p.JWKSURI)
 		if err != nil {
@@ -86,6 +90,10 @@ func (c *customClaims) Validate(_ context.Context) error {
 
 // AuthInfoMiddleware loads claim from context and attach the user info.
 func AuthInfoMiddleware(key any) func(http.Handler) http.Handler {
+	if key == nil {
+		key = authInfoKey{}
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()

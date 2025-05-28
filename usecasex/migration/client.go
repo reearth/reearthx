@@ -3,13 +3,13 @@ package migration
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 
 	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"github.com/samber/lo"
-	"golang.org/x/exp/slices"
 )
 
 type Key = int64

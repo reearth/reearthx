@@ -2,13 +2,13 @@ package mongoxindexcompat
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"golang.org/x/exp/slices"
 )
 
 // Indexes creates or deletes indexes by keys declaratively

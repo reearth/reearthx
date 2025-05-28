@@ -1,11 +1,11 @@
 package util
 
 import (
+	"cmp"
 	"net/url"
+	"slices"
 
 	"github.com/samber/lo"
-	"golang.org/x/exp/constraints"
-	"golang.org/x/exp/slices"
 )
 
 func ToPtrIfNotEmpty[T comparable](t T) *T {
@@ -65,7 +65,7 @@ func Try(tries ...func() error) error {
 	return nil
 }
 
-func SortedEntries[K constraints.Ordered, V any](m map[K]V) []lo.Entry[K, V] {
+func SortedEntries[K cmp.Ordered, V any](m map[K]V) []lo.Entry[K, V] {
 	entries := lo.Entries(m)
 	slices.SortStableFunc(entries, func(a, b lo.Entry[K, V]) int {
 		switch {
