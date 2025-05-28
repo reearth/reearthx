@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/reearth/reearthx/util"
-	"golang.org/x/text/language"
 )
 
 var (
@@ -22,8 +21,6 @@ type User struct {
 	password      EncodedPassword
 	workspace     WorkspaceID
 	auths         []Auth
-	lang          language.Tag
-	theme         Theme
 	verification  *Verification
 	passwordReset *PasswordReset
 	host          string
@@ -53,14 +50,6 @@ func (u *User) Workspace() WorkspaceID {
 	return u.workspace
 }
 
-func (u *User) Lang() language.Tag {
-	return u.lang
-}
-
-func (u *User) Theme() Theme {
-	return u.theme
-}
-
 func (u *User) Password() []byte {
 	return u.password
 }
@@ -83,14 +72,6 @@ func (u *User) UpdateEmail(email string) error {
 
 func (u *User) UpdateWorkspace(workspace WorkspaceID) {
 	u.workspace = workspace
-}
-
-func (u *User) UpdateLang(lang language.Tag) {
-	u.lang = lang
-}
-
-func (u *User) UpdateTheme(t Theme) {
-	u.theme = t
 }
 
 func (u *User) Verification() *Verification {
@@ -230,8 +211,6 @@ func (u *User) Clone() *User {
 		password:      u.password,
 		workspace:     u.workspace,
 		auths:         slices.Clone(u.auths),
-		lang:          u.lang,
-		theme:         u.theme,
 		metadata:      util.CloneRef(u.metadata),
 		verification:  util.CloneRef(u.verification),
 		passwordReset: util.CloneRef(u.passwordReset),

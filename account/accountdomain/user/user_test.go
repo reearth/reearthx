@@ -21,8 +21,6 @@ func TestUser(t *testing.T) {
 			Provider: "aaa",
 			Sub:      "sss",
 		}},
-		lang:          language.Make("en"),
-		theme:         ThemeDark,
 		verification:  nil,
 		passwordReset: nil,
 		host:          "",
@@ -37,18 +35,16 @@ func TestUser(t *testing.T) {
 		Sub:      "sss",
 	}}), u.Auths())
 	assert.Equal(t, "ff@xx.zz", u.Email())
-	assert.Equal(t, language.Make("en"), u.Lang())
-	assert.Equal(t, ThemeDark, u.Theme())
 
 	u.UpdateName("a")
 	assert.Equal(t, "a", u.name)
 	assert.ErrorContains(t, u.UpdateEmail("ab"), "invalid email")
 	assert.NoError(t, u.UpdateEmail("a@example.com"))
 	assert.Equal(t, "a@example.com", u.email)
-	u.UpdateLang(language.Und)
-	assert.Equal(t, language.Und, u.lang)
-	u.UpdateTheme(ThemeLight)
-	assert.Equal(t, ThemeLight, u.theme)
+	u.Metadata().SetLang(language.Und)
+	assert.Equal(t, language.Und, u.metadata.lang)
+	u.Metadata().SetTheme(ThemeLight)
+	assert.Equal(t, ThemeLight, u.metadata.theme)
 	u.UpdateAlias("alias")
 	assert.Equal(t, "alias", u.alias)
 	u.Metadata().SetPhotoURL("photo url")

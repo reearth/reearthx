@@ -151,11 +151,15 @@ func (i *User) UpdateMe(ctx context.Context, p accountinterfaces.UpdateMeParam, 
 				return nil, err
 			}
 		}
-		if p.Lang != nil {
-			u.UpdateLang(*p.Lang)
-		}
-		if p.Theme != nil {
-			u.UpdateTheme(*p.Theme)
+
+		if u.Metadata() != nil {
+			if p.Lang != nil {
+				u.Metadata().LangFrom(p.Lang.String())
+			}
+
+			if p.Theme != nil {
+				u.Metadata().SetTheme(*p.Theme)
+			}
 		}
 
 		if p.Password != nil && u.HasAuthProvider("reearth") {

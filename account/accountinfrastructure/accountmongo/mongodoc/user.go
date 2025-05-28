@@ -39,6 +39,8 @@ type UserMetadataDoc struct {
 	Description string
 	Website     string
 	PhotoURL    string
+	Lang        string
+	Theme       string
 }
 
 func NewUser(user *user.User) (*UserDocument, string) {
@@ -71,6 +73,9 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		metadataDoc = &UserMetadataDoc{
 			Description: user.Metadata().Description(),
 			Website:     user.Metadata().Website(),
+			PhotoURL:    user.Metadata().PhotoURL(),
+			Lang:        user.Metadata().Lang().String(),
+			Theme:       string(user.Metadata().Theme()),
 		}
 	}
 
@@ -81,8 +86,6 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		Email:         user.Email(),
 		Subs:          authsdoc,
 		Workspace:     user.Workspace().String(),
-		Lang:          user.Lang().String(),
-		Theme:         string(user.Theme()),
 		Verification:  v,
 		Password:      user.Password(),
 		PasswordReset: pwdResetDoc,
@@ -118,7 +121,12 @@ func (d *UserDocument) Model() (*user.User, error) {
 
 	var metadata *user.Metadata
 	if d.Metadata != nil {
-		metadata = user.MetadataFrom(d.Metadata.PhotoURL, d.Metadata.Description, d.Metadata.Website)
+		metadata = user.NewMetadata()
+		metadata.SetDescription(d.Metadata.Description)
+		metadata.SetWebsite(d.Metadata.Website)
+		metadata.SetPhotoURL(d.Metadata.PhotoURL)
+		metadata.LangFrom(d.Metadata.Lang)
+		metadata.SetTheme(user.Theme(d.Metadata.Theme))
 	}
 
 	u, err := user.New().
@@ -129,11 +137,9 @@ func (d *UserDocument) Model() (*user.User, error) {
 		Alias(d.Alias).
 		Auths(auths).
 		Workspace(tid).
-		LangFrom(d.Lang).
 		Verification(v).
 		EncodedPassword(d.Password).
 		PasswordReset(d.PasswordReset.Model()).
-		Theme(user.Theme(d.Theme)).
 		Build()
 
 	if err != nil {

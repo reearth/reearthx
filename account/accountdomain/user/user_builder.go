@@ -4,7 +4,6 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
-	"golang.org/x/text/language"
 )
 
 var ErrInvalidName = rerror.NewE(i18n.T("invalid user name"))
@@ -31,9 +30,6 @@ func (b *Builder) Build() (*User, error) {
 	if b.u.name == "" {
 		return nil, ErrInvalidName
 	}
-	if !b.u.theme.Valid() {
-		b.u.theme = ThemeDefault
-	}
 	if b.passwordText != "" {
 		if err := b.u.SetPassword(b.passwordText); err != nil {
 			return nil, err
@@ -41,6 +37,10 @@ func (b *Builder) Build() (*User, error) {
 	}
 	if b.u.metadata != nil {
 		b.u.SetMetadata(b.u.metadata)
+
+		if !b.u.metadata.theme.Valid() {
+			b.u.metadata.theme = ThemeDefault
+		}
 	}
 	if err := b.u.UpdateEmail(b.email); err != nil {
 		return nil, err
@@ -98,25 +98,6 @@ func (b *Builder) PasswordPlainText(p string) *Builder {
 
 func (b *Builder) Workspace(workspace WorkspaceID) *Builder {
 	b.u.workspace = workspace
-	return b
-}
-
-func (b *Builder) Lang(lang language.Tag) *Builder {
-	b.u.lang = lang
-	return b
-}
-
-func (b *Builder) Theme(t Theme) *Builder {
-	b.u.theme = t
-	return b
-}
-
-func (b *Builder) LangFrom(lang string) *Builder {
-	if lang == "" {
-		b.u.lang = language.Und
-	} else if l, err := language.Parse(lang); err == nil {
-		b.u.lang = l
-	}
 	return b
 }
 
