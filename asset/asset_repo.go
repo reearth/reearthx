@@ -8,7 +8,7 @@ import (
 )
 
 type AssetRepository interface {
-	Save(ctx context.Context, asset *Asset) error
+	SaveCMS(ctx context.Context, asset *Asset) error
 	FindByID(ctx context.Context, id AssetID) (*Asset, error)
 	FindByUUID(ctx context.Context, uuid string) (*Asset, error)
 	FindByIDs(ctx context.Context, ids AssetIDList) ([]*Asset, error)
@@ -26,7 +26,7 @@ type AssetRepository interface {
 	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error) //viz
 	RemoveByProjectWithFile(context.Context, GroupID, any) error
 	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *GroupID, AssetFilter) ([]*Asset, *usecasex.PageInfo, error)
-	SaveViz(ctx context.Context, asset *Asset) error // viz
+	Save(ctx context.Context, asset *Asset) error // viz and flow
 }
 
 // cms

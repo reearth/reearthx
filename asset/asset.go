@@ -10,8 +10,7 @@ import (
 
 type Asset struct {
 	id                      AssetID
-	groupID                 *GroupID // projectID in visualizer and cms, workspaceID in flow
-	workspaceID             *WorkspaceID
+	groupID                 *GroupID // projectID in cms, workspaceID in flow and viz
 	createdAt               time.Time
 	user                    *accountdomain.UserID
 	size                    int64
