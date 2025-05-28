@@ -36,9 +36,9 @@ type UserVerificationDoc struct {
 }
 
 type UserMetadataDoc struct {
-	PhotoURL    string
 	Description string
 	Website     string
+	PhotoURL    string
 }
 
 func NewUser(user *user.User) (*UserDocument, string) {
