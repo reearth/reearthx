@@ -8,20 +8,20 @@ import (
 
 func TestAssetID(t *testing.T) {
 	id := NewAssetID()
-	assert.NotEqual(t, AssetID{}, id)
+	assert.NotEqual(t, ID{}, id)
 	assert.NotEmpty(t, id.String())
 
 	idStr := id.String()
 	assert.NotEmpty(t, idStr)
 
-	parsedID, err := AssetIDFrom(idStr)
+	parsedID, err := IdFrom(idStr)
 	assert.NoError(t, err)
 	assert.Equal(t, id, parsedID)
 
-	_, err = AssetIDFrom("invalid-id")
+	_, err = IdFrom("invalid-id")
 	assert.Error(t, err)
 
-	var emptyID AssetID
+	var emptyID ID
 	assert.True(t, emptyID.IsNil())
 	assert.False(t, id.IsNil())
 }
@@ -109,7 +109,7 @@ func TestIDStringFormat(t *testing.T) {
 func TestMustIDFunctions(t *testing.T) {
 	validID := NewAssetID().String()
 	mustID := MustAssetID(validID)
-	assert.NotEqual(t, AssetID{}, mustID)
+	assert.NotEqual(t, ID{}, mustID)
 
 	validGroupID := NewGroupID().String()
 	mustGID := MustGroupID(validGroupID)

@@ -116,7 +116,7 @@ func NewAsset(a *asset2.Asset) (*AssetDocument, string) {
 }
 
 func (d *AssetDocument) Model() (*asset2.Asset, error) {
-	aid, err := asset2.AssetIDFrom(d.ID)
+	aid, err := asset2.IdFrom(d.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func NewFile(f *asset2.File) *AssetFileDocument {
 		return nil
 	}
 
-	c := []*AssetFileDocument{}
+	var c []*AssetFileDocument
 	if len(f.Children()) > 0 {
 		for _, v := range f.Children() {
 			c = append(c, NewFile(v))
@@ -245,7 +245,7 @@ type AssetFilesPageDocument struct {
 
 const assetFilesPageSize = 1000
 
-func NewFiles(assetID asset2.AssetID, fs []*asset2.File) AssetFilesDocument {
+func NewFiles(assetID asset2.ID, fs []*asset2.File) AssetFilesDocument {
 	pageCount := (len(fs) + assetFilesPageSize - 1) / assetFilesPageSize
 	pages := make([]*AssetFilesPageDocument, 0, pageCount)
 	for i := 0; i < pageCount; i++ {

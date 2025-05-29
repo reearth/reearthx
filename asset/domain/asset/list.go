@@ -31,13 +31,13 @@ func (l List) Clone() List {
 func (l List) Map() Map {
 	return lo.SliceToMap(lo.Filter(l, func(a *Asset, _ int) bool {
 		return a != nil
-	}), func(a *Asset) (AssetID, *Asset) {
+	}), func(a *Asset) (ID, *Asset) {
 		return a.ID(), a
 	})
 }
 
-func (l List) IDs() []AssetID {
-	ids := make([]AssetID, 0, len(l))
+func (l List) IDs() []ID {
+	ids := make([]ID, 0, len(l))
 	for _, a := range l {
 		ids = append(ids, a.ID())
 	}

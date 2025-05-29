@@ -4,13 +4,13 @@ import (
 	"github.com/reearth/reearthx/idx"
 )
 
-type AssetIDType struct{}
+type IDType struct{}
 
-func (AssetIDType) Type() string {
+func (IDType) Type() string {
 	return "asset"
 }
 
-type AssetID = idx.ID[AssetIDType]
+type ID = idx.ID[IDType]
 
 type IntegrationIDType struct{}
 
@@ -34,16 +34,16 @@ func (ThreadIDType) Type() string {
 
 type ThreadID = idx.ID[ThreadIDType]
 
-func NewAssetID() AssetID {
-	return idx.New[AssetIDType]()
+func NewAssetID() ID {
+	return idx.New[IDType]()
 }
 
-func AssetIDFrom(id string) (AssetID, error) {
-	return idx.From[AssetIDType](id)
+func IdFrom(id string) (ID, error) {
+	return idx.From[IDType](id)
 }
 
-func MustAssetID(id string) AssetID {
-	return idx.Must[AssetIDType](id)
+func MustAssetID(id string) ID {
+	return idx.Must[IDType](id)
 }
 
 type GroupIDType struct{}

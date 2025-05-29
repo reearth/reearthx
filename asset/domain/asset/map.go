@@ -4,15 +4,15 @@ import (
 	"github.com/samber/lo"
 )
 
-type Map map[AssetID]*Asset
+type Map map[ID]*Asset
 
 func (m Map) List() List {
-	return lo.MapToSlice(m, func(_ AssetID, v *Asset) *Asset {
+	return lo.MapToSlice(m, func(_ ID, v *Asset) *Asset {
 		return v
 	})
 }
 
-func (m Map) ListFrom(ids []AssetID) (res List) {
+func (m Map) ListFrom(ids []ID) (res List) {
 	for _, id := range ids {
 		if a, ok := m[id]; ok {
 			res = append(res, a)

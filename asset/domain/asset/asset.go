@@ -3,13 +3,14 @@ package asset
 //go:generate go run ./tools/gqlgen/main.go
 
 import (
+	"github.com/reearth/reearthx/usecasex"
 	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 )
 
 type Asset struct {
-	id                      AssetID
+	id                      ID
 	groupID                 *GroupID // projectID in cms, workspaceID in flow and viz
 	createdAt               time.Time
 	user                    *accountdomain.UserID
@@ -37,7 +38,7 @@ type AccessInfo struct {
 	Public bool
 }
 
-func NewAsset(id AssetID, groupID *GroupID, createdAt time.Time, size int64, contentType string) *Asset {
+func NewAsset(id ID, groupID *GroupID, createdAt time.Time, size int64, contentType string) *Asset {
 	return &Asset{
 		id:          id,
 		groupID:     groupID,
@@ -82,7 +83,7 @@ func (f *GroupFilter) Merge(g *GroupFilter) *GroupFilter {
 	}
 }
 
-func (a *Asset) ID() AssetID {
+func (a *Asset) ID() ID {
 	return a.id
 }
 
@@ -167,7 +168,7 @@ func (a *Asset) Public() bool {
 }
 
 // Setter methods for modifying private fields
-func (a *Asset) SetID(id AssetID) {
+func (a *Asset) SetID(id ID) {
 	a.id = id
 }
 
@@ -262,3 +263,49 @@ const (
 	ExtractionStatusDone       ExtractionStatus = "DONE"
 	ExtractionStatusFailed     ExtractionStatus = "FAILED"
 )
+
+type AssetSortType string
+
+const (
+	SortTypeDate AssetSortType = "DATE"
+	SortTypeSize AssetSortType = "SIZE"
+	SortTypeName AssetSortType = "NAME"
+)
+
+type SortDirection string
+
+const (
+	SortDirectionAsc  SortDirection = "ASC"
+	SortDirectionDesc SortDirection = "DESC"
+)
+
+type Sort struct {
+	By        AssetSortType
+	Direction SortDirection
+}
+
+type Pagination struct {
+	Offset int64
+	Limit  int64
+}
+
+type IDList []ID
+
+func (l IDList) Add(id ID) IDList {
+	return append(l, id)
+}
+
+func (l IDList) Strings() []string {
+	strings := make([]string, len(l))
+	for i, id := range l {
+		strings[i] = id.String()
+	}
+	return strings
+}
+
+type Filter struct {
+	Sort         *usecasex.Sort
+	Keyword      *string
+	Pagination   *usecasex.Pagination
+	ContentTypes []string
+}
