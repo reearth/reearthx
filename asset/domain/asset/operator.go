@@ -8,7 +8,7 @@ import (
 )
 
 // AssetOperator provides project and workspace access control
-type AssetOperator struct {
+type Operator struct {
 	Integration          IntegrationID
 	Machine              bool
 	Lang                 string
@@ -28,7 +28,7 @@ type Ownable interface {
 }
 
 // Workspaces returns workspace IDs with the given role
-func (o *AssetOperator) Workspaces(r workspace.Role) accountdomain.WorkspaceIDList {
+func (o *Operator) Workspaces(r workspace.Role) accountdomain.WorkspaceIDList {
 	if o == nil || o.AcOperator == nil {
 		return nil
 	}
@@ -44,11 +44,13 @@ func (o *AssetOperator) Workspaces(r workspace.Role) accountdomain.WorkspaceIDLi
 	if r == workspace.RoleOwner {
 		return o.AcOperator.OwningWorkspaces
 	}
+
 	return nil
+
 }
 
 // AllReadableWorkspaces returns all workspaces the operator can read
-func (o *AssetOperator) AllReadableWorkspaces() accountdomain.WorkspaceIDList {
+func (o *Operator) AllReadableWorkspaces() accountdomain.WorkspaceIDList {
 	if o == nil || o.AcOperator == nil {
 		return nil
 	}
@@ -56,7 +58,7 @@ func (o *AssetOperator) AllReadableWorkspaces() accountdomain.WorkspaceIDList {
 }
 
 // AllWritableWorkspaces returns all workspaces the operator can write
-func (o *AssetOperator) AllWritableWorkspaces() accountdomain.WorkspaceIDList {
+func (o *Operator) AllWritableWorkspaces() accountdomain.WorkspaceIDList {
 	if o == nil || o.AcOperator == nil {
 		return nil
 	}
@@ -64,7 +66,7 @@ func (o *AssetOperator) AllWritableWorkspaces() accountdomain.WorkspaceIDList {
 }
 
 // AllMaintainingWorkspaces returns all workspaces the operator can maintain
-func (o *AssetOperator) AllMaintainingWorkspaces() accountdomain.WorkspaceIDList {
+func (o *Operator) AllMaintainingWorkspaces() accountdomain.WorkspaceIDList {
 	if o == nil || o.AcOperator == nil {
 		return nil
 	}
@@ -72,7 +74,7 @@ func (o *AssetOperator) AllMaintainingWorkspaces() accountdomain.WorkspaceIDList
 }
 
 // AllOwningWorkspaces returns all workspaces the operator owns
-func (o *AssetOperator) AllOwningWorkspaces() accountdomain.WorkspaceIDList {
+func (o *Operator) AllOwningWorkspaces() accountdomain.WorkspaceIDList {
 	if o == nil || o.AcOperator == nil {
 		return nil
 	}
@@ -80,27 +82,27 @@ func (o *AssetOperator) AllOwningWorkspaces() accountdomain.WorkspaceIDList {
 }
 
 // IsReadableWorkspace checks if the operator can read the given workspaces
-func (o *AssetOperator) IsReadableWorkspace(workspace ...accountdomain.WorkspaceID) bool {
+func (o *Operator) IsReadableWorkspace(workspace ...accountdomain.WorkspaceID) bool {
 	return o.AllReadableWorkspaces().Intersect(workspace).Len() > 0
 }
 
 // IsWritableWorkspace checks if the operator can write to the given workspaces
-func (o *AssetOperator) IsWritableWorkspace(workspace ...accountdomain.WorkspaceID) bool {
+func (o *Operator) IsWritableWorkspace(workspace ...accountdomain.WorkspaceID) bool {
 	return o.AllWritableWorkspaces().Intersect(workspace).Len() > 0
 }
 
 // IsMaintainingWorkspace checks if the operator can maintain the given workspaces
-func (o *AssetOperator) IsMaintainingWorkspace(workspace ...accountdomain.WorkspaceID) bool {
+func (o *Operator) IsMaintainingWorkspace(workspace ...accountdomain.WorkspaceID) bool {
 	return o.AllMaintainingWorkspaces().Intersect(workspace).Len() > 0
 }
 
 // IsOwningWorkspace checks if the operator owns the given workspaces
-func (o *AssetOperator) IsOwningWorkspace(workspace ...accountdomain.WorkspaceID) bool {
+func (o *Operator) IsOwningWorkspace(workspace ...accountdomain.WorkspaceID) bool {
 	return o.AllOwningWorkspaces().Intersect(workspace).Len() > 0
 }
 
 // AddNewWorkspace adds a new workspace to the operator's owned workspaces
-func (o *AssetOperator) AddNewWorkspace(workspace accountdomain.WorkspaceID) {
+func (o *Operator) AddNewWorkspace(workspace accountdomain.WorkspaceID) {
 	if o == nil || o.AcOperator == nil {
 		return
 	}
@@ -108,7 +110,7 @@ func (o *AssetOperator) AddNewWorkspace(workspace accountdomain.WorkspaceID) {
 }
 
 // Projects returns project IDs with the given role
-func (o *AssetOperator) Projects(r workspace.Role) GroupIDList {
+func (o *Operator) Projects(r workspace.Role) GroupIDList {
 	if o == nil {
 		return nil
 	}
@@ -128,47 +130,47 @@ func (o *AssetOperator) Projects(r workspace.Role) GroupIDList {
 }
 
 // AllReadableProjects returns all projects the operator can read
-func (o *AssetOperator) AllReadableProjects() GroupIDList {
+func (o *Operator) AllReadableProjects() GroupIDList {
 	return append(o.ReadableProjects, o.AllWritableProjects()...)
 }
 
 // AllWritableProjects returns all projects the operator can write
-func (o *AssetOperator) AllWritableProjects() GroupIDList {
+func (o *Operator) AllWritableProjects() GroupIDList {
 	return append(o.WritableProjects, o.AllMaintainableProjects()...)
 }
 
 // AllMaintainableProjects returns all projects the operator can maintain
-func (o *AssetOperator) AllMaintainableProjects() GroupIDList {
+func (o *Operator) AllMaintainableProjects() GroupIDList {
 	return append(o.MaintainableProjects, o.AllOwningProjects()...)
 }
 
 // AllOwningProjects returns all projects the operator owns
-func (o *AssetOperator) AllOwningProjects() GroupIDList {
+func (o *Operator) AllOwningProjects() GroupIDList {
 	return o.OwningProjects
 }
 
 // IsReadableProject checks if the operator can read the given projects
-func (o *AssetOperator) IsReadableProject(projects ...GroupID) bool {
+func (o *Operator) IsReadableProject(projects ...GroupID) bool {
 	return o.AllReadableProjects().Intersect(projects).Len() > 0
 }
 
 // IsWritableProject checks if the operator can write to the given projects
-func (o *AssetOperator) IsWritableProject(projects ...GroupID) bool {
+func (o *Operator) IsWritableProject(projects ...GroupID) bool {
 	return o.AllWritableProjects().Intersect(projects).Len() > 0
 }
 
 // IsMaintainingProject checks if the operator can maintain the given projects
-func (o *AssetOperator) IsMaintainingProject(projects ...GroupID) bool {
+func (o *Operator) IsMaintainingProject(projects ...GroupID) bool {
 	return o.AllMaintainableProjects().Intersect(projects).Len() > 0
 }
 
 // IsOwningProject checks if the operator owns the given projects
-func (o *AssetOperator) IsOwningProject(projects ...GroupID) bool {
+func (o *Operator) IsOwningProject(projects ...GroupID) bool {
 	return o.AllOwningProjects().Intersect(projects).Len() > 0
 }
 
 // AddNewProject adds a new project to the operator's owned projects
-func (o *AssetOperator) AddNewProject(p GroupID) {
+func (o *Operator) AddNewProject(p GroupID) {
 	o.OwningProjects = append(o.OwningProjects, p)
 }
 
@@ -193,7 +195,7 @@ func OperatorFromMachine() idx.ID[OperatorIDType] {
 }
 
 // Operator returns an OperatorID representing this operator
-func (o *AssetOperator) Operator() idx.ID[OperatorIDType] {
+func (o *Operator) Operator() idx.ID[OperatorIDType] {
 	if o == nil || o.AcOperator == nil {
 		return idx.ID[OperatorIDType]{}
 	}
@@ -212,14 +214,14 @@ func (o *AssetOperator) Operator() idx.ID[OperatorIDType] {
 }
 
 // CanUpdate checks if the operator can update the given object
-func (o *AssetOperator) CanUpdate(obj Ownable) bool {
+func (o *Operator) CanUpdate(obj Ownable) bool {
 	isWriter := o.IsWritableProject(obj.Project())
 	isMaintainer := o.IsMaintainingProject(obj.Project())
 	return isMaintainer || (isWriter && o.Owns(obj)) || o.Machine
 }
 
 // Owns checks if the operator owns the given object
-func (o *AssetOperator) Owns(obj Ownable) bool {
+func (o *Operator) Owns(obj Ownable) bool {
 	if o == nil || o.AcOperator == nil {
 		return false
 	}
@@ -229,7 +231,7 @@ func (o *AssetOperator) Owns(obj Ownable) bool {
 }
 
 // RoleByProject returns the role of the operator for the given project
-func (o *AssetOperator) RoleByProject(pid GroupID) workspace.Role {
+func (o *Operator) RoleByProject(pid GroupID) workspace.Role {
 	if o.IsOwningProject(pid) {
 		return workspace.RoleOwner
 	}
