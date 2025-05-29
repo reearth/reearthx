@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reearth/reearthx/asset/domain/"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUpload_Upload(t *testing.T) {
 	t.Parallel()
-	projectID := asset.newGroupID()
+	projectID := id.NewProjectID()
 	timeNow := time.Now()
 	uploadWithData := &Upload{
 		uuid:          "1",
