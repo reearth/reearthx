@@ -3,15 +3,19 @@ package interactor
 import (
 	"fmt"
 	"github.com/google/uuid"
+	repo "github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/event"
 	"github.com/reearth/reearthx/asset/domain/file"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/task"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
-	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"github.com/samber/lo"
+	"golang.org/x/net/context"
+	"io"
 	"path"
 	"strings"
 	"time"
@@ -23,7 +27,7 @@ type Asset struct {
 	ignoreEvent bool
 }
 
-func NewAsset(r *repo.Container, g *gateway.Container) interfaces.Asset {
+func New(r *repo.Container, g *gateway.Container) interfaces.Asset {
 	return &Asset{
 		repos:    r,
 		gateways: g,

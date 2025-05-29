@@ -62,7 +62,7 @@ type AssetUpload struct {
 type Asset interface {
 	FindByID(context.Context, id.ID, *asset.Operator) (*asset.Asset, error)
 	FindByUUID(context.Context, string, *asset.Operator) (*asset.Asset, error)
-	FindByIDs(context.Context, asset.IDList, *asset.Operator) (asset.List, error)
+	FindByIDs(context.Context, id.List, *asset.Operator) (asset.List, error)
 	Search(context.Context, id.GroupID, AssetFilter, *asset.Operator) (asset.List, *usecasex.PageInfo, error)
 	FindFileByID(context.Context, id.ID, *asset.Operator) (*file.File, error)
 	FindFilesByIDs(context.Context, asset.IDList, *asset.Operator) (map[id.ID]*file.File, error)

@@ -52,26 +52,26 @@ func NewAsset(id id.ID, projectID *id.ProjectID, workspaceID *id.WorkspaceID, cr
 	}
 }
 
-type projectFilter struct {
+type ProjectFilter struct {
 	Readable id.ProjectIDList
 	Writable id.ProjectIDList
 }
 
-func (f *projectFilter) CanRead(id *id.ProjectID) bool {
+func (f *ProjectFilter) CanRead(id *id.ProjectID) bool {
 	if id == nil {
 		return false
 	}
 	return f.Readable == nil || f.Readable.Has(*id) || f.CanWrite(id)
 }
 
-func (f *projectFilter) CanWrite(id *id.ProjectID) bool {
+func (f *ProjectFilter) CanWrite(id *id.ProjectID) bool {
 	if id == nil {
 		return false
 	}
 	return f.Writable == nil || f.Writable.Has(*id)
 }
 
-func (f *projectFilter) Merge(g *projectFilter) *projectFilter {
+func (f *ProjectFilter) Merge(g *ProjectFilter) *ProjectFilter {
 	var r, w id.ProjectIDList
 	if f.Readable != nil || g.Readable != nil {
 		if f.Readable == nil {
@@ -87,10 +87,59 @@ func (f *projectFilter) Merge(g *projectFilter) *projectFilter {
 			w = append(f.Writable, g.Writable...)
 		}
 	}
-	return &projectFilter{
+	return &ProjectFilter{
 		Readable: r,
 		Writable: w,
 	}
+}
+
+type WorkspaceFilter struct {
+	Readable id.WorkspaceIDList
+	Writable id.WorkspaceIDList
+}
+
+func (f *WorkspaceFilter) CanRead(id *id.WorkspaceID) bool {
+	if id == nil {
+		return false
+	}
+	return f.Readable == nil || f.Readable.Has(*id) || f.CanWrite(id)
+}
+
+func (f *WorkspaceFilter) CanWrite(id *id.WorkspaceID) bool {
+	if id == nil {
+		return false
+	}
+	return f.Writable == nil || f.Writable.Has(*id)
+}
+
+func (f *WorkspaceFilter) Merge(g *WorkspaceFilter) *WorkspaceFilter {
+	var r, w id.WorkspaceIDList
+	if f.Readable != nil || g.Readable != nil {
+		if f.Readable == nil {
+			r = g.Readable.Clone()
+		} else {
+			r = append(f.Readable, g.Readable...)
+		}
+	}
+	if f.Writable != nil || g.Writable != nil {
+		if f.Writable == nil {
+			w = g.Writable.Clone()
+		} else {
+			w = append(f.Writable, g.Writable...)
+		}
+	}
+	return &WorkspaceFilter{
+		Readable: r,
+		Writable: w,
+	}
+}
+
+func (a *Asset) IsPublic() bool {
+	if a == nil {
+		return false
+	}
+	return a.public
+
 }
 
 func (a *Asset) ID() id.ID {

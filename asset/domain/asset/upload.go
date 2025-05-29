@@ -1,13 +1,14 @@
 package asset
 
 import (
-	asset2 "github.com/reearth/reearth-cms/server/pkg/asset"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
 )
 
 type Upload struct {
 	uuid            string
-	project         asset2.ProjectID
+	project         id.ProjectID
 	fileName        string
 	expiresAt       time.Time
 	contentLength   int64
@@ -19,7 +20,7 @@ func (u *Upload) UUID() string {
 	return u.uuid
 }
 
-func (u *Upload) Project() asset2.ProjectID {
+func (u *Upload) Project() id.ProjectID {
 	return u.project
 }
 

@@ -4,19 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"log/slog"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/reearth/reearthx/asset/domain/id"
+
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 
 	"github.com/reearth/reearthx/account/accountdomain"
-	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
@@ -28,10 +29,10 @@ import (
 
 var (
 	assetIndexes = []string{
-		"groupid,!createdat,!id",
-		"groupid,createdat,id",
-		"groupid,!size,!id",
-		"groupid,size,id",
+		"projectid,!createdat,!id",
+		"projectid,createdat,id",
+		"projectid,!size,!id",
+		"projectid,size,id",
 		"!createdat,!id",
 	}
 	assetUniqueIndexes = []string{"id", "uuid"}
@@ -40,14 +41,16 @@ var (
 var _ repo.AssetRepository = &AssetRepository{}
 
 type AssetRepository struct {
-	client *mongox.Collection
-	f      *asset.GroupFilter
+	client          *mongox.Collection
+	projectFilter   *asset.ProjectFilter
+	workspaceFilter *asset.WorkspaceFilter
 }
 
-func NewAssetRepository(db *mongo.Database) *AssetRepository {
+func NewAssetRepository(db *mongo.Database, projectFilter *asset.ProjectFilter, workspaceFilter *asset.WorkspaceFilter) *AssetRepository {
 	return &AssetRepository{
-		client: mongox.NewCollection(db.Collection("assets")),
-		f:      &asset.GroupFilter{},
+		client:          mongox.NewCollection(db.Collection("assets")),
+		projectFilter:   projectFilter,
+		workspaceFilter: workspaceFilter,
 	}
 }
 
@@ -60,15 +63,16 @@ func (r *AssetRepository) Init() error {
 	)
 }
 
-func (r *AssetRepository) Filtered(filter asset.GroupFilter) repo.AssetRepository {
+func (r *AssetRepository) Filtered(projectFilter *asset.ProjectFilter, workspaceFilter *asset.WorkspaceFilter) repo.AssetRepository {
 	return &AssetRepository{
-		client: r.client,
-		f:      r.f.Merge(&filter),
+		client:          r.client,
+		projectFilter:   r.projectFilter.Merge(projectFilter),
+		workspaceFilter: r.workspaceFilter.Merge(workspaceFilter),
 	}
 }
 
 func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset.Asset) error {
-	if !r.f.CanWrite(*asset.GroupID()) {
+	if !r.projectFilter.CanWrite(asset.ProjectID()) {
 		return errors.New("operation denied")
 	}
 
@@ -84,8 +88,9 @@ func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset.Asset) error
 	return nil
 }
 
-func (r *AssetRepository) Search(ctx context.Context, pID id.GroupID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
-	if !r.f.CanRead(pID) {
+// cms
+func (r *AssetRepository) Search(ctx context.Context, pID id.ProjectID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
+	if !r.projectFilter.CanRead(&pID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
 
@@ -132,7 +137,7 @@ func (r *AssetRepository) FindByUUID(ctx context.Context, uuid string) (*asset.A
 	})
 }
 
-func (r *AssetRepository) FindByIDs(ctx context.Context, ids asset.IDList) ([]*asset.Asset, error) {
+func (r *AssetRepository) FindByIDs(ctx context.Context, ids id.List) ([]*asset.Asset, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -150,8 +155,8 @@ func (r *AssetRepository) FindByIDs(ctx context.Context, ids asset.IDList) ([]*a
 	return filterAssets(ids, res), nil
 }
 
-func (r *AssetRepository) UpdateProject(ctx context.Context, from, to id.GroupID) error {
-	if !r.f.CanWrite(from) || !r.f.CanWrite(to) {
+func (r *AssetRepository) UpdateProject(ctx context.Context, from, to id.ProjectID) error {
+	if !r.projectFilter.CanWrite(&from) || !r.projectFilter.CanWrite(&to) {
 		return errors.New("operation denied")
 	}
 
@@ -162,7 +167,7 @@ func (r *AssetRepository) UpdateProject(ctx context.Context, from, to id.GroupID
 	})
 }
 
-func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.IDList) (asset.List, error) {
+func (r *AssetRepository) FindByIDList(ctx context.Context, ids id.List) (asset.List, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -260,12 +265,12 @@ func (r *AssetRepository) FindByGroup(
 	return assets, count, nil
 }
 
-func (r *AssetRepository) FindByProject(ctx context.Context, groupID id.GroupID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
-	if !r.f.CanRead(groupID) {
+func (r *AssetRepository) FindByProject(ctx context.Context, projectID id.ProjectID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
+	if !r.projectFilter.CanRead(&projectID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
 
-	var query interface{} = bson.M{"groupid": groupID.String()}
+	var query interface{} = bson.M{"projectid": projectID.String()}
 
 	if filter.Keyword != nil {
 		query = mongox.And(query, "", bson.M{
@@ -310,7 +315,7 @@ func (r *AssetRepository) DeleteMany(ctx context.Context, ids []id.ID) error {
 	return r.client.RemoveAll(ctx, filter)
 }
 
-func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.IDList) error {
+func (r *AssetRepository) BatchDelete(ctx context.Context, ids id.List) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -407,69 +412,6 @@ type assetDocument struct {
 	FileName                string    `bson:"filename"`
 	ArchiveExtractionStatus string    `bson:"archiveextractionstatus,omitempty"`
 	IntegrationID           string    `bson:"integrationid"`
-}
-
-// func assetToDoc(a *asset.Asset) *assetDocument {
-// 	doc := &assetDocument{
-// 		ID:            a.ID().String(),
-// 		GroupID:       a.GroupID().String(),
-// 		CreatedAt:     a.CreatedAt(),
-// 		Size:          a.Size(),
-// 		ContentType:   a.ContentType(),
-// 		UUID:          a.UUID(),
-// 		URL:           a.URL(),
-// 		FileName:      a.FileName(),
-// 		IntegrationID: a.Integration().String(),
-// 	}
-
-// 	if a.PreviewType() != nil {
-// 		doc.PreviewType = string(*a.PreviewType())
-// 	}
-
-// 	if a.ContentEncoding() != "" {
-// 		doc.ContentEncoding = a.ContentEncoding()
-// 	}
-
-// 	if a.ArchiveExtractionStatus() != nil {
-// 		doc.ArchiveExtractionStatus = string(*a.ArchiveExtractionStatus())
-// 	}
-
-// 	return doc
-// }
-
-func docToAsset(doc *assetDocument) (*asset.Asset, error) {
-	assetID, err := id.From(doc.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	groupID, err := id.GroupIDFrom(doc.GroupID)
-	if err != nil {
-		return nil, err
-	}
-
-	var integration id.IntegrationID
-	if doc.IntegrationID != "" {
-		integration, err = idx.From[id.IntegrationIDType](doc.IntegrationID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	a := asset.NewAsset(assetID, &groupID, doc.CreatedAt, doc.Size, doc.ContentType)
-	a.SetContentEncoding(doc.ContentEncoding)
-	a.SetPreviewType(asset.PreviewType(doc.PreviewType))
-	a.SetUUID(doc.UUID)
-	a.SetURL(doc.URL)
-	a.SetFileName(doc.FileName)
-	a.AddIntegration(integration)
-
-	if doc.ArchiveExtractionStatus != "" {
-		status := asset.ExtractionStatus(doc.ArchiveExtractionStatus)
-		a.SetArchiveExtractionStatus(&status)
-	}
-
-	return a, nil
 }
 
 // cms
@@ -599,41 +541,36 @@ func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountd
 }
 
 // viz
-func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID id.GroupID, fileInterface any) error {
-	if !r.f.CanWrite(groupID) {
-		return rerror.ErrInvalidParams
-	}
-
-	assets, err := r.find(ctx, bson.M{"groupid": groupID.String()})
+func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, projectID id.ProjectID, f gateway.File) error {
+	projectAssets, err := r.find(ctx, bson.M{
+		"coresupport": true,
+		"project":     projectID.String(),
+	})
 	if err != nil {
 		return err
 	}
 
-	var fileRemover FileRemover
-	if fr, ok := fileInterface.(FileRemover); ok {
-		fileRemover = fr
-	}
+	for _, a := range projectAssets {
 
-	for _, a := range assets {
-
-		if !r.f.CanWrite(*a.GroupID()) {
-			return errors.New("operation denied")
+		if !r.workspaceFilter.CanWrite(a.WorkspaceID()) {
+			return repo.ErrOperationDenied
 		}
 
-		if fileRemover != nil && a.URL() != "" {
-			assetURL, err := url.Parse(a.URL())
-			if err != nil {
-				continue
-			}
-
-			if err := fileRemover.RemoveAsset(ctx, assetURL); err != nil {
-				continue
-			}
-		}
-
-		if err := r.Delete(ctx, a.ID()); err != nil {
+		aPath, err := url.Parse(a.URL())
+		if err != nil {
 			continue
 		}
+
+		err = f.RemoveAsset(ctx, aPath)
+		if err != nil {
+			log.Print(err.Error())
+		}
+
+		err = r.Remove(ctx, a.ID())
+		if err != nil {
+			log.Print(err.Error())
+		}
+
 	}
 
 	return nil
@@ -641,7 +578,7 @@ func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID i
 
 // viz and flow
 func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
-	if !r.f.CanWrite(*asset.GroupID()) {
+	if !r.workspaceFilter.CanWrite(asset.WorkspaceID()) {
 		return errors.New("operation denied")
 	}
 	doc, id := mongodoc.NewAsset(asset)
