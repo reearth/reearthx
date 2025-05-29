@@ -170,6 +170,22 @@ func (Thread) Type() string {
 
 type ThreadID = idx.ID[Thread]
 
+func NewThreadID() ThreadID {
+	return idx.New[Thread]()
+}
+
+func ThreadIDFrom(id string) (ThreadID, error) {
+	return idx.From[Thread](id)
+}
+
+func MustThreadID(id string) ThreadID {
+	return idx.Must[Thread](id)
+}
+
+func ThreadIDFromRef(id *string) *ThreadID {
+	return idx.FromRef[Thread](id)
+}
+
 // Webhook type and ID
 type WebhookIDType struct{}
 
