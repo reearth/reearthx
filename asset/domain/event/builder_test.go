@@ -1,10 +1,14 @@
 package event
 
 import (
+	"github.com/reearth/reearthx/asset/domain/id"
 	"testing"
 	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/operator"
+	"github.com/reearth/reearthx/asset/domain/project"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,14 +24,14 @@ func TestBuilder(t *testing.T) {
 	id := NewID()
 
 	ev := New[*asset.Asset]().ID(id).Timestamp(now).
-		Type(AssetCreate).Operator(operator.OperatorFromUser(u.ID())).Object(a).MustBuild()
+		Type(AssetCreate).Operator(operator.FromUser(u.ID())).Object(a).MustBuild()
 	ev2 := New[*asset.Asset]().NewID().Timestamp(now).
-		Type(AssetDecompress).Operator(operator.OperatorFromUser(u.ID())).Object(a).MustBuild()
+		Type(AssetDecompress).Operator(operator.FromUser(u.ID())).Object(a).MustBuild()
 
 	// ev1
 	assert.Equal(t, id, ev.ID())
 	assert.Equal(t, Type(AssetCreate), ev.Type())
-	assert.Equal(t, operator.OperatorFromUser(u.ID()), ev.Operator())
+	assert.Equal(t, operator.FromUser(u.ID()), ev.Operator())
 	assert.Equal(t, a, ev.Object())
 
 	// ev2
