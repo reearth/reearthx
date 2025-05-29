@@ -264,12 +264,12 @@ const (
 	ExtractionStatusFailed     ExtractionStatus = "FAILED"
 )
 
-type AssetSortType string
+type SortType string
 
 const (
-	SortTypeDate AssetSortType = "DATE"
-	SortTypeSize AssetSortType = "SIZE"
-	SortTypeName AssetSortType = "NAME"
+	SortTypeDate SortType = "DATE"
+	SortTypeSize SortType = "SIZE"
+	SortTypeName SortType = "NAME"
 )
 
 type SortDirection string
@@ -280,7 +280,7 @@ const (
 )
 
 type Sort struct {
-	By        AssetSortType
+	By        SortType
 	Direction SortDirection
 }
 
