@@ -1,13 +1,12 @@
 package mongodoc
 
 import (
-	asset2 "github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/file"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain"
-	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/samber/lo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -47,7 +46,7 @@ type AssetFileDocument struct {
 	Children        []*AssetFileDocument
 }
 
-type AssetConsumer = mongox.SliceFuncConsumer[*AssetDocument, *asset2.Asset]
+type AssetConsumer = mongox.SliceFuncConsumer[*AssetDocument, *asset.Asset]
 
 type AssetAndFileConsumer = mongox.SliceConsumer[*AssetAndFileDocument]
 
@@ -64,10 +63,10 @@ func (a *AssetFilesConsumer) Result() AssetFilesDocument {
 }
 
 func NewAssetConsumer() *AssetConsumer {
-	return NewConsumer[*AssetDocument, *asset2.Asset]()
+	return NewConsumer[*AssetDocument, *asset.Asset]()
 }
 
-func NewAsset(a *asset2.Asset) (*AssetDocument, string) {
+func NewAsset(a *asset.Asset) (*AssetDocument, string) {
 	aid := a.ID().String()
 
 	previewType := ""
@@ -99,7 +98,7 @@ func NewAsset(a *asset2.Asset) (*AssetDocument, string) {
 
 	return &AssetDocument{
 		ID:                      aid,
-		Project:                 a.GroupID().String(), // GroupID serves as Project
+		Project:                 a.ProjectID().String(), // GroupID serves as Project
 		CreatedAt:               a.CreatedAt(),
 		User:                    uid,
 		Integration:             iid,
@@ -117,17 +116,17 @@ func NewAsset(a *asset2.Asset) (*AssetDocument, string) {
 	}, aid
 }
 
-func (d *AssetDocument) Model() (*asset2.Asset, error) {
+func (d *AssetDocument) Model() (*asset.Asset, error) {
 	aid, err := id.From(d.ID)
 	if err != nil {
 		return nil, err
 	}
-	groupID, err := id.GroupIDFrom(d.Project)
+	groupID, err := id.ProjectIDFrom(d.Project)
 	if err != nil {
 		return nil, err
 	}
 
-	a := asset2.NewAsset(aid, &groupID, d.CreatedAt, int64(d.Size), d.ContentType)
+	a := asset.NewAsset(aid, &groupID, nil, d.CreatedAt, uint64(d.Size), d.ContentType)
 
 	a.SetFileName(d.FileName)
 	a.SetUUID(d.UUID)
@@ -137,21 +136,21 @@ func (d *AssetDocument) Model() (*asset2.Asset, error) {
 	a.SetPublic(d.Public)
 
 	if d.PreviewType != "" {
-		pt := asset2.PreviewType(d.PreviewType)
+		pt := asset.PreviewType(d.PreviewType)
 		a.SetPreviewType(pt)
 	}
 
 	if d.ArchiveExtractionStatus != "" {
-		status := asset2.ExtractionStatus(d.ArchiveExtractionStatus)
+		status := asset.ExtractionStatus(d.ArchiveExtractionStatus)
 		a.SetArchiveExtractionStatus(&status)
 	}
 
 	if d.Integration != nil {
-		iid, err := idx.From[id.IntegrationIDType](*d.Integration)
+		iid, err := id.IntegrationIDFrom(*d.Integration)
 		if err != nil {
 			return nil, err
 		}
-		a.AddIntegration(iid)
+		a.AddIntegration(&iid)
 	}
 
 	if d.User != nil {
@@ -163,7 +162,7 @@ func (d *AssetDocument) Model() (*asset2.Asset, error) {
 	}
 
 	if d.Thread != nil {
-		tid, err := idx.From[id.ThreadIDType](*d.Thread)
+		tid, err := id.ThreadIDFrom(*d.Thread)
 		if err != nil {
 			return nil, err
 		}
