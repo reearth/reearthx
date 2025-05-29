@@ -1,11 +1,10 @@
 package asset
 
 import (
-	asset2 "github.com/reearth/reearth-cms/server/pkg/asset"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,10 +57,10 @@ func TestUploadBuilderUUID(t *testing.T) {
 }
 
 func TestUploadBuilderProject(t *testing.T) {
-	projectID := id.NewProjectID()
+	projectID := id.ProjectID()
 	tests := []struct {
 		name  string
-		input asset2.ProjectID
+		input id.ProjectID
 		want  *UploadBuilder
 	}{
 		{
@@ -165,7 +164,7 @@ func TestUploadBuilderExpiresAt(t *testing.T) {
 
 func TestUploadBuilderBuild(t *testing.T) {
 	now := time.Now()
-	projectID := asset2.NewProjectID()
+	projectID := id.NewProjectID()
 	ubWithData := &UploadBuilder{
 		u: &Upload{
 			uuid:          "1",

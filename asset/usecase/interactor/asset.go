@@ -299,7 +299,7 @@ func (i *Asset) Decompress(ctx context.Context, aId id.AssetID, operator *usecas
 	)
 }
 
-func (i *Asset) Publish(ctx context.Context, aId id.AssetID, operator *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) Publish(ctx context.Context, aId id.ID, operator *usecase.Operator) (*asset.Asset, error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}

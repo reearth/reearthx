@@ -4,6 +4,7 @@ import (
 	"github.com/reearth/reearthx/idx"
 )
 
+// Asset type and ID
 type Type struct{}
 
 func (Type) Type() string {
@@ -11,49 +12,7 @@ func (Type) Type() string {
 }
 
 type ID = idx.ID[Type]
-
-type IntegrationIDType struct{}
-
-func (IntegrationIDType) Type() string {
-	return "integration"
-}
-
-type IntegrationID = idx.ID[IntegrationIDType]
-
-type IntegrationIDList = idx.List[IntegrationIDType]
-
-type ProjectIDType struct{}
-
-func (ProjectIDType) Type() string {
-	return "project"
-}
-
-type ProjectID = idx.ID[ProjectIDType]
-
-type ProjectIDList = idx.List[ProjectIDType]
-
-type workspaceIDType struct{}
-
-func (workspaceIDType) Type() string {
-	return "workspace"
-}
-
-type workspaceID = idx.ID[workspaceIDType]
-type workspaceIDList = idx.List[workspaceIDType]
-
-type OperatorIDType struct{}
-
-func (OperatorIDType) Type() string {
-	return "operator"
-}
-
-type ThreadIDType struct{}
-
-func (ThreadIDType) Type() string {
-	return "thread"
-}
-
-type ThreadID = idx.ID[ThreadIDType]
+type List []ID
 
 func NewAssetID() ID {
 	return idx.New[Type]()
@@ -67,50 +26,95 @@ func MustAssetID(id string) ID {
 	return idx.Must[Type](id)
 }
 
-type GroupIDType struct{}
+func (l List) Add(id ID) List {
+	return append(l, id)
+}
 
-func (GroupIDType) Type() string {
+func (l List) Strings() []string {
+	strings := make([]string, len(l))
+	for i, id := range l {
+		strings[i] = id.String()
+	}
+	return strings
+}
+
+// Group type and ID
+type Group struct{}
+
+func (Group) Type() string {
 	return "group"
 }
 
-type GroupID = idx.ID[GroupIDType]
-
-type GroupIDList = idx.List[GroupIDType]
+type GroupID = idx.ID[Group]
+type GroupIDList = idx.List[Group]
 
 func NewGroupID() GroupID {
-	return idx.New[GroupIDType]()
+	return idx.New[Group]()
 }
 
 func GroupIDFrom(id string) (GroupID, error) {
-	return idx.From[GroupIDType](id)
+	return idx.From[Group](id)
 }
 
 func MustGroupID(id string) GroupID {
-	return idx.Must[GroupIDType](id)
+	return idx.Must[Group](id)
 }
 
-type WorkspaceIDType struct{}
+// Integration type and ID
+type Integration struct{}
 
-func (WorkspaceIDType) Type() string {
-	return "workspace"
+func (Integration) Type() string {
+	return "integration"
 }
 
-type WorkspaceID = idx.ID[WorkspaceIDType]
+type IntegrationID = idx.ID[Integration]
+type IntegrationIDList = idx.List[Integration]
 
-type WorkspaceIDList = idx.List[WorkspaceIDType]
-
-func NewWorkspaceID() WorkspaceID {
-	return idx.New[WorkspaceIDType]()
+func NewIntegrationID() IntegrationID {
+	return idx.New[Integration]()
 }
 
-func WorkspaceIDFrom(id string) (WorkspaceID, error) {
-	return idx.From[WorkspaceIDType](id)
+func IntegrationIDFrom(id string) (IntegrationID, error) {
+	return idx.From[Integration](id)
 }
 
-func MustWorkspaceID(id string) WorkspaceID {
-	return idx.Must[WorkspaceIDType](id)
+func MustIntegrationID(id string) IntegrationID {
+	return idx.Must[Integration](id)
 }
 
+func IntegrationIDFromRef(id *string) *IntegrationID {
+	return idx.FromRef[Integration](id)
+}
+
+// Model type and ID
+type ModelIDType struct{}
+
+func (ModelIDType) Type() string {
+	return "model"
+}
+
+type ModelID = idx.ID[ModelIDType]
+
+func NewModelID() ModelID {
+	return idx.New[ModelIDType]()
+}
+
+func ModelIDFrom(id string) (ModelID, error) {
+	return idx.From[ModelIDType](id)
+}
+
+func MustModelID(id string) ModelID {
+	return idx.Must[ModelIDType](id)
+}
+
+// Operator type
+type Operator struct{}
+
+func (Operator) Type() string {
+	return "operator"
+}
+
+// Policy type and ID
 type PolicyIDType struct{}
 
 func (PolicyIDType) Type() string {
@@ -131,16 +135,81 @@ func MustPolicyID(id string) PolicyID {
 	return idx.Must[PolicyIDType](id)
 }
 
-type List []ID
+// Project type and ID
+type Project struct{}
 
-func (l List) Add(id ID) List {
-	return append(l, id)
+func (Project) Type() string {
+	return "project"
 }
 
-func (l List) Strings() []string {
-	strings := make([]string, len(l))
-	for i, id := range l {
-		strings[i] = id.String()
-	}
-	return strings
+type ProjectID = idx.ID[Project]
+type ProjectIDList = idx.List[Project]
+
+func NewProjectID() ProjectID {
+	return idx.New[Project]()
 }
+
+// Thread type and ID
+type Thread struct{}
+
+func (Thread) Type() string {
+	return "thread"
+}
+
+type ThreadID = idx.ID[Thread]
+
+// Webhook type and ID
+type WebhookIDType struct{}
+
+func (WebhookIDType) Type() string {
+	return "webhook"
+}
+
+type WebhookID = idx.ID[WebhookIDType]
+
+func NewWebhookID() WebhookID {
+	return idx.New[WebhookIDType]()
+}
+
+func WebhookIDFrom(id string) (WebhookID, error) {
+	return idx.From[WebhookIDType](id)
+}
+
+func MustWebhookID(id string) WebhookID {
+	return idx.Must[WebhookIDType](id)
+}
+
+// Workspace type and ID
+type WorkspaceIDType struct{}
+
+func (WorkspaceIDType) Type() string {
+	return "workspace"
+}
+
+type WorkspaceID = idx.ID[WorkspaceIDType]
+type WorkspaceIDList = idx.List[WorkspaceIDType]
+
+func NewWorkspaceID() WorkspaceID {
+	return idx.New[WorkspaceIDType]()
+}
+
+func WorkspaceIDFrom(id string) (WorkspaceID, error) {
+	return idx.From[WorkspaceIDType](id)
+}
+
+func MustWorkspaceID(id string) WorkspaceID {
+	return idx.Must[WorkspaceIDType](id)
+}
+
+// Legacy workspace
+type workspace struct{}
+
+func (workspace) Type() string {
+	return "workspace"
+}
+
+type workspaceID = idx.ID[workspace]
+type workspaceIDList = idx.List[workspace]
+
+// Error
+var ErrInvalidID = idx.ErrInvalidID

@@ -1,7 +1,7 @@
 package asset
 
 import (
-	asset2 "github.com/reearth/reearth-cms/server/pkg/asset"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"time"
 )
 
@@ -20,7 +20,7 @@ func (b *UploadBuilder) UUID(uuid string) *UploadBuilder {
 	return b
 }
 
-func (b *UploadBuilder) Project(project asset2.ProjectID) *UploadBuilder {
+func (b *UploadBuilder) Project(project id.ProjectID) *UploadBuilder {
 	b.u.project = project
 	return b
 }
