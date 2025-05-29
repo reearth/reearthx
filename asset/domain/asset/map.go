@@ -1,6 +1,8 @@
 package asset
 
-import "github.com/samber/lo"
+import (
+	"github.com/samber/lo"
+)
 
 type Map map[AssetID]*Asset
 
@@ -10,7 +12,7 @@ func (m Map) List() List {
 	})
 }
 
-func (m Map) ListFrom(ids AssetIDList) (res List) {
+func (m Map) ListFrom(ids []AssetID) (res List) {
 	for _, id := range ids {
 		if a, ok := m[id]; ok {
 			res = append(res, a)

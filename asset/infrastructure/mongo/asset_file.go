@@ -3,9 +3,10 @@ package mongo
 import (
 	"context"
 	"errors"
+	asset2 "github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 
-	"github.com/reearth/reearthx/asset"
-	"github.com/reearth/reearthx/asset/mongo/mongodoc"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,21 +14,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var _ asset.AssetFile = &AssetFile{}
+var _ repo.AssetFile = &AssetFile{}
 
 type AssetFile struct {
 	client           *mongox.Collection
 	assetFilesClient *mongox.Collection
 }
 
-func NewAssetFile(db *mongo.Database) asset.AssetFile {
+func NewAssetFile(db *mongo.Database) repo.AssetFile {
 	return &AssetFile{
 		client:           mongox.NewCollection(db.Collection("assets")),
 		assetFilesClient: mongox.NewCollection(db.Collection("asset_files")),
 	}
 }
 
-func (r *AssetFile) FindByID(ctx context.Context, id asset.AssetID) (*asset.File, error) {
+func (r *AssetFile) FindByID(ctx context.Context, id asset2.AssetID) (*asset2.File, error) {
 	c := &mongodoc.AssetAndFileConsumer{}
 	if err := r.client.FindOne(ctx, bson.M{
 		"id": id.String(),
@@ -64,8 +65,8 @@ func (r *AssetFile) FindByID(ctx context.Context, id asset.AssetID) (*asset.File
 	return f, nil
 }
 
-func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.AssetIDList) (map[asset.AssetID]*asset.File, error) {
-	filesMap := make(map[asset.AssetID]*asset.File)
+func (r *AssetFile) FindByIDs(ctx context.Context, ids repo.AssetIDList) (map[asset2.AssetID]*asset2.File, error) {
+	filesMap := make(map[asset2.AssetID]*asset2.File)
 
 	c := &mongodoc.AssetAndFileConsumer{}
 	if err := r.client.Find(ctx, bson.M{
@@ -100,7 +101,7 @@ func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.AssetIDList) (map[a
 			f.SetFiles(f.FlattenChildren())
 		}
 
-		aId, err := asset.AssetIDFrom(assetID)
+		aId, err := asset2.AssetIDFrom(assetID)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +111,7 @@ func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.AssetIDList) (map[a
 	return filesMap, nil
 }
 
-func (r *AssetFile) Save(ctx context.Context, id asset.AssetID, file *asset.File) error {
+func (r *AssetFile) Save(ctx context.Context, id asset2.AssetID, file *asset2.File) error {
 	doc := mongodoc.NewFile(file)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),
@@ -129,7 +130,7 @@ func (r *AssetFile) Save(ctx context.Context, id asset.AssetID, file *asset.File
 	return nil
 }
 
-func (r *AssetFile) SaveFlat(ctx context.Context, id asset.AssetID, parent *asset.File, files []*asset.File) error {
+func (r *AssetFile) SaveFlat(ctx context.Context, id asset2.AssetID, parent *asset2.File, files []*asset2.File) error {
 	doc := mongodoc.NewFile(parent)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),

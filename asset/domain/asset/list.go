@@ -36,9 +36,10 @@ func (l List) Map() Map {
 	})
 }
 
-func (l List) IDs() (ids AssetIDList) {
+func (l List) IDs() []AssetID {
+	ids := make([]AssetID, 0, len(l))
 	for _, a := range l {
-		ids = ids.Add(a.ID())
+		ids = append(ids, a.ID())
 	}
-	return
+	return ids
 }

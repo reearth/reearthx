@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	asset2 "github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain"
-	"github.com/reearth/reearthx/asset"
-	"github.com/reearth/reearthx/asset/mongo/mongodoc"
 	"github.com/reearth/reearthx/idx"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
@@ -33,17 +34,17 @@ var (
 	assetUniqueIndexes = []string{"id", "uuid"}
 )
 
-var _ asset.AssetRepository = &AssetRepository{}
+var _ repo.AssetRepository = &AssetRepository{}
 
 type AssetRepository struct {
 	client *mongox.Collection
-	f      *asset.GroupFilter
+	f      *asset2.GroupFilter
 }
 
 func NewAssetRepository(db *mongo.Database) *AssetRepository {
 	return &AssetRepository{
 		client: mongox.NewCollection(db.Collection("assets")),
-		f:      &asset.GroupFilter{},
+		f:      &asset2.GroupFilter{},
 	}
 }
 
@@ -56,14 +57,14 @@ func (r *AssetRepository) Init() error {
 	)
 }
 
-func (r *AssetRepository) Filtered(filter asset.GroupFilter) asset.AssetRepository {
+func (r *AssetRepository) Filtered(filter asset2.GroupFilter) repo.AssetRepository {
 	return &AssetRepository{
 		client: r.client,
 		f:      r.f.Merge(&filter),
 	}
 }
 
-func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset.Asset) error {
+func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset2.Asset) error {
 	if !r.f.CanWrite(*asset.GroupID()) {
 		return errors.New("operation denied")
 	}
@@ -80,7 +81,7 @@ func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset.Asset) error
 	return nil
 }
 
-func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter asset.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+func (r *AssetRepository) Search(ctx context.Context, pID asset2.GroupID, filter repo.AssetFilter) (asset2.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(pID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -116,19 +117,19 @@ func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter 
 	return result, pageInfo, err
 }
 
-func (r *AssetRepository) FindByID(ctx context.Context, id asset.AssetID) (*asset.Asset, error) {
+func (r *AssetRepository) FindByID(ctx context.Context, id asset2.AssetID) (*asset2.Asset, error) {
 	return r.findOne(ctx, bson.M{
 		"id": id.String(),
 	})
 }
 
-func (r *AssetRepository) FindByUUID(ctx context.Context, uuid string) (*asset.Asset, error) {
+func (r *AssetRepository) FindByUUID(ctx context.Context, uuid string) (*asset2.Asset, error) {
 	return r.findOne(ctx, bson.M{
 		"uuid": uuid,
 	})
 }
 
-func (r *AssetRepository) FindByIDs(ctx context.Context, ids asset.AssetIDList) ([]*asset.Asset, error) {
+func (r *AssetRepository) FindByIDs(ctx context.Context, ids repo.AssetIDList) ([]*asset2.Asset, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -146,7 +147,7 @@ func (r *AssetRepository) FindByIDs(ctx context.Context, ids asset.AssetIDList) 
 	return filterAssets(ids, res), nil
 }
 
-func (r *AssetRepository) UpdateProject(ctx context.Context, from, to asset.GroupID) error {
+func (r *AssetRepository) UpdateProject(ctx context.Context, from, to asset2.GroupID) error {
 	if !r.f.CanWrite(from) || !r.f.CanWrite(to) {
 		return errors.New("operation denied")
 	}
@@ -158,7 +159,7 @@ func (r *AssetRepository) UpdateProject(ctx context.Context, from, to asset.Grou
 	})
 }
 
-func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDList) (asset.List, error) {
+func (r *AssetRepository) FindByIDList(ctx context.Context, ids repo.AssetIDList) (asset2.List, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -175,16 +176,16 @@ func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.AssetIDLis
 		return nil, nil
 	}
 
-	return asset.List(res), nil
+	return asset2.List(res), nil
 }
 
 func (r *AssetRepository) FindByGroup(
 	ctx context.Context,
-	groupID asset.GroupID,
-	filter asset.AssetFilter,
-	sort asset.AssetSort,
-	pagination asset.Pagination,
-) ([]*asset.Asset, int64, error) {
+	groupID asset2.GroupID,
+	filter repo.AssetFilter,
+	sort repo.AssetSort,
+	pagination repo.Pagination,
+) ([]*asset2.Asset, int64, error) {
 	if !r.f.CanRead(groupID) {
 		return nil, 0, nil
 	}
@@ -202,20 +203,20 @@ func (r *AssetRepository) FindByGroup(
 
 	sortOptions := bson.D{}
 	switch sort.By {
-	case asset.AssetSortTypeDate:
-		if sort.Direction == asset.SortDirectionAsc {
+	case repo.AssetSortTypeDate:
+		if sort.Direction == repo.SortDirectionAsc {
 			sortOptions = append(sortOptions, bson.E{Key: "createdat", Value: 1})
 		} else {
 			sortOptions = append(sortOptions, bson.E{Key: "createdat", Value: -1})
 		}
-	case asset.AssetSortTypeSize:
-		if sort.Direction == asset.SortDirectionAsc {
+	case repo.AssetSortTypeSize:
+		if sort.Direction == repo.SortDirectionAsc {
 			sortOptions = append(sortOptions, bson.E{Key: "size", Value: 1})
 		} else {
 			sortOptions = append(sortOptions, bson.E{Key: "size", Value: -1})
 		}
-	case asset.AssetSortTypeName:
-		if sort.Direction == asset.SortDirectionAsc {
+	case repo.AssetSortTypeName:
+		if sort.Direction == repo.SortDirectionAsc {
 			sortOptions = append(sortOptions, bson.E{Key: "filename", Value: 1})
 		} else {
 			sortOptions = append(sortOptions, bson.E{Key: "filename", Value: -1})
@@ -243,7 +244,7 @@ func (r *AssetRepository) FindByGroup(
 		return nil, 0, rerror.ErrInternalBy(err)
 	}
 
-	assets := make([]*asset.Asset, 0, len(consumer.Result))
+	assets := make([]*asset2.Asset, 0, len(consumer.Result))
 	for _, doc := range consumer.Result {
 		a, err := docToAsset(doc)
 		if err != nil {
@@ -255,7 +256,7 @@ func (r *AssetRepository) FindByGroup(
 	return assets, count, nil
 }
 
-func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.GroupID, filter asset.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset2.GroupID, filter repo.AssetFilter) (asset2.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(groupID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -286,13 +287,13 @@ func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.Group
 	return r.paginate(ctx, query, filter.Sort, pagination)
 }
 
-func (r *AssetRepository) Delete(ctx context.Context, id asset.AssetID) error {
+func (r *AssetRepository) Delete(ctx context.Context, id asset2.AssetID) error {
 	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{
 		"id": id.String(),
 	}))
 }
 
-func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset.AssetID) error {
+func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset2.AssetID) error {
 	idStrings := make([]string, len(ids))
 	for i, id := range ids {
 		idStrings[i] = id.String()
@@ -305,7 +306,7 @@ func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset.AssetID) e
 	return r.client.RemoveAll(ctx, filter)
 }
 
-func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.AssetIDList) error {
+func (r *AssetRepository) BatchDelete(ctx context.Context, ids repo.AssetIDList) error {
 	if len(ids) == 0 {
 		return nil
 	}
@@ -317,7 +318,7 @@ func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.AssetIDList
 	return r.client.RemoveAll(ctx, filter)
 }
 
-func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset.AssetID, status asset.ExtractionStatus) error {
+func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset2.AssetID, status asset2.ExtractionStatus) error {
 	filter := r.writeFilter(bson.M{"id": id.String()})
 	_, err := r.client.Client().UpdateOne(
 		ctx,
@@ -335,7 +336,7 @@ type FileRemover interface {
 }
 
 // Helper methods for document operations
-func (r *AssetRepository) find(ctx context.Context, filter any) ([]*asset.Asset, error) {
+func (r *AssetRepository) find(ctx context.Context, filter any) ([]*asset2.Asset, error) {
 	c := mongodoc.NewAssetConsumer()
 	if err := r.client.Find(ctx, r.readFilter(filter), c, options.Find().SetProjection(bson.M{"file": 0})); err != nil {
 		return nil, rerror.ErrInternalBy(err)
@@ -343,7 +344,7 @@ func (r *AssetRepository) find(ctx context.Context, filter any) ([]*asset.Asset,
 	return c.Result, nil
 }
 
-func (r *AssetRepository) findOne(ctx context.Context, filter any) (*asset.Asset, error) {
+func (r *AssetRepository) findOne(ctx context.Context, filter any) (*asset2.Asset, error) {
 	c := mongodoc.NewAssetConsumer()
 	if err := r.client.FindOne(ctx, r.readFilter(filter), c, options.FindOne().SetProjection(bson.M{"file": 0})); err != nil {
 		return nil, err
@@ -352,10 +353,10 @@ func (r *AssetRepository) findOne(ctx context.Context, filter any) (*asset.Asset
 }
 
 // cms
-func filterAssets(ids []asset.AssetID, rows []*asset.Asset) []*asset.Asset {
-	res := make([]*asset.Asset, 0, len(ids))
+func filterAssets(ids []asset2.AssetID, rows []*asset2.Asset) []*asset2.Asset {
+	res := make([]*asset2.Asset, 0, len(ids))
 	for _, id := range ids {
-		var r2 *asset.Asset
+		var r2 *asset2.Asset
 		for _, r := range rows {
 			if r.ID() == id {
 				r2 = r
@@ -367,7 +368,7 @@ func filterAssets(ids []asset.AssetID, rows []*asset.Asset) []*asset.Asset {
 	return res
 }
 
-func applyGroupFilter(filter interface{}, groups []asset.GroupID) interface{} {
+func applyGroupFilter(filter interface{}, groups []asset2.GroupID) interface{} {
 	if len(groups) == 0 {
 		return filter
 	}
@@ -432,35 +433,35 @@ type assetDocument struct {
 // 	return doc
 // }
 
-func docToAsset(doc *assetDocument) (*asset.Asset, error) {
-	assetID, err := asset.AssetIDFrom(doc.ID)
+func docToAsset(doc *assetDocument) (*asset2.Asset, error) {
+	assetID, err := asset2.AssetIDFrom(doc.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	groupID, err := asset.GroupIDFrom(doc.GroupID)
+	groupID, err := asset2.GroupIDFrom(doc.GroupID)
 	if err != nil {
 		return nil, err
 	}
 
-	var integration asset.IntegrationID
+	var integration asset2.IntegrationID
 	if doc.IntegrationID != "" {
-		integration, err = idx.From[asset.IntegrationIDType](doc.IntegrationID)
+		integration, err = idx.From[asset2.IntegrationIDType](doc.IntegrationID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	a := asset.NewAsset(assetID, &groupID, doc.CreatedAt, doc.Size, doc.ContentType)
+	a := asset2.NewAsset(assetID, &groupID, doc.CreatedAt, doc.Size, doc.ContentType)
 	a.SetContentEncoding(doc.ContentEncoding)
-	a.SetPreviewType(asset.PreviewType(doc.PreviewType))
+	a.SetPreviewType(asset2.PreviewType(doc.PreviewType))
 	a.SetUUID(doc.UUID)
 	a.SetURL(doc.URL)
 	a.SetFileName(doc.FileName)
 	a.AddIntegration(integration)
 
 	if doc.ArchiveExtractionStatus != "" {
-		status := asset.ExtractionStatus(doc.ArchiveExtractionStatus)
+		status := asset2.ExtractionStatus(doc.ArchiveExtractionStatus)
 		a.SetArchiveExtractionStatus(&status)
 	}
 
@@ -468,7 +469,7 @@ func docToAsset(doc *assetDocument) (*asset.Asset, error) {
 }
 
 // cms
-func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort *usecasex.Sort, pagination *usecasex.Pagination) (asset.List, *usecasex.PageInfo, error) {
+func (r *AssetRepository) paginate(ctx context.Context, filter interface{}, sort *usecasex.Sort, pagination *usecasex.Pagination) (asset2.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewAssetConsumer()
 
 	actualFilter := r.readFilter(filter)
@@ -496,15 +497,15 @@ func (r *AssetRepository) writeFilter(filter any) any {
 }
 
 // viz
-func (r *AssetRepository) FindByURL(ctx context.Context, path string) (*asset.Asset, error) {
+func (r *AssetRepository) FindByURL(ctx context.Context, path string) (*asset2.Asset, error) {
 	return r.findOne(ctx, bson.M{
 		"url": path,
 	})
 }
 
 // viz
-func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *asset.GroupID, filter asset.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
-	if !r.f.CanRead(asset.GroupID(workspaceID)) {
+func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *asset2.GroupID, filter repo.AssetFilter) ([]*asset2.Asset, *usecasex.PageInfo, error) {
+	if !r.f.CanRead(asset2.GroupID(workspaceID)) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
 
@@ -556,7 +557,7 @@ func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceI
 
 // viz and flow
 func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
-	if !r.f.CanRead(asset.GroupID(wid)) {
+	if !r.f.CanRead(asset2.GroupID(wid)) {
 		return 0, rerror.ErrInvalidParams
 	}
 
@@ -588,7 +589,7 @@ func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountd
 }
 
 // viz
-func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID asset.GroupID, fileInterface any) error {
+func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID asset2.GroupID, fileInterface any) error {
 	if !r.f.CanWrite(groupID) {
 		return rerror.ErrInvalidParams
 	}
@@ -629,7 +630,7 @@ func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID a
 }
 
 // viz and flow
-func (r *AssetRepository) Save(ctx context.Context, asset *asset.Asset) error {
+func (r *AssetRepository) Save(ctx context.Context, asset *asset2.Asset) error {
 	if !r.f.CanWrite(*asset.GroupID()) {
 		return errors.New("operation denied")
 	}
