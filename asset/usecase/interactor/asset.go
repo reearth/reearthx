@@ -1,9 +1,15 @@
 package interactor
 
 import (
+	"errors"
 	"fmt"
+	"github.com/reearth/reearthx/asset/usecase"
+	"io"
+	"path"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
-	repo "github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/event"
 	"github.com/reearth/reearthx/asset/domain/file"
@@ -11,14 +17,11 @@ import (
 	"github.com/reearth/reearthx/asset/domain/task"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
+	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"github.com/samber/lo"
 	"golang.org/x/net/context"
-	"io"
-	"path"
-	"strings"
-	"time"
 )
 
 type Asset struct {
@@ -34,7 +37,7 @@ func New(r *repo.Container, g *gateway.Container) interfaces.Asset {
 	}
 }
 
-func (i *Asset) FindByID(ctx context.Context, aid id.AssetID, _ *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) FindByID(ctx context.Context, aid id.ID, _ *usecasex.Operator) (*asset.Asset, error) {
 	a, err := i.repos.Asset.FindByID(ctx, aid)
 	if err != nil {
 		return nil, err

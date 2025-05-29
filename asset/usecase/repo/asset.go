@@ -10,7 +10,7 @@ import (
 	"github.com/reearth/reearthx/usecasex"
 )
 
-type AssetRepository interface {
+type Asset interface {
 	SaveCMS(ctx context.Context, asset *asset.Asset) error
 	FindByID(ctx context.Context, id id.ID) (*asset.Asset, error)
 	FindByUUID(ctx context.Context, uuid string) (*asset.Asset, error)
@@ -23,7 +23,7 @@ type AssetRepository interface {
 	DeleteMany(ctx context.Context, ids []id.ID) error
 	BatchDelete(ctx context.Context, list id.List) error
 	UpdateExtractionStatus(ctx context.Context, id id.ID, status asset.ExtractionStatus) error
-	Filtered(any) AssetRepository                                 // cms
+	Filtered(any) Asset                                           // cms
 	UpdateProject(ctx context.Context, from, to id.GroupID) error // cms
 
 	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error) //viz

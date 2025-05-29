@@ -87,24 +87,24 @@ func IntegrationIDFromRef(id *string) *IntegrationID {
 }
 
 // Model type and ID
-type ModelIDType struct{}
+type Model struct{}
 
-func (ModelIDType) Type() string {
+func (Model) Type() string {
 	return "model"
 }
 
-type ModelID = idx.ID[ModelIDType]
+type ModelID = idx.ID[Model]
 
 func NewModelID() ModelID {
-	return idx.New[ModelIDType]()
+	return idx.New[Model]()
 }
 
 func ModelIDFrom(id string) (ModelID, error) {
-	return idx.From[ModelIDType](id)
+	return idx.From[Model](id)
 }
 
 func MustModelID(id string) ModelID {
-	return idx.Must[ModelIDType](id)
+	return idx.Must[Model](id)
 }
 
 // Operator type
@@ -228,6 +228,30 @@ func MustWorkspaceID(id string) WorkspaceID {
 
 func WorkspaceIDFromRef(id *string) *WorkspaceID {
 	return idx.FromRef[WorkspaceIDType](id)
+}
+
+type Schema struct{}
+
+func (Schema) Type() string {
+	return "schema"
+}
+
+type SchemaID = idx.ID[Schema]
+
+func NewSchemaID() SchemaID {
+	return idx.New[Schema]()
+}
+
+func SchemaIDFrom(id string) (SchemaID, error) {
+	return idx.From[Schema](id)
+}
+
+func MustSchemaID(id string) SchemaID {
+	return idx.Must[Schema](id)
+}
+
+func SchemaIDFromRef(id *string) *SchemaID {
+	return idx.FromRef[Schema](id)
 }
 
 // Legacy workspace

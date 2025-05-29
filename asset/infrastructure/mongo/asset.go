@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/reearth/reearthx/asset/usecase/gateway"
+	"log"
 	"log/slog"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/reearth/reearthx/asset/usecase/gateway"
 
 	"github.com/reearth/reearthx/asset/domain/id"
 
