@@ -103,6 +103,9 @@ func ModelIDFrom(id string) (ModelID, error) {
 	return idx.From[Model](id)
 }
 
+func ModelIDFromRef(id *string) *ModelID {
+	return idx.FromRef[Model](id)
+}
 func MustModelID(id string) ModelID {
 	return idx.Must[Model](id)
 }
