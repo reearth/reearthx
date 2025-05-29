@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"net/url"
 	"testing"
 	"time"
@@ -34,8 +35,8 @@ func TestAssetRepository_Save(t *testing.T) {
 	db := mongotest.Connect(t)(t)
 	repo := NewAssetRepository(db)
 
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "text/plain")
@@ -60,8 +61,8 @@ func TestAssetRepository_SaveCMS(t *testing.T) {
 	db := mongotest.Connect(t)(t)
 	repo := NewAssetRepository(db)
 
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "text/plain")
@@ -83,12 +84,12 @@ func TestAssetRepository_FindByID(t *testing.T) {
 	db := mongotest.Connect(t)(t)
 	repo := NewAssetRepository(db)
 
-	notFoundID := asset.NewAssetID()
+	notFoundID := id.NewAssetID()
 	_, err := repo.FindByID(ctx, notFoundID)
 	assert.Error(t, err)
 
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "text/plain")
@@ -117,8 +118,8 @@ func TestAssetRepository_FindByUUID(t *testing.T) {
 	assert.Error(t, err)
 
 	// Create and save test asset
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 	uuid := "test-find-uuid"
 
@@ -142,8 +143,8 @@ func TestAssetRepository_FindByURL(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create and save test asset
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 	testURL := "http://example.com/test-url.txt"
 
@@ -172,14 +173,14 @@ func TestAssetRepository_FindByIDs(t *testing.T) {
 	assert.Nil(t, assets)
 
 	// Create test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "text/plain")
 	asset1.SetFileName("test1.txt")
 
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &groupID, now, 2048, "text/plain")
 	asset2.SetFileName("test2.txt")
 
@@ -196,7 +197,7 @@ func TestAssetRepository_FindByIDs(t *testing.T) {
 	assert.Len(t, found, 2)
 
 	// Verify order is maintained (same as input order)
-	foundIDs := make([]asset.ID, len(found))
+	foundIDs := make([]id.ID, len(found))
 	for i, a := range found {
 		if a != nil {
 			foundIDs[i] = a.ID()
@@ -219,10 +220,10 @@ func TestAssetRepository_FindByIDList(t *testing.T) {
 	assert.Nil(t, assets)
 
 	// Create and save test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "text/plain")
 	asset1.SetFileName("test1.txt")
 
@@ -244,16 +245,16 @@ func TestAssetRepository_Search(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
 	// Asset 1 - PDF
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "application/pdf")
 	asset1.SetFileName("document.pdf")
 
 	// Asset 2 - Image
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &groupID, now, 2048, "image/jpeg")
 	asset2.SetFileName("image.jpg")
 
@@ -300,13 +301,13 @@ func TestAssetRepository_FindByGroup(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
 	// Create multiple assets with different sizes and names
 	var assets []*asset.Asset
 	for i := 0; i < 3; i++ {
-		assetID := asset.NewAssetID()
+		assetID := id.NewAssetID()
 		a := asset.NewAsset(assetID, &groupID, now.Add(time.Duration(i)*time.Hour), int64(1024*(i+1)), "text/plain")
 		a.SetFileName(map[int]string{0: "alpha.txt", 1: "beta.txt", 2: "gamma.txt"}[i])
 		assets = append(assets, a)
@@ -354,8 +355,8 @@ func TestAssetRepository_FindByProject(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create test asset
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "text/plain")
@@ -389,8 +390,8 @@ func TestAssetRepository_FindByWorkspaceProject(t *testing.T) {
 
 	// Create test asset
 	workspaceID := accountdomain.NewWorkspaceID()
-	groupID := asset.GroupID(workspaceID)
-	assetID := asset.NewAssetID()
+	groupID := id.GroupID(workspaceID)
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "text/plain")
@@ -424,8 +425,8 @@ func TestAssetRepository_Delete(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create and save test asset
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "text/plain")
@@ -453,14 +454,14 @@ func TestAssetRepository_DeleteMany(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "text/plain")
 	asset1.SetFileName("delete1.txt")
 
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &groupID, now, 2048, "text/plain")
 	asset2.SetFileName("delete2.txt")
 
@@ -471,7 +472,7 @@ func TestAssetRepository_DeleteMany(t *testing.T) {
 	require.NoError(t, err)
 
 	// Delete multiple assets
-	ids := []asset.ID{asset1ID, asset2ID}
+	ids := []id.ID{asset1ID, asset2ID}
 	err = repo.DeleteMany(ctx, ids)
 	assert.NoError(t, err)
 
@@ -492,14 +493,14 @@ func TestAssetRepository_BatchDelete(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "text/plain")
 	asset1.SetFileName("batch1.txt")
 
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &groupID, now, 2048, "text/plain")
 	asset2.SetFileName("batch2.txt")
 
@@ -524,8 +525,8 @@ func TestAssetRepository_UpdateExtractionStatus(t *testing.T) {
 	db := mongotest.Connect(t)(t)
 	repo := NewAssetRepository(db)
 
-	groupID := asset.NewGroupID()
-	assetID := asset.NewAssetID()
+	groupID := id.NewGroupID()
+	assetID := id.NewAssetID()
 	now := time.Now()
 
 	a := asset.NewAsset(assetID, &groupID, now, 1024, "application/zip")
@@ -549,15 +550,15 @@ func TestAssetRepository_UpdateProject(t *testing.T) {
 	db := mongotest.Connect(t)(t)
 	repo := NewAssetRepository(db)
 
-	fromGroupID := asset.NewGroupID()
-	toGroupID := asset.NewGroupID()
+	fromGroupID := id.NewGroupID()
+	toGroupID := id.NewGroupID()
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &fromGroupID, now, 1024, "text/plain")
 	asset1.SetFileName("move1.txt")
 
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &fromGroupID, now, 2048, "text/plain")
 	asset2.SetFileName("move2.txt")
 
@@ -584,14 +585,14 @@ func TestAssetRepository_TotalSizeByWorkspace(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	workspaceID := accountdomain.NewWorkspaceID()
-	groupID := asset.GroupID(workspaceID)
+	groupID := id.GroupID(workspaceID)
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "text/plain")
 	asset1.SetFileName("size1.txt")
 
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &groupID, now, 2048, "text/plain")
 	asset2.SetFileName("size2.txt")
 
@@ -625,15 +626,15 @@ func TestAssetRepository_RemoveByProjectWithFile(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create test assets
-	groupID := asset.NewGroupID()
+	groupID := id.NewGroupID()
 	now := time.Now()
 
-	asset1ID := asset.NewAssetID()
+	asset1ID := id.NewAssetID()
 	asset1 := asset.NewAsset(asset1ID, &groupID, now, 1024, "text/plain")
 	asset1.SetFileName("remove1.txt")
 	asset1.SetURL("http://example.com/remove1.txt")
 
-	asset2ID := asset.NewAssetID()
+	asset2ID := id.NewAssetID()
 	asset2 := asset.NewAsset(asset2ID, &groupID, now, 2048, "text/plain")
 	asset2.SetFileName("remove2.txt")
 	asset2.SetURL("http://example.com/remove2.txt")
@@ -664,14 +665,14 @@ func TestAssetRepository_Filtered(t *testing.T) {
 	repo := NewAssetRepository(db)
 
 	// Create test groups
-	readableGroupID := asset.NewGroupID()
-	writableGroupID := asset.NewGroupID()
-	restrictedGroupID := asset.NewGroupID()
+	readableGroupID := id.NewGroupID()
+	writableGroupID := id.NewGroupID()
+	restrictedGroupID := id.NewGroupID()
 
 	// Create filter
 	filter := asset.GroupFilter{
-		Readable: asset.GroupIDList{readableGroupID, writableGroupID},
-		Writable: asset.GroupIDList{writableGroupID},
+		Readable: id.GroupIDList{readableGroupID, writableGroupID},
+		Writable: id.GroupIDList{writableGroupID},
 	}
 
 	filteredRepo := repo.Filtered(filter)
@@ -680,17 +681,17 @@ func TestAssetRepository_Filtered(t *testing.T) {
 	now := time.Now()
 
 	// Asset in readable group
-	readableAssetID := asset.NewAssetID()
+	readableAssetID := id.NewAssetID()
 	readableAsset := asset.NewAsset(readableAssetID, &readableGroupID, now, 1024, "text/plain")
 	readableAsset.SetFileName("readable.txt")
 
 	// Asset in writable group
-	writableAssetID := asset.NewAssetID()
+	writableAssetID := id.NewAssetID()
 	writableAsset := asset.NewAsset(writableAssetID, &writableGroupID, now, 1024, "text/plain")
 	writableAsset.SetFileName("writable.txt")
 
 	// Asset in restricted group
-	restrictedAssetID := asset.NewAssetID()
+	restrictedAssetID := id.NewAssetID()
 	restrictedAsset := asset.NewAsset(restrictedAssetID, &restrictedGroupID, now, 1024, "text/plain")
 	restrictedAsset.SetFileName("restricted.txt")
 
@@ -717,7 +718,7 @@ func TestAssetRepository_Filtered(t *testing.T) {
 	assert.Nil(t, found)
 
 	// Test writing to writable group succeeds
-	newWritableAssetID := asset.NewAssetID()
+	newWritableAssetID := id.NewAssetID()
 	newWritableAsset := asset.NewAsset(newWritableAssetID, &writableGroupID, now, 512, "text/plain")
 	newWritableAsset.SetFileName("new-writable.txt")
 
@@ -725,7 +726,7 @@ func TestAssetRepository_Filtered(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Test writing to readable-only group fails
-	newReadableAssetID := asset.NewAssetID()
+	newReadableAssetID := id.NewAssetID()
 	newReadableAsset := asset.NewAsset(newReadableAssetID, &readableGroupID, now, 512, "text/plain")
 	newReadableAsset.SetFileName("new-readable.txt")
 
@@ -736,30 +737,30 @@ func TestAssetRepository_Filtered(t *testing.T) {
 
 func TestAssetRepository_GroupFilter(t *testing.T) {
 	filter := &asset.GroupFilter{
-		Readable: asset.GroupIDList{asset.NewGroupID()},
-		Writable: asset.GroupIDList{asset.NewGroupID()},
+		Readable: id.GroupIDList{id.NewGroupID()},
+		Writable: id.GroupIDList{id.NewGroupID()},
 	}
 
 	assert.True(t, filter.CanRead(filter.Readable[0]))
 
 	assert.True(t, filter.CanRead(filter.Writable[0]))
 
-	assert.False(t, filter.CanRead(asset.NewGroupID()))
+	assert.False(t, filter.CanRead(id.NewGroupID()))
 
 	assert.True(t, filter.CanWrite(filter.Writable[0]))
 	assert.False(t, filter.CanWrite(filter.Readable[0]))
-	assert.False(t, filter.CanWrite(asset.NewGroupID()))
+	assert.False(t, filter.CanWrite(id.NewGroupID()))
 
 	nilFilter := &asset.GroupFilter{}
-	anyGroupID := asset.NewGroupID()
+	anyGroupID := id.NewGroupID()
 	assert.True(t, nilFilter.CanRead(anyGroupID))
 	assert.True(t, nilFilter.CanWrite(anyGroupID))
 }
 
 func TestAssetRepository_docToAsset(t *testing.T) {
 	doc := &assetDocument{
-		ID:                      asset.NewAssetID().String(),
-		GroupID:                 asset.NewGroupID().String(),
+		ID:                      id.NewAssetID().String(),
+		GroupID:                 id.NewGroupID().String(),
 		CreatedAt:               time.Now(),
 		Size:                    1024,
 		ContentType:             "text/plain",
@@ -769,7 +770,7 @@ func TestAssetRepository_docToAsset(t *testing.T) {
 		URL:                     "http://example.com/test.txt",
 		FileName:                "test.txt",
 		ArchiveExtractionStatus: string(asset.ExtractionStatusDone),
-		IntegrationID:           idx.New[asset.IntegrationIDType]().String(),
+		IntegrationID:           idx.New[id.IntegrationIDType]().String(),
 	}
 
 	a, err := docToAsset(doc)
@@ -785,13 +786,13 @@ func TestAssetRepository_docToAsset(t *testing.T) {
 
 	invalidDoc := &assetDocument{
 		ID:      "invalid-id",
-		GroupID: asset.NewGroupID().String(),
+		GroupID: id.NewGroupID().String(),
 	}
 	_, err = docToAsset(invalidDoc)
 	assert.Error(t, err)
 
 	invalidDoc = &assetDocument{
-		ID:      asset.NewAssetID().String(),
+		ID:      id.NewAssetID().String(),
 		GroupID: "invalid-group-id",
 	}
 	_, err = docToAsset(invalidDoc)

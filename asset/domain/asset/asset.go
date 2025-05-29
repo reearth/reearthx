@@ -3,19 +3,22 @@ package asset
 //go:generate go run ./tools/gqlgen/main.go
 
 import (
-	"github.com/reearth/reearthx/usecasex"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/usecasex"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 )
 
 type Asset struct {
-	id                      ID
-	groupID                 *GroupID // projectID in cms, workspaceID in flow and viz
+	id                      id.ID
+	projectID               *id.ProjectID
+	workspaceID             *id.WorkspaceID
 	createdAt               time.Time
 	user                    *accountdomain.UserID
 	size                    int64
-	thread                  *ThreadID
+	thread                  *id.ThreadID
 	contentType             string // visualizer && flow
 	contentEncoding         string
 	previewType             *PreviewType // cms
@@ -24,7 +27,7 @@ type Asset struct {
 	fileName                string            //cms
 	archiveExtractionStatus *ExtractionStatus //cms
 	flatFiles               bool              //cms
-	integration             IntegrationID
+	integration             id.IntegrationID
 	public                  bool                //cms
 	accessInfoResolver      *AccessInfoResolver // cms
 }
@@ -38,31 +41,38 @@ type AccessInfo struct {
 	Public bool
 }
 
-func NewAsset(id ID, groupID *GroupID, createdAt time.Time, size int64, contentType string) *Asset {
+func NewAsset(id id.ID, projectID *id.ProjectID, workspaceID *id.WorkspaceID, createdAt time.Time, size int64, contentType string) *Asset {
 	return &Asset{
 		id:          id,
-		groupID:     groupID,
+		projectID:   projectID,
+		workspaceID: workspaceID,
 		createdAt:   createdAt,
 		size:        size,
 		contentType: contentType,
 	}
 }
 
-type GroupFilter struct {
-	Readable GroupIDList
-	Writable GroupIDList
+type projectFilter struct {
+	Readable id.ProjectIDList
+	Writable id.ProjectIDList
 }
 
-func (f *GroupFilter) CanRead(id GroupID) bool {
-	return f.Readable == nil || f.Readable.Has(id) || f.CanWrite(id)
+func (f *projectFilter) CanRead(id *id.ProjectID) bool {
+	if id == nil {
+		return false
+	}
+	return f.Readable == nil || f.Readable.Has(*id) || f.CanWrite(id)
 }
 
-func (f *GroupFilter) CanWrite(id GroupID) bool {
-	return f.Writable == nil || f.Writable.Has(id)
+func (f *projectFilter) CanWrite(id *id.ProjectID) bool {
+	if id == nil {
+		return false
+	}
+	return f.Writable == nil || f.Writable.Has(*id)
 }
 
-func (f *GroupFilter) Merge(g *GroupFilter) *GroupFilter {
-	var r, w GroupIDList
+func (f *projectFilter) Merge(g *projectFilter) *projectFilter {
+	var r, w id.ProjectIDList
 	if f.Readable != nil || g.Readable != nil {
 		if f.Readable == nil {
 			r = g.Readable.Clone()
@@ -77,20 +87,21 @@ func (f *GroupFilter) Merge(g *GroupFilter) *GroupFilter {
 			w = append(f.Writable, g.Writable...)
 		}
 	}
-	return &GroupFilter{
+	return &projectFilter{
 		Readable: r,
 		Writable: w,
 	}
 }
 
-func (a *Asset) ID() ID {
+func (a *Asset) ID() id.ID {
 	return a.id
 }
 
 func (a *Asset) Clone() *Asset {
 	return &Asset{
 		id:                      a.id,
-		groupID:                 a.groupID,
+		projectID:               a.projectID,
+		workspaceID:             a.workspaceID,
 		createdAt:               a.createdAt,
 		size:                    a.size,
 		contentType:             a.contentType,
@@ -107,8 +118,12 @@ func (a *Asset) Clone() *Asset {
 	}
 }
 
-func (a *Asset) GroupID() *GroupID {
-	return a.groupID
+func (a *Asset) ProjectID() *id.ProjectID {
+	return a.projectID
+}
+
+func (a *Asset) WorkspaceID() *id.WorkspaceID {
+	return a.workspaceID
 }
 
 func (a *Asset) CreatedAt() time.Time {
@@ -151,7 +166,7 @@ func (a *Asset) FlatFiles() bool {
 	return a.flatFiles
 }
 
-func (a *Asset) Integration() IntegrationID {
+func (a *Asset) Integration() id.IntegrationID {
 	return a.integration
 }
 
@@ -159,7 +174,7 @@ func (a *Asset) User() *accountdomain.UserID {
 	return a.user
 }
 
-func (a *Asset) Thread() *ThreadID {
+func (a *Asset) Thread() *id.ThreadID {
 	return a.thread
 }
 
@@ -168,12 +183,16 @@ func (a *Asset) Public() bool {
 }
 
 // Setter methods for modifying private fields
-func (a *Asset) SetID(id ID) {
+func (a *Asset) SetID(id id.ID) {
 	a.id = id
 }
 
-func (a *Asset) SetGroupID(groupID *GroupID) {
-	a.groupID = groupID
+func (a *Asset) SetProjectID(projectID *id.ProjectID) {
+	a.projectID = projectID
+}
+
+func (a *Asset) SetWorkspaceID(workspaceID *id.WorkspaceID) {
+	a.workspaceID = workspaceID
 }
 
 func (a *Asset) SetCreatedAt(createdAt time.Time) {
@@ -224,7 +243,7 @@ func (a *Asset) SetFlatFiles(flatFiles bool) {
 	a.flatFiles = flatFiles
 }
 
-func (a *Asset) AddIntegration(integrationID IntegrationID) {
+func (a *Asset) AddIntegration(integrationID id.IntegrationID) {
 	a.integration = integrationID
 }
 
@@ -232,7 +251,7 @@ func (a *Asset) SetUser(user *accountdomain.UserID) {
 	a.user = user
 }
 
-func (a *Asset) SetThread(thread *ThreadID) {
+func (a *Asset) SetThread(thread *id.ThreadID) {
 	a.thread = thread
 }
 
@@ -287,20 +306,6 @@ type Sort struct {
 type Pagination struct {
 	Offset int64
 	Limit  int64
-}
-
-type IDList []ID
-
-func (l IDList) Add(id ID) IDList {
-	return append(l, id)
-}
-
-func (l IDList) Strings() []string {
-	strings := make([]string, len(l))
-	for i, id := range l {
-		strings[i] = id.String()
-	}
-	return strings
 }
 
 type Filter struct {

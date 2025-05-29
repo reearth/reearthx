@@ -4,18 +4,19 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/idx"
 )
 
 // AssetOperator provides project and workspace access control
 type Operator struct {
-	Integration          IntegrationID
+	Integration          id.IntegrationID
 	Machine              bool
 	Lang                 string
-	ReadableProjects     GroupIDList
-	WritableProjects     GroupIDList
-	OwningProjects       GroupIDList
-	MaintainableProjects GroupIDList
+	ReadableProjects     id.GroupIDList
+	WritableProjects     id.GroupIDList
+	OwningProjects       id.GroupIDList
+	MaintainableProjects id.GroupIDList
 
 	AcOperator *accountusecase.Operator
 }
@@ -23,8 +24,8 @@ type Operator struct {
 // Ownable interface represents objects that can be owned by a user or integration
 type Ownable interface {
 	User() *accountdomain.UserID
-	Integration() *IntegrationID
-	Project() GroupID
+	Integration() *id.IntegrationID
+	Project() id.GroupID
 }
 
 // Workspaces returns workspace IDs with the given role
@@ -110,7 +111,7 @@ func (o *Operator) AddNewWorkspace(workspace accountdomain.WorkspaceID) {
 }
 
 // Projects returns project IDs with the given role
-func (o *Operator) Projects(r workspace.Role) GroupIDList {
+func (o *Operator) Projects(r workspace.Role) id.GroupIDList {
 	if o == nil {
 		return nil
 	}
@@ -130,81 +131,81 @@ func (o *Operator) Projects(r workspace.Role) GroupIDList {
 }
 
 // AllReadableProjects returns all projects the operator can read
-func (o *Operator) AllReadableProjects() GroupIDList {
+func (o *Operator) AllReadableProjects() id.GroupIDList {
 	return append(o.ReadableProjects, o.AllWritableProjects()...)
 }
 
 // AllWritableProjects returns all projects the operator can write
-func (o *Operator) AllWritableProjects() GroupIDList {
+func (o *Operator) AllWritableProjects() id.GroupIDList {
 	return append(o.WritableProjects, o.AllMaintainableProjects()...)
 }
 
 // AllMaintainableProjects returns all projects the operator can maintain
-func (o *Operator) AllMaintainableProjects() GroupIDList {
+func (o *Operator) AllMaintainableProjects() id.GroupIDList {
 	return append(o.MaintainableProjects, o.AllOwningProjects()...)
 }
 
 // AllOwningProjects returns all projects the operator owns
-func (o *Operator) AllOwningProjects() GroupIDList {
+func (o *Operator) AllOwningProjects() id.GroupIDList {
 	return o.OwningProjects
 }
 
 // IsReadableProject checks if the operator can read the given projects
-func (o *Operator) IsReadableProject(projects ...GroupID) bool {
+func (o *Operator) IsReadableProject(projects ...id.GroupID) bool {
 	return o.AllReadableProjects().Intersect(projects).Len() > 0
 }
 
 // IsWritableProject checks if the operator can write to the given projects
-func (o *Operator) IsWritableProject(projects ...GroupID) bool {
+func (o *Operator) IsWritableProject(projects ...id.GroupID) bool {
 	return o.AllWritableProjects().Intersect(projects).Len() > 0
 }
 
 // IsMaintainingProject checks if the operator can maintain the given projects
-func (o *Operator) IsMaintainingProject(projects ...GroupID) bool {
+func (o *Operator) IsMaintainingProject(projects ...id.GroupID) bool {
 	return o.AllMaintainableProjects().Intersect(projects).Len() > 0
 }
 
 // IsOwningProject checks if the operator owns the given projects
-func (o *Operator) IsOwningProject(projects ...GroupID) bool {
+func (o *Operator) IsOwningProject(projects ...id.GroupID) bool {
 	return o.AllOwningProjects().Intersect(projects).Len() > 0
 }
 
 // AddNewProject adds a new project to the operator's owned projects
-func (o *Operator) AddNewProject(p GroupID) {
+func (o *Operator) AddNewProject(p id.GroupID) {
 	o.OwningProjects = append(o.OwningProjects, p)
 }
 
 // Helper functions for operator ID
 
 // OperatorFromUser creates an operator from a user ID
-func OperatorFromUser(userID accountdomain.UserID) idx.ID[OperatorIDType] {
-	id, _ := idx.From[OperatorIDType]("user:" + userID.String())
+func OperatorFromUser(userID accountdomain.UserID) idx.ID[id.OperatorIDType] {
+	id, _ := idx.From[id.OperatorIDType]("user:" + userID.String())
 	return id
 }
 
 // OperatorFromIntegration creates an operator from an integration ID
-func OperatorFromIntegration(integrationID IntegrationID) idx.ID[OperatorIDType] {
-	id, _ := idx.From[OperatorIDType]("integration:" + integrationID.String())
+func OperatorFromIntegration(integrationID id.IntegrationID) idx.ID[id.OperatorIDType] {
+	id, _ := idx.From[id.OperatorIDType]("integration:" + integrationID.String())
 	return id
 }
 
 // OperatorFromMachine creates a machine operator
-func OperatorFromMachine() idx.ID[OperatorIDType] {
-	id, _ := idx.From[OperatorIDType]("machine")
+func OperatorFromMachine() idx.ID[id.OperatorIDType] {
+	id, _ := idx.From[id.OperatorIDType]("machine")
 	return id
 }
 
 // Operator returns an OperatorID representing this operator
-func (o *Operator) Operator() idx.ID[OperatorIDType] {
+func (o *Operator) Operator() idx.ID[id.OperatorIDType] {
 	if o == nil || o.AcOperator == nil {
-		return idx.ID[OperatorIDType]{}
+		return idx.ID[id.OperatorIDType]{}
 	}
 
-	var eOp idx.ID[OperatorIDType]
+	var eOp idx.ID[id.OperatorIDType]
 	if o.AcOperator.User != nil {
 		eOp = OperatorFromUser(*o.AcOperator.User)
 	}
-	if o.Integration != (IntegrationID{}) {
+	if o.Integration != (id.IntegrationID{}) {
 		eOp = OperatorFromIntegration(o.Integration)
 	}
 	if o.Machine {
@@ -227,11 +228,11 @@ func (o *Operator) Owns(obj Ownable) bool {
 	}
 
 	return (o.AcOperator.User != nil && obj.User() != nil && *o.AcOperator.User == *obj.User()) ||
-		(o.Integration != (IntegrationID{}) && obj.Integration() != nil && o.Integration == *obj.Integration())
+		(o.Integration != (id.IntegrationID{}) && obj.Integration() != nil && o.Integration == *obj.Integration())
 }
 
 // RoleByProject returns the role of the operator for the given project
-func (o *Operator) RoleByProject(pid GroupID) workspace.Role {
+func (o *Operator) RoleByProject(pid id.GroupID) workspace.Role {
 	if o.IsOwningProject(pid) {
 		return workspace.RoleOwner
 	}

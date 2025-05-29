@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/file"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 
@@ -28,7 +30,7 @@ func NewAssetFile(db *mongo.Database) repo.AssetFile {
 	}
 }
 
-func (r *AssetFile) FindByID(ctx context.Context, id asset.ID) (*asset.File, error) {
+func (r *AssetFile) FindByID(ctx context.Context, id id.ID) (*file.File, error) {
 	c := &mongodoc.AssetAndFileConsumer{}
 	if err := r.client.FindOne(ctx, bson.M{
 		"id": id.String(),
@@ -65,8 +67,8 @@ func (r *AssetFile) FindByID(ctx context.Context, id asset.ID) (*asset.File, err
 	return f, nil
 }
 
-func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.IDList) (map[asset.ID]*asset.File, error) {
-	filesMap := make(map[asset.ID]*asset.File)
+func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.IDList) (map[id.ID]*file.File, error) {
+	filesMap := make(map[id.ID]*file.File)
 
 	c := &mongodoc.AssetAndFileConsumer{}
 	if err := r.client.Find(ctx, bson.M{
@@ -101,7 +103,7 @@ func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.IDList) (map[asset.
 			f.SetFiles(f.FlattenChildren())
 		}
 
-		aId, err := asset.IdFrom(assetID)
+		aId, err := id.From(assetID)
 		if err != nil {
 			return nil, err
 		}
@@ -111,7 +113,7 @@ func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.IDList) (map[asset.
 	return filesMap, nil
 }
 
-func (r *AssetFile) Save(ctx context.Context, id asset.ID, file *asset.File) error {
+func (r *AssetFile) Save(ctx context.Context, id id.ID, file *file.File) error {
 	doc := mongodoc.NewFile(file)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),
@@ -130,7 +132,7 @@ func (r *AssetFile) Save(ctx context.Context, id asset.ID, file *asset.File) err
 	return nil
 }
 
-func (r *AssetFile) SaveFlat(ctx context.Context, id asset.ID, parent *asset.File, files []*asset.File) error {
+func (r *AssetFile) SaveFlat(ctx context.Context, id id.ID, parent *file.File, files []*file.File) error {
 	doc := mongodoc.NewFile(parent)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),

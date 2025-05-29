@@ -1,4 +1,4 @@
-package asset
+package id
 
 import (
 	"testing"
@@ -14,11 +14,11 @@ func TestAssetID(t *testing.T) {
 	idStr := id.String()
 	assert.NotEmpty(t, idStr)
 
-	parsedID, err := IdFrom(idStr)
+	parsedID, err := From(idStr)
 	assert.NoError(t, err)
 	assert.Equal(t, id, parsedID)
 
-	_, err = IdFrom("invalid-id")
+	_, err = From("invalid-id")
 	assert.Error(t, err)
 
 	var emptyID ID

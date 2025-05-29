@@ -1,16 +1,16 @@
-package asset
+package id
 
 import (
 	"github.com/reearth/reearthx/idx"
 )
 
-type IDType struct{}
+type Type struct{}
 
-func (IDType) Type() string {
+func (Type) Type() string {
 	return "asset"
 }
 
-type ID = idx.ID[IDType]
+type ID = idx.ID[Type]
 
 type IntegrationIDType struct{}
 
@@ -19,6 +19,27 @@ func (IntegrationIDType) Type() string {
 }
 
 type IntegrationID = idx.ID[IntegrationIDType]
+
+type IntegrationIDList = idx.List[IntegrationIDType]
+
+type ProjectIDType struct{}
+
+func (ProjectIDType) Type() string {
+	return "project"
+}
+
+type ProjectID = idx.ID[ProjectIDType]
+
+type ProjectIDList = idx.List[ProjectIDType]
+
+type workspaceIDType struct{}
+
+func (workspaceIDType) Type() string {
+	return "workspace"
+}
+
+type workspaceID = idx.ID[workspaceIDType]
+type workspaceIDList = idx.List[workspaceIDType]
 
 type OperatorIDType struct{}
 
@@ -35,15 +56,15 @@ func (ThreadIDType) Type() string {
 type ThreadID = idx.ID[ThreadIDType]
 
 func NewAssetID() ID {
-	return idx.New[IDType]()
+	return idx.New[Type]()
 }
 
-func IdFrom(id string) (ID, error) {
-	return idx.From[IDType](id)
+func From(id string) (ID, error) {
+	return idx.From[Type](id)
 }
 
 func MustAssetID(id string) ID {
-	return idx.Must[IDType](id)
+	return idx.Must[Type](id)
 }
 
 type GroupIDType struct{}
@@ -108,4 +129,18 @@ func PolicyIDFrom(id string) (PolicyID, error) {
 
 func MustPolicyID(id string) PolicyID {
 	return idx.Must[PolicyIDType](id)
+}
+
+type List []ID
+
+func (l List) Add(id ID) List {
+	return append(l, id)
+}
+
+func (l List) Strings() []string {
+	strings := make([]string, len(l))
+	for i, id := range l {
+		strings[i] = id.String()
+	}
+	return strings
 }

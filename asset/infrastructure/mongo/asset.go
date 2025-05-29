@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"log/slog"
 	"net/url"
 	"regexp"
@@ -83,7 +84,7 @@ func (r *AssetRepository) SaveCMS(ctx context.Context, asset *asset.Asset) error
 	return nil
 }
 
-func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
+func (r *AssetRepository) Search(ctx context.Context, pID id.GroupID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(pID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -119,7 +120,7 @@ func (r *AssetRepository) Search(ctx context.Context, pID asset.GroupID, filter 
 	return result, pageInfo, err
 }
 
-func (r *AssetRepository) FindByID(ctx context.Context, id asset.ID) (*asset.Asset, error) {
+func (r *AssetRepository) FindByID(ctx context.Context, id id.ID) (*asset.Asset, error) {
 	return r.findOne(ctx, bson.M{
 		"id": id.String(),
 	})
@@ -149,7 +150,7 @@ func (r *AssetRepository) FindByIDs(ctx context.Context, ids asset.IDList) ([]*a
 	return filterAssets(ids, res), nil
 }
 
-func (r *AssetRepository) UpdateProject(ctx context.Context, from, to asset.GroupID) error {
+func (r *AssetRepository) UpdateProject(ctx context.Context, from, to id.GroupID) error {
 	if !r.f.CanWrite(from) || !r.f.CanWrite(to) {
 		return errors.New("operation denied")
 	}
@@ -183,7 +184,7 @@ func (r *AssetRepository) FindByIDList(ctx context.Context, ids asset.IDList) (a
 
 func (r *AssetRepository) FindByGroup(
 	ctx context.Context,
-	groupID asset.GroupID,
+	groupID id.GroupID,
 	filter asset.Filter,
 	sort asset.Sort,
 	pagination asset.Pagination,
@@ -259,7 +260,7 @@ func (r *AssetRepository) FindByGroup(
 	return assets, count, nil
 }
 
-func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.GroupID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
+func (r *AssetRepository) FindByProject(ctx context.Context, groupID id.GroupID, filter asset.Filter) (asset.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(groupID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -290,13 +291,13 @@ func (r *AssetRepository) FindByProject(ctx context.Context, groupID asset.Group
 	return r.paginate(ctx, query, filter.Sort, pagination)
 }
 
-func (r *AssetRepository) Delete(ctx context.Context, id asset.ID) error {
+func (r *AssetRepository) Delete(ctx context.Context, id id.ID) error {
 	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{
 		"id": id.String(),
 	}))
 }
 
-func (r *AssetRepository) DeleteMany(ctx context.Context, ids []asset.ID) error {
+func (r *AssetRepository) DeleteMany(ctx context.Context, ids []id.ID) error {
 	idStrings := make([]string, len(ids))
 	for i, id := range ids {
 		idStrings[i] = id.String()
@@ -321,7 +322,7 @@ func (r *AssetRepository) BatchDelete(ctx context.Context, ids asset.IDList) err
 	return r.client.RemoveAll(ctx, filter)
 }
 
-func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id asset.ID, status asset.ExtractionStatus) error {
+func (r *AssetRepository) UpdateExtractionStatus(ctx context.Context, id id.ID, status asset.ExtractionStatus) error {
 	filter := r.writeFilter(bson.M{"id": id.String()})
 	_, err := r.client.Client().UpdateOne(
 		ctx,
@@ -356,7 +357,7 @@ func (r *AssetRepository) findOne(ctx context.Context, filter any) (*asset.Asset
 }
 
 // cms
-func filterAssets(ids []asset.ID, rows []*asset.Asset) []*asset.Asset {
+func filterAssets(ids []id.ID, rows []*asset.Asset) []*asset.Asset {
 	res := make([]*asset.Asset, 0, len(ids))
 	for _, id := range ids {
 		var r2 *asset.Asset
@@ -371,7 +372,7 @@ func filterAssets(ids []asset.ID, rows []*asset.Asset) []*asset.Asset {
 	return res
 }
 
-func applyGroupFilter(filter interface{}, groups []asset.GroupID) interface{} {
+func applyGroupFilter(filter interface{}, groups []id.GroupID) interface{} {
 	if len(groups) == 0 {
 		return filter
 	}
@@ -437,19 +438,19 @@ type assetDocument struct {
 // }
 
 func docToAsset(doc *assetDocument) (*asset.Asset, error) {
-	assetID, err := asset.IdFrom(doc.ID)
+	assetID, err := id.From(doc.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	groupID, err := asset.GroupIDFrom(doc.GroupID)
+	groupID, err := id.GroupIDFrom(doc.GroupID)
 	if err != nil {
 		return nil, err
 	}
 
-	var integration asset.IntegrationID
+	var integration id.IntegrationID
 	if doc.IntegrationID != "" {
-		integration, err = idx.From[asset.IntegrationIDType](doc.IntegrationID)
+		integration, err = idx.From[id.IntegrationIDType](doc.IntegrationID)
 		if err != nil {
 			return nil, err
 		}
@@ -507,8 +508,8 @@ func (r *AssetRepository) FindByURL(ctx context.Context, path string) (*asset.As
 }
 
 // viz
-func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *asset.GroupID, filter asset.Filter) ([]*asset.Asset, *usecasex.PageInfo, error) {
-	if !r.f.CanRead(asset.GroupID(workspaceID)) {
+func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceID accountdomain.WorkspaceID, groupID *id.GroupID, filter asset.Filter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+	if !r.f.CanRead(id.GroupID(workspaceID)) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
 
@@ -560,7 +561,7 @@ func (r *AssetRepository) FindByWorkspaceProject(ctx context.Context, workspaceI
 
 // viz and flow
 func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
-	if !r.f.CanRead(asset.GroupID(wid)) {
+	if !r.f.CanRead(id.GroupID(wid)) {
 		return 0, rerror.ErrInvalidParams
 	}
 
@@ -598,7 +599,7 @@ func (r *AssetRepository) TotalSizeByWorkspace(ctx context.Context, wid accountd
 }
 
 // viz
-func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID asset.GroupID, fileInterface any) error {
+func (r *AssetRepository) RemoveByProjectWithFile(ctx context.Context, groupID id.GroupID, fileInterface any) error {
 	if !r.f.CanWrite(groupID) {
 		return rerror.ErrInvalidParams
 	}

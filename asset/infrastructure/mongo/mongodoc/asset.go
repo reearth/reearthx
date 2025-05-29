@@ -2,6 +2,8 @@ package mongodoc
 
 import (
 	asset2 "github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/file"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain"
@@ -116,11 +118,11 @@ func NewAsset(a *asset2.Asset) (*AssetDocument, string) {
 }
 
 func (d *AssetDocument) Model() (*asset2.Asset, error) {
-	aid, err := asset2.IdFrom(d.ID)
+	aid, err := id.From(d.ID)
 	if err != nil {
 		return nil, err
 	}
-	groupID, err := asset2.GroupIDFrom(d.Project)
+	groupID, err := id.GroupIDFrom(d.Project)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +147,7 @@ func (d *AssetDocument) Model() (*asset2.Asset, error) {
 	}
 
 	if d.Integration != nil {
-		iid, err := idx.From[asset2.IntegrationIDType](*d.Integration)
+		iid, err := idx.From[id.IntegrationIDType](*d.Integration)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +163,7 @@ func (d *AssetDocument) Model() (*asset2.Asset, error) {
 	}
 
 	if d.Thread != nil {
-		tid, err := idx.From[asset2.ThreadIDType](*d.Thread)
+		tid, err := idx.From[id.ThreadIDType](*d.Thread)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +173,7 @@ func (d *AssetDocument) Model() (*asset2.Asset, error) {
 	return a, nil
 }
 
-func NewFile(f *asset2.File) *AssetFileDocument {
+func NewFile(f *file.File) *AssetFileDocument {
 	if f == nil {
 		return nil
 	}
@@ -193,12 +195,12 @@ func NewFile(f *asset2.File) *AssetFileDocument {
 	}
 }
 
-func (f *AssetFileDocument) Model() *asset2.File {
+func (f *AssetFileDocument) Model() *file.File {
 	if f == nil {
 		return nil
 	}
 
-	var c []*asset2.File
+	var c []*file.File
 	if len(f.Children) > 0 {
 		for _, v := range f.Children {
 			childFile := v.Model()
@@ -206,7 +208,7 @@ func (f *AssetFileDocument) Model() *asset2.File {
 		}
 	}
 
-	af := asset2.NewFile().
+	af := file.NewFile().
 		Name(f.Name).
 		Size(f.Size).
 		ContentType(f.ContentType).
@@ -227,10 +229,10 @@ func (d AssetFilesDocument) totalFiles() int {
 	return size
 }
 
-func (d AssetFilesDocument) Model() []*asset2.File {
-	files := make([]*asset2.File, 0, d.totalFiles())
+func (d AssetFilesDocument) Model() []*file.File {
+	files := make([]*file.File, 0, d.totalFiles())
 	for _, page := range d {
-		files = append(files, lo.Map(page.Files, func(f *AssetFileDocument, _ int) *asset2.File {
+		files = append(files, lo.Map(page.Files, func(f *AssetFileDocument, _ int) *file.File {
 			return f.Model()
 		})...)
 	}
@@ -245,7 +247,7 @@ type AssetFilesPageDocument struct {
 
 const assetFilesPageSize = 1000
 
-func NewFiles(assetID asset2.ID, fs []*asset2.File) AssetFilesDocument {
+func NewFiles(assetID id.ID, fs []*file.File) AssetFilesDocument {
 	pageCount := (len(fs) + assetFilesPageSize - 1) / assetFilesPageSize
 	pages := make([]*AssetFilesPageDocument, 0, pageCount)
 	for i := 0; i < pageCount; i++ {
@@ -257,7 +259,7 @@ func NewFiles(assetID asset2.ID, fs []*asset2.File) AssetFilesDocument {
 		pages = append(pages, &AssetFilesPageDocument{
 			AssetID: assetID.String(),
 			Page:    i,
-			Files: lo.Map(chunk, func(f *asset2.File, _ int) *AssetFileDocument {
+			Files: lo.Map(chunk, func(f *file.File, _ int) *AssetFileDocument {
 				return NewFile(f)
 			}),
 		})
