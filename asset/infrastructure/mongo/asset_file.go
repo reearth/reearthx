@@ -3,7 +3,7 @@ package mongo
 import (
 	"context"
 	"errors"
-	"github.com/reearth/reearthx/asset/domain/asset"
+
 	"github.com/reearth/reearthx/asset/domain/file"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
@@ -67,7 +67,7 @@ func (r *AssetFile) FindByID(ctx context.Context, id id.ID) (*file.File, error) 
 	return f, nil
 }
 
-func (r *AssetFile) FindByIDs(ctx context.Context, ids asset.IDList) (map[id.ID]*file.File, error) {
+func (r *AssetFile) FindByIDs(ctx context.Context, ids id.List) (map[id.ID]*file.File, error) {
 	filesMap := make(map[id.ID]*file.File)
 
 	c := &mongodoc.AssetAndFileConsumer{}

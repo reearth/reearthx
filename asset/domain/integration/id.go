@@ -7,10 +7,6 @@ import (
 
 type ID = id.IntegrationID
 
-func (i ID) IsNil() bool {
-	return i == ""
-}
-
 type WebhookID = id.WebhookID
 type UserID = accountdomain.UserID
 type ModelID = id.ModelID

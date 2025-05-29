@@ -1,10 +1,9 @@
 package task
 
 import (
+	"github.com/reearth/reearthx/asset/domain/event"
+	"github.com/reearth/reearthx/asset/domain/integration"
 	"strings"
-
-	"github.com/reearth/reearth-cms/server/pkg/event"
-	"github.com/reearth/reearth-cms/server/pkg/integration"
 )
 
 type Payload struct {
