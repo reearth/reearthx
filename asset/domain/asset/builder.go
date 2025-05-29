@@ -1,14 +1,20 @@
 package asset
 
 import (
-	"github.com/reearth/reearthx/asset/domain/id"
+	"errors"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/account/accountdomain"
 )
 
 var ErrInvalidID = id.ErrInvalidID
+var ErrNoProjectID = errors.New("no project ID")
+var ErrNoUser = errors.New("no user or integration specified")
+var ErrZeroSize = errors.New("size must be greater than zero")
+var ErrNoUUID = errors.New("no UUID")
 
 type ID = id.ID
 
@@ -26,7 +32,7 @@ func (b *Builder) Build() (*Asset, error) {
 	if b.a.id.IsNil() {
 		return nil, ErrInvalidID
 	}
-	if b.a.project.IsNil() {
+	if b.a.ProjectID().IsNil() {
 		return nil, ErrNoProjectID
 	}
 	if b.a.user.IsNil() && b.a.integration.IsNil() {

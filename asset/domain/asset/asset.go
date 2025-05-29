@@ -27,7 +27,7 @@ type Asset struct {
 	fileName                string            //cms
 	archiveExtractionStatus *ExtractionStatus //cms
 	flatFiles               bool              //cms
-	integration             id.IntegrationID
+	integration             *id.IntegrationID
 	public                  bool                //cms
 	accessInfoResolver      *AccessInfoResolver // cms
 }
