@@ -1,9 +1,8 @@
 package event
 
 import (
+	"github.com/reearth/reearthx/asset/domain/operator"
 	"time"
-
-	"github.com/reearth/reearth-cms/server/pkg/operator"
 )
 
 type Type string

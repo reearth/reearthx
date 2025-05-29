@@ -178,30 +178,30 @@ func (o *Operator) AddNewProject(p id.GroupID) {
 // Helper functions for operator ID
 
 // OperatorFromUser creates an operator from a user ID
-func OperatorFromUser(userID accountdomain.UserID) idx.ID[id.OperatorIDType] {
-	id, _ := idx.From[id.OperatorIDType]("user:" + userID.String())
+func OperatorFromUser(userID accountdomain.UserID) idx.ID[id.Operator] {
+	id, _ := idx.From[id.Operator]("user:" + userID.String())
 	return id
 }
 
 // OperatorFromIntegration creates an operator from an integration ID
-func OperatorFromIntegration(integrationID id.IntegrationID) idx.ID[id.OperatorIDType] {
-	id, _ := idx.From[id.OperatorIDType]("integration:" + integrationID.String())
+func OperatorFromIntegration(integrationID id.IntegrationID) idx.ID[id.Operator] {
+	id, _ := idx.From[id.Operator]("integration:" + integrationID.String())
 	return id
 }
 
 // OperatorFromMachine creates a machine operator
-func OperatorFromMachine() idx.ID[id.OperatorIDType] {
-	id, _ := idx.From[id.OperatorIDType]("machine")
+func OperatorFromMachine() idx.ID[id.Operator] {
+	id, _ := idx.From[id.Operator]("machine")
 	return id
 }
 
 // Operator returns an OperatorID representing this operator
-func (o *Operator) Operator() idx.ID[id.OperatorIDType] {
+func (o *Operator) Operator() idx.ID[id.Operator] {
 	if o == nil || o.AcOperator == nil {
-		return idx.ID[id.OperatorIDType]{}
+		return idx.ID[id.Operator]{}
 	}
 
-	var eOp idx.ID[id.OperatorIDType]
+	var eOp idx.ID[id.Operator]
 	if o.AcOperator.User != nil {
 		eOp = OperatorFromUser(*o.AcOperator.User)
 	}

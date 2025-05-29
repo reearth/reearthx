@@ -1,9 +1,10 @@
 package asset
 
 import (
-	"github.com/reearth/reearthx/asset/domain/id"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -57,7 +58,7 @@ func TestUploadBuilderUUID(t *testing.T) {
 }
 
 func TestUploadBuilderProject(t *testing.T) {
-	projectID := id.ProjectID()
+	projectID := id.NewProjectID()
 	tests := []struct {
 		name  string
 		input id.ProjectID

@@ -186,9 +186,6 @@ func (WorkspaceIDType) Type() string {
 	return "workspace"
 }
 
-type WorkspaceID = idx.ID[WorkspaceIDType]
-type WorkspaceIDList = idx.List[WorkspaceIDType]
-
 func NewWorkspaceID() WorkspaceID {
 	return idx.New[WorkspaceIDType]()
 }
@@ -208,8 +205,53 @@ func (workspace) Type() string {
 	return "workspace"
 }
 
-type workspaceID = idx.ID[workspace]
-type workspaceIDList = idx.List[workspace]
+type WorkspaceID = idx.ID[WorkspaceIDType]
+type WorkspaceIDList = idx.List[WorkspaceIDType]
+
+type event struct{}
+
+func (event) Type() string {
+	return "event"
+}
+
+func NewEventID() EventID {
+	return idx.New[event]()
+}
+
+func EventIDFrom(id string) (EventID, error) {
+	return idx.From[event](id)
+}
+
+func MustEventID(id string) EventID {
+	return idx.Must[event](id)
+}
+
+func EventIDFromRef(id *string) *EventID {
+	return idx.FromRef[event](id)
+}
+
+type EventID = idx.ID[event]
+type EventIDList = idx.List[event]
+
+type Operation struct{}
+
+func (Operation) Type() string {
+	return "operation"
+}
+
+type OperationID = idx.ID[Operation]
+
+func NewOperationID() OperationID {
+	return idx.New[Operation]()
+}
+
+func OperationIDFrom(id string) (OperationID, error) {
+	return idx.From[Operation](id)
+}
+
+func MustOperationID(id string) OperationID {
+	return idx.Must[Operation](id)
+}
 
 // Error
 var ErrInvalidID = idx.ErrInvalidID
