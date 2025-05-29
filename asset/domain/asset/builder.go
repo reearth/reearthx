@@ -64,12 +64,12 @@ func (b *Builder) ID(id ID) *Builder {
 }
 
 func (b *Builder) NewID() *Builder {
-	b.a.id = NewID()
+	b.a.id = id.NewID()
 	return b
 }
 
-func (b *Builder) Project(pid ProjectID) *Builder {
-	b.a.project = pid
+func (b *Builder) Project(pid id.ProjectID) *Builder {
+	b.a.projectID = &pid
 	return b
 }
 
@@ -84,7 +84,7 @@ func (b *Builder) CreatedByUser(createdBy accountdomain.UserID) *Builder {
 	return b
 }
 
-func (b *Builder) CreatedByIntegration(createdBy IntegrationID) *Builder {
+func (b *Builder) CreatedByIntegration(createdBy id.IntegrationID) *Builder {
 	b.a.integration = &createdBy
 	b.a.user = nil
 	return b

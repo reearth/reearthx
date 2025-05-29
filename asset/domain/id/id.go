@@ -14,7 +14,7 @@ func (Type) Type() string {
 type ID = idx.ID[Type]
 type List []ID
 
-func NewAssetID() ID {
+func NewID() ID {
 	return idx.New[Type]()
 }
 

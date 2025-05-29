@@ -17,7 +17,7 @@ type Asset struct {
 	workspaceID             *id.WorkspaceID
 	createdAt               time.Time
 	user                    *accountdomain.UserID
-	size                    int64
+	size                    uint64
 	thread                  *id.ThreadID
 	contentType             string // visualizer && flow
 	contentEncoding         string
@@ -41,7 +41,7 @@ type AccessInfo struct {
 	Public bool
 }
 
-func NewAsset(id id.ID, projectID *id.ProjectID, workspaceID *id.WorkspaceID, createdAt time.Time, size int64, contentType string) *Asset {
+func NewAsset(id id.ID, projectID *id.ProjectID, workspaceID *id.WorkspaceID, createdAt time.Time, size uint64, contentType string) *Asset {
 	return &Asset{
 		id:          id,
 		projectID:   projectID,
@@ -179,7 +179,7 @@ func (a *Asset) CreatedAt() time.Time {
 	return a.createdAt
 }
 
-func (a *Asset) Size() int64 {
+func (a *Asset) Size() uint64 {
 	return a.size
 }
 
@@ -215,7 +215,7 @@ func (a *Asset) FlatFiles() bool {
 	return a.flatFiles
 }
 
-func (a *Asset) Integration() id.IntegrationID {
+func (a *Asset) Integration() *id.IntegrationID {
 	return a.integration
 }
 
@@ -256,7 +256,7 @@ func (a *Asset) SetAccessInfoResolver(resolver AccessInfoResolver) {
 	a.accessInfoResolver = &resolver
 }
 
-func (a *Asset) SetSize(size int64) {
+func (a *Asset) SetSize(size uint64) {
 	a.size = size
 }
 
@@ -292,7 +292,7 @@ func (a *Asset) SetFlatFiles(flatFiles bool) {
 	a.flatFiles = flatFiles
 }
 
-func (a *Asset) AddIntegration(integrationID id.IntegrationID) {
+func (a *Asset) AddIntegration(integrationID *id.IntegrationID) {
 	a.integration = integrationID
 }
 
