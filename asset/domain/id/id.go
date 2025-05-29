@@ -22,7 +22,7 @@ func From(id string) (ID, error) {
 	return idx.From[Type](id)
 }
 
-func MustAssetID(id string) ID {
+func MustID(id string) ID {
 	return idx.Must[Type](id)
 }
 
@@ -149,6 +149,18 @@ func NewProjectID() ProjectID {
 	return idx.New[Project]()
 }
 
+func ProjectIDFrom(id string) (ProjectID, error) {
+	return idx.From[Project](id)
+}
+
+func MustProjectID(id string) ProjectID {
+	return idx.Must[Project](id)
+}
+
+func ProjectIDFromRef(id *string) *ProjectID {
+	return idx.FromRef[Project](id)
+}
+
 // Thread type and ID
 type Thread struct{}
 
@@ -196,6 +208,10 @@ func WorkspaceIDFrom(id string) (WorkspaceID, error) {
 
 func MustWorkspaceID(id string) WorkspaceID {
 	return idx.Must[WorkspaceIDType](id)
+}
+
+func WorkspaceIDFromRef(id *string) *WorkspaceID {
+	return idx.FromRef[WorkspaceIDType](id)
 }
 
 // Legacy workspace

@@ -7,7 +7,7 @@ import (
 )
 
 func TestAssetID(t *testing.T) {
-	id := NewAssetID()
+	id := NewID()
 	assert.NotEqual(t, ID{}, id)
 	assert.NotEmpty(t, id.String())
 
@@ -67,8 +67,8 @@ func TestPolicyID(t *testing.T) {
 }
 
 func TestIDEquality(t *testing.T) {
-	id1 := NewAssetID()
-	id2 := NewAssetID()
+	id1 := NewID()
+	id2 := NewID()
 	idCopy := id1
 
 	assert.NotEqual(t, id1, id2)
@@ -90,7 +90,7 @@ func TestIDEquality(t *testing.T) {
 }
 
 func TestIDStringFormat(t *testing.T) {
-	id := NewAssetID()
+	id := NewID()
 	idStr := id.String()
 
 	assert.Len(t, idStr, 26)
@@ -107,8 +107,8 @@ func TestIDStringFormat(t *testing.T) {
 }
 
 func TestMustIDFunctions(t *testing.T) {
-	validID := NewAssetID().String()
-	mustID := MustAssetID(validID)
+	validID := NewID().String()
+	mustID := MustID(validID)
 	assert.NotEqual(t, ID{}, mustID)
 
 	validGroupID := NewGroupID().String()

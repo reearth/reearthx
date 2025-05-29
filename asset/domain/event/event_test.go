@@ -1,12 +1,16 @@
 package event
 
 import (
-	"github.com/reearth/reearthx/asset/domain/operator"
 	"testing"
 	"time"
 
+	"github.com/reearth/reearthx/asset/domain/id"
+
+	"github.com/reearth/reearthx/asset/domain/operator"
+
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/project"
 	"github.com/stretchr/testify/assert"
 )
 
