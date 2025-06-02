@@ -2,8 +2,7 @@ package schema
 
 import "github.com/reearth/reearthx/asset/domain/value"
 
-type FieldURL struct {
-}
+type FieldURL struct{}
 
 func NewURL() *FieldURL {
 	return &FieldURL{}

@@ -1,9 +1,10 @@
 package integrationapi
 
 import (
+	"time"
+
 	"github.com/reearth/reearthx/asset/domain/event"
 	"github.com/reearth/reearthx/asset/domain/operator"
-	"time"
 )
 
 type Event struct {

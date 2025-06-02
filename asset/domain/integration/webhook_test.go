@@ -1,11 +1,12 @@
 package integration
 
 import (
-	"github.com/reearth/reearthx/asset/domain/event"
-	"github.com/reearth/reearthx/asset/domain/id"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/event"
+	"github.com/reearth/reearthx/asset/domain/id"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

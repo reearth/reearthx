@@ -1,19 +1,18 @@
 package exporters
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"strconv"
-	"time"
 
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 )
 
-var (
-	noPointFieldError = rerror.NewE(i18n.T("no point field in this model"))
-)
+var noPointFieldError = rerror.NewE(i18n.T("no point field in this model"))
 
 func BuildCSVHeaders(s *schema.Schema) []string {
 	keys := []string{"id", "location_lat", "location_lng"}

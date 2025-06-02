@@ -1,11 +1,12 @@
 package exporters
 
 import (
+	"testing"
+
 	"github.com/reearth/reearthx/asset/domain/group"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"testing"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/samber/lo"
@@ -83,7 +84,8 @@ func TestBuildProperties(t *testing.T) {
 						Format: lo.ToPtr("binary"),
 						Type:   "string",
 					},
-				}},
+				},
+			},
 		},
 		sfKey4.String(): {
 			Type: "boolean",

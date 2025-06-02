@@ -2,11 +2,12 @@ package interactor
 
 import (
 	"context"
-	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"net/url"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/integration"
@@ -573,7 +574,6 @@ func TestIntegration_FindByIDs(t *testing.T) {
 				assert.False(t, in.ID().IsEmpty())
 				assertIntegrationEq(t, tt.want[idx], in)
 			}
-
 		})
 	}
 }
@@ -632,7 +632,6 @@ func TestIntegration_FindByMe(t *testing.T) {
 				assert.False(t, in.ID().IsEmpty())
 				assertIntegrationEq(t, tt.want[idx], in)
 			}
-
 		})
 	}
 }

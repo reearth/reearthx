@@ -21,8 +21,8 @@ type Input struct {
 }
 
 func TestBuilder_Build(t *testing.T) {
-	var thid = NewID()
-	var wid = accountdomain.NewWorkspaceID()
+	thid := NewID()
+	wid := accountdomain.NewWorkspaceID()
 	c := []*Comment{}
 
 	tests := Tests{

@@ -38,6 +38,7 @@ func TestFieldTag_TypeProperty(t *testing.T) {
 		tag: &f,
 	}, (&f).TypeProperty())
 }
+
 func TestFieldTag_Clone(t *testing.T) {
 	assert.Nil(t, (*FieldTag)(nil).Clone())
 	assert.Equal(t, &FieldTag{}, (&FieldTag{}).Clone())

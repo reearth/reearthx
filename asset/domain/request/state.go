@@ -4,10 +4,12 @@ import "strings"
 
 type State string
 
-var StateApproved State = "approved"
-var StateClosed State = "closed"
-var StateWaiting State = "waiting"
-var StateDraft State = "draft"
+var (
+	StateApproved State = "approved"
+	StateClosed   State = "closed"
+	StateWaiting  State = "waiting"
+	StateDraft    State = "draft"
+)
 
 func (s State) String() string {
 	return string(s)

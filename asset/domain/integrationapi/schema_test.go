@@ -1,13 +1,14 @@
 package integrationapi
 
 import (
+	"testing"
+	"time"
+
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/model"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"testing"
-	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/util"
@@ -94,7 +95,6 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestNewItemFieldChanges(t *testing.T) {
-
 	fID := id.NewFieldID()
 	v0 := value.MultipleFrom(value.TypeBool, []*value.Value{
 		value.New(value.TypeBool, false),

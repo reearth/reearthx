@@ -29,7 +29,6 @@ func NewThread(client *mongox.Client) repo.Thread {
 
 func (r *ThreadRepo) Init() error {
 	return createIndexes(context.Background(), r.client, threadIndexes, threadUniqueIndexes)
-
 }
 
 func (r *ThreadRepo) Save(ctx context.Context, thread *thread.Thread) error {

@@ -1,13 +1,14 @@
 package integrationapi
 
 import (
+	"testing"
+	"time"
+
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/event"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/operator"
 	"github.com/reearth/reearthx/asset/domain/project"
-	"testing"
-	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
@@ -15,7 +16,6 @@ import (
 )
 
 func Test_NewOperator(t *testing.T) {
-
 	uid := accountdomain.NewUserID()
 	integrationID := id.NewIntegrationID()
 	opUser := operator.OperatorFromUser(uid)
@@ -63,7 +63,6 @@ func Test_NewOperator(t *testing.T) {
 			result := NewOperator(test.input)
 			assert.Equal(t, result, test.want)
 		})
-
 	}
 }
 

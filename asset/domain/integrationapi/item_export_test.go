@@ -2,13 +2,14 @@ package integrationapi
 
 import (
 	"encoding/json"
+	"testing"
+
 	"github.com/reearth/reearthx/asset/domain/exporters"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
 	"github.com/reearth/reearthx/asset/domain/version"
-	"testing"
 
 	"github.com/iancoleman/orderedmap"
 	"github.com/reearth/reearthx/account/accountdomain"

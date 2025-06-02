@@ -9,9 +9,7 @@ import (
 	"github.com/reearth/reearthx/util"
 )
 
-var (
-	ErrInvalidMinMax = rerror.NewE(i18n.T("max must be larger then min"))
-)
+var ErrInvalidMinMax = rerror.NewE(i18n.T("max must be larger then min"))
 
 type FieldInteger struct {
 	min *int64

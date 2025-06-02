@@ -20,23 +20,27 @@ func TestQuery_Apply(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		bson.M{"$and": []any{
-			bson.M{
-				"a":     "b",
-				metaKey: bson.M{"$exists": false},
+		bson.M{
+			"$and": []any{
+				bson.M{
+					"a":     "b",
+					metaKey: bson.M{"$exists": false},
+				},
+				bson.M{versionKey: v},
 			},
-			bson.M{versionKey: v}},
 		},
 		apply(version.Eq(v.OrRef()), bson.M{"a": "b"}),
 	)
 	assert.Equal(
 		t,
-		bson.M{"$and": []any{
-			bson.M{
-				"a":     "b",
-				metaKey: bson.M{"$exists": false},
+		bson.M{
+			"$and": []any{
+				bson.M{
+					"a":     "b",
+					metaKey: bson.M{"$exists": false},
+				},
+				bson.M{refsKey: bson.M{"$in": []string{"latest"}}},
 			},
-			bson.M{refsKey: bson.M{"$in": []string{"latest"}}}},
 		},
 		apply(version.Eq(version.Latest.OrVersion()), bson.M{"a": "b"}),
 	)

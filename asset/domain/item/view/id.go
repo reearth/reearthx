@@ -5,15 +5,19 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 )
 
-type ID = id.ViewID
-type IDList = id.ViewIDList
-type UserID = accountdomain.UserID
-type ProjectID = id.ProjectID
-type ModelID = id.ModelID
-type SchemaID = id.SchemaID
+type (
+	ID        = id.ViewID
+	IDList    = id.ViewIDList
+	UserID    = accountdomain.UserID
+	ProjectID = id.ProjectID
+	ModelID   = id.ModelID
+	SchemaID  = id.SchemaID
+)
 
-var NewID = id.NewViewID
-var NewProjectID = id.NewProjectID
-var NewModelID = id.NewModelID
-var NewSchemaID = id.NewSchemaID
-var NewUserID = accountdomain.NewUserID
+var (
+	NewID        = id.NewViewID
+	NewProjectID = id.NewProjectID
+	NewModelID   = id.NewModelID
+	NewSchemaID  = id.NewSchemaID
+	NewUserID    = accountdomain.NewUserID
+)

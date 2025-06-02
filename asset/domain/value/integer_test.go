@@ -147,7 +147,6 @@ func Test_propertyInteger_Validate(t *testing.T) {
 }
 
 func Test_propertyInteger_Equal(t *testing.T) {
-
 	var f1, f2 int64 = 10, 0
 	assert.True(t, (&propertyInteger{}).Equal(f1, f1))
 	assert.True(t, (&propertyInteger{}).Equal(nil, nil))

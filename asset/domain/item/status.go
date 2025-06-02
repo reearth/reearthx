@@ -23,6 +23,7 @@ func (s Status) Wrap(s2 Status) Status {
 	}
 	return s2
 }
+
 func (s Status) hasPublic() bool {
 	if s == StatusPublic || s == StatusPublicDraft {
 		return true

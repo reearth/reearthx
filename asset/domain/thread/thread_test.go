@@ -87,7 +87,6 @@ func TestThread_UpdateComment(t *testing.T) {
 	err = thread.UpdateComment(c.id, "updated")
 	assert.NoError(t, err)
 	assert.Equal(t, "updated", c.content)
-
 }
 
 func TestThread_DeleteComment(t *testing.T) {
@@ -120,7 +119,6 @@ func TestThread_Comment(t *testing.T) {
 
 	cc := thread.Comment(c.id)
 	assert.Equal(t, c, cc)
-
 }
 
 func TestThread_Clone(t *testing.T) {

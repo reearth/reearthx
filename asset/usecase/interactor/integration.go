@@ -262,7 +262,6 @@ func (i Integration) CreateWebhook(ctx context.Context, iId id.IntegrationID, pa
 				Secret(param.Secret).
 				Trigger(integration.WebhookTrigger(*param.Trigger)).
 				Build()
-
 			if err != nil {
 				return nil, err
 			}

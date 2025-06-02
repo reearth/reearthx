@@ -32,9 +32,7 @@ type Container struct {
 	Transaction       usecasex.Transaction
 }
 
-var (
-	ErrOperationDenied = rerror.NewE(i18n.T("operation denied"))
-)
+var ErrOperationDenied = rerror.NewE(i18n.T("operation denied"))
 
 func (c *Container) Filtered(workspace WorkspaceFilter, project ProjectFilter) *Container {
 	if c == nil {

@@ -176,9 +176,11 @@ type ownable struct {
 func (o ownable) User() *accountdomain.UserID {
 	return o.U
 }
+
 func (o ownable) Integration() *id.IntegrationID {
 	return o.I
 }
+
 func (o ownable) Project() id.ProjectID {
 	return o.P
 }

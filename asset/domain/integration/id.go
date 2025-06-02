@@ -5,14 +5,18 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 )
 
-type ID = id.IntegrationID
-type WebhookID = id.WebhookID
-type UserID = accountdomain.UserID
-type ModelID = id.ModelID
+type (
+	ID        = id.IntegrationID
+	WebhookID = id.WebhookID
+	UserID    = accountdomain.UserID
+	ModelID   = id.ModelID
+)
 
-var NewID = id.NewIntegrationID
-var NewWebhookID = id.NewWebhookID
-var MustID = id.MustIntegrationID
-var IDFrom = id.IntegrationIDFrom
-var IDFromRef = id.IntegrationIDFromRef
-var ErrInvalidID = id.ErrInvalidID
+var (
+	NewID        = id.NewIntegrationID
+	NewWebhookID = id.NewWebhookID
+	MustID       = id.MustIntegrationID
+	IDFrom       = id.IntegrationIDFrom
+	IDFromRef    = id.IntegrationIDFromRef
+	ErrInvalidID = id.ErrInvalidID
+)

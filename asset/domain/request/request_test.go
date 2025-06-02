@@ -57,7 +57,6 @@ func TestRequest_SetTitle(t *testing.T) {
 
 	err = req.SetTitle("")
 	assert.Equal(t, ErrEmptyTitle, err)
-
 }
 
 func TestRequest_SetState1(t *testing.T) {

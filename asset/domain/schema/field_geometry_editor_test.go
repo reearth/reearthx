@@ -32,6 +32,7 @@ func TestFieldGeometryEditor_TypeProperty(t *testing.T) {
 		geometryEditor: &f,
 	}, (&f).TypeProperty())
 }
+
 func TestFieldGeometryEditor_Clone(t *testing.T) {
 	assert.Nil(t, (*FieldGeometryEditor)(nil).Clone())
 	assert.Equal(t, &FieldGeometryEditor{}, (&FieldGeometryEditor{}).Clone())

@@ -12,12 +12,14 @@ import (
 
 var ErrDuplicatedTag = errors.New("duplicated tag")
 
-type TagList []*Tag
-type Tag struct {
-	id    TagID
-	name  string
-	color TagColor
-}
+type (
+	TagList []*Tag
+	Tag     struct {
+		id    TagID
+		name  string
+		color TagColor
+	}
+)
 
 type FieldTag struct {
 	tags TagList
@@ -73,6 +75,7 @@ func (f *FieldTag) Validate(v *value.Value) (err error) {
 	})
 	return
 }
+
 func (f *FieldTag) ValidateMultiple(v *value.Multiple) (err error) {
 	vs, ok := v.ValuesString()
 	if !ok {

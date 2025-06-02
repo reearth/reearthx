@@ -615,7 +615,6 @@ func TestCollection_DeleteRef(t *testing.T) {
 	got = c.FindOne(ctx, bson.M{"id": "y", versionKey: v3})
 	assert.NoError(t, got.Decode(&meta))
 	assert.Equal(t, Meta{ObjectID: meta.ObjectID, Version: v3, Refs: []version.Ref{"d"}}, meta)
-
 }
 
 func TestCollection_UpdateRef(t *testing.T) {

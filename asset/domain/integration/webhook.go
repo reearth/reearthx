@@ -1,9 +1,10 @@
 package integration
 
 import (
-	"github.com/reearth/reearthx/asset/domain/event"
 	"net/url"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/event"
 )
 
 type Webhook struct {
@@ -64,6 +65,7 @@ func (w *Webhook) UpdatedAt() time.Time {
 func (w *Webhook) CreatedAt() time.Time {
 	return w.id.Timestamp()
 }
+
 func (w *Webhook) SetUpdatedAt(updatedAt time.Time) {
 	w.updatedAt = updatedAt
 }
@@ -71,6 +73,7 @@ func (w *Webhook) SetUpdatedAt(updatedAt time.Time) {
 func (w *Webhook) Secret() string {
 	return w.secret
 }
+
 func (w *Webhook) SetSecret(secret string) {
 	w.secret = secret
 }

@@ -25,6 +25,7 @@ func (l List) Projects() id.ProjectIDList {
 		return m.Project(), true
 	}))
 }
+
 func (l List) Clone() List {
 	return util.Map(l, func(m *Model) *Model { return m.Clone() })
 }

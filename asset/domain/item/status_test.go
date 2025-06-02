@@ -7,7 +7,6 @@ import (
 )
 
 func TestStatus_Wrap(t *testing.T) {
-
 	tests := []struct {
 		name  string
 		s, s2 Status

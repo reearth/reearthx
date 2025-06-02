@@ -13,9 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var (
-	schemaIndexes = []string{"id"}
-)
+var schemaIndexes = []string{"id"}
 
 type Schema struct {
 	client *mongox.Collection

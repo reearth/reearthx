@@ -2,10 +2,11 @@ package exporters
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"time"
 
 	"github.com/iancoleman/orderedmap"
 	"github.com/reearth/reearthx/i18n"
@@ -13,9 +14,7 @@ import (
 	"github.com/samber/lo"
 )
 
-var (
-	noGeometryFieldError = rerror.NewE(i18n.T("no geometry field in this model"))
-)
+var noGeometryFieldError = rerror.NewE(i18n.T("no geometry field in this model"))
 
 type GeoJSON = FeatureCollection
 
@@ -69,12 +68,14 @@ type Geometry_Coordinates struct {
 	union json.RawMessage
 }
 
-type LineString = []Point
-type MultiLineString = []LineString
-type MultiPoint = []Point
-type MultiPolygon = []Polygon
-type Point = []float64
-type Polygon = [][]Point
+type (
+	LineString      = []Point
+	MultiLineString = []LineString
+	MultiPoint      = []Point
+	MultiPolygon    = []Polygon
+	Point           = []float64
+	Polygon         = [][]Point
+)
 
 func (t Geometry_Coordinates) AsPoint() (Point, error) {
 	var body Point

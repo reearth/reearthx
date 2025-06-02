@@ -5,8 +5,10 @@ import (
 	"github.com/samber/lo"
 )
 
-const Latest = Ref("latest")
-const Public = Ref("public")
+const (
+	Latest = Ref("latest")
+	Public = Ref("public")
+)
 
 type Ref string
 

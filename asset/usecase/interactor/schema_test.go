@@ -2,9 +2,10 @@ package interactor
 
 import (
 	"context"
-	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountusecase"

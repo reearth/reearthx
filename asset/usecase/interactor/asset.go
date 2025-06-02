@@ -283,7 +283,6 @@ func (i *Asset) Create(ctx context.Context, inp interfaces.CreateAssetParam, op 
 			}
 			return a, f, nil
 		})
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -747,7 +746,6 @@ func (i *Asset) Delete(ctx context.Context, aId id.AssetID, operator *usecase.Op
 
 // BatchDelete deletes assets in batch based on multiple asset IDs
 func (i *Asset) BatchDelete(ctx context.Context, assetIDs id.AssetIDList, operator *usecase.Operator) (result []id.AssetID, err error) {
-
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return assetIDs, interfaces.ErrInvalidOperator
 	}
@@ -918,7 +916,6 @@ func (i *Asset) FindByWorkspaceProject(ctx context.Context, tid accountdomain.Wo
 }
 
 func (i *Asset) FindByWorkspace(ctx context.Context, tid accountdomain.WorkspaceID, keyword *string, sort *asset.SortType, p *interfaces.PaginationParam) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
-
 	var pagination *usecasex.Pagination
 	if p != nil && p.Page != nil {
 		pagination = usecasex.OffsetPagination{
@@ -941,6 +938,5 @@ func (i *Asset) FindByWorkspace(ctx context.Context, tid accountdomain.Workspace
 }
 
 func (i *Asset) Fetch(ctx context.Context, assets []id.AssetID) ([]*asset.Asset, error) {
-
 	return i.repos.Asset.FindByIDs(ctx, assets)
 }

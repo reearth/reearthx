@@ -28,7 +28,8 @@ type ContainerConfig struct {
 
 func New(r *repo.Container, g *gateway.Container,
 	ar *accountrepo.Container, ag *accountgateway.Container,
-	config ContainerConfig) interfaces.Container {
+	config ContainerConfig,
+) interfaces.Container {
 	return interfaces.Container{
 		Asset:             NewAsset(r, g),
 		Workspace:         accountinteractor.NewWorkspace(ar, nil),

@@ -10,9 +10,7 @@ import (
 	"github.com/reearth/reearthx/rerror"
 )
 
-var (
-	ErrCommentNotFound error = rerror.NewE(i18n.T("comment not found"))
-)
+var ErrCommentNotFound error = rerror.NewE(i18n.T("comment not found"))
 
 type Thread interface {
 	Save(context.Context, *thread.Thread) error

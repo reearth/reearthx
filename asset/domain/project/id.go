@@ -6,22 +6,32 @@ import (
 	"github.com/samber/lo"
 )
 
-type ID = id.ProjectID
-type WorkspaceID = id.WorkspaceID
+type (
+	ID          = id.ProjectID
+	WorkspaceID = id.WorkspaceID
+)
 
 type IDList = id.ProjectIDList
 
-var NewID = id.NewProjectID
-var NewWorkspaceID = accountdomain.NewWorkspaceID
+var (
+	NewID          = id.NewProjectID
+	NewWorkspaceID = accountdomain.NewWorkspaceID
+)
 
-var MustID = id.MustProjectID
-var MustWorkspaceID = id.MustWorkspaceID
+var (
+	MustID          = id.MustProjectID
+	MustWorkspaceID = id.MustWorkspaceID
+)
 
-var IDFrom = id.ProjectIDFrom
-var WorkspaceIDFrom = id.WorkspaceIDFrom
+var (
+	IDFrom          = id.ProjectIDFrom
+	WorkspaceIDFrom = id.WorkspaceIDFrom
+)
 
-var IDFromRef = id.ProjectIDFromRef
-var WorkspaceIDFromRef = id.WorkspaceIDFromRef
+var (
+	IDFromRef          = id.ProjectIDFromRef
+	WorkspaceIDFromRef = id.WorkspaceIDFromRef
+)
 
 var ErrInvalidID = id.ErrInvalidID
 

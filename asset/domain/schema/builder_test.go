@@ -141,7 +141,6 @@ func TestBuilder_MustBuild(t *testing.T) {
 			} else {
 				assert.Equal(t, tt.want, b.MustBuild())
 			}
-
 		})
 	}
 }

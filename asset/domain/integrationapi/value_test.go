@@ -1,8 +1,9 @@
 package integrationapi
 
 import (
-	"github.com/reearth/reearthx/asset/domain/value"
 	"testing"
+
+	"github.com/reearth/reearthx/asset/domain/value"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

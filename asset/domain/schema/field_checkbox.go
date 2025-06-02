@@ -2,8 +2,7 @@ package schema
 
 import "github.com/reearth/reearthx/asset/domain/value"
 
-type FieldCheckbox struct {
-}
+type FieldCheckbox struct{}
 
 func NewCheckbox() *FieldCheckbox {
 	return &FieldCheckbox{}

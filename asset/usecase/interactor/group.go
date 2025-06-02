@@ -267,7 +267,6 @@ func (i Group) getModelsByGroup(ctx context.Context, g *group.Group) (res model.
 				})
 			}
 		}
-
 	}
 	return
 }

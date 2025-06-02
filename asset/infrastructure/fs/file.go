@@ -28,11 +28,11 @@ import (
 
 type fileRepo struct {
 	fs              afero.Fs
-	publicBase      *url.URL                        //cms
-	privateBase     *url.URL                        //cms
-	public          bool                            //cms
-	urlBase         *url.URL                        //viz
-	baseFileStorage *infrastructure.BaseFileStorage //viz
+	publicBase      *url.URL                        // cms
+	privateBase     *url.URL                        // cms
+	public          bool                            // cms
+	urlBase         *url.URL                        // viz
+	baseFileStorage *infrastructure.BaseFileStorage // viz
 }
 
 func NewFile(fs afero.Fs, publicBase string) (gateway.File, error) {
@@ -244,7 +244,7 @@ func (f *fileRepo) Upload(_ context.Context, file *file.File, filename string) (
 	}
 
 	if fnd := filepath.Dir(filename); fnd != "" {
-		if err := f.fs.MkdirAll(fnd, 0755); err != nil {
+		if err := f.fs.MkdirAll(fnd, 0o755); err != nil {
 			return 0, rerror.ErrInternalBy(err)
 		}
 	}

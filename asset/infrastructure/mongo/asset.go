@@ -288,7 +288,6 @@ func (r *Asset) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.Work
 }
 
 func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f gateway.File) error {
-
 	projectAssets, err := r.find(ctx, bson.M{
 		"coresupport": true,
 		"project":     pid.String(),
@@ -340,6 +339,7 @@ func (r *Asset) FindByWorkspace(ctx context.Context, id accountdomain.WorkspaceI
 
 	return r.paginate_flow(ctx, filter, uFilter.SortType, uFilter.Pagination)
 }
+
 func (r *Asset) readFilter(filter interface{}) interface{} {
 	return applyProjectFilter(filter, r.projectFilter.Readable)
 }
@@ -349,7 +349,6 @@ func (r *Asset) writeFilter(filter interface{}) interface{} {
 }
 
 func (r *Asset) paginate_flow(ctx context.Context, filter any, sort *asset.SortType, pagination *usecasex.Pagination) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
-
 	c := mongodoc.NewAssetConsumer()
 
 	if pagination != nil && pagination.Offset != nil {

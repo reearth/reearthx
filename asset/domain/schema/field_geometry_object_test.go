@@ -32,6 +32,7 @@ func TestFieldGeometryObject_TypeProperty(t *testing.T) {
 		geometryObject: &f,
 	}, (&f).TypeProperty())
 }
+
 func TestFieldGeometryObject_Clone(t *testing.T) {
 	assert.Nil(t, (*FieldGeometryObject)(nil).Clone())
 	assert.Equal(t, &FieldGeometryObject{}, (&FieldGeometryObject{}).Clone())

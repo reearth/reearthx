@@ -34,6 +34,7 @@ func NewRequest(client *mongox.Client) repo.Request {
 func (r *Request) Init() error {
 	return createIndexes(context.Background(), r.client, requestIndexes, requestUniqueIndexes)
 }
+
 func (r *Request) Filtered(f repo.ProjectFilter) repo.Request {
 	return &Request{
 		client: r.client,
@@ -66,7 +67,6 @@ func (r *Request) FindByIDs(ctx context.Context, ids id.RequestIDList) (request.
 }
 
 func (r *Request) FindByItems(ctx context.Context, list id.ItemIDList, uFilter *repo.RequestFilter) (request.List, error) {
-
 	filter := bson.M{
 		"items.item": bson.M{
 			"$in": list.Strings(),
@@ -169,7 +169,8 @@ func (r *Request) SaveAll(ctx context.Context, pid id.ProjectID, requests reques
 
 func (r *Request) Remove(ctx context.Context, id id.RequestID) error {
 	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{
-		"id": id.String()}))
+		"id": id.String(),
+	}))
 }
 
 func (r *Request) paginate(ctx context.Context, filter any, sort *usecasex.Sort, pagination *usecasex.Pagination) (request.List, *usecasex.PageInfo, error) {

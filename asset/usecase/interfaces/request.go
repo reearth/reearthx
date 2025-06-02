@@ -13,9 +13,7 @@ import (
 	"github.com/reearth/reearthx/usecasex"
 )
 
-var (
-	ErrAlreadyPublished = rerror.NewE(i18n.T("already published"))
-)
+var ErrAlreadyPublished = rerror.NewE(i18n.T("already published"))
 
 type CreateRequestParam struct {
 	ProjectID   id.ProjectID

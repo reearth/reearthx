@@ -11,6 +11,4 @@ const (
 	defaultBase         = "http://localhost:8080"
 )
 
-var (
-	ErrInvalidBaseURL = rerror.NewE(i18n.T("invalid base URL"))
-)
+var ErrInvalidBaseURL = rerror.NewE(i18n.T("invalid base URL"))

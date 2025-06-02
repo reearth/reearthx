@@ -1,11 +1,12 @@
 package integration
 
 import (
-	"github.com/reearth/reearthx/asset/domain/id"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/samber/lo"

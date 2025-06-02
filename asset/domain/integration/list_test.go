@@ -1,10 +1,11 @@
 package integration
 
 import (
-	"github.com/reearth/reearthx/asset/domain/event"
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/event"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/samber/lo"
@@ -101,7 +102,8 @@ func TestList_ActiveWebhooks(t *testing.T) {
 			event.ItemUnpublish:   false,
 			event.AssetCreate:     false,
 			event.AssetDecompress: false,
-			event.AssetDelete:     false},
+			event.AssetDelete:     false,
+		},
 		updatedAt: now,
 	}
 	w4 := &Webhook{

@@ -8,18 +8,18 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	var tb = New()
+	tb := New()
 	assert.NotNil(t, tb)
 }
 
 func TestBuilder_ID(t *testing.T) {
-	var tb = New()
+	tb := New()
 	res := tb.ID(NewID()).MustBuild()
 	assert.NotNil(t, res.ID())
 }
 
 func TestBuilder_Tiles(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	rid := NewResourceID()
 	pp := NewURLResourceProps("foo", "bar", "baz")
 	tt := NewTileResource(rid, TileTypeDefault, pp)
@@ -30,7 +30,7 @@ func TestBuilder_Tiles(t *testing.T) {
 }
 
 func TestBuilder_Terrains(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	rid := NewResourceID()
 	pp := NewCesiumResourceProps("foo", "bar", "baz", "test", "test")
 	tt := NewTerrainResource(rid, TerrainTypeCesiumIon, pp)
@@ -41,7 +41,7 @@ func TestBuilder_Terrains(t *testing.T) {
 }
 
 func TestBuilder_NewID(t *testing.T) {
-	var tb = New()
+	tb := New()
 	res := tb.NewID().MustBuild()
 	assert.NotNil(t, res.ID())
 }

@@ -88,7 +88,6 @@ func (r *Request) FindByProject(ctx context.Context, id id.ProjectID, filter rep
 		true,
 		true,
 	), nil
-
 }
 
 func (r *Request) Save(ctx context.Context, a *request.Request) error {

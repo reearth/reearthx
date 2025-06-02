@@ -33,5 +33,4 @@ func TestOperator(t *testing.T) {
 	assert.True(t, uOp.Validate())
 	assert.True(t, iOp.Validate())
 	assert.True(t, cmsOp.Validate())
-
 }

@@ -1,11 +1,12 @@
 package integration
 
 import (
-	"github.com/reearth/reearthx/asset/domain/id"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/samber/lo"
@@ -1175,7 +1176,8 @@ func TestIntegration_UpdateWebhook(t *testing.T) {
 					active:    true,
 					trigger:   WebhookTrigger{},
 					updatedAt: now,
-				}},
+				},
+			},
 			want:  []*Webhook{},
 			want1: false,
 		},
@@ -1200,7 +1202,8 @@ func TestIntegration_UpdateWebhook(t *testing.T) {
 					active:    true,
 					trigger:   WebhookTrigger{},
 					updatedAt: now,
-				}},
+				},
+			},
 			want: []*Webhook{
 				{
 					id:        wId,

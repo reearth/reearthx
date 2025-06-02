@@ -280,6 +280,7 @@ func TestItem_FindByAssets(t *testing.T) {
 	SetItemError(r, wantErr)
 	assert.Same(t, wantErr, r.Save(ctx, i))
 }
+
 func TestItem_Copy(t *testing.T) {
 	ctx := context.Background()
 	r := NewItem()

@@ -42,8 +42,10 @@ type AssetFileDocument struct {
 	Children        []*AssetFileDocument
 }
 
-type AssetConsumer = mongox.SliceFuncConsumer[*AssetDocument, *asset.Asset]
-type AssetAndFileConsumer = mongox.SliceConsumer[*AssetAndFileDocument]
+type (
+	AssetConsumer        = mongox.SliceFuncConsumer[*AssetDocument, *asset.Asset]
+	AssetAndFileConsumer = mongox.SliceConsumer[*AssetAndFileDocument]
+)
 
 func NewAssetConsumer() *AssetConsumer {
 	return NewConsumer[*AssetDocument, *asset.Asset]()

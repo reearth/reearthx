@@ -3,9 +3,10 @@ package interactor
 import (
 	"context"
 	"errors"
-	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/model"
@@ -536,7 +537,6 @@ func TestModel_Publish(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-
 		})
 	}
 }

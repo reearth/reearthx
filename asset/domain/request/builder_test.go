@@ -153,7 +153,7 @@ func TestBuilder_Build(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			//tt.Parallel()
+			// tt.Parallel()
 			b := &Builder{
 				r: tc.fields.r,
 			}

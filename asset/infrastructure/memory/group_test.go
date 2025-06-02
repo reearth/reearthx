@@ -29,7 +29,6 @@ func TestGroupRepo_Filtered(t *testing.T) {
 }
 
 func TestGroupRepo_FindByID(t *testing.T) {
-
 	pid1 := id.NewProjectID()
 	id1 := id.NewGroupID()
 	sid1 := id.NewSchemaID()
@@ -134,7 +133,6 @@ func TestGroupRepo_FindByID(t *testing.T) {
 }
 
 func TestGroupRepo_FindByIDs(t *testing.T) {
-
 	pid1 := id.NewProjectID()
 	id1 := id.NewGroupID()
 	id2 := id.NewGroupID()

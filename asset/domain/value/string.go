@@ -8,14 +8,16 @@ import (
 	"github.com/samber/lo"
 )
 
-const TypeText Type = "text"
-const TypeTextArea Type = "textArea"
-const TypeRichText Type = "richText"
-const TypeMarkdown Type = "markdown"
-const TypeSelect Type = "select"
-const TypeTag Type = "tag"
-const TypeGeometryObject Type = "geometryObject"
-const TypeGeometryEditor Type = "geometryEditor"
+const (
+	TypeText           Type = "text"
+	TypeTextArea       Type = "textArea"
+	TypeRichText       Type = "richText"
+	TypeMarkdown       Type = "markdown"
+	TypeSelect         Type = "select"
+	TypeTag            Type = "tag"
+	TypeGeometryObject Type = "geometryObject"
+	TypeGeometryEditor Type = "geometryEditor"
+)
 
 type propertyString struct{}
 

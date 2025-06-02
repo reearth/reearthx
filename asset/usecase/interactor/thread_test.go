@@ -2,8 +2,9 @@ package interactor
 
 import (
 	"context"
-	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"testing"
+
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
@@ -244,7 +245,8 @@ func TestThreadRepo_CreateThreadWithComment(t *testing.T) {
 					User:               &uid,
 					ReadableWorkspaces: nil,
 					WritableWorkspaces: nil,
-					OwningWorkspaces:   []accountdomain.WorkspaceID{wid2}},
+					OwningWorkspaces:   []accountdomain.WorkspaceID{wid2},
+				},
 			},
 			wantErr: thread.ErrNoWorkspaceID,
 		},
@@ -305,7 +307,8 @@ func TestThread_AddComment(t *testing.T) {
 			User:               &uid,
 			ReadableWorkspaces: nil,
 			WritableWorkspaces: nil,
-			OwningWorkspaces:   []accountdomain.WorkspaceID{wid}},
+			OwningWorkspaces:   []accountdomain.WorkspaceID{wid},
+		},
 	}
 
 	type args struct {
@@ -395,7 +398,6 @@ func TestThread_AddComment(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, 1, len(th.Comments()))
 			assert.True(t, th.HasComment(c.ID()))
-
 		})
 	}
 }
@@ -411,7 +413,8 @@ func TestThread_UpdateComment(t *testing.T) {
 			User:               &uid,
 			ReadableWorkspaces: nil,
 			WritableWorkspaces: nil,
-			OwningWorkspaces:   []accountdomain.WorkspaceID{wid}},
+			OwningWorkspaces:   []accountdomain.WorkspaceID{wid},
+		},
 	}
 
 	type args struct {
@@ -517,7 +520,8 @@ func TestThread_DeleteComment(t *testing.T) {
 			User:               &uid,
 			ReadableWorkspaces: nil,
 			WritableWorkspaces: nil,
-			OwningWorkspaces:   []accountdomain.WorkspaceID{wid}},
+			OwningWorkspaces:   []accountdomain.WorkspaceID{wid},
+		},
 	}
 
 	type args struct {

@@ -5,32 +5,42 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 )
 
-type ID = id.AssetID
-type IDList = id.AssetIDList
-type ProjectID = id.ProjectID
-type UserID = accountdomain.UserID
-type ThreadID = id.ThreadID
-type IntegrationID = id.IntegrationID
+type (
+	ID            = id.AssetID
+	IDList        = id.AssetIDList
+	ProjectID     = id.ProjectID
+	UserID        = accountdomain.UserID
+	ThreadID      = id.ThreadID
+	IntegrationID = id.IntegrationID
+)
 
-var NewID = id.NewAssetID
-var NewProjectID = id.NewProjectID
-var NewUserID = accountdomain.NewUserID
-var NewThreadID = id.NewThreadID
-var NewIntegrationID = id.NewIntegrationID
+var (
+	NewID            = id.NewAssetID
+	NewProjectID     = id.NewProjectID
+	NewUserID        = accountdomain.NewUserID
+	NewThreadID      = id.NewThreadID
+	NewIntegrationID = id.NewIntegrationID
+)
 
-var MustID = id.MustAssetID
-var MustProjectID = id.MustProjectID
-var MustUserID = id.MustUserID
-var MustThreadID = id.MustThreadID
+var (
+	MustID        = id.MustAssetID
+	MustProjectID = id.MustProjectID
+	MustUserID    = id.MustUserID
+	MustThreadID  = id.MustThreadID
+)
 
-var IDFrom = id.AssetIDFrom
-var ProjectIDFrom = id.ProjectIDFrom
-var UserIDFrom = accountdomain.UserIDFrom
-var ThreadIDFrom = id.ThreadIDFrom
+var (
+	IDFrom        = id.AssetIDFrom
+	ProjectIDFrom = id.ProjectIDFrom
+	UserIDFrom    = accountdomain.UserIDFrom
+	ThreadIDFrom  = id.ThreadIDFrom
+)
 
-var IDFromRef = id.AssetIDFromRef
-var ProjectIDFromRef = id.ProjectIDFromRef
-var UserIDFromRef = accountdomain.UserIDFromRef
-var ThreadIDFromRef = id.ThreadIDFromRef
+var (
+	IDFromRef        = id.AssetIDFromRef
+	ProjectIDFromRef = id.ProjectIDFromRef
+	UserIDFromRef    = accountdomain.UserIDFromRef
+	ThreadIDFromRef  = id.ThreadIDFromRef
+)
 
 var ErrInvalidID = id.ErrInvalidID

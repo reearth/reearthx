@@ -5,15 +5,19 @@ import (
 	"github.com/samber/lo"
 )
 
-type ID = id.GroupID
-type ProjectID = id.ProjectID
-type SchemaID = id.SchemaID
+type (
+	ID        = id.GroupID
+	ProjectID = id.ProjectID
+	SchemaID  = id.SchemaID
+)
 
-var NewID = id.NewGroupID
-var MustID = id.MustGroupID
-var IDFrom = id.GroupIDFrom
-var IDFromRef = id.GroupIDFromRef
-var ErrInvalidID = id.ErrInvalidID
+var (
+	NewID        = id.NewGroupID
+	MustID       = id.MustGroupID
+	IDFrom       = id.GroupIDFrom
+	IDFromRef    = id.GroupIDFromRef
+	ErrInvalidID = id.ErrInvalidID
+)
 
 type IDOrKey string
 

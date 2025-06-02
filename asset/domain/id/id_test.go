@@ -7,7 +7,6 @@ import (
 )
 
 func TestAsset_Type(t *testing.T) {
-
 	as := Asset{}
 	assert.Equal(t, "asset", as.Type())
 

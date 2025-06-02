@@ -3,8 +3,9 @@ package interactor
 import (
 	"context"
 	"errors"
-	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"testing"
+
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
@@ -157,7 +158,8 @@ func TestRequest_FindByIDs(t *testing.T) {
 	op := &usecase.Operator{
 		AcOperator: &accountusecase.Operator{
 			User: lo.ToPtr(u.ID()),
-		}}
+		},
+	}
 
 	tests := []struct {
 		name  string
@@ -256,7 +258,8 @@ func TestRequest_FindByProject(t *testing.T) {
 	op := &usecase.Operator{
 		AcOperator: &accountusecase.Operator{
 			User: lo.ToPtr(u.ID()),
-		}}
+		},
+	}
 
 	tests := []struct {
 		name  string

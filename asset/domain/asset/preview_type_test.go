@@ -1,8 +1,9 @@
 package asset
 
 import (
-	"github.com/reearth/reearthx/asset/domain/file"
 	"testing"
+
+	"github.com/reearth/reearthx/asset/domain/file"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -292,7 +293,7 @@ func TestPreviewType_String(t *testing.T) {
 
 func TestPreviewType_StringRef(t *testing.T) {
 	var pt1 *PreviewType
-	var pt2 = lo.ToPtr(PreviewTypeImage)
+	pt2 := lo.ToPtr(PreviewTypeImage)
 	s := string(*pt2)
 
 	tests := []struct {

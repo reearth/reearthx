@@ -10,9 +10,7 @@ import (
 	"github.com/reearth/reearthx/rerror"
 )
 
-var (
-	ErrUnsupportedEntity = rerror.NewE(i18n.T("unsupported entity"))
-)
+var ErrUnsupportedEntity = rerror.NewE(i18n.T("unsupported entity"))
 
 func New(obj any, v string) (res any, err error) {
 	// note: version (v) is not used currently

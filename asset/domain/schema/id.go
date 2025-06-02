@@ -4,33 +4,41 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 )
 
-type FieldID = id.FieldID
-type WorkspaceID = id.WorkspaceID
-type TagID = id.TagID
-type TagIDList = id.TagIDList
-type GroupID = id.GroupID
-type GroupIDList = id.GroupIDList
+type (
+	FieldID     = id.FieldID
+	WorkspaceID = id.WorkspaceID
+	TagID       = id.TagID
+	TagIDList   = id.TagIDList
+	GroupID     = id.GroupID
+	GroupIDList = id.GroupIDList
+)
 
-var NewTagID = id.NewTagID
-var MustTagID = id.MustTagID
-var TagIDFrom = id.TagIDFrom
-var TagIDFromRef = id.TagIDFromRef
-var ErrInvalidTagID = id.ErrInvalidID
-var NewFieldID = id.NewFieldID
-var MustFieldID = id.MustFieldID
-var FieldIDFrom = id.FieldIDFrom
-var FieldIDFromRef = id.FieldIDFromRef
-var ErrInvalidFieldID = id.ErrInvalidID
+var (
+	NewTagID          = id.NewTagID
+	MustTagID         = id.MustTagID
+	TagIDFrom         = id.TagIDFrom
+	TagIDFromRef      = id.TagIDFromRef
+	ErrInvalidTagID   = id.ErrInvalidID
+	NewFieldID        = id.NewFieldID
+	MustFieldID       = id.MustFieldID
+	FieldIDFrom       = id.FieldIDFrom
+	FieldIDFromRef    = id.FieldIDFromRef
+	ErrInvalidFieldID = id.ErrInvalidID
+)
 
-type ID = id.SchemaID
-type IDList = id.SchemaIDList
-type ProjectID = id.ProjectID
+type (
+	ID        = id.SchemaID
+	IDList    = id.SchemaIDList
+	ProjectID = id.ProjectID
+)
 
-var NewID = id.NewSchemaID
-var MustID = id.MustSchemaID
-var IDFrom = id.SchemaIDFrom
-var IDListFrom = id.SchemaIDListFrom
-var IDFromRef = id.SchemaIDFromRef
-var ErrInvalidID = id.ErrInvalidID
+var (
+	NewID        = id.NewSchemaID
+	MustID       = id.MustSchemaID
+	IDFrom       = id.SchemaIDFrom
+	IDListFrom   = id.SchemaIDListFrom
+	IDFromRef    = id.SchemaIDFromRef
+	ErrInvalidID = id.ErrInvalidID
+)
 
 type FieldIDOrKey string

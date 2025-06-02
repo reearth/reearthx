@@ -78,7 +78,7 @@ type File interface {
 	IssueUploadAssetLink(context.Context, IssueUploadAssetParam) (*UploadAssetLink, error)
 	UploadedAsset(context.Context, *asset.Upload) (*file.File, error)
 
-	RemoveAsset(context.Context, *url.URL) error //viz
+	RemoveAsset(context.Context, *url.URL) error // viz
 }
 
 func init() {

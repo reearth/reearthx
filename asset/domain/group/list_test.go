@@ -1,8 +1,9 @@
 package group
 
 import (
-	"github.com/reearth/reearthx/asset/domain/id"
 	"testing"
+
+	"github.com/reearth/reearthx/asset/domain/id"
 
 	"github.com/stretchr/testify/assert"
 )

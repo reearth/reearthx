@@ -203,7 +203,8 @@ func TestValues_UpdateRef(t *testing.T) {
 				inner: []*Value[string]{
 					NewValue(vx, nil, nil, time.Time{}, "a"),
 					NewValue(vy, nil, NewRefs("B"), time.Time{}, "b"),
-				}},
+				},
+			},
 			args: args{
 				ref: "A",
 				vr:  nil,

@@ -54,7 +54,6 @@ func (r *WorkspaceSettingsRepo) FindByIDs(ctx context.Context, ids accountdomain
 	})
 
 	return workspacesettings.List(result).SortByID(), nil
-
 }
 
 func (r *WorkspaceSettingsRepo) Save(ctx context.Context, ws *workspacesettings.WorkspaceSettings) error {
@@ -80,5 +79,4 @@ func (r *WorkspaceSettingsRepo) Remove(ctx context.Context, wid accountdomain.Wo
 		return nil
 	}
 	return rerror.ErrNotFound
-
 }

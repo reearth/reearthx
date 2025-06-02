@@ -6,8 +6,10 @@ import (
 	"github.com/samber/lo"
 )
 
-const TypeBool Type = "bool"
-const TypeCheckbox Type = "checkbox"
+const (
+	TypeBool     Type = "bool"
+	TypeCheckbox Type = "checkbox"
+)
 
 type propertyBool struct{}
 

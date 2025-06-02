@@ -56,9 +56,7 @@ type PublishModelParam struct {
 	Public  bool
 }
 
-var (
-	ErrModelKey error = rerror.NewE(i18n.T("model key is already used by another model"))
-)
+var ErrModelKey error = rerror.NewE(i18n.T("model key is already used by another model"))
 
 type Model interface {
 	FindByID(context.Context, id.ModelID, *usecase.Operator) (*model.Model, error)

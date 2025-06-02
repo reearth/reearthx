@@ -26,8 +26,10 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const maxPerPage = 100
-const defaultPerPage int64 = 50
+const (
+	maxPerPage           = 100
+	defaultPerPage int64 = 50
+)
 
 type Item struct {
 	repos       *repo.Container
@@ -693,7 +695,7 @@ func (i Item) handleReferenceField(ctx context.Context, sf schema.Field, iID ite
 }
 
 func (i Item) getItemCorrespondingItems(ctx context.Context, fr schema.FieldReference, newF, oldF *item.Field) (item.List, error) {
-	var ci = make([]*item.Item, 0)
+	ci := make([]*item.Item, 0)
 
 	oldRefId, _ := oldF.Value().First().ValueReference()
 	if !oldRefId.IsEmpty() {
@@ -866,7 +868,6 @@ func (i Item) ItemsAsCSV(ctx context.Context, schemaPackage *schema.Package, pag
 		return interfaces.ExportItemsToCSVResponse{}, interfaces.ErrInvalidOperator
 	}
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (interfaces.ExportItemsToCSVResponse, error) {
-
 		// fromPagination
 		paginationOffset := fromPagination(page, perPage)
 
@@ -889,13 +890,11 @@ func (i Item) ItemsAsCSV(ctx context.Context, schemaPackage *schema.Package, pag
 
 // ItemsAsGeoJSON converts items to Geo JSON type given the schema package
 func (i Item) ItemsAsGeoJSON(ctx context.Context, schemaPackage *schema.Package, page *int, perPage *int, operator *usecase.Operator) (interfaces.ExportItemsToGeoJSONResponse, error) {
-
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return interfaces.ExportItemsToGeoJSONResponse{}, interfaces.ErrInvalidOperator
 	}
 
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (interfaces.ExportItemsToGeoJSONResponse, error) {
-
 		// fromPagination
 		paginationOffset := fromPagination(page, perPage)
 

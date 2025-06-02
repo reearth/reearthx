@@ -11,8 +11,10 @@ import (
 	"github.com/samber/lo"
 )
 
-var ErrInvalidKey = rerror.NewE(i18n.T("invalid key"))
-var ErrInvalidType = rerror.NewE(i18n.T("invalid type"))
+var (
+	ErrInvalidKey  = rerror.NewE(i18n.T("invalid key"))
+	ErrInvalidType = rerror.NewE(i18n.T("invalid type"))
+)
 
 type FieldBuilder struct {
 	f   *Field

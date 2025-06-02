@@ -12,36 +12,36 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	var tb = New()
+	tb := New()
 	assert.NotNil(t, tb)
 }
 
 func TestBuilder_ID(t *testing.T) {
-	var tb = New()
+	tb := New()
 	res := tb.ID(NewID()).MustBuild()
 	assert.NotNil(t, res.ID())
 }
 
 func TestBuilder_Name(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	res := tb.Name("foo").MustBuild()
 	assert.Equal(t, "foo", res.Name())
 }
 
 func TestBuilder_NewID(t *testing.T) {
-	var tb = New()
+	tb := New()
 	res := tb.NewID().MustBuild()
 	assert.NotNil(t, res.ID())
 }
 
 func TestBuilder_Alias(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	res := tb.Alias("xxxxx").MustBuild()
 	assert.Equal(t, "xxxxx", res.Alias())
 }
 
 func TestBuilder_Description(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	res := tb.Description("desc").MustBuild()
 	assert.Equal(t, "desc", res.Description())
 }
@@ -80,20 +80,20 @@ func TestBuilder_ImageURL(t *testing.T) {
 }
 
 func TestBuilder_Team(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	res := tb.Workspace(accountdomain.NewWorkspaceID()).MustBuild()
 	assert.NotNil(t, res.Workspace())
 }
 
 func TestBuilder_UpdatedAt(t *testing.T) {
-	var tb = New().NewID()
-	d := time.Date(1900, 1, 1, 00, 00, 0, 1, time.UTC)
+	tb := New().NewID()
+	d := time.Date(1900, 1, 1, 0o0, 0o0, 0, 1, time.UTC)
 	res := tb.UpdatedAt(d).MustBuild()
 	assert.True(t, reflect.DeepEqual(res.UpdatedAt(), d))
 }
 
 func TestBuilder_Publication(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	p := &Publication{}
 	res := tb.Publication(p)
 	assert.Equal(t, &Builder{
@@ -102,7 +102,7 @@ func TestBuilder_Publication(t *testing.T) {
 }
 
 func TestBuilder_RequestRoles(t *testing.T) {
-	var tb = New().NewID()
+	tb := New().NewID()
 	r := []workspace.Role{workspace.RoleOwner, workspace.RoleMaintainer}
 	res := tb.RequestRoles(r)
 	assert.Equal(t, &Builder{
@@ -111,7 +111,7 @@ func TestBuilder_RequestRoles(t *testing.T) {
 }
 
 func TestBuilder_Build(t *testing.T) {
-	d := time.Date(1900, 1, 1, 00, 00, 0, 1, time.UTC)
+	d := time.Date(1900, 1, 1, 0o0, 0o0, 0, 1, time.UTC)
 	i, _ := url.Parse("ttt://xxx.aa/")
 	pid := NewID()
 	tid := accountdomain.NewWorkspaceID()
@@ -202,7 +202,7 @@ func TestBuilder_Build(t *testing.T) {
 }
 
 func TestBuilder_MustBuild(t *testing.T) {
-	d := time.Date(1900, 1, 1, 00, 00, 0, 1, time.UTC)
+	d := time.Date(1900, 1, 1, 0o0, 0o0, 0, 1, time.UTC)
 	i, _ := url.Parse("ttt://xxx.aa/")
 	pid := NewID()
 	tid := accountdomain.NewWorkspaceID()

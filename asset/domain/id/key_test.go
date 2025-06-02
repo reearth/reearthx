@@ -50,7 +50,6 @@ func TestKey_StringRef(t *testing.T) {
 }
 
 func TestKey_NewKeyFromPtr(t *testing.T) {
-
 	str := "test-key"
 	wantKey := Key{
 		key: lo.FromPtr(&str),

@@ -14,9 +14,7 @@ import (
 	"github.com/samber/lo"
 )
 
-var (
-	workspaceSettingsIndexes = []string{"id"}
-)
+var workspaceSettingsIndexes = []string{"id"}
 
 type WorkspaceSettingsRepo struct {
 	client *mongox.Collection

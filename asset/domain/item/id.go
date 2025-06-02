@@ -5,34 +5,44 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 )
 
-type ID = id.ItemID
-type IDList = id.ItemIDList
-type ProjectID = id.ProjectID
-type SchemaID = id.SchemaID
-type FieldID = id.FieldID
-type FieldIDList = id.FieldIDList
-type ModelID = id.ModelID
-type ThreadID = id.ThreadID
-type UserID = accountdomain.UserID
-type IntegrationID = id.IntegrationID
-type AssetID = id.AssetID
-type AssetIDList = id.AssetIDList
-type ItemGroupID = id.ItemGroupID
+type (
+	ID            = id.ItemID
+	IDList        = id.ItemIDList
+	ProjectID     = id.ProjectID
+	SchemaID      = id.SchemaID
+	FieldID       = id.FieldID
+	FieldIDList   = id.FieldIDList
+	ModelID       = id.ModelID
+	ThreadID      = id.ThreadID
+	UserID        = accountdomain.UserID
+	IntegrationID = id.IntegrationID
+	AssetID       = id.AssetID
+	AssetIDList   = id.AssetIDList
+	ItemGroupID   = id.ItemGroupID
+)
 
-var NewID = id.NewItemID
-var NewThreadID = id.NewThreadID
+var (
+	NewID       = id.NewItemID
+	NewThreadID = id.NewThreadID
+)
 
-var MustID = id.MustItemID
-var MustThreadID = id.MustThreadID
+var (
+	MustID       = id.MustItemID
+	MustThreadID = id.MustThreadID
+)
 
-var IDFrom = id.ItemIDFrom
-var IDFromRef = id.ItemIDFromRef
-var ThreadIDFrom = id.ThreadIDFrom
-var ThreadIDFromRef = id.ThreadIDFromRef
+var (
+	IDFrom          = id.ItemIDFrom
+	IDFromRef       = id.ItemIDFromRef
+	ThreadIDFrom    = id.ThreadIDFrom
+	ThreadIDFromRef = id.ThreadIDFromRef
+)
 
-var NewFieldID = id.NewFieldID
-var MustFieldID = id.MustFieldID
-var FieldIDFrom = id.FieldIDFrom
-var FieldIDFromRef = id.FieldIDFromRef
+var (
+	NewFieldID     = id.NewFieldID
+	MustFieldID    = id.MustFieldID
+	FieldIDFrom    = id.FieldIDFrom
+	FieldIDFromRef = id.FieldIDFromRef
+)
 
 var ErrInvalidID = id.ErrInvalidID

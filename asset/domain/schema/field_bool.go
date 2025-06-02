@@ -2,8 +2,7 @@ package schema
 
 import "github.com/reearth/reearthx/asset/domain/value"
 
-type FieldBool struct {
-}
+type FieldBool struct{}
 
 func NewBool() *FieldBool {
 	return &FieldBool{}

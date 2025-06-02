@@ -38,8 +38,8 @@ func TestCheckAliasPattern(t *testing.T) {
 
 func TestProject_SetUpdatedAt(t *testing.T) {
 	p := &Project{}
-	p.SetUpdatedAt(time.Date(1900, 1, 1, 00, 00, 1, 1, time.UTC))
-	assert.Equal(t, time.Date(1900, 1, 1, 00, 00, 1, 1, time.UTC), p.UpdatedAt())
+	p.SetUpdatedAt(time.Date(1900, 1, 1, 0o0, 0o0, 1, 1, time.UTC))
+	assert.Equal(t, time.Date(1900, 1, 1, 0o0, 0o0, 1, 1, time.UTC), p.UpdatedAt())
 }
 
 func TestProject_SetImageURL(t *testing.T) {

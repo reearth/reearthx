@@ -7,7 +7,6 @@ import (
 )
 
 func TestTagColorFrom(t *testing.T) {
-
 	tests := []struct {
 		name string
 		arg  string

@@ -3,10 +3,11 @@ package interactor
 import (
 	"context"
 	"errors"
-	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"io"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/integrationapi"
@@ -308,7 +309,8 @@ func TestItem_FindAllVersionsByID(t *testing.T) {
 	op := &usecase.Operator{
 		AcOperator: &accountusecase.Operator{
 			User: lo.ToPtr(u.ID()),
-		}}
+		},
+	}
 	ctx := context.Background()
 
 	db := memory.New()
@@ -462,7 +464,6 @@ func TestItem_Search(t *testing.T) {
 			}
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, len(got))
-
 		})
 	}
 }
@@ -611,7 +612,8 @@ func TestItem_Create(t *testing.T) {
 		},
 	}, &usecase.Operator{
 		AcOperator: &accountusecase.Operator{
-			User: accountdomain.NewUserID().Ref()},
+			User: accountdomain.NewUserID().Ref(),
+		},
 	})
 	assert.Equal(t, interfaces.ErrOperationDenied, err)
 	assert.Nil(t, item)

@@ -50,7 +50,8 @@ func TestUc_checkPermission(t *testing.T) {
 			op: &usecase.Operator{
 				AcOperator: &accountusecase.Operator{
 					ReadableWorkspaces: accountdomain.WorkspaceIDList{},
-				}},
+				},
+			},
 			wantErr: true,
 		},
 		{

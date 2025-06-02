@@ -19,25 +19,23 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var (
-	itemIndexes = []string{
-		"assets",
-		"modelid",
-		"project",
-		"schema",
-		"fields.f",
-		"fields.v.t",
-		"fields.v.v",
-		"project,schema,!timestamp,!id,__r",
-		"project,__r,modelid,schema,__",
-		"modelid,id,__r",
-		"modelid,!_id,__r",
-		//"__r,assets,project,__", // mongo cannot index parallel arrays [assets] [__r]
-		"__r,project,__",
-		"__r,asset,project,__",
-		"schema,id,__r,project",
-	}
-)
+var itemIndexes = []string{
+	"assets",
+	"modelid",
+	"project",
+	"schema",
+	"fields.f",
+	"fields.v.t",
+	"fields.v.v",
+	"project,schema,!timestamp,!id,__r",
+	"project,__r,modelid,schema,__",
+	"modelid,id,__r",
+	"modelid,!_id,__r",
+	//"__r,assets,project,__", // mongo cannot index parallel arrays [assets] [__r]
+	"__r,project,__",
+	"__r,asset,project,__",
+	"schema,id,__r,project",
+}
 
 type Item struct {
 	client *mongogit.Collection
@@ -300,7 +298,7 @@ func (r *Item) Copy(ctx context.Context, params repo.CopyParams) (*string, *stri
 		},
 		"timestamp": {
 			Type:  task.ChangeTypeSet,
-			Value: params.Timestamp.UTC().Format("2006-01-02T15:04:05.000+00:00"), //TODO: should use a better way to format
+			Value: params.Timestamp.UTC().Format("2006-01-02T15:04:05.000+00:00"), // TODO: should use a better way to format
 		},
 		"updatedbyuser": {
 			Type:  task.ChangeTypeSet,
