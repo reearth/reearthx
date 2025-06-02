@@ -35,9 +35,9 @@ func TestBuilder_Name(t *testing.T) {
 	assert.Equal(t, "xxx", b.Name())
 }
 
-func TestBuilder_DisplayName(t *testing.T) {
-	b := New().NewID().Name("aaa").DisplayName("xxx").Email("aaa@bbb.com").MustBuild()
-	assert.Equal(t, "xxx", b.DisplayName())
+func TestBuilder_Alias(t *testing.T) {
+	b := New().NewID().Name("aaa").Alias("xxx").Email("aaa@bbb.com").MustBuild()
+	assert.Equal(t, "xxx", b.Alias())
 }
 
 func TestBuilder_Workspace(t *testing.T) {
@@ -66,44 +66,6 @@ func TestBuilder_Email(t *testing.T) {
 	assert.Equal(t, "xx@yy.zz", b.Email())
 }
 
-func TestBuilder_Lang(t *testing.T) {
-	l := language.Make("en")
-	b := New().NewID().Name("aaa").Email("aaa@bbb.com").Lang(l).MustBuild()
-	assert.Equal(t, l, b.Lang())
-}
-
-func TestBuilder_LangFrom(t *testing.T) {
-	tests := []struct {
-		Name, Lang string
-		Expected   language.Tag
-	}{
-		{
-			Name:     "success creating language",
-			Lang:     "en",
-			Expected: language.Make("en"),
-		},
-		{
-			Name:     "empty language and empty tag",
-			Lang:     "",
-			Expected: language.Tag{},
-		},
-		{
-			Name:     "empty tag of parse err",
-			Lang:     "xxxxxxxxxxx",
-			Expected: language.Tag{},
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.Name, func(t *testing.T) {
-			t.Parallel()
-			b := New().NewID().Name("aaa").Email("aaa@bbb.com").LangFrom(tc.Lang).MustBuild()
-			assert.Equal(t, tc.Expected, b.Lang())
-		})
-	}
-}
-
 func TestNew(t *testing.T) {
 	b := New()
 	assert.NotNil(t, b)
@@ -122,9 +84,17 @@ func TestBuilder_Build(t *testing.T) {
 		Name, Lang, Email string
 		ID                ID
 		Workspace         WorkspaceID
+		Metadata          *Metadata
 		Auths             []Auth
 		PasswordBin       []byte
 	}
+
+	metadata := NewMetadata()
+	metadata.SetDescription("description")
+	metadata.SetWebsite("website")
+	metadata.SetPhotoURL("photo url")
+	metadata.LangFrom("en")
+	metadata.SetTheme(ThemeDefault)
 
 	tests := []struct {
 		Name     string
@@ -147,6 +117,7 @@ func TestBuilder_Build(t *testing.T) {
 						Sub:      "sss",
 					},
 				},
+				Metadata: metadata,
 			},
 			Expected: &User{
 				id:        uid,
@@ -155,10 +126,43 @@ func TestBuilder_Build(t *testing.T) {
 				name:      "xxx",
 				password:  pass,
 				auths:     []Auth{{Provider: "ppp", Sub: "sss"}},
-				lang:      language.English,
-				theme:     ThemeDefault,
+				metadata:  metadata,
 			},
-		}, {
+		},
+		{
+			Name: "Success build user with metadata",
+			Args: args{
+				Name:        "xxx",
+				Email:       "xx@yy.zz",
+				Lang:        "en",
+				ID:          uid,
+				Workspace:   wid,
+				Metadata:    metadata,
+				PasswordBin: pass,
+				Auths: []Auth{
+					{
+						Provider: "ppp",
+						Sub:      "sss",
+					},
+				},
+			},
+			Expected: &User{
+				id:        uid,
+				workspace: wid,
+				email:     "xx@yy.zz",
+				name:      "xxx",
+				password:  pass,
+				auths:     []Auth{{Provider: "ppp", Sub: "sss"}},
+				metadata: &Metadata{
+					photoURL:    "photo url",
+					description: "description",
+					website:     "website",
+					lang:        language.English,
+					theme:       ThemeDefault,
+				},
+			},
+		},
+		{
 			Name:     "failed invalid id",
 			Expected: nil,
 			Err:      ErrInvalidID,
@@ -173,8 +177,8 @@ func TestBuilder_Build(t *testing.T) {
 				ID(tt.Args.ID).
 				EncodedPassword(pass).
 				Name(tt.Args.Name).
+				Metadata(tt.Args.Metadata).
 				Auths(tt.Args.Auths).
-				LangFrom(tt.Args.Lang).
 				Email(tt.Args.Email).
 				Workspace(tt.Args.Workspace).
 				Build()
@@ -195,12 +199,20 @@ func TestBuilder_MustBuild(t *testing.T) {
 	wid := NewWorkspaceID()
 	pass := MustEncodedPassword("abcDEF0!")
 
+	metadata := NewMetadata()
+	metadata.SetDescription("description")
+	metadata.SetWebsite("website")
+	metadata.SetPhotoURL("photo url")
+	metadata.LangFrom("en")
+	metadata.SetTheme(ThemeDefault)
+
 	type args struct {
 		Name, Lang, Email string
 		ID                ID
 		Workspace         WorkspaceID
 		PasswordBin       []byte
 		Auths             []Auth
+		Metadata          *Metadata
 	}
 
 	tests := []struct {
@@ -224,6 +236,7 @@ func TestBuilder_MustBuild(t *testing.T) {
 						Sub:      "sss",
 					},
 				},
+				Metadata: metadata,
 			},
 			Expected: &User{
 				id:        uid,
@@ -232,8 +245,13 @@ func TestBuilder_MustBuild(t *testing.T) {
 				name:      "xxx",
 				password:  pass,
 				auths:     []Auth{{Provider: "ppp", Sub: "sss"}},
-				lang:      language.English,
-				theme:     ThemeDefault,
+				metadata: &Metadata{
+					photoURL:    "photo url",
+					description: "description",
+					website:     "website",
+					lang:        language.English,
+					theme:       ThemeDefault,
+				},
 			},
 		}, {
 			Name: "failed invalid id",
@@ -253,7 +271,7 @@ func TestBuilder_MustBuild(t *testing.T) {
 					EncodedPassword(pass).
 					Name(tt.Args.Name).
 					Auths(tt.Args.Auths).
-					LangFrom(tt.Args.Lang).
+					Metadata(tt.Args.Metadata).
 					Email(tt.Args.Email).
 					Workspace(tt.Args.Workspace).
 					MustBuild()
