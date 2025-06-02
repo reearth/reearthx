@@ -1,8 +1,8 @@
 package schema
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/value"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/value"
 )
 
 func CreateCorrespondingField(sid id.SchemaID, mid id.ModelID, f *Field, inp CorrespondingField) (*Field, error) {

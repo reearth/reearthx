@@ -1,9 +1,9 @@
 package schema
 
 import (
+	"github.com/reearth/reearthx/asset/domain/id"
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
 	"github.com/stretchr/testify/assert"
 )
 
