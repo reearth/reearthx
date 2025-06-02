@@ -1,316 +1,295 @@
 package id
 
 import (
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/idx"
 )
 
-// Asset type and ID
-type Type struct{}
+type Workspace struct{}
+type User struct{}
+type Asset struct{}
+type Event struct{}
 
-func (Type) Type() string {
-	return "asset"
-}
+func (Workspace) Type() string { return "workspace" }
+func (User) Type() string      { return "user" }
+func (Asset) Type() string     { return "asset" }
+func (Event) Type() string     { return "event" }
 
-type ID = idx.ID[Type]
-type List []ID
+type WorkspaceID = idx.ID[Workspace]
+type UserID = idx.ID[User]
+type AssetID = idx.ID[Asset]
+type EventID = idx.ID[Event]
 
-func NewID() ID {
-	return idx.New[Type]()
-}
+var NewWorkspaceID = idx.New[Workspace]
+var NewUserID = idx.New[User]
+var NewAssetID = idx.New[Asset]
+var NewEventID = idx.New[Event]
 
-func From(id string) (ID, error) {
-	return idx.From[Type](id)
-}
+var MustWorkspaceID = idx.Must[Workspace]
+var MustUserID = idx.Must[User]
+var MustAssetID = idx.Must[Asset]
+var MustEventID = idx.Must[Event]
 
-func MustID(id string) ID {
-	return idx.Must[Type](id)
-}
+var WorkspaceIDFrom = idx.From[Workspace]
+var UserIDFrom = idx.From[User]
+var AssetIDFrom = idx.From[Asset]
+var EventIDFrom = idx.From[Event]
 
-func (l List) Add(id ID) List {
-	return append(l, id)
-}
+var WorkspaceIDFromRef = idx.FromRef[Workspace]
+var UserIDFromRef = idx.FromRef[User]
+var AssetIDFromRef = idx.FromRef[Asset]
+var EventIDFromRef = idx.FromRef[Event]
 
-func (l List) Strings() []string {
-	strings := make([]string, len(l))
-	for i, id := range l {
-		strings[i] = id.String()
-	}
-	return strings
-}
+type WorkspaceIDList = idx.List[accountdomain.Workspace]
+type UserIDList = idx.List[accountdomain.User]
+type AssetIDList = idx.List[Asset]
 
-// Group type and ID
-type Group struct{}
+var WorkspaceIDListFrom = idx.ListFrom[accountdomain.Workspace]
+var UserIDListFrom = idx.ListFrom[accountdomain.User]
+var AssetIDListFrom = idx.ListFrom[Asset]
 
-func (Group) Type() string {
-	return "group"
-}
+type WorkspaceIDSet = idx.Set[Workspace]
+type UserIDSet = idx.Set[User]
+type AssetIDSet = idx.Set[Asset]
 
-type GroupID = idx.ID[Group]
-type GroupIDList = idx.List[Group]
+var NewWorkspaceIDSet = idx.NewSet[Workspace]
+var NewUserIDSet = idx.NewSet[User]
+var NewAssetIDSet = idx.NewSet[Asset]
 
-func NewGroupID() GroupID {
-	return idx.New[Group]()
-}
-
-func GroupIDFrom(id string) (GroupID, error) {
-	return idx.From[Group](id)
-}
-
-func MustGroupID(id string) GroupID {
-	return idx.Must[Group](id)
-}
-
-// Integration type and ID
-type Integration struct{}
-
-func (Integration) Type() string {
-	return "integration"
-}
-
-type IntegrationID = idx.ID[Integration]
-type IntegrationIDList = idx.List[Integration]
-
-func NewIntegrationID() IntegrationID {
-	return idx.New[Integration]()
-}
-
-func IntegrationIDFrom(id string) (IntegrationID, error) {
-	return idx.From[Integration](id)
-}
-
-func MustIntegrationID(id string) IntegrationID {
-	return idx.Must[Integration](id)
-}
-
-func IntegrationIDFromRef(id *string) *IntegrationID {
-	return idx.FromRef[Integration](id)
-}
-
-// Model type and ID
-type Model struct{}
-
-func (Model) Type() string {
-	return "model"
-}
-
-type ModelID = idx.ID[Model]
-
-func NewModelID() ModelID {
-	return idx.New[Model]()
-}
-
-func ModelIDFrom(id string) (ModelID, error) {
-	return idx.From[Model](id)
-}
-
-func ModelIDFromRef(id *string) *ModelID {
-	return idx.FromRef[Model](id)
-}
-func MustModelID(id string) ModelID {
-	return idx.Must[Model](id)
-}
-
-// Operator type
-type Operator struct{}
-
-func (Operator) Type() string {
-	return "operator"
-}
-
-// Policy type and ID
-type PolicyIDType struct{}
-
-func (PolicyIDType) Type() string {
-	return "policy"
-}
-
-type PolicyID = idx.ID[PolicyIDType]
-
-func NewPolicyID() PolicyID {
-	return idx.New[PolicyIDType]()
-}
-
-func PolicyIDFrom(id string) (PolicyID, error) {
-	return idx.From[PolicyIDType](id)
-}
-
-func MustPolicyID(id string) PolicyID {
-	return idx.Must[PolicyIDType](id)
-}
-
-// Project type and ID
 type Project struct{}
 
-func (Project) Type() string {
-	return "project"
-}
+func (Project) Type() string { return "project" }
 
 type ProjectID = idx.ID[Project]
 type ProjectIDList = idx.List[Project]
 
-func NewProjectID() ProjectID {
-	return idx.New[Project]()
-}
+var MustProjectID = idx.Must[Project]
+var NewProjectID = idx.New[Project]
+var ProjectIDFrom = idx.From[Project]
+var ProjectIDFromRef = idx.FromRef[Project]
+var ProjectIDListFrom = idx.ListFrom[Project]
 
-func ProjectIDFrom(id string) (ProjectID, error) {
-	return idx.From[Project](id)
-}
+type Model struct{}
 
-func MustProjectID(id string) ProjectID {
-	return idx.Must[Project](id)
-}
+func (Model) Type() string { return "model" }
 
-func ProjectIDFromRef(id *string) *ProjectID {
-	return idx.FromRef[Project](id)
-}
+type ModelID = idx.ID[Model]
+type ModelIDList = idx.List[Model]
 
-// Thread type and ID
-type Thread struct{}
+var MustModelID = idx.Must[Model]
+var NewModelID = idx.New[Model]
+var ModelIDFrom = idx.From[Model]
+var ModelIDFromRef = idx.FromRef[Model]
+var ModelIDListFrom = idx.ListFrom[Model]
 
-func (Thread) Type() string {
-	return "thread"
-}
+type Field struct{}
 
-type ThreadID = idx.ID[Thread]
+func (Field) Type() string { return "field" }
 
-func NewThreadID() ThreadID {
-	return idx.New[Thread]()
-}
+type FieldID = idx.ID[Field]
+type FieldIDList = idx.List[Field]
 
-func ThreadIDFrom(id string) (ThreadID, error) {
-	return idx.From[Thread](id)
-}
+var MustFieldID = idx.Must[Field]
+var NewFieldID = idx.New[Field]
+var FieldIDFrom = idx.From[Field]
+var FieldIDFromRef = idx.FromRef[Field]
+var FieldIDListFrom = idx.ListFrom[Field]
 
-func MustThreadID(id string) ThreadID {
-	return idx.Must[Thread](id)
-}
+type Tag struct{}
 
-func ThreadIDFromRef(id *string) *ThreadID {
-	return idx.FromRef[Thread](id)
-}
+func (Tag) Type() string { return "tag" }
 
-// Webhook type and ID
-type WebhookIDType struct{}
+type TagID = idx.ID[Tag]
+type TagIDList = idx.List[Tag]
 
-func (WebhookIDType) Type() string {
-	return "webhook"
-}
-
-type WebhookID = idx.ID[WebhookIDType]
-
-func NewWebhookID() WebhookID {
-	return idx.New[WebhookIDType]()
-}
-
-func WebhookIDFrom(id string) (WebhookID, error) {
-	return idx.From[WebhookIDType](id)
-}
-
-func MustWebhookID(id string) WebhookID {
-	return idx.Must[WebhookIDType](id)
-}
-
-// Workspace type and ID
-type WorkspaceIDType struct{}
-
-func (WorkspaceIDType) Type() string {
-	return "workspace"
-}
-
-func NewWorkspaceID() WorkspaceID {
-	return idx.New[WorkspaceIDType]()
-}
-
-func WorkspaceIDFrom(id string) (WorkspaceID, error) {
-	return idx.From[WorkspaceIDType](id)
-}
-
-func MustWorkspaceID(id string) WorkspaceID {
-	return idx.Must[WorkspaceIDType](id)
-}
-
-func WorkspaceIDFromRef(id *string) *WorkspaceID {
-	return idx.FromRef[WorkspaceIDType](id)
-}
+var MustTagID = idx.Must[Tag]
+var NewTagID = idx.New[Tag]
+var TagIDFrom = idx.From[Tag]
+var TagIDFromRef = idx.FromRef[Tag]
+var TagIDListFrom = idx.ListFrom[Tag]
 
 type Schema struct{}
 
-func (Schema) Type() string {
-	return "schema"
-}
+func (Schema) Type() string { return "schema" }
 
 type SchemaID = idx.ID[Schema]
+type SchemaIDList = idx.List[Schema]
 
-func NewSchemaID() SchemaID {
-	return idx.New[Schema]()
-}
+var MustSchemaID = idx.Must[Schema]
+var NewSchemaID = idx.New[Schema]
+var SchemaIDFrom = idx.From[Schema]
+var SchemaIDFromRef = idx.FromRef[Schema]
+var SchemaIDListFrom = idx.ListFrom[Schema]
 
-func SchemaIDFrom(id string) (SchemaID, error) {
-	return idx.From[Schema](id)
-}
+type Group struct{}
 
-func MustSchemaID(id string) SchemaID {
-	return idx.Must[Schema](id)
-}
+func (Group) Type() string { return "group" }
 
-func SchemaIDFromRef(id *string) *SchemaID {
-	return idx.FromRef[Schema](id)
-}
+type GroupID = idx.ID[Group]
+type GroupIDList = idx.List[Group]
 
-// Legacy workspace
-type workspace struct{}
+var MustGroupID = idx.Must[Group]
+var NewGroupID = idx.New[Group]
+var GroupIDFrom = idx.From[Group]
+var GroupIDFromRef = idx.FromRef[Group]
+var GroupIDListFrom = idx.ListFrom[Group]
 
-func (workspace) Type() string {
-	return "workspace"
-}
+type ItemGroup struct{}
 
-type WorkspaceID = idx.ID[WorkspaceIDType]
-type WorkspaceIDList = idx.List[WorkspaceIDType]
+func (ItemGroup) Type() string { return "item_group" }
 
-type event struct{}
+type ItemGroupID = idx.ID[ItemGroup]
+type ItemGroupIDList = idx.List[ItemGroup]
 
-func (event) Type() string {
-	return "event"
-}
+var MustItemGroupID = idx.Must[ItemGroup]
+var NewItemGroupID = idx.New[ItemGroup]
+var ItemGroupIDFrom = idx.From[ItemGroup]
+var ItemGroupIDFromRef = idx.FromRef[ItemGroup]
+var ItemGroupIDListFrom = idx.ListFrom[ItemGroup]
 
-func NewEventID() EventID {
-	return idx.New[event]()
-}
+type Thread struct{}
 
-func EventIDFrom(id string) (EventID, error) {
-	return idx.From[event](id)
-}
+func (Thread) Type() string { return "thread" }
 
-func MustEventID(id string) EventID {
-	return idx.Must[event](id)
-}
+type ThreadID = idx.ID[Thread]
+type ThreadIDList = idx.List[Thread]
 
-func EventIDFromRef(id *string) *EventID {
-	return idx.FromRef[event](id)
-}
+var NewThreadID = idx.New[Thread]
+var MustThreadID = idx.Must[Thread]
+var ThreadIDFrom = idx.From[Thread]
+var ThreadIDFromRef = idx.FromRef[Thread]
 
-type EventID = idx.ID[event]
-type EventIDList = idx.List[event]
+type Comment struct{}
+
+func (Comment) Type() string { return "comment" }
+
+type CommentID = idx.ID[Comment]
+type CommentIDList = idx.List[Comment]
+
+var NewCommentID = idx.New[Comment]
+var MustCommentID = idx.Must[Comment]
+var CommentIDFrom = idx.From[Comment]
+var CommentIDFromRef = idx.FromRef[Comment]
+
+type Item struct{}
+
+func (Item) Type() string { return "item" }
+
+type ItemID = idx.ID[Item]
+type ItemIDList = idx.List[Item]
+
+var MustItemID = idx.Must[Item]
+var NewItemID = idx.New[Item]
+var ItemIDFrom = idx.From[Item]
+var ItemIDFromRef = idx.FromRef[Item]
+var ItemIDListFrom = idx.ListFrom[Item]
+
+type Integration struct{}
+
+func (Integration) Type() string { return "integration" }
+
+type IntegrationID = idx.ID[Integration]
+type IntegrationIDList = idx.List[Integration]
+
+var MustIntegrationID = idx.Must[Integration]
+var NewIntegrationID = idx.New[Integration]
+var IntegrationIDFrom = idx.From[Integration]
+var IntegrationIDFromRef = idx.FromRef[Integration]
+var IntegrationIDListFrom = idx.ListFrom[Integration]
+
+type Webhook struct{}
+
+func (Webhook) Type() string { return "webhook" }
+
+type WebhookID = idx.ID[Webhook]
+type WebhookIDList = idx.List[Webhook]
+
+var MustWebhookID = idx.Must[Webhook]
+var NewWebhookID = idx.New[Webhook]
+var WebhookIDFrom = idx.From[Webhook]
+var WebhookIDFromRef = idx.FromRef[Webhook]
+var WebhookIDListFrom = idx.ListFrom[Webhook]
+
+type Task struct{}
+
+func (Task) Type() string { return "task" }
+
+type TaskID = idx.ID[Task]
+
+var NewTaskID = idx.New[Task]
+var MustTaskID = idx.Must[Task]
+var TaskIDFrom = idx.From[Task]
+var TaskIDFromRef = idx.FromRef[Task]
+
+type TaskIDList = idx.List[Task]
+
+var TaskIDListFrom = idx.ListFrom[Task]
+
+type TaskIDSet = idx.Set[Task]
+
+var NewTaskIDSet = idx.NewSet[Task]
+
+type Request struct{}
+
+func (Request) Type() string { return "request" }
+
+type RequestID = idx.ID[Request]
+type RequestIDList = idx.List[Request]
+
+var NewRequestID = idx.New[Request]
+var MustRequestID = idx.Must[Request]
+var RequestIDFrom = idx.From[Request]
+var RequestIDFromRef = idx.FromRef[Request]
+
+type View struct{}
+
+func (View) Type() string { return "view" }
+
+type ViewID = idx.ID[View]
+type ViewIDList = idx.List[View]
+
+var NewViewID = idx.New[View]
+var MustViewID = idx.Must[View]
+var ViewIDFrom = idx.From[View]
+var ViewIDFromRef = idx.FromRef[View]
+
+type Resource struct{}
+
+func (Resource) Type() string { return "resource" }
+
+type ResourceID = idx.ID[Resource]
+type ResourceIDList = idx.List[Resource]
+
+var NewResourceID = idx.New[Resource]
+var MustResourceID = idx.Must[Resource]
+var ResourceIDFrom = idx.From[Resource]
+var ResourceIDFromRef = idx.FromRef[Resource]
+
+type Policy struct{}
+
+func (Policy) Type() string { return "policy" }
+
+type PolicyID = idx.ID[Policy]
+type PolicyIDList = idx.List[Policy]
+
+var NewPolicyID = idx.New[Policy]
+var MustPolicyID = idx.Must[Policy]
+var PolicyIDFrom = idx.From[Policy]
+var PolicyIDFromRef = idx.FromRef[Policy]
+var PolicyIDListFrom = idx.ListFrom[Policy]
 
 type Operation struct{}
 
-func (Operation) Type() string {
-	return "operation"
-}
+func (Operation) Type() string { return "operation" }
 
 type OperationID = idx.ID[Operation]
+type OperationIDList = idx.List[Operation]
 
-func NewOperationID() OperationID {
-	return idx.New[Operation]()
-}
-
-func OperationIDFrom(id string) (OperationID, error) {
-	return idx.From[Operation](id)
-}
-
-func MustOperationID(id string) OperationID {
-	return idx.Must[Operation](id)
-}
+var NewOperationID = idx.New[Operation]
+var MustOperationID = idx.Must[Operation]
+var OperationIDFrom = idx.From[Operation]
+var OperationIDFromRef = idx.FromRef[Operation]
+var OperationIDListFrom = idx.ListFrom[Operation]
 
 // Error
 var ErrInvalidID = idx.ErrInvalidID

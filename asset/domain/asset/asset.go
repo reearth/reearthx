@@ -12,7 +12,7 @@ import (
 )
 
 type Asset struct {
-	id                      id.ID
+	id                      id.AssetID
 	projectID               *id.ProjectID
 	workspaceID             *id.WorkspaceID
 	createdAt               time.Time
@@ -41,7 +41,7 @@ type AccessInfo struct {
 	Public bool
 }
 
-func NewAsset(id id.ID, projectID *id.ProjectID, workspaceID *id.WorkspaceID, createdAt time.Time, size uint64, contentType string) *Asset {
+func NewAsset(id id.AssetID, projectID *id.ProjectID, workspaceID *id.WorkspaceID, createdAt time.Time, size uint64, contentType string) *Asset {
 	return &Asset{
 		id:          id,
 		projectID:   projectID,
@@ -102,14 +102,28 @@ func (f *WorkspaceFilter) CanRead(id *id.WorkspaceID) bool {
 	if id == nil {
 		return false
 	}
-	return f.Readable == nil || f.Readable.Has(*id) || f.CanWrite(id)
+
+	// Convert local WorkspaceID to accountdomain.WorkspaceID
+	accountID, err := accountdomain.WorkspaceIDFrom(id.String())
+	if err != nil {
+		return false
+	}
+
+	return f.Readable == nil || f.Readable.Has(accountID) || f.CanWrite(id)
 }
 
 func (f *WorkspaceFilter) CanWrite(id *id.WorkspaceID) bool {
 	if id == nil {
 		return false
 	}
-	return f.Writable == nil || f.Writable.Has(*id)
+
+	// Convert local WorkspaceID to accountdomain.WorkspaceID
+	accountID, err := accountdomain.WorkspaceIDFrom(id.String())
+	if err != nil {
+		return false
+	}
+
+	return f.Writable == nil || f.Writable.Has(accountID)
 }
 
 func (f *WorkspaceFilter) Merge(g *WorkspaceFilter) *WorkspaceFilter {
@@ -142,7 +156,7 @@ func (a *Asset) IsPublic() bool {
 
 }
 
-func (a *Asset) ID() id.ID {
+func (a *Asset) ID() id.AssetID {
 	return a.id
 }
 
@@ -232,7 +246,7 @@ func (a *Asset) Public() bool {
 }
 
 // Setter methods for modifying private fields
-func (a *Asset) SetID(id id.ID) {
+func (a *Asset) SetID(id id.AssetID) {
 	a.id = id
 }
 

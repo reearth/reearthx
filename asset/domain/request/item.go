@@ -1,8 +1,8 @@
 package request
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/id"
 	"github.com/reearth/reearth-cms/server/pkg/version"
+	"github.com/reearth/reearthx/asset/domain/id"
 )
 
 type ItemList []*Item
