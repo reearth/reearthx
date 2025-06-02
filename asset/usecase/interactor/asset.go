@@ -895,7 +895,6 @@ func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.Fil
 		}
 		afterName := path.Base(parsedURL.Path)
 
-		// Replace new asset file name
 		beforeUrl := fmt.Sprintf("%s/assets/%s", currentHost, beforeName)
 		afterUrl := fmt.Sprintf("%s/assets/%s", currentHost, afterName)
 		*data = bytes.Replace(*data, []byte(beforeUrl), []byte(afterUrl), -1)
@@ -916,4 +915,32 @@ func (i *Asset) FindByWorkspaceProject(ctx context.Context, tid accountdomain.Wo
 			})
 		},
 	)
+}
+
+func (i *Asset) FindByWorkspace(ctx context.Context, tid accountdomain.WorkspaceID, keyword *string, sort *asset.SortType, p *interfaces.PaginationParam) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+
+	var pagination *usecasex.Pagination
+	if p != nil && p.Page != nil {
+		pagination = usecasex.OffsetPagination{
+			Offset: int64((p.Page.Page - 1) * p.Page.PageSize),
+			Limit:  int64(p.Page.PageSize),
+		}.Wrap()
+	}
+
+	return Run2(
+		ctx, nil, i.repos,
+		Usecase().WithReadableWorkspaces(tid),
+		func(ctx context.Context) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+			return i.repos.Asset.FindByWorkspace(ctx, tid, repo.AssetFilter{
+				SortType:   sort,
+				Keyword:    keyword,
+				Pagination: pagination,
+			})
+		},
+	)
+}
+
+func (i *Asset) Fetch(ctx context.Context, assets []id.AssetID) ([]*asset.Asset, error) {
+
+	return i.repos.Asset.FindByIDs(ctx, assets)
 }

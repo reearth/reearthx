@@ -3,9 +3,10 @@ package interfaces
 import (
 	"archive/zip"
 	"context"
+	"io"
+
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/asset/domain/project"
-	"io"
 
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/file"
@@ -65,6 +66,17 @@ type AssetUpload struct {
 	Next            string
 }
 
+type PageBasedPaginationParam struct {
+	Page     int
+	PageSize int
+	OrderBy  *string
+	OrderDir *string
+}
+
+type PaginationParam struct {
+	Page *PageBasedPaginationParam
+}
+
 type Asset interface {
 	FindByID(context.Context, id.AssetID, *usecase.Operator) (*asset.Asset, error)
 	FindByUUID(context.Context, string, *usecase.Operator) (*asset.Asset, error)
@@ -86,4 +98,7 @@ type Asset interface {
 
 	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *id.ProjectID, *string, *asset.SortType, *usecasex.Pagination, *usecase.Operator) ([]*asset.Asset, *usecasex.PageInfo, error)
 	ImportAssetFiles(context.Context, map[string]*zip.File, *[]byte, *project.Project) (*[]byte, error)
+
+	FindByWorkspace(context.Context, accountdomain.WorkspaceID, *string, *asset.SortType, *PaginationParam) ([]*asset.Asset, *PageBasedInfo, error)
+	Fetch(context.Context, []id.AssetID) ([]*asset.Asset, error)
 }

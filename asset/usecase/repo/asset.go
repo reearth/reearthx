@@ -5,6 +5,7 @@ import (
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
+	"github.com/reearth/reearthx/asset/usecase/interfaces"
 
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/id"
@@ -33,6 +34,7 @@ type Asset interface {
 	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error)
 	RemoveByProjectWithFile(context.Context, id.ProjectID, gateway.File) error
 	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *id.ProjectID, AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error)
+	FindByWorkspace(context.Context, accountdomain.WorkspaceID, AssetFilter) ([]*asset.Asset, *interfaces.PageBasedInfo, error) // flow
 }
 
 type AssetFile interface {

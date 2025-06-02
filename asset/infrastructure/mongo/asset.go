@@ -13,6 +13,7 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
+	"github.com/reearth/reearthx/asset/usecase/interfaces"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
@@ -322,10 +323,60 @@ func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f
 	return nil
 }
 
+func (r *Asset) FindByWorkspace(ctx context.Context, id accountdomain.WorkspaceID, uFilter repo.AssetFilter) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+	if !r.workspaceFilter.CanRead(id) {
+		return nil, interfaces.NewPageBasedInfo(0, 1, 1), nil
+	}
+
+	var filter any = bson.M{
+		"workspace": id.String(),
+	}
+
+	if uFilter.Keyword != nil {
+		filter = mongox.And(filter, "name", bson.M{
+			"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)), Options: "i"},
+		})
+	}
+
+	return r.paginate_flow(ctx, filter, uFilter.SortType, uFilter.Pagination)
+}
 func (r *Asset) readFilter(filter interface{}) interface{} {
 	return applyProjectFilter(filter, r.projectFilter.Readable)
 }
 
 func (r *Asset) writeFilter(filter interface{}) interface{} {
 	return applyProjectFilter(filter, r.projectFilter.Writable)
+}
+
+func (r *Asset) paginate_flow(ctx context.Context, filter any, sort *asset.SortType, pagination *usecasex.Pagination) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+
+	c := mongodoc.NewAssetConsumer()
+
+	if pagination != nil && pagination.Offset != nil {
+		skip := pagination.Offset.Offset
+		limit := pagination.Offset.Limit
+
+		total, err := r.client.Count(ctx, filter)
+		if err != nil {
+			return nil, nil, rerror.ErrInternalByWithContext(ctx, err)
+		}
+
+		opts := options.Find()
+		if sort != nil {
+			opts.SetSort(bson.D{{Key: string(sort.Key), Value: 1}})
+		}
+
+		opts.SetSkip(skip).SetLimit(limit)
+
+		if err := r.client.Find(ctx, filter, c, opts); err != nil {
+			return nil, nil, rerror.ErrInternalByWithContext(ctx, err)
+		}
+
+		page := int(skip/limit) + 1
+		pageSize := int(limit)
+
+		return c.Result, interfaces.NewPageBasedInfo(total, page, pageSize), nil
+	}
+
+	return c.Result, interfaces.NewPageBasedInfo(int64(len(c.Result)), 1, len(c.Result)), nil
 }

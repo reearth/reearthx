@@ -10,6 +10,7 @@ import (
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
+	"github.com/reearth/reearthx/asset/usecase/interfaces"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
@@ -216,4 +217,55 @@ func (r *Asset) TotalSizeByWorkspace(_ context.Context, wid accountdomain.Worksp
 		return true
 	})
 	return
+}
+
+func (r *Asset) FindByWorkspace(_ context.Context, wid accountdomain.WorkspaceID, filter repo.AssetFilter) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+	if !r.workspaceFilter.CanRead(wid) {
+		return nil, interfaces.NewPageBasedInfo(0, 1, 1), nil
+	}
+
+	result := r.data.FindAll(func(k id.AssetID, v *asset.Asset) bool {
+		return v.Workspace() == wid && (filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
+	})
+
+	if filter.SortType != nil {
+		s := *filter.SortType
+		sort.SliceStable(result, func(i, j int) bool {
+			if s == asset.SortTypeID {
+				return result[i].ID().Compare(result[j].ID()) < 0
+			}
+			if s == asset.SortTypeSize {
+				return result[i].Size() < result[j].Size()
+			}
+			if s == asset.SortTypeName {
+				return strings.Compare(result[i].Name(), result[j].Name()) < 0
+			}
+			return false
+		})
+	}
+
+	total := int64(len(result))
+	if total == 0 {
+		return nil, interfaces.NewPageBasedInfo(0, 1, 1), nil
+	}
+
+	if filter.Pagination != nil && filter.Pagination.Offset != nil {
+		skip := int(filter.Pagination.Offset.Offset)
+		limit := int(filter.Pagination.Offset.Limit)
+
+		if skip >= len(result) {
+			page := skip/limit + 1
+			return nil, interfaces.NewPageBasedInfo(total, page, limit), nil
+		}
+
+		end := skip + limit
+		if end > len(result) {
+			end = len(result)
+		}
+
+		page := skip/limit + 1
+		return result[skip:end], interfaces.NewPageBasedInfo(total, page, limit), nil
+	}
+
+	return result, interfaces.NewPageBasedInfo(total, 1, int(total)), nil
 }
