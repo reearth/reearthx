@@ -3,7 +3,7 @@ package mongogit
 import (
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/version"
+	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 )

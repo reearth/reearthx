@@ -1,8 +1,8 @@
 package integrationapi
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/group"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
+	"github.com/reearth/reearthx/asset/domain/group"
+	"github.com/reearth/reearthx/asset/domain/schema"
 )
 
 func NewGroup(g *group.Group, s *schema.Schema) Group {

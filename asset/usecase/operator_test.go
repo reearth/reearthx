@@ -1,9 +1,10 @@
 package usecase
 
 import (
+	"testing"
+
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/project"
-	"testing"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"

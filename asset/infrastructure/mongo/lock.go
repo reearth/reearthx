@@ -10,7 +10,7 @@ import (
 	lock "github.com/square/mongo-lock"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/reearth/reearth-cms/server/internal/usecase/repo"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/log"
 )
 

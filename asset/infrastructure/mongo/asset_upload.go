@@ -3,9 +3,9 @@ package mongo
 import (
 	"context"
 
-	"github.com/reearth/reearth-cms/server/internal/infrastructure/mongo/mongodoc"
-	"github.com/reearth/reearth-cms/server/internal/usecase/repo"
-	"github.com/reearth/reearth-cms/server/pkg/asset"
+	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/mongox"
 	"go.mongodb.org/mongo-driver/bson"
 )

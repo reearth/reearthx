@@ -7,6 +7,13 @@ import (
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountusecase"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/model"
+	"github.com/reearth/reearthx/asset/domain/project"
+	"github.com/reearth/reearthx/asset/domain/schema"
+	"github.com/reearth/reearthx/asset/domain/value"
+	"github.com/reearth/reearthx/asset/usecase"
+	"github.com/reearth/reearthx/asset/usecase/interfaces"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

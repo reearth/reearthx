@@ -3,9 +3,9 @@ package mongodoc
 import (
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/item/view"
 	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/item/view"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/samber/lo"
 )

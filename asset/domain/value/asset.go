@@ -1,7 +1,7 @@
 package value
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/id"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/samber/lo"
 )
 

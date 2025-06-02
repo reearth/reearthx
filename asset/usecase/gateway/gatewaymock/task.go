@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	task "github.com/reearth/reearth-cms/server/pkg/task"
+	task "github.com/reearth/reearthx/asset/domain/task"
 )
 
 // MockTaskRunner is a mock of TaskRunner interface.

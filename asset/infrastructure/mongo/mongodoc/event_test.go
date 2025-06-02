@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/event"
-	"github.com/reearth/reearth-cms/server/pkg/operator"
-	"github.com/reearth/reearth-cms/server/pkg/project"
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/asset/domain/event"
+	"github.com/reearth/reearthx/asset/domain/operator"
+	"github.com/reearth/reearthx/asset/domain/project"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"

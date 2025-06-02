@@ -1,8 +1,8 @@
 package item
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/schema"
-	"github.com/reearth/reearth-cms/server/pkg/value"
+	"github.com/reearth/reearthx/asset/domain/schema"
+	"github.com/reearth/reearthx/asset/domain/value"
 	"github.com/reearth/reearthx/util"
 )
 

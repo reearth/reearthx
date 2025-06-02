@@ -1,8 +1,9 @@
 package schema
 
 import (
-	"github.com/reearth/reearthx/asset/domain/value"
 	"testing"
+
+	"github.com/reearth/reearthx/asset/domain/value"
 
 	"github.com/stretchr/testify/assert"
 )

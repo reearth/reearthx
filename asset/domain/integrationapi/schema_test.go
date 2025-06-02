@@ -1,14 +1,14 @@
 package integrationapi
 
 import (
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/item"
+	"github.com/reearth/reearthx/asset/domain/model"
+	"github.com/reearth/reearthx/asset/domain/schema"
+	"github.com/reearth/reearthx/asset/domain/value"
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/item"
-	"github.com/reearth/reearth-cms/server/pkg/model"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
-	"github.com/reearth/reearth-cms/server/pkg/value"
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"

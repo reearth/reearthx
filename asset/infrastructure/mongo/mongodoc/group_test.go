@@ -3,10 +3,10 @@ package mongodoc
 import (
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/group"
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/project"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
+	"github.com/reearth/reearthx/asset/domain/group"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/project"
+	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/stretchr/testify/assert"
 )
 

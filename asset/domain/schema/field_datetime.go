@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/value"
+	"github.com/reearth/reearthx/asset/domain/value"
 )
 
 type FieldDateTime struct{}

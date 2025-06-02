@@ -3,8 +3,8 @@ package request
 import (
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
 	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/util"

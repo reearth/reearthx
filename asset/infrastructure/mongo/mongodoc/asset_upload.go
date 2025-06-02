@@ -3,8 +3,8 @@ package mongodoc
 import (
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/asset"
-	"github.com/reearth/reearth-cms/server/pkg/id"
+	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/mongox"
 )
 

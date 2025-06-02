@@ -3,9 +3,9 @@ package mongodoc
 import (
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/operator"
-	"github.com/reearth/reearth-cms/server/pkg/thread"
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/asset/domain/operator"
+	"github.com/reearth/reearthx/asset/domain/thread"
 
 	"github.com/stretchr/testify/assert"
 )

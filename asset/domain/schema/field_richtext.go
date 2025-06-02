@@ -1,6 +1,6 @@
 package schema
 
-import "github.com/reearth/reearth-cms/server/pkg/value"
+import "github.com/reearth/reearthx/asset/domain/value"
 
 type FieldRichText struct {
 	s *FieldString

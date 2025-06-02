@@ -5,6 +5,9 @@ import (
 	"io"
 
 	"github.com/labstack/gommon/log"
+	"github.com/reearth/reearthx/asset/domain/integrationapi"
+	"github.com/reearth/reearthx/asset/domain/item"
+	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"

@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/integration"
-	"github.com/reearth/reearth-cms/server/pkg/item"
-	"github.com/reearth/reearth-cms/server/pkg/model"
-	"github.com/reearth/reearth-cms/server/pkg/project"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
-	"github.com/reearth/reearth-cms/server/pkg/thread"
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/asset/domain/integration"
+	"github.com/reearth/reearthx/asset/domain/item"
+	"github.com/reearth/reearthx/asset/domain/model"
+	"github.com/reearth/reearthx/asset/domain/project"
+	"github.com/reearth/reearthx/asset/domain/schema"
+	"github.com/reearth/reearthx/asset/domain/thread"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,6 +3,13 @@ package interactor
 import (
 	"bytes"
 	"context"
+	"io"
+	"path"
+	"runtime"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/file"
 	"github.com/reearth/reearthx/asset/domain/id"
@@ -11,12 +18,7 @@ import (
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
-	"io"
-	"path"
-	"runtime"
-	"strings"
-	"testing"
-	"time"
+	"gotest.tools/v3/fs"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/account/accountdomain"

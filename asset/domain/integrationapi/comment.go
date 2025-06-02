@@ -1,7 +1,7 @@
 package integrationapi
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/thread"
+	"github.com/reearth/reearthx/asset/domain/thread"
 	"github.com/samber/lo"
 )
 

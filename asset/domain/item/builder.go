@@ -1,9 +1,9 @@
 package item
 
 import (
+	"github.com/reearth/reearthx/asset/domain/schema"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/schema"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 	"golang.org/x/exp/slices"

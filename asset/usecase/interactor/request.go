@@ -3,6 +3,8 @@ package interactor
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	"github.com/reearth/reearthx/asset/domain/event"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
@@ -12,7 +14,6 @@ import (
 	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
 	"github.com/reearth/reearthx/asset/usecase/repo"
-	"slices"
 
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"

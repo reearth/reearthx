@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
+	"github.com/reearth/reearthx/asset/domain/id"
 )
 
 type Builder struct {

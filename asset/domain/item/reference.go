@@ -1,9 +1,9 @@
 package item
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
-	"github.com/reearth/reearth-cms/server/pkg/value"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/schema"
+	"github.com/reearth/reearthx/asset/domain/value"
 )
 
 func AreItemsReferenced(i1, i2 *Item, s1, s2 *schema.Schema) (*id.FieldID, *id.FieldID) {

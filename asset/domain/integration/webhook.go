@@ -1,10 +1,9 @@
 package integration
 
 import (
+	"github.com/reearth/reearthx/asset/domain/event"
 	"net/url"
 	"time"
-
-	"github.com/reearth/reearth-cms/server/pkg/event"
 )
 
 type Webhook struct {

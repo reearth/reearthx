@@ -1,6 +1,6 @@
 package view
 
-import "github.com/reearth/reearth-cms/server/pkg/id"
+import "github.com/reearth/reearthx/asset/domain/id"
 
 type FieldType string
 

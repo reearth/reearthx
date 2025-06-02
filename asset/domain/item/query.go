@@ -1,9 +1,9 @@
 package item
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/item/view"
-	"github.com/reearth/reearth-cms/server/pkg/version"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/item/view"
+	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/util"
 )
 

@@ -1,10 +1,10 @@
 package asset
 
 import (
+	"github.com/reearth/reearthx/asset/domain/file"
 	"path/filepath"
 	"strings"
 
-	"github.com/reearth/reearth-cms/server/pkg/file"
 	"github.com/samber/lo"
 )
 

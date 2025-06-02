@@ -2,6 +2,7 @@ package interactor
 
 import (
 	"context"
+
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/thread"
 	"github.com/reearth/reearthx/asset/usecase"

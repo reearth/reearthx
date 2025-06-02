@@ -2,16 +2,16 @@ package exporters
 
 import (
 	"encoding/json"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/item"
+	"github.com/reearth/reearthx/asset/domain/schema"
+	"github.com/reearth/reearthx/asset/domain/value"
+	"github.com/reearth/reearthx/asset/domain/version"
 	"net/url"
 	"testing"
 	"time"
 
 	"github.com/iancoleman/orderedmap"
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/item"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
-	"github.com/reearth/reearth-cms/server/pkg/value"
-	"github.com/reearth/reearth-cms/server/pkg/version"
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"

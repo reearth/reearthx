@@ -1,10 +1,10 @@
 package integrationapi
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/exporters"
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/item"
-	"github.com/reearth/reearth-cms/server/pkg/schema"
+	"github.com/reearth/reearthx/asset/domain/exporters"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/item"
+	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/samber/lo"
 )
 

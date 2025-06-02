@@ -2,10 +2,11 @@ package schema
 
 import (
 	"fmt"
-	"github.com/reearth/reearthx/asset/domain/id"
-	"github.com/reearth/reearthx/asset/domain/value"
 	"testing"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/value"
 
 	"github.com/reearth/reearthx/rerror"
 	"github.com/stretchr/testify/assert"

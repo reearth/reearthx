@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
+
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/model"
@@ -13,7 +15,6 @@ import (
 	"github.com/reearth/reearthx/asset/domain/value"
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
-	"reflect"
 
 	"github.com/iancoleman/orderedmap"
 	"github.com/reearth/reearthx/i18n"

@@ -3,7 +3,7 @@ package view
 import (
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/id"
+	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/stretchr/testify/assert"
 )
 

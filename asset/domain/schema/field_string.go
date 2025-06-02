@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/reearth/reearth-cms/server/pkg/value"
+	"github.com/reearth/reearthx/asset/domain/value"
 	"github.com/reearth/reearthx/util"
 )
 

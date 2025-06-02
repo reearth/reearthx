@@ -1,11 +1,11 @@
 package integration
 
 import (
+	"github.com/reearth/reearthx/asset/domain/event"
 	"net/url"
 	"testing"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/event"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"

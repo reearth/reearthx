@@ -6,7 +6,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/reearth/reearth-cms/server/pkg/version"
+	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"

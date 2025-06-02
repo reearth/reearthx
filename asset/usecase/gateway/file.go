@@ -2,12 +2,13 @@ package gateway
 
 import (
 	"context"
-	"github.com/reearth/reearthx/asset/domain/asset"
-	"github.com/reearth/reearthx/asset/domain/file"
 	"io"
 	"mime"
 	"path"
 	"time"
+
+	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/file"
 
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"

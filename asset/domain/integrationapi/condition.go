@@ -1,7 +1,7 @@
 package integrationapi
 
 import (
-	"github.com/reearth/reearth-cms/server/pkg/item/view"
+	"github.com/reearth/reearthx/asset/domain/item/view"
 	"github.com/samber/lo"
 )
 

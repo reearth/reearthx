@@ -3,7 +3,7 @@ package mongodoc
 import (
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/workspacesettings"
+	"github.com/reearth/reearthx/asset/domain/workspacesettings"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )

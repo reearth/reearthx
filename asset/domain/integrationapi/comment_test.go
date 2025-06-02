@@ -1,10 +1,10 @@
 package integrationapi
 
 import (
+	"github.com/reearth/reearthx/asset/domain/operator"
+	"github.com/reearth/reearthx/asset/domain/thread"
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/operator"
-	"github.com/reearth/reearth-cms/server/pkg/thread"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )

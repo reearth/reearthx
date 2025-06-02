@@ -3,11 +3,11 @@ package mongo
 import (
 	"context"
 
-	"github.com/reearth/reearth-cms/server/internal/infrastructure/mongo/mongodoc"
-	"github.com/reearth/reearth-cms/server/internal/usecase/repo"
-	"github.com/reearth/reearth-cms/server/pkg/id"
-	"github.com/reearth/reearth-cms/server/pkg/integration"
 	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/domain/integration"
+	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"

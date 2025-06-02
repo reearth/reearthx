@@ -1,9 +1,9 @@
 package asset
 
 import (
+	"github.com/reearth/reearthx/asset/domain/file"
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/pkg/file"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )
