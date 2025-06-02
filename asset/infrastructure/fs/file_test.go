@@ -3,6 +3,8 @@ package fs
 import (
 	"context"
 	"fmt"
+	"github.com/reearth/reearthx/asset/domain/file"
+	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"io"
 	"os"
 	"path"
@@ -10,8 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/reearth/reearth-cms/server/internal/usecase/gateway"
-	"github.com/reearth/reearth-cms/server/pkg/file"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"

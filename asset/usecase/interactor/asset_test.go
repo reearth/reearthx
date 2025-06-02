@@ -15,11 +15,11 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/project"
 	"github.com/reearth/reearthx/asset/domain/task"
+	"github.com/reearth/reearthx/asset/infrastructure/fs"
 	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
-	"gotest.tools/v3/fs"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/account/accountdomain"
