@@ -1,18 +1,21 @@
 package interactor
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/reearth/reearthx/account/accountdomain"
-	"github.com/reearth/reearthx/asset/domain/project"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/domain/project"
 
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/event"
@@ -31,9 +34,31 @@ import (
 	"github.com/samber/lo"
 )
 
+// HostAdapter defines an interface for getting the current host from context
+type HostAdapter interface {
+	CurrentHost(ctx context.Context) string
+}
+
+// DefaultHostAdapter is a simple implementation of HostAdapter
+// Example implementation:
+/*
+type DefaultHostAdapter struct {
+	host string
+}
+
+func NewDefaultHostAdapter(host string) HostAdapter {
+	return &DefaultHostAdapter{host: host}
+}
+
+func (h *DefaultHostAdapter) CurrentHost(ctx context.Context) string {
+	return h.host
+}
+*/
+
 type Asset struct {
 	repos       *repo.Container
 	gateways    *gateway.Container
+	hostAdapter HostAdapter
 	ignoreEvent bool
 }
 
@@ -41,6 +66,14 @@ func NewAsset(r *repo.Container, g *gateway.Container) interfaces.Asset {
 	return &Asset{
 		repos:    r,
 		gateways: g,
+	}
+}
+
+func NewAssetWithHostAdapter(r *repo.Container, g *gateway.Container, hostAdapter HostAdapter) interfaces.Asset {
+	return &Asset{
+		repos:       r,
+		gateways:    g,
+		hostAdapter: hostAdapter,
 	}
 }
 
@@ -777,7 +810,10 @@ func (i *Asset) RetryDecompression(ctx context.Context, id string) error {
 }
 
 func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.File, data *[]byte, newProject *project.Project) (*[]byte, error) {
-	currentHost := adapter.CurrentHost(ctx)
+	var currentHost string
+	if i.hostAdapter != nil {
+		currentHost = i.hostAdapter.CurrentHost(ctx)
+	}
 
 	var d map[string]any
 	if err := json.Unmarshal(*data, &d); err != nil {
@@ -814,7 +850,7 @@ func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.Fil
 			ContentType: http.DetectContentType([]byte(zipFile.Name)),
 		}
 
-		url, size, err := i.gateways.File.UploadAsset(ctx, file)
+		uploadURL, size, err := i.gateways.File.UploadAsset(ctx, file)
 		if err != nil {
 			return nil, err
 		}
@@ -822,22 +858,28 @@ func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.Fil
 		// Project logo update will be at this time
 		if newProject.ImageURL() != nil {
 			if path.Base(newProject.ImageURL().Path) == beforeName {
-				newProject.SetImageURL(url)
-				err := i.repos.Project.Save(ctx, newProject)
+				parsedURL, err := url.Parse(uploadURL)
+				if err != nil {
+					return nil, err
+				}
+				newProject.SetImageURL(parsedURL)
+				err = i.repos.Project.Save(ctx, newProject)
 				if err != nil {
 					return nil, err
 				}
 			}
 		}
 
+		systemUserID := accountdomain.NewUserID()
+
 		a, err := asset.New().
 			NewID().
+			Project(newProject.ID()).
 			Workspace(newProject.Workspace()).
-			Project(newProject.ID().Ref()).
 			Name(path.Base(realName)).
-			Size(size).
-			URL(url.String()).
-			CoreSupport(true).
+			Size(uint64(size)).
+			UUID(uploadURL).
+			CreatedByUser(systemUserID).
 			Build()
 		if err != nil {
 			return nil, err
@@ -846,7 +888,12 @@ func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.Fil
 		if err := i.repos.Asset.Save(ctx, a); err != nil {
 			return nil, err
 		}
-		afterName := path.Base(url.Path)
+
+		parsedURL, err := url.Parse(uploadURL)
+		if err != nil {
+			return nil, err
+		}
+		afterName := path.Base(parsedURL.Path)
 
 		// Replace new asset file name
 		beforeUrl := fmt.Sprintf("%s/assets/%s", currentHost, beforeName)

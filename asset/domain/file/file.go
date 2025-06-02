@@ -22,6 +22,7 @@ type File struct {
 	Size            int64
 	ContentType     string
 	ContentEncoding string
+	Path            string
 }
 
 func FromMultipart(multipartReader *multipart.Reader, formName string) (*File, error) {

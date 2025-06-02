@@ -57,6 +57,32 @@ func (b *Builder) NewID() *Builder {
 	return b
 }
 
+func (b *Builder) Name(name string) *Builder {
+	b.a.name = name
+	return b
+}
+
+func (b *Builder) CoreSupport(coreSupport bool) *Builder {
+	b.a.coreSupport = coreSupport
+	return b
+}
+
+func (b *Builder) ContentType(contentType string) *Builder {
+	b.a.contentType = contentType
+	return b
+}
+
+func (b *Builder) CreatedBy(createdBy accountdomain.UserID) *Builder {
+	b.a.user = &createdBy
+	b.a.integration = nil
+	return b
+}
+
+func (b *Builder) Workspace(workspace accountdomain.WorkspaceID) *Builder {
+	b.a.workspace = workspace
+	return b
+}
+
 func (b *Builder) Project(pid ProjectID) *Builder {
 	b.a.project = pid
 	return b
