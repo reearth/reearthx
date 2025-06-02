@@ -3,6 +3,7 @@ package interactor
 import (
 	"context"
 	"errors"
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"testing"
 
 	"github.com/reearth/reearthx/asset/domain/id"

@@ -2,6 +2,7 @@ package interactor
 
 import (
 	"context"
+	"github.com/reearth/reearthx/asset/infrastructure/memory"
 	"testing"
 	"time"
 
