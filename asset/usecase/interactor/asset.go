@@ -895,7 +895,7 @@ func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.Fil
 
 		beforeUrl := fmt.Sprintf("%s/assets/%s", currentHost, beforeName)
 		afterUrl := fmt.Sprintf("%s/assets/%s", currentHost, afterName)
-		*data = bytes.Replace(*data, []byte(beforeUrl), []byte(afterUrl), -1)
+		*data = bytes.ReplaceAll(*data, []byte(beforeUrl), []byte(afterUrl))
 	}
 
 	return data, nil
