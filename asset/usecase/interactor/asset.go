@@ -3,11 +3,12 @@ package interactor
 import (
 	"errors"
 	"fmt"
-	"github.com/reearth/reearthx/asset/usecase"
 	"io"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/reearth/reearthx/asset/usecase"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/asset/domain/asset"
@@ -25,7 +26,7 @@ import (
 )
 
 type Asset struct {
-	repos       *repo.Container
+	repos       *Container
 	gateways    *gateway.Container
 	ignoreEvent bool
 }
