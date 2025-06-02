@@ -1,10 +1,15 @@
 package interactor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/domain/project"
 	"io"
+	"net/http"
 	"path"
 	"strings"
 	"time"
@@ -769,4 +774,99 @@ func (i *Asset) event(ctx context.Context, e Event) error {
 
 func (i *Asset) RetryDecompression(ctx context.Context, id string) error {
 	return i.gateways.TaskRunner.Retry(ctx, id)
+}
+
+func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.File, data *[]byte, newProject *project.Project) (*[]byte, error) {
+	currentHost := adapter.CurrentHost(ctx)
+
+	var d map[string]any
+	if err := json.Unmarshal(*data, &d); err != nil {
+		return nil, err
+	}
+
+	assetNames := make(map[string]string)
+	for beforeName, realName := range d["assets"].(map[string]any) {
+		if realName, ok := realName.(string); ok {
+			assetNames[beforeName] = realName
+		}
+	}
+
+	for beforeName, zipFile := range assets {
+		if zipFile.UncompressedSize64 == 0 {
+			continue
+		}
+		realName := assetNames[beforeName]
+		readCloser, err := zipFile.Open()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			if cerr := readCloser.Close(); cerr != nil {
+				fmt.Printf("Error closing file: %v\n", cerr)
+			}
+		}()
+
+		file := &file.File{
+			Content:     readCloser,
+			Path:        realName,
+			Size:        int64(zipFile.UncompressedSize64),
+			ContentType: http.DetectContentType([]byte(zipFile.Name)),
+		}
+
+		url, size, err := i.gateways.File.UploadAsset(ctx, file)
+		if err != nil {
+			return nil, err
+		}
+
+		// Project logo update will be at this time
+		if newProject.ImageURL() != nil {
+			if path.Base(newProject.ImageURL().Path) == beforeName {
+				newProject.SetImageURL(url)
+				err := i.repos.Project.Save(ctx, newProject)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		a, err := asset.New().
+			NewID().
+			Workspace(newProject.Workspace()).
+			Project(newProject.ID().Ref()).
+			Name(path.Base(realName)).
+			Size(size).
+			URL(url.String()).
+			CoreSupport(true).
+			Build()
+		if err != nil {
+			return nil, err
+		}
+
+		if err := i.repos.Asset.Save(ctx, a); err != nil {
+			return nil, err
+		}
+		afterName := path.Base(url.Path)
+
+		// Replace new asset file name
+		beforeUrl := fmt.Sprintf("%s/assets/%s", currentHost, beforeName)
+		afterUrl := fmt.Sprintf("%s/assets/%s", currentHost, afterName)
+		*data = bytes.Replace(*data, []byte(beforeUrl), []byte(afterUrl), -1)
+	}
+
+	return data, nil
+}
+
+func (i *Asset) FindByWorkspaceProject(ctx context.Context, tid accountdomain.WorkspaceID, pid *id.ProjectID, keyword *string, sort *asset.SortType, p *usecasex.Pagination, operator *usecase.Operator) ([]*asset.Asset, *usecasex.PageInfo, error) {
+	return Run2(
+		ctx, operator, i.repos,
+		Usecase().WithReadableWorkspaces(tid),
+		func(ctx context.Context) ([]*asset.Asset, *usecasex.PageInfo, error) {
+			return i.repos.Asset.FindByWorkspaceProject(ctx, tid, pid, repo.AssetFilter{
+				SortType:   sort,
+				Keyword:    keyword,
+				Pagination: p,
+			})
+		},
+	)
 }

@@ -1,7 +1,10 @@
 package interfaces
 
 import (
+	"archive/zip"
 	"context"
+	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/domain/project"
 	"io"
 
 	"github.com/reearth/reearthx/asset/domain/asset"
@@ -47,6 +50,7 @@ var (
 
 type AssetFilter struct {
 	Sort         *usecasex.Sort
+	VizSort      *asset.SortType // viz sort
 	Keyword      *string
 	Pagination   *usecasex.Pagination
 	ContentTypes []string
@@ -79,4 +83,7 @@ type Asset interface {
 	Unpublish(context.Context, id.AssetID, *usecase.Operator) (*asset.Asset, error)
 	CreateUpload(context.Context, CreateAssetUploadParam, *usecase.Operator) (*AssetUpload, error)
 	RetryDecompression(context.Context, string) error
+
+	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *id.ProjectID, *string, *asset.SortType, *usecasex.Pagination, *usecase.Operator) ([]*asset.Asset, *usecasex.PageInfo, error)
+	ImportAssetFiles(context.Context, map[string]*zip.File, *[]byte, *project.Project) (*[]byte, error)
 }

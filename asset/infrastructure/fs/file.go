@@ -4,15 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/reearth/reearthx/asset/domain/asset"
-	"github.com/reearth/reearthx/asset/domain/file"
-	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"io"
 	"io/fs"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/reearth/reearthx/asset/infrastructure"
+
+	"github.com/kennygrant/sanitize"
+	"github.com/reearth/reearthx/asset/domain/asset"
+	"github.com/reearth/reearthx/asset/domain/file"
+	"github.com/reearth/reearthx/asset/usecase/gateway"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/i18n"
@@ -22,10 +27,12 @@ import (
 )
 
 type fileRepo struct {
-	fs          afero.Fs
-	publicBase  *url.URL
-	privateBase *url.URL
-	public      bool
+	fs              afero.Fs
+	publicBase      *url.URL                        //cms
+	privateBase     *url.URL                        //cms
+	public          bool                            //cms
+	urlBase         *url.URL                        //viz
+	baseFileStorage *infrastructure.BaseFileStorage //viz
 }
 
 func NewFile(fs afero.Fs, publicBase string) (gateway.File, error) {
@@ -71,6 +78,17 @@ func (f *fileRepo) ReadAsset(ctx context.Context, fileUUID string, fn string, h 
 	p := getFSObjectPath(fileUUID, fn)
 
 	return f.Read(ctx, p, h)
+}
+
+func (f *fileRepo) RemoveAsset(ctx context.Context, u *url.URL) error {
+	if u == nil {
+		return nil
+	}
+	p := sanitize.Path(u.Path)
+	if p == "" || f.urlBase == nil || u.Scheme != f.urlBase.Scheme || u.Host != f.urlBase.Host || path.Dir(p) != filepath.Join(f.urlBase.Path, assetDir) {
+		return gateway.ErrInvalidFile
+	}
+	return f.delete(filepath.Join(assetDir, filepath.Base(p)))
 }
 
 func (f *fileRepo) GetAssetFiles(_ context.Context, fileUUID string) ([]gateway.FileEntry, error) {

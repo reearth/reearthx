@@ -12,6 +12,7 @@ import (
 type Asset struct {
 	id                      ID
 	project                 ProjectID
+	workspace               accountdomain.WorkspaceID
 	createdAt               time.Time
 	user                    *accountdomain.UserID
 	integration             *IntegrationID
@@ -24,6 +25,10 @@ type Asset struct {
 	flatFiles               bool
 	public                  bool
 	accessInfoResolver      *AccessInfoResolver
+	url                     string
+	contentType             string // flow
+	name                    string // flow
+	coreSupport             bool   // flow
 }
 
 type AccessInfoResolver = func(*Asset) *AccessInfo
@@ -35,12 +40,52 @@ type AccessInfo struct {
 
 // getters
 
+func (a *Asset) Name() string {
+	if a == nil {
+		return ""
+	}
+
+	return a.name
+}
+
+func (a *Asset) ContentType() string {
+	if a == nil {
+		return ""
+	}
+
+	return a.contentType
+}
+
+func (a *Asset) CoreSupport() bool {
+	if a == nil {
+		return false
+	}
+
+	return a.coreSupport
+}
+
 func (a *Asset) ID() ID {
 	return a.id
 }
 
+func (a *Asset) URL() string {
+	if a == nil {
+		return ""
+	}
+
+	return a.url
+}
+
 func (a *Asset) Project() ProjectID {
 	return a.project
+}
+
+func (a *Asset) Workspace() accountdomain.WorkspaceID {
+	if a == nil {
+		return accountdomain.WorkspaceID{}
+	}
+
+	return a.workspace
 }
 
 func (a *Asset) CreatedAt() time.Time {
@@ -148,7 +193,7 @@ func (a *Asset) Clone() *Asset {
 
 	return &Asset{
 		id:                      a.id.Clone(),
-		project:                 a.project.Clone(),
+		project:                 a.project,
 		createdAt:               a.createdAt,
 		user:                    a.user.CloneRef(),
 		integration:             a.integration.CloneRef(),
@@ -162,3 +207,14 @@ func (a *Asset) Clone() *Asset {
 		public:                  a.public,
 	}
 }
+
+type SortType struct {
+	Key  string
+	Desc bool
+}
+
+var (
+	SortTypeID   = SortType{Key: "id"}
+	SortTypeSize = SortType{Key: "size"}
+	SortTypeName = SortType{Key: "name"}
+)

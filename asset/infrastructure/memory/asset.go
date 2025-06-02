@@ -2,10 +2,14 @@ package memory
 
 import (
 	"context"
+	"sort"
 	"strings"
+
+	"github.com/reearth/reearthx/account/accountdomain"
 
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/id"
+	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
@@ -14,9 +18,10 @@ import (
 )
 
 type Asset struct {
-	data *util.SyncMap[asset.ID, *asset.Asset]
-	err  error
-	f    repo.ProjectFilter
+	data            *util.SyncMap[asset.ID, *asset.Asset]
+	err             error
+	projectFilter   repo.ProjectFilter
+	workspaceFilter repo.WorkspaceFilter
 }
 
 func NewAsset() repo.Asset {
@@ -27,8 +32,9 @@ func NewAsset() repo.Asset {
 
 func (r *Asset) Filtered(f repo.ProjectFilter) repo.Asset {
 	return &Asset{
-		data: r.data,
-		f:    r.f.Merge(f),
+		data:            r.data,
+		projectFilter:   r.projectFilter.Merge(f),
+		workspaceFilter: r.workspaceFilter,
 	}
 }
 
@@ -38,7 +44,7 @@ func (r *Asset) FindByID(_ context.Context, id id.AssetID) (*asset.Asset, error)
 	}
 
 	return rerror.ErrIfNil(r.data.Find(func(key asset.ID, value *asset.Asset) bool {
-		return key == id && r.f.CanRead(value.Project())
+		return key == id && r.projectFilter.CanRead(value.Project())
 	}), rerror.ErrNotFound)
 }
 
@@ -48,7 +54,7 @@ func (r *Asset) FindByUUID(_ context.Context, uuid string) (*asset.Asset, error)
 	}
 
 	return rerror.ErrIfNil(r.data.Find(func(key asset.ID, value *asset.Asset) bool {
-		return value.UUID() == uuid && r.f.CanRead(value.Project())
+		return value.UUID() == uuid && r.projectFilter.CanRead(value.Project())
 	}), rerror.ErrNotFound)
 }
 
@@ -58,13 +64,13 @@ func (r *Asset) FindByIDs(_ context.Context, ids id.AssetIDList) (asset.List, er
 	}
 
 	res := asset.List(r.data.FindAll(func(key asset.ID, value *asset.Asset) bool {
-		return ids.Has(key) && r.f.CanRead(value.Project())
+		return ids.Has(key) && r.projectFilter.CanRead(value.Project())
 	})).SortByID()
 	return res, nil
 }
 
 func (r *Asset) Search(_ context.Context, id id.ProjectID, filter repo.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
-	if !r.f.CanRead(id) {
+	if !r.projectFilter.CanRead(id) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
 
@@ -105,7 +111,7 @@ func (r *Asset) Search(_ context.Context, id id.ProjectID, filter repo.AssetFilt
 }
 
 func (r *Asset) Save(_ context.Context, a *asset.Asset) error {
-	if !r.f.CanWrite(a.Project()) {
+	if !r.projectFilter.CanWrite(a.Project()) {
 		return repo.ErrOperationDenied
 	}
 
@@ -122,7 +128,7 @@ func (r *Asset) Delete(_ context.Context, id id.AssetID) error {
 		return r.err
 	}
 
-	if a, ok := r.data.Load(id); ok && r.f.CanWrite(a.Project()) {
+	if a, ok := r.data.Load(id); ok && r.projectFilter.CanWrite(a.Project().Clone()) {
 		r.data.Delete(id)
 	}
 	return nil
@@ -134,9 +140,80 @@ func (r *Asset) BatchDelete(_ context.Context, ids id.AssetIDList) error {
 	}
 
 	for _, aId := range ids {
-		if a, ok := r.data.Load(aId); ok && r.f.CanWrite(a.Project()) {
+		if a, ok := r.data.Load(aId); ok && r.projectFilter.CanWrite(a.Project().Clone()) {
 			r.data.Delete(aId)
 		}
 	}
 	return nil
+}
+
+func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f gateway.File) error {
+	r.data.FindAll(func(id id.AssetID, a *asset.Asset) bool {
+		if r.workspaceFilter.CanWrite(a.Workspace()) {
+			if a.Project() == pid {
+				r.data.Delete(id)
+			}
+		}
+		return true
+	})
+	return nil
+}
+
+func (r *Asset) FindByWorkspaceProject(_ context.Context, wid accountdomain.WorkspaceID, pid *id.ProjectID, filter repo.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+	if !r.workspaceFilter.CanRead(wid) {
+		return nil, usecasex.EmptyPageInfo(), nil
+	}
+
+	result := r.data.FindAll(func(k id.AssetID, v *asset.Asset) bool {
+		if pid != nil {
+			return v.Project() == *pid && v.CoreSupport() && (filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
+		}
+		return v.Workspace() == wid && v.CoreSupport() && (filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
+	})
+
+	if filter.SortType != nil {
+		s := *filter.SortType
+		sort.SliceStable(result, func(i, j int) bool {
+			if s == asset.SortTypeID {
+				return result[i].ID().Compare(result[j].ID()) < 0
+			}
+			if s == asset.SortTypeSize {
+				return result[i].Size() < result[j].Size()
+			}
+			if s == asset.SortTypeName {
+				return strings.Compare(result[i].Name(), result[j].Name()) < 0
+			}
+			return false
+		})
+	}
+
+	var startCursor, endCursor *usecasex.Cursor
+	if len(result) > 0 {
+		_startCursor := usecasex.Cursor(result[0].ID().String())
+		_endCursor := usecasex.Cursor(result[len(result)-1].ID().String())
+		startCursor = &_startCursor
+		endCursor = &_endCursor
+	}
+
+	return result, usecasex.NewPageInfo(
+		int64(len(result)),
+		startCursor,
+		endCursor,
+		true,
+		true,
+	), nil
+}
+
+func (r *Asset) TotalSizeByWorkspace(_ context.Context, wid accountdomain.WorkspaceID) (t int64, err error) {
+	if !r.workspaceFilter.CanRead(wid) {
+		return 0, nil
+	}
+
+	r.data.Range(func(k id.AssetID, v *asset.Asset) bool {
+		if v.Workspace() == wid {
+			t += int64(v.Size())
+		}
+		return true
+	})
+	return
 }

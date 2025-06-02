@@ -3,6 +3,9 @@ package repo
 import (
 	"context"
 
+	"github.com/reearth/reearthx/account/accountdomain"
+	"github.com/reearth/reearthx/asset/usecase/gateway"
+
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/id"
 
@@ -11,6 +14,7 @@ import (
 
 type AssetFilter struct {
 	Sort         *usecasex.Sort
+	SortType     *asset.SortType
 	Keyword      *string
 	Pagination   *usecasex.Pagination
 	ContentTypes []string
@@ -23,8 +27,12 @@ type Asset interface {
 	FindByIDs(context.Context, id.AssetIDList) (asset.List, error)
 	Search(context.Context, id.ProjectID, AssetFilter) (asset.List, *usecasex.PageInfo, error)
 	Save(context.Context, *asset.Asset) error
-	Delete(context.Context, id.AssetID) error
+	Delete(context.Context, id.AssetID) error // save as remove at viz
 	BatchDelete(context.Context, id.AssetIDList) error
+
+	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error)
+	RemoveByProjectWithFile(context.Context, id.ProjectID, gateway.File) error
+	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *id.ProjectID, AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error)
 }
 
 type AssetFile interface {

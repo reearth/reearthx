@@ -24,6 +24,7 @@ require (
 	github.com/iancoleman/strcase v0.3.0
 	github.com/jarcoal/httpmock v1.4.0
 	github.com/jpillora/opts v1.2.3
+	github.com/kennygrant/sanitize v1.2.4
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2
 	github.com/maruel/panicparse/v2 v2.5.0
@@ -54,7 +55,6 @@ require (
 	gopkg.in/go-jose/go-jose.v2 v2.6.3
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
-	gotest.tools/v3 v3.5.2
 )
 
 require (
@@ -87,7 +87,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
