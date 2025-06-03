@@ -6,7 +6,6 @@ import (
 	"slices"
 
 	"github.com/reearth/reearthx/util"
-	"golang.org/x/text/language"
 )
 
 var (
@@ -16,13 +15,12 @@ var (
 type User struct {
 	id            ID
 	name          string
-	displayName   string
+	alias         string
 	email         string
+	metadata      *Metadata
 	password      EncodedPassword
 	workspace     WorkspaceID
 	auths         []Auth
-	lang          language.Tag
-	theme         Theme
 	verification  *Verification
 	passwordReset *PasswordReset
 	host          string
@@ -36,11 +34,12 @@ func (u *User) Name() string {
 	return u.name
 }
 
-func (u *User) DisplayName() string {
-	if u.displayName == "" {
+func (u *User) Alias() string {
+	if u.alias == "" {
 		return u.name
 	}
-	return u.displayName
+
+	return u.alias
 }
 
 func (u *User) Email() string {
@@ -51,20 +50,16 @@ func (u *User) Workspace() WorkspaceID {
 	return u.workspace
 }
 
-func (u *User) Lang() language.Tag {
-	return u.lang
-}
-
-func (u *User) Theme() Theme {
-	return u.theme
-}
-
 func (u *User) Password() []byte {
 	return u.password
 }
 
 func (u *User) UpdateName(name string) {
 	u.name = name
+}
+
+func (u *User) UpdateAlias(alias string) {
+	u.alias = alias
 }
 
 func (u *User) UpdateEmail(email string) error {
@@ -79,20 +74,12 @@ func (u *User) UpdateWorkspace(workspace WorkspaceID) {
 	u.workspace = workspace
 }
 
-func (u *User) UpdateLang(lang language.Tag) {
-	u.lang = lang
-}
-
-func (u *User) UpdateTheme(t Theme) {
-	u.theme = t
-}
-
-func (u *User) UpdateDisplayName(displayName string) {
-	u.displayName = displayName
-}
-
 func (u *User) Verification() *Verification {
 	return u.verification
+}
+
+func (u *User) Metadata() *Metadata {
+	return u.metadata
 }
 
 func (u *User) Auths() Auths {
@@ -207,6 +194,10 @@ func (u *User) SetVerification(v *Verification) {
 	u.verification = v
 }
 
+func (u *User) SetMetadata(m *Metadata) {
+	u.metadata = m
+}
+
 func (u *User) Host() string {
 	return u.host
 }
@@ -215,13 +206,12 @@ func (u *User) Clone() *User {
 	return &User{
 		id:            u.id,
 		name:          u.name,
-		displayName:   u.displayName,
+		alias:         u.alias,
 		email:         u.email,
 		password:      u.password,
 		workspace:     u.workspace,
 		auths:         slices.Clone(u.auths),
-		lang:          u.lang,
-		theme:         u.theme,
+		metadata:      util.CloneRef(u.metadata),
 		verification:  util.CloneRef(u.verification),
 		passwordReset: util.CloneRef(u.passwordReset),
 	}

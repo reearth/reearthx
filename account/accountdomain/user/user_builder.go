@@ -4,10 +4,10 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
-	"golang.org/x/text/language"
 )
 
 var ErrInvalidName = rerror.NewE(i18n.T("invalid user name"))
+var ErrInvalidAlias = rerror.NewE(i18n.T("invalid alias"))
 
 type Builder struct {
 	u            *User
@@ -30,12 +30,16 @@ func (b *Builder) Build() (*User, error) {
 	if b.u.name == "" {
 		return nil, ErrInvalidName
 	}
-	if !b.u.theme.Valid() {
-		b.u.theme = ThemeDefault
-	}
 	if b.passwordText != "" {
 		if err := b.u.SetPassword(b.passwordText); err != nil {
 			return nil, err
+		}
+	}
+	if b.u.metadata != nil {
+		b.u.SetMetadata(b.u.metadata)
+
+		if !b.u.metadata.theme.Valid() {
+			b.u.metadata.theme = ThemeDefault
 		}
 	}
 	if err := b.u.UpdateEmail(b.email); err != nil {
@@ -72,8 +76,8 @@ func (b *Builder) Name(name string) *Builder {
 	return b
 }
 
-func (b *Builder) DisplayName(displayName string) *Builder {
-	b.u.displayName = displayName
+func (b *Builder) Alias(alias string) *Builder {
+	b.u.alias = alias
 	return b
 }
 
@@ -97,25 +101,6 @@ func (b *Builder) Workspace(workspace WorkspaceID) *Builder {
 	return b
 }
 
-func (b *Builder) Lang(lang language.Tag) *Builder {
-	b.u.lang = lang
-	return b
-}
-
-func (b *Builder) Theme(t Theme) *Builder {
-	b.u.theme = t
-	return b
-}
-
-func (b *Builder) LangFrom(lang string) *Builder {
-	if lang == "" {
-		b.u.lang = language.Und
-	} else if l, err := language.Parse(lang); err == nil {
-		b.u.lang = l
-	}
-	return b
-}
-
 func (b *Builder) Auths(auths []Auth) *Builder {
 	for _, a := range auths {
 		b.u.AddAuth(a)
@@ -130,5 +115,10 @@ func (b *Builder) PasswordReset(pr *PasswordReset) *Builder {
 
 func (b *Builder) Verification(v *Verification) *Builder {
 	b.u.verification = v
+	return b
+}
+
+func (b *Builder) Metadata(m *Metadata) *Builder {
+	b.u.metadata = m
 	return b
 }

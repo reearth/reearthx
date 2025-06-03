@@ -16,7 +16,7 @@ type PasswordResetDocument struct {
 type UserDocument struct {
 	ID            string
 	Name          string
-	DisplayName   string
+	Alias         string
 	Email         string
 	Subs          []string
 	Workspace     string
@@ -26,12 +26,21 @@ type UserDocument struct {
 	Password      []byte
 	PasswordReset *PasswordResetDocument
 	Verification  *UserVerificationDoc
+	Metadata      *UserMetadataDoc
 }
 
 type UserVerificationDoc struct {
 	Code       string
 	Expiration time.Time
 	Verified   bool
+}
+
+type UserMetadataDoc struct {
+	Description string
+	Website     string
+	PhotoURL    string
+	Lang        string
+	Theme       string
 }
 
 func NewUser(user *user.User) (*UserDocument, string) {
@@ -59,18 +68,28 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		}
 	}
 
+	var metadataDoc *UserMetadataDoc
+	if user.Metadata() != nil {
+		metadataDoc = &UserMetadataDoc{
+			Description: user.Metadata().Description(),
+			Website:     user.Metadata().Website(),
+			PhotoURL:    user.Metadata().PhotoURL(),
+			Lang:        user.Metadata().Lang().String(),
+			Theme:       string(user.Metadata().Theme()),
+		}
+	}
+
 	return &UserDocument{
 		ID:            id,
 		Name:          user.Name(),
-		DisplayName:   user.DisplayName(),
+		Alias:         user.Alias(),
 		Email:         user.Email(),
 		Subs:          authsdoc,
 		Workspace:     user.Workspace().String(),
-		Lang:          user.Lang().String(),
-		Theme:         string(user.Theme()),
 		Verification:  v,
 		Password:      user.Password(),
 		PasswordReset: pwdResetDoc,
+		Metadata:      metadataDoc,
 	}, id
 }
 
@@ -100,17 +119,27 @@ func (d *UserDocument) Model() (*user.User, error) {
 		v = user.VerificationFrom(d.Verification.Code, d.Verification.Expiration, d.Verification.Verified)
 	}
 
+	var metadata *user.Metadata
+	if d.Metadata != nil {
+		metadata = user.NewMetadata()
+		metadata.SetDescription(d.Metadata.Description)
+		metadata.SetWebsite(d.Metadata.Website)
+		metadata.SetPhotoURL(d.Metadata.PhotoURL)
+		metadata.LangFrom(d.Metadata.Lang)
+		metadata.SetTheme(user.Theme(d.Metadata.Theme))
+	}
+
 	u, err := user.New().
 		ID(uid).
 		Name(d.Name).
 		Email(d.Email).
+		Metadata(metadata).
+		Alias(d.Alias).
 		Auths(auths).
 		Workspace(tid).
-		LangFrom(d.Lang).
 		Verification(v).
 		EncodedPassword(d.Password).
 		PasswordReset(d.PasswordReset.Model()).
-		Theme(user.Theme(d.Theme)).
 		Build()
 
 	if err != nil {
