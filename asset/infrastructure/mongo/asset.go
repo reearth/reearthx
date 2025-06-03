@@ -240,11 +240,12 @@ func (r *Asset) FindByWorkspaceProject(ctx context.Context, id accountdomain.Wor
 		bucketPattern = r.hostAdapter.CurrentHost(ctx)
 	}
 
-	if bucketPattern == "" {
+	switch {
+	case bucketPattern == "":
 		bucketPattern = "example.com"
-	} else if strings.Contains(bucketPattern, "localhost") {
+	case strings.Contains(bucketPattern, "localhost"):
 		bucketPattern = "localhost"
-	} else {
+	default:
 		bucketPattern = "visualizer"
 	}
 

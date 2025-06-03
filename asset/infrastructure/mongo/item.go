@@ -31,7 +31,7 @@ var itemIndexes = []string{
 	"project,__r,modelid,schema,__",
 	"modelid,id,__r",
 	"modelid,!_id,__r",
-	//"__r,assets,project,__", // mongo cannot index parallel arrays [assets] [__r]
+	// "__r,assets,project,__", // mongo cannot index parallel arrays [assets] [__r]
 	"__r,project,__",
 	"__r,asset,project,__",
 	"schema,id,__r,project",

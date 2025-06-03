@@ -85,14 +85,16 @@ func (f WorkspaceFilter) Merge(g WorkspaceFilter) WorkspaceFilter {
 		if f.Readable == nil {
 			r = g.Readable.Clone()
 		} else {
-			r = append(f.Readable, g.Readable...)
+			r = f.Readable
+			r = append(r, g.Readable...)
 		}
 	}
 	if f.Writable != nil || g.Writable != nil {
 		if f.Writable == nil {
 			w = g.Writable.Clone()
 		} else {
-			w = append(f.Writable, g.Writable...)
+			w = f.Writable
+			w = append(w, g.Writable...)
 		}
 	}
 	return WorkspaceFilter{
@@ -134,14 +136,16 @@ func (f ProjectFilter) Merge(g ProjectFilter) ProjectFilter {
 		if f.Readable == nil {
 			r = g.Readable.Clone()
 		} else {
-			r = append(f.Readable, g.Readable...)
+			r = f.Readable
+			r = append(r, g.Readable...)
 		}
 	}
 	if f.Writable != nil || g.Writable != nil {
 		if f.Writable == nil {
 			w = g.Writable.Clone()
 		} else {
-			w = append(f.Writable, g.Writable...)
+			w = f.Writable
+			w = append(w, g.Writable...)
 		}
 	}
 	return ProjectFilter{

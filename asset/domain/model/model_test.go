@@ -313,24 +313,24 @@ func TestModel_SetKey(t *testing.T) {
 				Err:   fmt.Errorf("%s", "a"),
 			},
 		},
-		//{
-		//	name: "fail 2",
-		//	args: args{key: id.NewKey("_aaaaaaaa")},
-		//	want: Model{},
-		//	wantErr: &rerror.Error{
-		//		Label: ErrInvalidKey,
-		//		Err:   fmt.Errorf("%s", "_aaaaaaaa"),
-		//	},
-		//},
-		//{
-		//	name: "fail 3",
-		//	args: args{key: id.NewKey("-aaaaaaaa")},
-		//	want: Model{},
-		//	wantErr: &rerror.Error{
-		//		Label: ErrInvalidKey,
-		//		Err:   fmt.Errorf("%s", "-aaaaaaaa"),
-		//	},
-		//},
+		// {
+		// 	name: "fail 2",
+		// 	args: args{key: id.NewKey("_aaaaaaaa")},
+		// 	want: Model{},
+		// 	wantErr: &rerror.Error{
+		// 		Label: ErrInvalidKey,
+		// 		Err:   fmt.Errorf("%s", "_aaaaaaaa"),
+		// 	},
+		// },
+		// {
+		// 	name: "fail 3",
+		// 	args: args{key: id.NewKey("-aaaaaaaa")},
+		// 	want: Model{},
+		// 	wantErr: &rerror.Error{
+		// 		Label: ErrInvalidKey,
+		// 		Err:   fmt.Errorf("%s", "-aaaaaaaa"),
+		// 	},
+		// },
 		{
 			name: "fails assets",
 			args: args{key: id.NewKey("assets")},

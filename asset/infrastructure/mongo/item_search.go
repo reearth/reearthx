@@ -189,7 +189,7 @@ func lookupReferencedField(f schema.Field, tfID id.FieldID) []any {
 		bson.M{
 			"$set": bson.M{
 				"__temp.fields." + f.ID().String(): bson.M{"$arrayElemAt": bson.A{"$__temp.&" + f.ID().String() + ".__temp.fields." + tfID.String(), 0}},
-				//"__temp.fields." + f.ID().String(): "$__temp.&" + f.ID().String() + ".__temp.fields." + tfID.String(),
+				// "__temp.fields." + f.ID().String(): "$__temp.&" + f.ID().String() + ".__temp.fields." + tfID.String(),
 			},
 		},
 	}

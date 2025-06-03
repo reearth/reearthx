@@ -254,24 +254,24 @@ func TestGroup_SetKey(t *testing.T) {
 				Err:   fmt.Errorf("%s", "a"),
 			},
 		},
-		//{
-		//	name: "fail 2",
-		//	args: args{key: id.NewKey("_aaaaaaaa")},
-		//	want: Group{},
-		//	wantErr: &rerror.Error{
-		//		Label: id.ErrInvalidKey,
-		//		Err:   fmt.Errorf("%s", "_aaaaaaaa"),
-		//	},
-		//},
-		//{
-		//	name: "fail 3",
-		//	args: args{key: id.NewKey("-aaaaaaaa")},
-		//	want: Group{},
-		//	wantErr: &rerror.Error{
-		//		Label: id.ErrInvalidKey,
-		//		Err:   fmt.Errorf("%s", "-aaaaaaaa"),
-		//	},
-		//},
+		// {
+		// 	name: "fail 2",
+		// 	args: args{key: id.NewKey("_aaaaaaaa")},
+		// 	want: Group{},
+		// 	wantErr: &rerror.Error{
+		// 		Label: id.ErrInvalidKey,
+		// 		Err:   fmt.Errorf("%s", "_aaaaaaaa"),
+		// 	},
+		// },
+		// {
+		// 	name: "fail 3",
+		// 	args: args{key: id.NewKey("-aaaaaaaa")},
+		// 	want: Group{},
+		// 	wantErr: &rerror.Error{
+		// 		Label: id.ErrInvalidKey,
+		// 		Err:   fmt.Errorf("%s", "-aaaaaaaa"),
+		// 	},
+		// },
 		{
 			name: "empty",
 			args: args{key: id.NewKey("")},

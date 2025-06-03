@@ -25,12 +25,12 @@ func NewView(r *repo.Container, g *gateway.Container) interfaces.View {
 	}
 }
 
-func (i View) FindByID(ctx context.Context, ID view.ID, _ *usecase.Operator) (*view.View, error) {
-	return i.repos.View.FindByID(ctx, ID)
+func (i View) FindByID(ctx context.Context, id view.ID, _ *usecase.Operator) (*view.View, error) {
+	return i.repos.View.FindByID(ctx, id)
 }
 
-func (i View) FindByIDs(ctx context.Context, IDs view.IDList, _ *usecase.Operator) (view.List, error) {
-	return i.repos.View.FindByIDs(ctx, IDs)
+func (i View) FindByIDs(ctx context.Context, ids view.IDList, _ *usecase.Operator) (view.List, error) {
+	return i.repos.View.FindByIDs(ctx, ids)
 }
 
 func (i View) FindByModel(ctx context.Context, mID view.ModelID, _ *usecase.Operator) (view.List, error) {
@@ -93,10 +93,10 @@ func (i View) Create(ctx context.Context, param interfaces.CreateViewParam, op *
 		})
 }
 
-func (i View) Update(ctx context.Context, ID view.ID, param interfaces.UpdateViewParam, op *usecase.Operator) (*view.View, error) {
+func (i View) Update(ctx context.Context, id view.ID, param interfaces.UpdateViewParam, op *usecase.Operator) (*view.View, error) {
 	return Run1(ctx, op, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *view.View, err error) {
-			v, err := i.repos.View.FindByID(ctx, ID)
+			v, err := i.repos.View.FindByID(ctx, id)
 			if err != nil {
 				return nil, err
 			}
@@ -153,10 +153,10 @@ func (i View) UpdateOrder(ctx context.Context, ids view.IDList, operator *usecas
 		})
 }
 
-func (i View) Delete(ctx context.Context, ID view.ID, op *usecase.Operator) error {
+func (i View) Delete(ctx context.Context, id view.ID, op *usecase.Operator) error {
 	return Run0(ctx, op, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) error {
-			m, err := i.repos.View.FindByID(ctx, ID)
+			m, err := i.repos.View.FindByID(ctx, id)
 			if err != nil {
 				return err
 			}
@@ -172,7 +172,7 @@ func (i View) Delete(ctx context.Context, ID view.ID, op *usecase.Operator) erro
 				return interfaces.ErrLastView
 			}
 
-			if err := i.repos.View.Remove(ctx, ID); err != nil {
+			if err := i.repos.View.Remove(ctx, id); err != nil {
 				return err
 			}
 			return nil

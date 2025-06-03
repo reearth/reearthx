@@ -30,7 +30,7 @@ func NewThreadConsumer() *ThreadConsumer {
 
 func NewThread(a *thread.Thread) (*ThreadDocument, string) {
 	thid := a.ID().String()
-	comments := util.Map(a.Comments(), func(c *thread.Comment) *CommentDocument { return NewComment(c) })
+	comments := util.Map(a.Comments(), NewComment)
 	thd, id := &ThreadDocument{
 		ID:        thid,
 		Workspace: a.Workspace().String(),

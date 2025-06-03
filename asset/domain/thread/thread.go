@@ -63,7 +63,8 @@ func (th *Thread) DeleteComment(cid id.CommentID) error {
 		return ErrCommentDoesNotExist
 	}
 
-	comments := append(th.Comments()[:i], th.Comments()[i+1:]...)
+	comments := th.Comments()
+	comments = append(comments[:i], comments[i+1:]...)
 	th.SetComments(comments...)
 	return nil
 }

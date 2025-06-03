@@ -1168,22 +1168,18 @@ func TestAsset_UpdateFiles(t *testing.T) {
 			operator: &usecase.Operator{
 				AcOperator: &accountusecase.Operator{},
 			},
-			prepareFileFunc: func() afero.Fs {
-				return mockFs()
-			},
-			assetID: assetID1,
-			want:    nil,
-			wantErr: interfaces.ErrInvalidOperator,
+			prepareFileFunc: mockFs,
+			assetID:         assetID1,
+			want:            nil,
+			wantErr:         interfaces.ErrInvalidOperator,
 		},
 		{
-			name:     "not found",
-			operator: op,
-			prepareFileFunc: func() afero.Fs {
-				return mockFs()
-			},
-			assetID: assetID1,
-			want:    nil,
-			wantErr: rerror.ErrNotFound,
+			name:            "not found",
+			operator:        op,
+			prepareFileFunc: mockFs,
+			assetID:         assetID1,
+			want:            nil,
+			wantErr:         rerror.ErrNotFound,
 		},
 		{
 			name: "operation denied",
@@ -1198,24 +1194,20 @@ func TestAsset_UpdateFiles(t *testing.T) {
 				a1.ID(): a1f,
 				a2.ID(): a2f,
 			},
-			seedProjects: []*project.Project{proj},
-			prepareFileFunc: func() afero.Fs {
-				return mockFs()
-			},
-			assetID: assetID1,
-			status:  sp,
-			want:    nil,
-			wantErr: interfaces.ErrOperationDenied,
+			seedProjects:    []*project.Project{proj},
+			prepareFileFunc: mockFs,
+			assetID:         assetID1,
+			status:          sp,
+			want:            nil,
+			wantErr:         interfaces.ErrOperationDenied,
 		},
 		{
-			name:     "update asset not found",
-			operator: op,
-			prepareFileFunc: func() afero.Fs {
-				return mockFs()
-			},
-			assetID: assetID1,
-			want:    nil,
-			wantErr: rerror.ErrNotFound,
+			name:            "update asset not found",
+			operator:        op,
+			prepareFileFunc: mockFs,
+			assetID:         assetID1,
+			want:            nil,
+			wantErr:         rerror.ErrNotFound,
 		},
 		{
 			name:       "update file not found",
@@ -1225,13 +1217,11 @@ func TestAsset_UpdateFiles(t *testing.T) {
 				a1.ID(): a1f,
 				a2.ID(): a2f,
 			},
-			prepareFileFunc: func() afero.Fs {
-				return afero.NewMemMapFs()
-			},
-			assetID: assetID1,
-			status:  lo.ToPtr(asset.ArchiveExtractionStatusFailed),
-			want:    nil,
-			wantErr: gateway.ErrFileNotFound,
+			prepareFileFunc: afero.NewMemMapFs,
+			assetID:         assetID1,
+			status:          lo.ToPtr(asset.ArchiveExtractionStatusFailed),
+			want:            nil,
+			wantErr:         gateway.ErrFileNotFound,
 		},
 		{
 			name:       "update",
@@ -1241,12 +1231,10 @@ func TestAsset_UpdateFiles(t *testing.T) {
 				a1.ID(): a1f,
 				a2.ID(): a2f,
 			},
-			seedProjects: []*project.Project{proj},
-			prepareFileFunc: func() afero.Fs {
-				return mockFs()
-			},
-			assetID: assetID1,
-			status:  sp,
+			seedProjects:    []*project.Project{proj},
+			prepareFileFunc: mockFs,
+			assetID:         assetID1,
+			status:          sp,
 			want: asset.New().
 				ID(assetID1).
 				Project(proj.ID()).

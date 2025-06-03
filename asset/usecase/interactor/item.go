@@ -190,9 +190,9 @@ func (i Item) Create(ctx context.Context, param interfaces.CreateItemParam, oper
 		if err != nil {
 			return nil, err
 		}
-		//if m.Schema() != param.SchemaID {
-		//	return nil, interfaces.ErrInvalidSchema
-		//}
+		// if m.Schema() != param.SchemaID {
+		// 	return nil, interfaces.ErrInvalidSchema
+		// }
 
 		s, err := i.repos.Schema.FindByID(ctx, param.SchemaID)
 		if err != nil {

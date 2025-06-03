@@ -260,7 +260,8 @@ func (i Model) FindOrCreateSchema(ctx context.Context, param interfaces.FindOrCr
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *schema.Schema, err error) {
 			var sid id.SchemaID
-			if param.ModelID != nil {
+			switch {
+			case param.ModelID != nil:
 				m, err := i.repos.Model.FindByID(ctx, *param.ModelID)
 				if err != nil {
 					return nil, err
@@ -300,13 +301,13 @@ func (i Model) FindOrCreateSchema(ctx context.Context, param interfaces.FindOrCr
 					// otherwise return error
 					return nil, rerror.NewE(i18n.T("metadata schema not found"))
 				}
-			} else if param.GroupID != nil {
+			case param.GroupID != nil:
 				g, err := i.repos.Group.FindByID(ctx, *param.GroupID)
 				if err != nil {
 					return nil, err
 				}
 				sid = g.Schema()
-			} else {
+			default:
 				return nil, interfaces.ErrEitherModelOrGroup
 			}
 

@@ -66,15 +66,16 @@ func (d *EventDocument) Model() (*event.Event[any], error) {
 	}
 
 	var o operator.Operator
-	if d.User != nil {
+	switch {
+	case d.User != nil:
 		if uid := accountdomain.UserIDFromRef(d.User); uid != nil {
 			o = operator.OperatorFromUser(*uid)
 		}
-	} else if d.Integration != nil {
+	case d.Integration != nil:
 		if iid := id.IntegrationIDFromRef(d.Integration); iid != nil {
 			o = operator.OperatorFromIntegration(*iid)
 		}
-	} else if d.Machine {
+	case d.Machine:
 		o = operator.OperatorFromMachine()
 	}
 

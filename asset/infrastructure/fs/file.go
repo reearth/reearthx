@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	//"github.com/reearth/reearthx/asset/infrastructure"
+	// "github.com/reearth/reearthx/asset/infrastructure"
 
 	"github.com/kennygrant/sanitize"
 	"github.com/reearth/reearthx/asset/domain/asset"
@@ -32,7 +32,7 @@ type fileRepo struct {
 	privateBase *url.URL // cms
 	public      bool     // cms
 	urlBase     *url.URL // viz
-	//baseFileStorage *infrastructure.BaseFileStorage // viz
+	// baseFileStorage *infrastructure.BaseFileStorage // viz
 }
 
 func NewFile(fs afero.Fs, publicBase string) (gateway.File, error) {
