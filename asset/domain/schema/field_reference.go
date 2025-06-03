@@ -14,10 +14,10 @@ type CorrespondingField struct {
 }
 
 type FieldReference struct {
-	modelID              id.ModelID
-	schemaID             id.SchemaID
 	correspondingFieldID *id.FieldID
 	correspondingField   *CorrespondingField // from user input only
+	modelID              id.ModelID
+	schemaID             id.SchemaID
 }
 
 func NewReference(mID id.ModelID, sID id.SchemaID, cfID *id.FieldID, cf *CorrespondingField) *FieldReference {

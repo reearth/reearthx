@@ -12,15 +12,16 @@ import (
 )
 
 type Operator struct {
-	Integration          *integration.ID
-	Machine              bool
+	Integration *integration.ID
+
+	AcOperator           *accountusecase.Operator
 	Lang                 string
 	ReadableProjects     project.IDList
 	WritableProjects     project.IDList
 	OwningProjects       project.IDList
 	MaintainableProjects project.IDList
 
-	AcOperator *accountusecase.Operator
+	Machine bool
 }
 
 type Ownable interface {

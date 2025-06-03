@@ -19,15 +19,15 @@ var (
 )
 
 type Project struct {
-	id           ID
-	workspaceID  accountdomain.WorkspaceID
+	updatedAt    time.Time
+	imageURL     *url.URL
+	publication  *Publication
 	name         string
 	description  string
 	alias        string
-	imageURL     *url.URL
-	updatedAt    time.Time
-	publication  *Publication
 	requestRoles []workspace.Role
+	id           ID
+	workspaceID  accountdomain.WorkspaceID
 }
 
 func (p *Project) ID() ID {

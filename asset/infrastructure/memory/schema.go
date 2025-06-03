@@ -12,10 +12,10 @@ import (
 )
 
 type Schema struct {
-	data *util.SyncMap[id.SchemaID, *schema.Schema]
-	f    repo.WorkspaceFilter
-	now  *util.TimeNow
 	err  error
+	data *util.SyncMap[id.SchemaID, *schema.Schema]
+	now  *util.TimeNow
+	f    repo.WorkspaceFilter
 }
 
 func NewSchema() repo.Schema {

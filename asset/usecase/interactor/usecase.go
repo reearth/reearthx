@@ -14,11 +14,11 @@ import (
 const transactionRetry = 2
 
 type uc struct {
-	tx                     bool
 	readableWorkspaces     accountdomain.WorkspaceIDList
 	writableWorkspaces     accountdomain.WorkspaceIDList
 	maintainableWorkspaces accountdomain.WorkspaceIDList
 	ownableWorkspaces      accountdomain.WorkspaceIDList
+	tx                     bool
 }
 
 func Usecase() *uc {

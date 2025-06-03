@@ -17,16 +17,16 @@ var (
 )
 
 type Model struct {
-	id          ID
-	project     ProjectID
-	schema      SchemaID
+	updatedAt   time.Time
 	metadata    *SchemaID
 	name        string
 	description string
 	key         id.Key
-	public      bool
-	updatedAt   time.Time
 	order       int
+	id          ID
+	project     ProjectID
+	schema      SchemaID
+	public      bool
 }
 
 func (p *Model) ID() ID {

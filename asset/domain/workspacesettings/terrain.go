@@ -9,9 +9,9 @@ const (
 )
 
 type TerrainResource struct {
-	id    ResourceID
-	rtype TerrainType
 	props CesiumResourceProps
+	rtype TerrainType
+	id    ResourceID
 }
 
 func NewTerrainResource(id ResourceID, rtype TerrainType, props CesiumResourceProps) *TerrainResource {

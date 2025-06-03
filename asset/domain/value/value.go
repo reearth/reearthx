@@ -1,9 +1,9 @@
 package value
 
 type Value struct {
-	t Type
 	v any
 	p TypeRegistry
+	t Type
 }
 
 func New(t Type, v any) *Value {

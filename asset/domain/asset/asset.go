@@ -10,25 +10,25 @@ import (
 )
 
 type Asset struct {
-	id                      ID
-	project                 ProjectID
-	workspace               accountdomain.WorkspaceID
 	createdAt               time.Time
 	user                    *accountdomain.UserID
 	integration             *IntegrationID
-	fileName                string
-	size                    uint64
 	previewType             *PreviewType
-	uuid                    string
 	thread                  *ThreadID
 	archiveExtractionStatus *ArchiveExtractionStatus
-	flatFiles               bool
-	public                  bool
 	accessInfoResolver      *AccessInfoResolver
+	fileName                string
+	uuid                    string
 	url                     string
 	contentType             string // flow
 	name                    string // flow
-	coreSupport             bool   // flow
+	size                    uint64
+	id                      ID
+	project                 ProjectID
+	workspace               accountdomain.WorkspaceID
+	flatFiles               bool
+	public                  bool
+	coreSupport             bool // flow
 }
 
 type AccessInfoResolver = func(*Asset) *AccessInfo

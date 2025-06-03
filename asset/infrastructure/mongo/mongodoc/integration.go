@@ -13,6 +13,7 @@ import (
 )
 
 type IntegrationDocument struct {
+	UpdatedAt   time.Time
 	ID          string
 	Name        string
 	Description string
@@ -21,17 +22,16 @@ type IntegrationDocument struct {
 	Token       string
 	Developer   string
 	Webhook     []WebhookDocument
-	UpdatedAt   time.Time
 }
 
 type WebhookDocument struct {
+	UpdatedAt time.Time
+	Trigger   map[string]bool
 	ID        string
 	Name      string
 	Url       string
-	Active    bool
-	Trigger   map[string]bool
-	UpdatedAt time.Time
 	Secret    string
+	Active    bool
 }
 
 func NewIntegration(i *integration.Integration) (*IntegrationDocument, string) {

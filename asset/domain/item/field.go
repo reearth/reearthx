@@ -7,9 +7,9 @@ import (
 )
 
 type Field struct {
-	field FieldID
 	group *ItemGroupID
 	value *value.Multiple
+	field FieldID
 }
 
 func NewField(field FieldID, v *value.Multiple, ig *ItemGroupID) *Field {

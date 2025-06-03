@@ -9,6 +9,6 @@ const (
 
 type BasicCondition struct {
 	Field FieldSelector
-	Op    BasicOperator
 	Value any
+	Op    BasicOperator
 }

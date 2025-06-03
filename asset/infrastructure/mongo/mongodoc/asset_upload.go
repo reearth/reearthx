@@ -9,13 +9,13 @@ import (
 )
 
 type AssetUploadDocument struct {
+	ExpiresAt       time.Time `bson:"expires_at"`
 	UUID            string    `bson:"uuid"`
 	Project         string    `bson:"project"`
 	FileName        string    `bson:"filename"`
-	ExpiresAt       time.Time `bson:"expires_at"`
-	ContentLength   int64     `bson:"content_length"`
 	ContentType     string    `bson:"content_type"`
 	ContentEncoding string    `bson:"content_encoding"`
+	ContentLength   int64     `bson:"content_length"`
 }
 
 func NewAssetUpload(u *asset.Upload) *AssetUploadDocument {

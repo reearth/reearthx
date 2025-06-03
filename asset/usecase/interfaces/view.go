@@ -11,20 +11,20 @@ import (
 )
 
 type CreateViewParam struct {
-	Name    string
-	Project view.ProjectID
-	Model   view.ModelID
 	Filter  *view.Condition
 	Sort    *view.Sort
 	Columns *view.ColumnList
+	Name    string
+	Project view.ProjectID
+	Model   view.ModelID
 }
 
 type UpdateViewParam struct {
-	ID      view.ID
 	Name    *string
 	Filter  *view.Condition
 	Sort    *view.Sort
 	Columns *view.ColumnList
+	ID      view.ID
 }
 
 var (

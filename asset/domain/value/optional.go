@@ -1,8 +1,8 @@
 package value
 
 type Optional struct {
-	t Type
 	v *Value
+	t Type
 }
 
 func NewOptional(t Type, v *Value) *Optional {

@@ -8,8 +8,8 @@ import (
 type ItemList []*Item
 
 type Item struct {
-	item    ItemID
 	pointer version.VersionOrRef
+	item    ItemID
 }
 
 func (i *Item) Item() ItemID {

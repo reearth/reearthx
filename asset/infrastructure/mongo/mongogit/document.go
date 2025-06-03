@@ -72,10 +72,10 @@ func (d *Document[T]) UnmarshalBSON(b []byte) error {
 }
 
 type Meta struct {
-	ObjectID primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Version  version.Version    `json:"__v,omitempty" bson:"__v,omitempty"`
 	Parents  []version.Version  `json:"__w,omitempty" bson:"__w,omitempty"`
 	Refs     []version.Ref      `json:"__r,omitempty" bson:"__r,omitempty"`
+	Version  version.Version    `json:"__v,omitempty" bson:"__v,omitempty"`
+	ObjectID primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
 }
 
 func (m Meta) Timestamp() time.Time {

@@ -5,13 +5,13 @@ import (
 )
 
 type Upload struct {
-	uuid            string
-	project         ProjectID
-	fileName        string
 	expiresAt       time.Time
-	contentLength   int64
+	uuid            string
+	fileName        string
 	contentType     string
 	contentEncoding string
+	contentLength   int64
+	project         ProjectID
 }
 
 func (u *Upload) UUID() string {

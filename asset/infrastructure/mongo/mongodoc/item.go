@@ -14,27 +14,27 @@ import (
 )
 
 type ItemDocument struct {
-	ID                   string
-	Project              string
-	Schema               string
-	Thread               *string
-	ModelID              string
-	Fields               []ItemFieldDocument
 	Timestamp            time.Time
+	Thread               *string
 	User                 *string
 	Integration          *string
-	Assets               []string `bson:"assets,omitempty"`
 	MetadataItem         *string
-	IsMetadata           bool
 	OriginalItem         *string
 	UpdatedByUser        *string
 	UpdatedByIntegration *string
+	ID                   string
+	Project              string
+	Schema               string
+	ModelID              string
+	Fields               []ItemFieldDocument
+	Assets               []string `bson:"assets,omitempty"`
+	IsMetadata           bool
 }
 
 type ItemFieldDocument struct {
+	ItemGroup *string
 	F         string        `bson:"f,omitempty"`
 	V         ValueDocument `bson:"v,omitempty"`
-	ItemGroup *string
 }
 
 type ItemConsumer = mongox.SliceFuncConsumer[*ItemDocument, *item.Item]

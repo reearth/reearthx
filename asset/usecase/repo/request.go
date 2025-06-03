@@ -11,10 +11,10 @@ import (
 )
 
 type RequestFilter struct {
-	State     []request.State
 	Keyword   *string
 	Reviewer  *accountdomain.UserID
 	CreatedBy *accountdomain.UserID
+	State     []request.State
 }
 
 type Request interface {

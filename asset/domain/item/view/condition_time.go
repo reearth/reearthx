@@ -16,6 +16,6 @@ const (
 
 type TimeCondition struct {
 	Field FieldSelector
-	Op    TimeOperator
 	Value time.Time
+	Op    TimeOperator
 }

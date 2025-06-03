@@ -30,29 +30,30 @@ var (
 
 type FileEntry struct {
 	Name            string
-	Size            int64
 	ContentType     string
 	ContentEncoding string
+	Size            int64
 }
 
 type UploadAssetLink struct {
 	URL             string
 	ContentType     string
-	ContentLength   int64
 	ContentEncoding string
 	Next            string
+	ContentLength   int64
 }
 
 type IssueUploadAssetParam struct {
-	UUID     string
-	Filename string
-	// ContentLength is the size of the file in bytes. It is required when S3 is used.
-	ContentLength   int64
+	ExpiresAt time.Time
+
+	UUID            string
+	Filename        string
 	ContentType     string
 	ContentEncoding string
-	ExpiresAt       time.Time
 
 	Cursor string
+	// ContentLength is the size of the file in bytes. It is required when S3 is used.
+	ContentLength int64
 }
 
 func (p IssueUploadAssetParam) GetOrGuessContentType() string {

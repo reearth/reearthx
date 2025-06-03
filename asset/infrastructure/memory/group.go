@@ -12,10 +12,10 @@ import (
 )
 
 type Group struct {
-	data *util.SyncMap[id.GroupID, *group.Group]
-	f    repo.ProjectFilter
-	now  *util.TimeNow
 	err  error
+	data *util.SyncMap[id.GroupID, *group.Group]
+	now  *util.TimeNow
+	f    repo.ProjectFilter
 }
 
 func NewGroup() repo.Group {

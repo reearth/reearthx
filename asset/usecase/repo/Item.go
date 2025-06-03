@@ -14,17 +14,17 @@ import (
 )
 
 type FieldAndValue struct {
-	Field schema.FieldID
 	Value *value.Multiple
+	Field schema.FieldID
 }
 
 type CopyParams struct {
-	OldSchema   id.SchemaID
-	NewSchema   id.SchemaID
-	NewModel    id.ModelID
 	Timestamp   time.Time
 	User        *string
 	Integration *string
+	OldSchema   id.SchemaID
+	NewSchema   id.SchemaID
+	NewModel    id.ModelID
 }
 
 type Item interface {

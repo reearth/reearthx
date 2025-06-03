@@ -22,26 +22,25 @@ import (
 type AssetFilterType string
 
 type CreateAssetParam struct {
-	ProjectID         idx.ID[id.Project]
 	File              *file.File
 	Token             string
+	ProjectID         idx.ID[id.Project]
 	SkipDecompression bool
 }
 
 type UpdateAssetParam struct {
-	AssetID     idx.ID[id.Asset]
 	PreviewType *asset.PreviewType
+	AssetID     idx.ID[id.Asset]
 }
 
 type CreateAssetUploadParam struct {
-	ProjectID idx.ID[id.Project]
-
 	Filename        string
-	ContentLength   int64
 	ContentType     string
 	ContentEncoding string
 
-	Cursor string
+	Cursor        string
+	ContentLength int64
+	ProjectID     idx.ID[id.Project]
 }
 
 var (
@@ -61,16 +60,16 @@ type AssetUpload struct {
 	URL             string
 	UUID            string
 	ContentType     string
-	ContentLength   int64
 	ContentEncoding string
 	Next            string
+	ContentLength   int64
 }
 
 type PageBasedPaginationParam struct {
-	Page     int
-	PageSize int
 	OrderBy  *string
 	OrderDir *string
+	Page     int
+	PageSize int
 }
 
 type PaginationParam struct {

@@ -16,28 +16,28 @@ import (
 var ErrAlreadyPublished = rerror.NewE(i18n.T("already published"))
 
 type CreateRequestParam struct {
-	ProjectID   id.ProjectID
-	Title       string
 	Description *string
 	State       *request.State
+	Title       string
 	Reviewers   accountdomain.UserIDList
 	Items       request.ItemList
+	ProjectID   id.ProjectID
 }
 
 type UpdateRequestParam struct {
-	RequestID   id.RequestID
 	Title       *string
 	Description *string
 	State       *request.State
 	Reviewers   accountdomain.UserIDList
 	Items       request.ItemList
+	RequestID   id.RequestID
 }
 
 type RequestFilter struct {
 	Keyword   *string
-	State     []request.State
 	Reviewer  *accountdomain.UserID
 	CreatedBy *accountdomain.UserID
+	State     []request.State
 }
 
 type Request interface {

@@ -10,16 +10,16 @@ import (
 )
 
 type ModelDocument struct {
+	UpdatedAt   time.Time
+	Metadata    *string
 	ID          string
 	Name        string
 	Description string
 	Key         string
-	Public      bool
 	Project     string
 	Schema      string
-	Metadata    *string
-	UpdatedAt   time.Time
 	Order       int
+	Public      bool
 }
 
 func NewModel(model *model.Model) (*ModelDocument, string) {

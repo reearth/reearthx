@@ -7,9 +7,9 @@ import (
 )
 
 type Comment struct {
-	id      CommentID
 	author  operator.Operator
 	content string
+	id      CommentID
 }
 
 func NewComment(id CommentID, author operator.Operator, content string) *Comment {

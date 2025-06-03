@@ -21,12 +21,12 @@ const (
 )
 
 type Event[T any] struct {
-	id        ID
 	timestamp time.Time
+	object    T
+	prj       *Project
 	operator  operator.Operator
 	ty        Type
-	prj       *Project
-	object    T
+	id        ID
 }
 
 func (e *Event[T]) ID() ID {

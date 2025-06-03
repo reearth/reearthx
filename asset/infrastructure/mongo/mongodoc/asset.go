@@ -12,34 +12,34 @@ import (
 )
 
 type AssetDocument struct {
-	ID                      string
-	Project                 string
 	CreatedAt               time.Time
 	User                    *string
 	Integration             *string
+	Thread                  *string
+	ID                      string
+	Project                 string
 	FileName                string
-	Size                    uint64
 	PreviewType             string
 	UUID                    string
-	Thread                  *string
 	ArchiveExtractionStatus string
+	Size                    uint64
 	FlatFiles               bool
 	Public                  bool
 }
 
 type AssetAndFileDocument struct {
-	ID        string
 	File      *AssetFileDocument
+	ID        string
 	FlatFiles bool
 }
 
 type AssetFileDocument struct {
 	Name            string
-	Size            uint64
 	ContentType     string
 	ContentEncoding string
 	Path            string
 	Children        []*AssetFileDocument
+	Size            uint64
 }
 
 type (
@@ -200,8 +200,8 @@ func (d AssetFilesDocument) Model() []*asset.File {
 
 type AssetFilesPageDocument struct {
 	AssetID string
-	Page    int
 	Files   []*AssetFileDocument
+	Page    int
 }
 
 const assetFilesPageSize = 1000

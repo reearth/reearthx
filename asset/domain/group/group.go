@@ -9,13 +9,13 @@ import (
 )
 
 type Group struct {
-	id          ID
-	schema      SchemaID
-	project     ProjectID
 	name        string
 	description string
 	key         id.Key
 	order       int
+	id          ID
+	schema      SchemaID
+	project     ProjectID
 }
 
 func (g *Group) ID() ID {

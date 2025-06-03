@@ -11,17 +11,17 @@ import (
 )
 
 type ViewDocument struct {
+	UpdatedAt time.Time
+	Sort      *SortDocument
+	Filter    *FilterDocument
 	ID        string
 	Name      string
 	User      string
 	Project   string
 	ModelId   string
 	Schema    string
-	Sort      *SortDocument
-	Filter    *FilterDocument
 	Columns   []ColumnDocument
 	Order     int
-	UpdatedAt time.Time
 }
 
 type FieldSelectorDocument struct {
@@ -104,7 +104,6 @@ func (d *SortDocument) Model() *view.Sort {
 }
 
 type FilterDocument struct {
-	ConditionType     string
 	AndCondition      *AndConditionDocument
 	OrCondition       *OrConditionDocument
 	BasicCondition    *BasicConditionDocument
@@ -114,6 +113,7 @@ type FilterDocument struct {
 	StringCondition   *StringConditionDocument
 	NumberCondition   *NumberConditionDocument
 	TimeCondition     *TimeConditionDocument
+	ConditionType     string
 }
 
 func NewFilter(i *view.Condition) *FilterDocument {
@@ -290,9 +290,9 @@ type OrConditionDocument struct {
 }
 
 type BasicConditionDocument struct {
+	Value any
 	Field FieldSelectorDocument
 	Op    string
-	Value any
 }
 
 type NullableConditionDocument struct {
@@ -325,9 +325,9 @@ type NumberConditionDocument struct {
 }
 
 type TimeConditionDocument struct {
+	Value time.Time
 	Field FieldSelectorDocument
 	Op    string
-	Value time.Time
 }
 
 func NewView(i *view.View) (*ViewDocument, string) {

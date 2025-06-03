@@ -8,9 +8,9 @@ const (
 )
 
 type Resource struct {
-	resourceType ResourceType
 	tile         *TileResource
 	terrain      *TerrainResource
+	resourceType ResourceType
 }
 
 func (r *Resource) ResourceType() ResourceType {

@@ -48,12 +48,12 @@ func New(r *repo.Container, g *gateway.Container,
 }
 
 type Event struct {
-	Project       *project.Project
-	Workspace     accountdomain.WorkspaceID
-	Type          event.Type
-	Operator      operator.Operator
 	Object        any
 	WebhookObject any
+	Project       *project.Project
+	Operator      operator.Operator
+	Type          event.Type
+	Workspace     accountdomain.WorkspaceID
 }
 
 func (e *Event) EventProject() *event.Project {

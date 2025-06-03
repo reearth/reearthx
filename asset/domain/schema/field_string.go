@@ -9,8 +9,8 @@ import (
 )
 
 type FieldString struct {
-	t         value.Type
 	maxLength *int
+	t         value.Type
 }
 
 func NewString(t value.Type, maxLength *int) *FieldString {

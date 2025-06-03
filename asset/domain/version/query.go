@@ -5,8 +5,8 @@ import (
 )
 
 type Query struct {
-	all bool
 	eq  *VersionOrRef
+	all bool
 }
 
 func All() Query {

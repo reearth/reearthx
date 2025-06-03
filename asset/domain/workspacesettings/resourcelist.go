@@ -6,9 +6,9 @@ import (
 )
 
 type ResourceList struct {
-	resources        []*Resource
 	selectedResource *ResourceID
 	enabled          *bool
+	resources        []*Resource
 }
 
 func (wr *ResourceList) Resources() []*Resource {

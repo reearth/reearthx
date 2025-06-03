@@ -11,9 +11,9 @@ import (
 )
 
 type Thread struct {
+	err  error
 	data *util.SyncMap[thread.ID, *thread.Thread]
 	f    repo.WorkspaceFilter
-	err  error
 }
 
 func NewThread() repo.Thread {

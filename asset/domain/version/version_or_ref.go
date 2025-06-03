@@ -1,8 +1,8 @@
 package version
 
 type VersionOrRef struct {
-	version Version
 	ref     Ref
+	version Version
 }
 
 func (vr VersionOrRef) Ref() *VersionOrRef {

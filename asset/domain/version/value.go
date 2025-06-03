@@ -3,11 +3,11 @@ package version
 import "time"
 
 type Value[T any] struct {
-	version Version
-	parents Versions
-	refs    Refs
 	time    time.Time
 	value   T
+	parents Versions
+	refs    Refs
+	version Version
 }
 
 func NewValue[T any](version Version, parents Versions, refs Refs, t time.Time, value T) *Value[T] {

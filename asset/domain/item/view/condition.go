@@ -17,7 +17,6 @@ const (
 )
 
 type Condition struct {
-	ConditionType     ConditionType
 	AndCondition      *AndCondition
 	OrCondition       *OrCondition
 	BasicCondition    *BasicCondition
@@ -27,6 +26,7 @@ type Condition struct {
 	StringCondition   *StringCondition
 	NumberCondition   *NumberCondition
 	TimeCondition     *TimeCondition
+	ConditionType     ConditionType
 }
 
 func (c Condition) MetaFields() FieldSelectorList {

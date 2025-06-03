@@ -12,10 +12,10 @@ import (
 )
 
 type View struct {
-	data *util.SyncMap[id.ViewID, *view.View]
-	f    repo.ProjectFilter
-	now  *util.TimeNow
 	err  error
+	data *util.SyncMap[id.ViewID, *view.View]
+	now  *util.TimeNow
+	f    repo.ProjectFilter
 }
 
 func NewView() repo.View {

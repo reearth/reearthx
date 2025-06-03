@@ -67,8 +67,8 @@ func (p *CopyPayload) Validate() bool {
 type (
 	Changes map[string]Change
 	Change  struct {
-		Type  ChangeType
 		Value any
+		Type  ChangeType
 	}
 )
 type ChangeType string

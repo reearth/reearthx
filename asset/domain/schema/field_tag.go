@@ -15,9 +15,9 @@ var ErrDuplicatedTag = errors.New("duplicated tag")
 type (
 	TagList []*Tag
 	Tag     struct {
-		id    TagID
 		name  string
 		color TagColor
+		id    TagID
 	}
 )
 

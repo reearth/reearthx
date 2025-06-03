@@ -11,13 +11,13 @@ import (
 )
 
 type EventDocument struct {
-	ID          string
 	Timestamp   time.Time
 	User        *string
 	Integration *string
-	Machine     bool
+	ID          string
 	Type        string
 	Object      Document
+	Machine     bool
 }
 
 func NewEvent(e *event.Event[any]) (*EventDocument, string, error) {

@@ -11,9 +11,9 @@ import (
 )
 
 type WorkspaceSettingsRepo struct {
+	err  error
 	data *util.SyncMap[accountdomain.WorkspaceID, *workspacesettings.WorkspaceSettings]
 	f    repo.WorkspaceFilter
-	err  error
 }
 
 func NewWorkspaceSettings() repo.WorkspaceSettings {

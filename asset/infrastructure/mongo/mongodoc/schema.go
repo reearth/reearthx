@@ -13,29 +13,28 @@ import (
 )
 
 type SchemaDocument struct {
+	TitleField *string
 	ID         string
 	Workspace  string
 	Project    string
 	Fields     []FieldDocument
-	TitleField *string
 }
 
 type FieldDocument struct {
+	TypeProperty TypePropertyDocument
+	UpdatedAt    time.Time
+	DefaultValue *ValueDocument
 	ID           string
 	Name         string
 	Description  string
-	Order        int
 	Key          string
+	Order        int
 	Unique       bool
 	Multiple     bool
 	Required     bool
-	UpdatedAt    time.Time
-	DefaultValue *ValueDocument
-	TypeProperty TypePropertyDocument
 }
 
 type TypePropertyDocument struct {
-	Type           string
 	Text           *FieldTextPropertyDocument           `bson:",omitempty"`
 	TextArea       *FieldTextPropertyDocument           `bson:",omitempty"`
 	RichText       *FieldTextPropertyDocument           `bson:",omitempty"`
@@ -48,6 +47,7 @@ type TypePropertyDocument struct {
 	Group          *FieldGroupPropertyDocument          `bson:",omitempty"`
 	GeometryObject *FieldGeometryObjectPropertyDocument `bson:",omitempty"`
 	GeometryEditor *FieldGeometryEditorPropertyDocument `bson:",omitempty"`
+	Type           string
 }
 
 type FieldTextPropertyDocument struct {
@@ -78,9 +78,9 @@ type FieldIntegerPropertyDocument struct {
 }
 
 type FieldReferencePropertyDocument struct {
+	CorrespondingField *string
 	Model              string
 	Schema             string
-	CorrespondingField *string
 }
 
 type FieldGroupPropertyDocument struct {

@@ -19,19 +19,19 @@ var (
 )
 
 type Request struct {
-	id          ID
-	workspace   accountdomain.WorkspaceID
-	project     ProjectID
-	items       ItemList
-	title       string
-	description string
-	createdBy   UserID
-	reviewers   UserIDList
-	state       State
 	updatedAt   time.Time
 	approvedAt  *time.Time
 	closedAt    *time.Time
 	thread      *ThreadID
+	title       string
+	description string
+	state       State
+	items       ItemList
+	reviewers   UserIDList
+	id          ID
+	workspace   accountdomain.WorkspaceID
+	project     ProjectID
+	createdBy   UserID
 }
 
 func (r *Request) ID() ID {

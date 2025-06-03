@@ -6,9 +6,9 @@ import (
 )
 
 type WorkspaceSettings struct {
-	id       ID
 	tiles    *ResourceList
 	terrains *ResourceList
+	id       ID
 }
 
 func (ws *WorkspaceSettings) ID() ID {

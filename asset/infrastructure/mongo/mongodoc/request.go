@@ -14,25 +14,25 @@ import (
 )
 
 type RequestDocument struct {
-	ID          string
-	Workspace   string
-	Project     string
-	Items       []RequestItem
-	Title       string
-	Description string
-	CreatedBy   string
-	Reviewers   []string
-	State       string
 	UpdatedAt   time.Time
 	ApprovedAt  *time.Time
 	ClosedAt    *time.Time
 	Thread      *string
+	ID          string
+	Workspace   string
+	Project     string
+	Title       string
+	Description string
+	CreatedBy   string
+	State       string
+	Items       []RequestItem
+	Reviewers   []string
 }
 
 type RequestItem struct {
-	Item    string
 	Version *string
 	Ref     *string
+	Item    string
 }
 
 type RequestConsumer = mongox.SliceFuncConsumer[*RequestDocument, *request.Request]

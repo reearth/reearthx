@@ -7,17 +7,17 @@ import (
 )
 
 type View struct {
-	id        ID
-	name      string
-	schema    SchemaID
-	model     ModelID
-	project   ProjectID
+	updatedAt time.Time
 	sort      *Sort
 	filter    *Condition
 	columns   *ColumnList
+	name      string
 	order     int
+	id        ID
+	schema    SchemaID
+	model     ModelID
+	project   ProjectID
 	user      UserID
-	updatedAt time.Time
 }
 
 func (v *View) Model() ModelID {

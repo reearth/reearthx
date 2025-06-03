@@ -16,10 +16,10 @@ const (
 type FieldChanges []FieldChange
 
 type FieldChange struct {
-	ID            FieldID
-	Type          FieldChangeType
 	CurrentValue  *value.Multiple
 	PreviousValue *value.Multiple
+	Type          FieldChangeType
+	ID            FieldID
 }
 
 func CompareFields(n, o Fields) FieldChanges {

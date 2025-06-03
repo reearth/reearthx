@@ -16,8 +16,8 @@ type PublicationScope string
 
 type Publication struct {
 	scope       PublicationScope
-	assetPublic bool
 	token       string
+	assetPublic bool
 }
 
 func NewPublication(scope PublicationScope, assetPublic bool) *Publication {

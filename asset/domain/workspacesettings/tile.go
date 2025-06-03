@@ -14,9 +14,9 @@ const (
 )
 
 type TileResource struct {
-	id    ResourceID
-	rtype TileType
 	props UrlResourceProps
+	rtype TileType
+	id    ResourceID
 }
 
 func NewTileResource(id ResourceID, rtype TileType, props UrlResourceProps) *TileResource {

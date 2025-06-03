@@ -14,17 +14,17 @@ import (
 var ErrValueRequired = rerror.NewE(i18n.T("value is required"))
 
 type Field struct {
-	id           FieldID
-	name         string
-	description  string
-	key          id.Key
-	unique       bool
-	multiple     bool
-	required     bool
 	updatedAt    time.Time
 	defaultValue *value.Multiple
 	typeProperty *TypeProperty
+	name         string
+	description  string
+	key          id.Key
 	order        int
+	id           FieldID
+	unique       bool
+	multiple     bool
+	required     bool
 }
 
 func (f *Field) ID() FieldID {

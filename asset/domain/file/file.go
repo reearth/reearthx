@@ -19,10 +19,10 @@ import (
 type File struct {
 	Content         io.ReadCloser
 	Name            string
-	Size            int64
 	ContentType     string
 	ContentEncoding string
 	Path            string
+	Size            int64
 }
 
 func FromMultipart(multipartReader *multipart.Reader, formName string) (*File, error) {

@@ -16,17 +16,17 @@ import (
 var ErrDelGroupUsed = rerror.NewE(i18n.T("can't delete a group as it's used by some models"))
 
 type CreateGroupParam struct {
-	ProjectId   id.ProjectID
+	Description *string
 	Name        string
 	Key         string
-	Description *string
+	ProjectId   id.ProjectID
 }
 
 type UpdateGroupParam struct {
-	GroupID     id.GroupID
 	Name        *string
 	Description *string
 	Key         *string
+	GroupID     id.GroupID
 }
 
 type Group interface {

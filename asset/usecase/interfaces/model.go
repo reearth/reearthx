@@ -14,24 +14,24 @@ import (
 )
 
 type CreateModelParam struct {
-	ProjectId   id.ProjectID
 	Name        *string
 	Description *string
 	Key         *string
 	Public      *bool
+	ProjectId   id.ProjectID
 }
 
 type CopyModelParam struct {
-	ModelId id.ModelID
 	Name    *string
 	Key     *string
+	ModelId id.ModelID
 }
 
 type FindByProjectAndKeywordParam struct {
-	ProjectID  id.ProjectID
-	Keyword    string
 	Sort       *model.Sort
 	Pagination *usecasex.Pagination
+	Keyword    string
+	ProjectID  id.ProjectID
 }
 
 type FindOrCreateSchemaParam struct {
@@ -44,11 +44,11 @@ type FindOrCreateSchemaParam struct {
 }
 
 type UpdateModelParam struct {
-	ModelID     id.ModelID
 	Name        *string
 	Description *string
 	Key         *string
 	Public      *bool
+	ModelID     id.ModelID
 }
 
 type PublishModelParam struct {

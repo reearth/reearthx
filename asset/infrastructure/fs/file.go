@@ -30,9 +30,9 @@ type fileRepo struct {
 	fs          afero.Fs
 	publicBase  *url.URL // cms
 	privateBase *url.URL // cms
-	public      bool     // cms
 	urlBase     *url.URL // viz
 	// baseFileStorage *infrastructure.BaseFileStorage // viz
+	public bool // cms
 }
 
 func NewFile(fs afero.Fs, publicBase string) (gateway.File, error) {

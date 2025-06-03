@@ -26,10 +26,10 @@ const (
 )
 
 type CreateThreadWithCommentInput struct {
-	WorkspaceID  accountdomain.WorkspaceID
 	ResourceID   string
 	ResourceType ResourceType
 	Content      string
+	WorkspaceID  accountdomain.WorkspaceID
 }
 
 type Thread interface {

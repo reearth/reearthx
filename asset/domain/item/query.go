@@ -8,14 +8,14 @@ import (
 )
 
 type Query struct {
-	project id.ProjectID
-	schema  *id.SchemaID
-	model   id.ModelID
-	keyword string
-	ref     *version.Ref
+	schema *id.SchemaID
+	ref    *version.Ref
 
-	sort   *view.Sort
-	filter *view.Condition
+	sort    *view.Sort
+	filter  *view.Condition
+	keyword string
+	project id.ProjectID
+	model   id.ModelID
 }
 
 func NewQuery(project id.ProjectID, model id.ModelID, schema *id.SchemaID, keyword string, ref *version.Ref) *Query {

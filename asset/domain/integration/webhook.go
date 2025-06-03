@@ -8,13 +8,13 @@ import (
 )
 
 type Webhook struct {
-	id        WebhookID
-	name      string
-	url       *url.URL
-	active    bool
-	trigger   WebhookTrigger
 	updatedAt time.Time
+	url       *url.URL
+	trigger   WebhookTrigger
+	name      string
 	secret    string
+	id        WebhookID
+	active    bool
 }
 
 type WebhookTrigger map[event.Type]bool

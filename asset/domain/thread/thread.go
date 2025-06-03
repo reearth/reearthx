@@ -9,9 +9,9 @@ import (
 )
 
 type Thread struct {
+	comments  []*Comment
 	id        ID
 	workspace accountdomain.WorkspaceID
-	comments  []*Comment
 }
 
 func (th *Thread) ID() ID {

@@ -15,20 +15,20 @@ import (
 )
 
 type Item struct {
-	id                   ID
-	schema               SchemaID
-	model                ModelID
-	project              ProjectID
-	fields               []*Field
 	timestamp            time.Time
 	thread               *ThreadID
-	isMetadata           bool
 	user                 *UserID
 	updatedByUser        *UserID
 	updatedByIntegration *IntegrationID
 	metadataItem         *id.ItemID
 	originalItem         *id.ItemID
 	integration          *IntegrationID
+	fields               []*Field
+	id                   ID
+	schema               SchemaID
+	model                ModelID
+	project              ProjectID
+	isMetadata           bool
 }
 
 type Versioned = *version.Value[*Item]

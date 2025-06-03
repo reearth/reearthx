@@ -11,7 +11,6 @@ var ErrInvalidValue = rerror.NewE(i18n.T("invalid value"))
 // TypeProperty Represent special attributes for some field
 // only one of the type properties should be not nil
 type TypeProperty struct {
-	t              value.Type
 	asset          *FieldAsset
 	text           *FieldText
 	textArea       *FieldTextArea
@@ -29,6 +28,7 @@ type TypeProperty struct {
 	group          *FieldGroup
 	geometryObject *FieldGeometryObject
 	geometryEditor *FieldGeometryEditor
+	t              value.Type
 }
 
 type TypePropertyMatch struct {

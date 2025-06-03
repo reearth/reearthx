@@ -14,23 +14,21 @@ import (
 
 type CreateFieldParam struct {
 	ModelID      *id.ModelID
-	SchemaID     id.SchemaID
+	Description  *string
+	TypeProperty *schema.TypeProperty
+	DefaultValue *value.Multiple
 	Type         value.Type
 	Name         string
-	Description  *string
 	Key          string
+	SchemaID     id.SchemaID
 	Multiple     bool
 	Unique       bool
 	Required     bool
 	IsTitle      bool
-	TypeProperty *schema.TypeProperty
-	DefaultValue *value.Multiple
 }
 
 type UpdateFieldParam struct {
 	ModelID      *id.ModelID
-	SchemaID     id.SchemaID
-	FieldID      id.FieldID
 	Name         *string
 	Description  *string
 	Order        *int
@@ -41,6 +39,8 @@ type UpdateFieldParam struct {
 	IsTitle      *bool
 	TypeProperty *schema.TypeProperty
 	DefaultValue *value.Multiple
+	SchemaID     id.SchemaID
+	FieldID      id.FieldID
 }
 
 type ModelData struct {

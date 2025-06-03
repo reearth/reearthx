@@ -40,10 +40,10 @@ var (
 )
 
 type Asset struct {
+	hostAdapter     HostAdapter
 	client          *mongox.Collection
 	projectFilter   repo.ProjectFilter
 	workspaceFilter repo.WorkspaceFilter
-	hostAdapter     HostAdapter
 }
 
 func NewAsset(client *mongox.Client) repo.Asset {

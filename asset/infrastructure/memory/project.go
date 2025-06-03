@@ -15,10 +15,10 @@ import (
 )
 
 type Project struct {
-	data *util.SyncMap[id.ProjectID, *project.Project]
-	f    repo.WorkspaceFilter
-	now  *util.TimeNow
 	err  error
+	data *util.SyncMap[id.ProjectID, *project.Project]
+	now  *util.TimeNow
+	f    repo.WorkspaceFilter
 }
 
 func NewProject() repo.Project {

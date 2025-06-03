@@ -24,11 +24,11 @@ type UpdateIntegrationParam struct {
 }
 
 type CreateWebhookParam struct {
-	Name    string
+	Trigger *WebhookTriggerParam
 	URL     url.URL
+	Name    string
 	Secret  string
 	Active  bool
-	Trigger *WebhookTriggerParam
 }
 
 type UpdateWebhookParam struct {

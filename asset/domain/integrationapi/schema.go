@@ -22,10 +22,10 @@ type ItemModelSchema struct {
 }
 
 type FieldChange struct {
-	ID            item.FieldID         `json:"id"`
-	Type          item.FieldChangeType `json:"type"`
 	CurrentValue  any                  `json:"currentValue"`
 	PreviousValue any                  `json:"previousValue"`
+	Type          item.FieldChangeType `json:"type"`
+	ID            item.FieldID         `json:"id"`
 }
 
 type ItemModelSchemaItemChange struct {

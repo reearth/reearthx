@@ -39,17 +39,17 @@ type ItemFieldParam struct {
 }
 
 type CreateItemParam struct {
-	SchemaID   schema.ID
-	ModelID    model.ID
 	MetadataID *item.ID
 	Fields     []ItemFieldParam
+	SchemaID   schema.ID
+	ModelID    model.ID
 }
 
 type UpdateItemParam struct {
-	ItemID     item.ID
 	MetadataID *item.ID
-	Fields     []ItemFieldParam
 	Version    *version.Version
+	Fields     []ItemFieldParam
+	ItemID     item.ID
 }
 
 type ImportFormatType string
@@ -98,21 +98,21 @@ type ImportItemParam struct {
 }
 
 type ImportItemsParam struct {
-	ModelID      id.ModelID
-	SP           schema.Package
-	Strategy     ImportStrategyType
-	Format       ImportFormatType
-	MutateSchema bool
 	Reader       io.Reader
 	GeoField     *string // field key or id
+	Strategy     ImportStrategyType
+	Format       ImportFormatType
+	SP           schema.Package
+	ModelID      id.ModelID
+	MutateSchema bool
 }
 
 type ImportItemsResponse struct {
+	NewFields schema.FieldList
 	Total     int
 	Inserted  int
 	Updated   int
 	Ignored   int
-	NewFields schema.FieldList
 }
 
 // ExportItemsToCSVResponse contains exported csv data from items

@@ -21,9 +21,9 @@ import (
 )
 
 type Item struct {
+	err  error
 	data *memorygit.VersionedSyncMap[item.ID, *item.Item]
 	f    repo.ProjectFilter
-	err  error
 }
 
 func NewItem() repo.Item {

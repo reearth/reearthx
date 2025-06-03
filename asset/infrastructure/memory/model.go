@@ -15,10 +15,10 @@ import (
 )
 
 type Model struct {
-	data *util.SyncMap[id.ModelID, *model.Model]
-	f    repo.ProjectFilter
-	now  *util.TimeNow
 	err  error
+	data *util.SyncMap[id.ModelID, *model.Model]
+	now  *util.TimeNow
+	f    repo.ProjectFilter
 }
 
 func NewModel() repo.Model {

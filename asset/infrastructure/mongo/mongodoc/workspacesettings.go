@@ -9,21 +9,21 @@ import (
 )
 
 type WorkspaceSettingsDocument struct {
-	ID       string
 	Tiles    *ResourceListDocument
 	Terrains *ResourceListDocument
+	ID       string
 }
 
 type ResourceListDocument struct {
-	Resources        []*ResourceDocument
 	SelectedResource *string
 	Enabled          *bool // only in terrains
+	Resources        []*ResourceDocument
 }
 
 type ResourceDocument struct {
-	ResourceType string
 	Tile         *TileResourceDocument
 	Terrain      *TerrainResourceDocument
+	ResourceType string
 }
 
 type TileResourceDocument struct {

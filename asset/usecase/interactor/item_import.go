@@ -229,8 +229,8 @@ func (i Item) saveChunk(ctx context.Context, prj *project.Project, m *model.Mode
 	isMetadata := m.Metadata() != nil && s.ID() == *m.Metadata()
 
 	type itemChanges struct {
-		oldFields item.Fields
 		action    interfaces.ImportStrategyType
+		oldFields item.Fields
 	}
 	f := func(ctx context.Context) (item.List, map[item.ID]itemChanges, error) {
 		itemsToSave := item.List{}

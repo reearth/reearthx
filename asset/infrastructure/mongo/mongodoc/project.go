@@ -25,9 +25,9 @@ type ProjectDocument struct {
 }
 
 type ProjectPublicationDocument struct {
-	AssetPublic bool
-	Scope       string
 	Token       *string
+	Scope       string
+	AssetPublic bool
 }
 
 func NewProject(project *project.Project) (*ProjectDocument, string) {

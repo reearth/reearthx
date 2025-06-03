@@ -10,12 +10,12 @@ import (
 
 type File struct {
 	name            string
-	size            uint64
 	contentType     string
 	contentEncoding string
 	path            string
 	children        []*File
 	files           []*File
+	size            uint64
 }
 
 // getters

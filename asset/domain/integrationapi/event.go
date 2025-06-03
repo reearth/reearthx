@@ -8,12 +8,12 @@ import (
 )
 
 type Event struct {
-	ID        string          `json:"eventId"`
-	Type      string          `json:"type"`
 	Timestamp time.Time       `json:"timestamp"`
+	Operator  Operator        `json:"operator"`
 	Data      any             `json:"data"`
 	Project   *ProjectIdAlias `json:"project"`
-	Operator  Operator        `json:"operator"`
+	ID        string          `json:"eventId"`
+	Type      string          `json:"type"`
 }
 
 type Operator struct {

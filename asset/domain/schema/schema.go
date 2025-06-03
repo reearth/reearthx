@@ -13,11 +13,11 @@ import (
 var ErrInvalidTitleField = errors.New("title field must be one of schema fields")
 
 type Schema struct {
+	titleField *FieldID
+	fields     []*Field
 	id         ID
 	project    ProjectID
 	workspace  accountdomain.WorkspaceID
-	fields     []*Field
-	titleField *FieldID
 }
 
 func (s *Schema) ID() ID {

@@ -17,8 +17,8 @@ const (
 )
 
 type FieldSelector struct {
-	Type FieldType
 	ID   *id.FieldID
+	Type FieldType
 }
 
 type FieldSelectorList []FieldSelector

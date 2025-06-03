@@ -15,20 +15,20 @@ import (
 )
 
 type CreateProjectParam struct {
-	WorkspaceID  accountdomain.WorkspaceID
 	Name         *string
 	Description  *string
 	Alias        *string
 	RequestRoles []workspace.Role
+	WorkspaceID  accountdomain.WorkspaceID
 }
 
 type UpdateProjectParam struct {
-	ID           id.ProjectID
 	Name         *string
 	Description  *string
 	Alias        *string
 	Publication  *UpdateProjectPublicationParam
 	RequestRoles []workspace.Role
+	ID           id.ProjectID
 }
 
 type UpdateProjectPublicationParam struct {

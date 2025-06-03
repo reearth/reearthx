@@ -5,9 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ea77200-abc8-4d9a-b57a-952c6c32850f" name="Changes" comment="feat(asset): enhance asset management with workspace filtering and import functionality">
-      <change beforePath="$PROJECT_DIR$/asset/domain/asset/builder.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/domain/asset/builder.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asset/domain/file/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/domain/file/file.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/asset/usecase/interactor/asset.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/usecase/interactor/asset.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,11 +56,12 @@
     &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
     &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/xy/work/eukarya/reearthx/asset/infrastructure&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/xy/work/eukarya/reearthx&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;go&quot;
+    &quot;settings.editor.selected.configurable&quot;: &quot;go&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">

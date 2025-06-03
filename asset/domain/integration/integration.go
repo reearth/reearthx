@@ -12,15 +12,15 @@ import (
 const charSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 type Integration struct {
-	id          ID
+	updatedAt   time.Time
+	logoUrl     *url.URL
 	name        string
 	description string
-	logoUrl     *url.URL
 	iType       Type
 	token       string
-	developer   UserID
 	webhooks    []*Webhook
-	updatedAt   time.Time
+	id          ID
+	developer   UserID
 }
 
 func (i *Integration) ID() ID {
