@@ -28,20 +28,41 @@ func NewProject(r *repo.Container, g *gateway.Container) interfaces.Project {
 	}
 }
 
-func (i *Project) Fetch(ctx context.Context, ids []id.ProjectID, operator *usecase.Operator) (project.List, error) {
+func (i *Project) Fetch(
+	ctx context.Context,
+	ids []id.ProjectID,
+	operator *usecase.Operator,
+) (project.List, error) {
 	return i.repos.Project.FindByIDs(ctx, ids)
 }
 
-func (i *Project) FindByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID, p *usecasex.Pagination, operator *usecase.Operator) (project.List, *usecasex.PageInfo, error) {
+func (i *Project) FindByWorkspace(
+	ctx context.Context,
+	wid accountdomain.WorkspaceID,
+	p *usecasex.Pagination,
+	operator *usecase.Operator,
+) (project.List, *usecasex.PageInfo, error) {
 	return i.repos.Project.FindByWorkspaces(ctx, accountdomain.WorkspaceIDList{wid}, p)
 }
 
-func (i *Project) FindByIDOrAlias(ctx context.Context, id project.IDOrAlias, operator *usecase.Operator) (*project.Project, error) {
+func (i *Project) FindByIDOrAlias(
+	ctx context.Context,
+	id project.IDOrAlias,
+	operator *usecase.Operator,
+) (*project.Project, error) {
 	return i.repos.Project.FindByIDOrAlias(ctx, id)
 }
 
-func (i *Project) Create(ctx context.Context, p interfaces.CreateProjectParam, operator *usecase.Operator) (_ *project.Project, err error) {
-	return Run1(ctx, operator, i.repos, Usecase().WithMaintainableWorkspaces(p.WorkspaceID).Transaction(),
+func (i *Project) Create(
+	ctx context.Context,
+	p interfaces.CreateProjectParam,
+	operator *usecase.Operator,
+) (_ *project.Project, err error) {
+	return Run1(
+		ctx,
+		operator,
+		i.repos,
+		Usecase().WithMaintainableWorkspaces(p.WorkspaceID).Transaction(),
 		func(ctx context.Context) (_ *project.Project, err error) {
 			pb := project.New().
 				NewID().
@@ -74,15 +95,24 @@ func (i *Project) Create(ctx context.Context, p interfaces.CreateProjectParam, o
 				return nil, err
 			}
 			return proj, nil
-		})
+		},
+	)
 }
 
-func (i *Project) Update(ctx context.Context, p interfaces.UpdateProjectParam, operator *usecase.Operator) (_ *project.Project, err error) {
+func (i *Project) Update(
+	ctx context.Context,
+	p interfaces.UpdateProjectParam,
+	operator *usecase.Operator,
+) (_ *project.Project, err error) {
 	proj, err := i.repos.Project.FindByID(ctx, p.ID)
 	if err != nil {
 		return nil, err
 	}
-	return Run1(ctx, operator, i.repos, Usecase().WithMaintainableWorkspaces(proj.Workspace()).Transaction(),
+	return Run1(
+		ctx,
+		operator,
+		i.repos,
+		Usecase().WithMaintainableWorkspaces(proj.Workspace()).Transaction(),
 		func(ctx context.Context) (_ *project.Project, err error) {
 			if p.Name != nil {
 				proj.UpdateName(*p.Name)
@@ -125,7 +155,8 @@ func (i *Project) Update(ctx context.Context, p interfaces.UpdateProjectParam, o
 			}
 
 			return proj, nil
-		})
+		},
+	)
 }
 
 func (i *Project) CheckAlias(ctx context.Context, alias string) (bool, error) {
@@ -139,12 +170,20 @@ func (i *Project) CheckAlias(ctx context.Context, alias string) (bool, error) {
 		})
 }
 
-func (i *Project) Delete(ctx context.Context, projectID id.ProjectID, operator *usecase.Operator) (err error) {
+func (i *Project) Delete(
+	ctx context.Context,
+	projectID id.ProjectID,
+	operator *usecase.Operator,
+) (err error) {
 	proj, err := i.repos.Project.FindByID(ctx, projectID)
 	if err != nil {
 		return err
 	}
-	return Run0(ctx, operator, i.repos, Usecase().WithMaintainableWorkspaces(proj.Workspace()).Transaction(),
+	return Run0(
+		ctx,
+		operator,
+		i.repos,
+		Usecase().WithMaintainableWorkspaces(proj.Workspace()).Transaction(),
 		func(ctx context.Context) error {
 			if !operator.IsOwningWorkspace(proj.Workspace()) {
 				return interfaces.ErrOperationDenied
@@ -153,10 +192,15 @@ func (i *Project) Delete(ctx context.Context, projectID id.ProjectID, operator *
 				return err
 			}
 			return nil
-		})
+		},
+	)
 }
 
-func (i *Project) RegenerateToken(ctx context.Context, pId id.ProjectID, operator *usecase.Operator) (*project.Project, error) {
+func (i *Project) RegenerateToken(
+	ctx context.Context,
+	pId id.ProjectID,
+	operator *usecase.Operator,
+) (*project.Project, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -172,7 +216,8 @@ func (i *Project) RegenerateToken(ctx context.Context, pId id.ProjectID, operato
 				return nil, interfaces.ErrOperationDenied
 			}
 
-			if p.Publication() == nil || p.Publication().Scope() != project.PublicationScopeLimited {
+			if p.Publication() == nil ||
+				p.Publication().Scope() != project.PublicationScopeLimited {
 				return nil, interfaces.ErrInvalidProject
 			}
 

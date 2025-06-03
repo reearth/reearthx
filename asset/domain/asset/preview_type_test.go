@@ -324,5 +324,9 @@ func TestPreviewType_StringRef(t *testing.T) {
 
 func TestPreviewType_Prev(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, func() *PreviewType { pt := PreviewType("image"); return &pt }(), PreviewTypeImage.Ref())
+	assert.Equal(
+		t,
+		func() *PreviewType { pt := PreviewType("image"); return &pt }(),
+		PreviewTypeImage.Ref(),
+	)
 }

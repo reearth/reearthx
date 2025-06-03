@@ -25,7 +25,10 @@ func NewIntegration() repo.Integration {
 	}
 }
 
-func (r *Integration) FindByID(_ context.Context, iId id.IntegrationID) (*integration.Integration, error) {
+func (r *Integration) FindByID(
+	_ context.Context,
+	iId id.IntegrationID,
+) (*integration.Integration, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -40,7 +43,10 @@ func (r *Integration) FindByID(_ context.Context, iId id.IntegrationID) (*integr
 	return nil, rerror.ErrNotFound
 }
 
-func (r *Integration) FindByToken(_ context.Context, token string) (*integration.Integration, error) {
+func (r *Integration) FindByToken(
+	_ context.Context,
+	token string,
+) (*integration.Integration, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -55,7 +61,10 @@ func (r *Integration) FindByToken(_ context.Context, token string) (*integration
 	return nil, rerror.ErrNotFound
 }
 
-func (r *Integration) FindByIDs(_ context.Context, iIds id.IntegrationIDList) (integration.List, error) {
+func (r *Integration) FindByIDs(
+	_ context.Context,
+	iIds id.IntegrationIDList,
+) (integration.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -67,7 +76,10 @@ func (r *Integration) FindByIDs(_ context.Context, iIds id.IntegrationIDList) (i
 	return integration.List(result).SortByID(), nil
 }
 
-func (r *Integration) FindByUser(_ context.Context, uID accountdomain.UserID) (integration.List, error) {
+func (r *Integration) FindByUser(
+	_ context.Context,
+	uID accountdomain.UserID,
+) (integration.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}

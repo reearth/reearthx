@@ -392,7 +392,8 @@ func TestAsset_FindByIDs(t *testing.T) {
 			name: "0 count with asset for another workspaces",
 			seeds: asset.List{
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 			},
 			arg:     []id.AssetID{},
 			want:    nil,
@@ -412,9 +413,11 @@ func TestAsset_FindByIDs(t *testing.T) {
 			seeds: asset.List{
 				a1,
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 			},
 			arg:     []id.AssetID{id1},
 			want:    asset.List{a1},
@@ -426,9 +429,11 @@ func TestAsset_FindByIDs(t *testing.T) {
 				a1,
 				a2,
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 			},
 			arg:     []id.AssetID{id1, id2},
 			want:    asset.List{a1, a2},
@@ -450,7 +455,11 @@ func TestAsset_FindByIDs(t *testing.T) {
 			}
 			assetUC := NewAsset(db, &g)
 
-			got, err := assetUC.FindByIDs(ctx, tc.arg, &usecase.Operator{AcOperator: &accountusecase.Operator{}})
+			got, err := assetUC.FindByIDs(
+				ctx,
+				tc.arg,
+				&usecase.Operator{AcOperator: &accountusecase.Operator{}},
+			)
 			if tc.wantErr != nil {
 				assert.Equal(t, tc.wantErr, err)
 				return
@@ -511,7 +520,8 @@ func TestAsset_Search(t *testing.T) {
 			name: "0 count with asset for another projects",
 			seeds: asset.List{
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 			},
 			args: args{
 				pid:      id.NewProjectID(),
@@ -540,9 +550,11 @@ func TestAsset_Search(t *testing.T) {
 			seeds: asset.List{
 				a1,
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 			},
 			args: args{
 				pid: pid,
@@ -560,9 +572,11 @@ func TestAsset_Search(t *testing.T) {
 				a1,
 				a2,
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 				asset.New().NewID().Project(id.NewProjectID()).NewUUID().
-					CreatedByUser(accountdomain.NewUserID()).Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
+					CreatedByUser(accountdomain.NewUserID()).
+					Size(1000).Thread(id.NewThreadID().Ref()).MustBuild(),
 			},
 			args: args{
 				pid: pid,
@@ -663,11 +677,36 @@ func TestAsset_Create(t *testing.T) {
 	buf3 := bytes.NewBufferString("Hello")
 	buf4 := bytes.NewBufferString("Hello")
 	buf5 := bytes.NewBufferString("Hello")
-	af := asset.NewFile().Name("aaa.txt").Size(uint64(buf.Len())).Path("aaa.txt").ContentType("text/plain; charset=utf-8").Build()
-	af2 := asset.NewFile().Name("aaa.txt").Size(uint64(buf2.Len())).Path("aaa.txt").ContentType("text/plain; charset=utf-8").Build()
-	af3 := asset.NewFile().Name("aaa.zip").Size(uint64(buf3.Len())).Path("aaa.zip").ContentType(zipMime).Build()
-	af4 := asset.NewFile().Name("aaa.zip").Size(uint64(buf4.Len())).Path("aaa.zip").ContentType(zipMime).Build()
-	af5 := asset.NewFile().Name("AAA.ZIP").Size(uint64(buf5.Len())).Path("AAA.ZIP").ContentType(zipMime).Build()
+	af := asset.NewFile().
+		Name("aaa.txt").
+		Size(uint64(buf.Len())).
+		Path("aaa.txt").
+		ContentType("text/plain; charset=utf-8").
+		Build()
+	af2 := asset.NewFile().
+		Name("aaa.txt").
+		Size(uint64(buf2.Len())).
+		Path("aaa.txt").
+		ContentType("text/plain; charset=utf-8").
+		Build()
+	af3 := asset.NewFile().
+		Name("aaa.zip").
+		Size(uint64(buf3.Len())).
+		Path("aaa.zip").
+		ContentType(zipMime).
+		Build()
+	af4 := asset.NewFile().
+		Name("aaa.zip").
+		Size(uint64(buf4.Len())).
+		Path("aaa.zip").
+		ContentType(zipMime).
+		Build()
+	af5 := asset.NewFile().
+		Name("AAA.ZIP").
+		Size(uint64(buf5.Len())).
+		Path("AAA.ZIP").
+		ContentType(zipMime).
+		Build()
 
 	type args struct {
 		cpp      interfaces.CreateAssetParam
@@ -1244,14 +1283,32 @@ func TestAsset_UpdateFiles(t *testing.T) {
 				Thread(thid).
 				ArchiveExtractionStatus(sp).
 				MustBuild(),
-			wantFile: asset.NewFile().Name("xxx").Path(path.Join("xxx.zip")).GuessContentType().Children([]*asset.File{
-				asset.NewFile().Name("xxx").Path(path.Join("xxx")).Dir().Children([]*asset.File{
-					asset.NewFile().Name("yyy").Path(path.Join("xxx", "yyy")).Dir().Children([]*asset.File{
-						asset.NewFile().Name("hello.txt").Path(path.Join("xxx", "yyy", "hello.txt")).GuessContentType().Build(),
+			wantFile: asset.NewFile().
+				Name("xxx").
+				Path(path.Join("xxx.zip")).
+				GuessContentType().
+				Children([]*asset.File{
+					asset.NewFile().Name("xxx").Path(path.Join("xxx")).Dir().Children([]*asset.File{
+						asset.NewFile().
+							Name("yyy").
+							Path(path.Join("xxx", "yyy")).
+							Dir().
+							Children([]*asset.File{
+								asset.NewFile().
+									Name("hello.txt").
+									Path(path.Join("xxx", "yyy", "hello.txt")).
+									GuessContentType().
+									Build(),
+							}).
+							Build(),
+						asset.NewFile().
+							Name("zzz.txt").
+							Path(path.Join("xxx", "zzz.txt")).
+							GuessContentType().
+							Build(),
 					}).Build(),
-					asset.NewFile().Name("zzz.txt").Path(path.Join("xxx", "zzz.txt")).GuessContentType().Build(),
-				}).Build(),
-			}).Build(),
+				}).
+				Build(),
 			wantErr: nil,
 		},
 	}

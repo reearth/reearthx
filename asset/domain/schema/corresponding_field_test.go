@@ -13,7 +13,11 @@ func TestFieldReferenceFromTypeProperty(t *testing.T) {
 	mid1 := id.NewModelID()
 	sid1 := id.NewSchemaID()
 	fid1 := id.NewFieldID()
-	f1 := NewField(NewReference(mid1, sid1, nil, nil).TypeProperty()).ID(fid1).Key(id.RandomKey()).MustBuild()
+	f1 := NewField(
+		NewReference(mid1, sid1, nil, nil).TypeProperty(),
+	).ID(fid1).
+		Key(id.RandomKey()).
+		MustBuild()
 	got1, ok := FieldReferenceFromTypeProperty(f1.TypeProperty())
 	want1 := &FieldReference{
 		modelID:              mid1,

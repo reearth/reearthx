@@ -66,7 +66,11 @@ func (r *Request) FindByIDs(ctx context.Context, ids id.RequestIDList) (request.
 	return filterRequests(ids, res), nil
 }
 
-func (r *Request) FindByItems(ctx context.Context, list id.ItemIDList, uFilter *repo.RequestFilter) (request.List, error) {
+func (r *Request) FindByItems(
+	ctx context.Context,
+	list id.ItemIDList,
+	uFilter *repo.RequestFilter,
+) (request.List, error) {
 	filter := bson.M{
 		"items.item": bson.M{
 			"$in": list.Strings(),
@@ -75,7 +79,10 @@ func (r *Request) FindByItems(ctx context.Context, list id.ItemIDList, uFilter *
 
 	if uFilter != nil && uFilter.Keyword != nil {
 		filter["title"] = bson.M{
-			"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)), Options: "i"},
+			"$regex": primitive.Regex{
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)),
+				Options: "i",
+			},
 		}
 	}
 
@@ -98,7 +105,13 @@ func (r *Request) FindByItems(ctx context.Context, list id.ItemIDList, uFilter *
 	return r.find(ctx, filter)
 }
 
-func (r *Request) FindByProject(ctx context.Context, id id.ProjectID, uFilter repo.RequestFilter, sort *usecasex.Sort, page *usecasex.Pagination) (request.List, *usecasex.PageInfo, error) {
+func (r *Request) FindByProject(
+	ctx context.Context,
+	id id.ProjectID,
+	uFilter repo.RequestFilter,
+	sort *usecasex.Sort,
+	page *usecasex.Pagination,
+) (request.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(id) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -124,7 +137,12 @@ func (r *Request) FindByProject(ctx context.Context, id id.ProjectID, uFilter re
 	}
 
 	if uFilter.Keyword != nil {
-		keywordRegex := bson.M{"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)), Options: "i"}}
+		keywordRegex := bson.M{
+			"$regex": primitive.Regex{
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)),
+				Options: "i",
+			},
+		}
 		filter = bson.M{
 			"$and": []bson.M{
 				filter,
@@ -173,7 +191,12 @@ func (r *Request) Remove(ctx context.Context, id id.RequestID) error {
 	}))
 }
 
-func (r *Request) paginate(ctx context.Context, filter any, sort *usecasex.Sort, pagination *usecasex.Pagination) (request.List, *usecasex.PageInfo, error) {
+func (r *Request) paginate(
+	ctx context.Context,
+	filter any,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (request.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewRequestConsumer()
 
 	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), sort, pagination, c)

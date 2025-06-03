@@ -35,7 +35,9 @@ func NewAsset(a *asset.Asset, f *asset.File, all bool) *Asset {
 	}
 }
 
-func ToAssetArchiveExtractionStatus(s *asset.ArchiveExtractionStatus) *AssetArchiveExtractionStatus {
+func ToAssetArchiveExtractionStatus(
+	s *asset.ArchiveExtractionStatus,
+) *AssetArchiveExtractionStatus {
 	if s == nil {
 		return nil
 	}

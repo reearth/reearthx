@@ -8,7 +8,9 @@ type CesiumResourceProps struct {
 	cesiumIonAccessToken string
 }
 
-func NewCesiumResourceProps(name, url, image, cesiumIonAssetId, cesiumIonAccessToken string) CesiumResourceProps {
+func NewCesiumResourceProps(
+	name, url, image, cesiumIonAssetId, cesiumIonAccessToken string,
+) CesiumResourceProps {
 	return CesiumResourceProps{
 		name:                 name,
 		url:                  url,

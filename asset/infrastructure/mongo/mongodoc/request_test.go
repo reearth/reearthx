@@ -158,9 +158,17 @@ func TestRequestDocument_Model(t *testing.T) {
 				ClosedAt:    nil,
 				Thread:      tId.StringRef(),
 			},
-			want: request.New().ID(rId).Project(pId).Workspace(wId).Thread(tId.Ref()).CreatedBy(uId).
-				Title("ab").Description("abc").
-				UpdatedAt(now).State(request.StateDraft).Reviewers([]idx.ID[accountdomain.User]{}).
+			want: request.New().
+				ID(rId).
+				Project(pId).
+				Workspace(wId).
+				Thread(tId.Ref()).
+				CreatedBy(uId).
+				Title("ab").
+				Description("abc").
+				UpdatedAt(now).
+				State(request.StateDraft).
+				Reviewers([]idx.ID[accountdomain.User]{}).
 				Items([]*request.Item{itm}).
 				MustBuild(),
 			wantErr: false,
@@ -186,9 +194,17 @@ func TestRequestDocument_Model(t *testing.T) {
 				ClosedAt:    nil,
 				Thread:      tId.StringRef(),
 			},
-			want: request.New().ID(rId).Project(pId).Workspace(wId).Thread(tId.Ref()).CreatedBy(uId).
-				Title("ab").Description("abc").
-				UpdatedAt(now).State(request.StateDraft).Reviewers([]idx.ID[accountdomain.User]{}).
+			want: request.New().
+				ID(rId).
+				Project(pId).
+				Workspace(wId).
+				Thread(tId.Ref()).
+				CreatedBy(uId).
+				Title("ab").
+				Description("abc").
+				UpdatedAt(now).
+				State(request.StateDraft).
+				Reviewers([]idx.ID[accountdomain.User]{}).
 				Items([]*request.Item{lo.Must(request.NewItemWithVersion(itm.Item(), version.Version(uuId).OrRef()))}).
 				MustBuild(),
 			wantErr: false,

@@ -26,11 +26,19 @@ func NewWorkspaceSettings(r *repo.Container, g *gateway.Container) interfaces.Wo
 	}
 }
 
-func (ws *WorkspaceSettings) Fetch(ctx context.Context, wid accountdomain.WorkspaceIDList, op *usecase.Operator) (result workspacesettings.List, err error) {
+func (ws *WorkspaceSettings) Fetch(
+	ctx context.Context,
+	wid accountdomain.WorkspaceIDList,
+	op *usecase.Operator,
+) (result workspacesettings.List, err error) {
 	return ws.repos.WorkspaceSettings.FindByIDs(ctx, wid)
 }
 
-func (ws *WorkspaceSettings) UpdateOrCreate(ctx context.Context, inp interfaces.UpdateOrCreateWorkspaceSettingsParam, op *usecase.Operator) (result *workspacesettings.WorkspaceSettings, err error) {
+func (ws *WorkspaceSettings) UpdateOrCreate(
+	ctx context.Context,
+	inp interfaces.UpdateOrCreateWorkspaceSettingsParam,
+	op *usecase.Operator,
+) (result *workspacesettings.WorkspaceSettings, err error) {
 	wss, err := ws.repos.WorkspaceSettings.FindByID(ctx, inp.ID)
 	if err != nil && !errors.Is(err, rerror.ErrNotFound) {
 		return nil, err
@@ -60,7 +68,11 @@ func (ws *WorkspaceSettings) UpdateOrCreate(ctx context.Context, inp interfaces.
 		})
 }
 
-func (ws *WorkspaceSettings) Delete(ctx context.Context, inp interfaces.DeleteWorkspaceSettingsParam, op *usecase.Operator) error {
+func (ws *WorkspaceSettings) Delete(
+	ctx context.Context,
+	inp interfaces.DeleteWorkspaceSettingsParam,
+	op *usecase.Operator,
+) error {
 	return Run0(ctx, op, ws.repos, Usecase().WithMaintainableWorkspaces(inp.ID).Transaction(),
 		func(ctx context.Context) error {
 			return ws.repos.WorkspaceSettings.Remove(ctx, inp.ID)

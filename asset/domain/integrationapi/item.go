@@ -9,7 +9,15 @@ import (
 	"github.com/samber/lo"
 )
 
-func NewVersionedItem(ver item.Versioned, s *schema.Schema, assets *AssetContext, f *[]VersionedItem, ms *schema.Schema, mi item.Versioned, sgl schema.List) VersionedItem {
+func NewVersionedItem(
+	ver item.Versioned,
+	s *schema.Schema,
+	assets *AssetContext,
+	f *[]VersionedItem,
+	ms *schema.Schema,
+	mi item.Versioned,
+	sgl schema.List,
+) VersionedItem {
 	ps := lo.Map(ver.Parents().Values(), func(v version.Version, _ int) types.UUID {
 		return types.UUID(v)
 	})

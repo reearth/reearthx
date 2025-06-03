@@ -42,13 +42,17 @@ func (c Condition) FieldsByType(t FieldType) FieldSelectorList {
 
 	switch c.ConditionType {
 	case ConditionTypeAnd:
-		res = append(res, lo.FlatMap(c.AndCondition.Conditions, func(c Condition, _ int) []FieldSelector {
-			return c.FieldsByType(t)
-		})...)
+		res = append(
+			res,
+			lo.FlatMap(c.AndCondition.Conditions, func(c Condition, _ int) []FieldSelector {
+				return c.FieldsByType(t)
+			})...)
 	case ConditionTypeOr:
-		res = append(res, lo.FlatMap(c.OrCondition.Conditions, func(c Condition, _ int) []FieldSelector {
-			return c.FieldsByType(t)
-		})...)
+		res = append(
+			res,
+			lo.FlatMap(c.OrCondition.Conditions, func(c Condition, _ int) []FieldSelector {
+				return c.FieldsByType(t)
+			})...)
 	case ConditionTypeBasic:
 		if c.BasicCondition.Field.Type == t {
 			res = append(res, c.BasicCondition.Field)

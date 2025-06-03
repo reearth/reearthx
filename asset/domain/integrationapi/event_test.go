@@ -77,8 +77,20 @@ func TestNewEventWith(t *testing.T) {
 		Alias: "testAlias",
 	}
 
-	ev := event.New[any]().ID(eID1).Timestamp(mockTime).Type(event.AssetCreate).Operator(operator.OperatorFromUser(u.ID())).Object(a).Project(&prj).MustBuild()
-	ev1 := event.New[any]().ID(eID1).Timestamp(mockTime).Type(event.Type("test")).Operator(operator.OperatorFromUser(u.ID())).Object("test").Project(&prj).MustBuild()
+	ev := event.New[any]().ID(eID1).
+		Timestamp(mockTime).
+		Type(event.AssetCreate).
+		Operator(operator.OperatorFromUser(u.ID())).
+		Object(a).
+		Project(&prj).
+		MustBuild()
+	ev1 := event.New[any]().ID(eID1).
+		Timestamp(mockTime).
+		Type(event.Type("test")).
+		Operator(operator.OperatorFromUser(u.ID())).
+		Object("test").
+		Project(&prj).
+		MustBuild()
 	d1, _ := New(ev, "test")
 	d2, _ := New(ev.Object(), "test")
 	type args struct {

@@ -155,7 +155,9 @@ func TestFile_DeleteAssets(t *testing.T) {
 			args: args{
 				ids: []string{"-"},
 			},
-			want: rerror.ErrInternalBy(fmt.Errorf("batch deletion errors: %v", []error{gateway.ErrInvalidUUID})),
+			want: rerror.ErrInternalBy(
+				fmt.Errorf("batch deletion errors: %v", []error{gateway.ErrInvalidUUID}),
+			),
 		},
 	}
 	for _, tt := range tests {

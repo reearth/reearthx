@@ -5,7 +5,12 @@ import (
 	"github.com/reearth/reearthx/asset/domain/value"
 )
 
-func CreateCorrespondingField(sid id.SchemaID, mid id.ModelID, f *Field, inp CorrespondingField) (*Field, error) {
+func CreateCorrespondingField(
+	sid id.SchemaID,
+	mid id.ModelID,
+	f *Field,
+	inp CorrespondingField,
+) (*Field, error) {
 	if f == nil || f.typeProperty == nil || f.typeProperty.reference == nil {
 		return nil, ErrInvalidType
 	}

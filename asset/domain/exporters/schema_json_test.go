@@ -20,7 +20,10 @@ func TestBuildProperties(t *testing.T) {
 	// text field
 	fId1 := id.NewFieldID()
 	sfKey1 := id.RandomKey()
-	sf1 := schema.NewField(schema.NewText(lo.ToPtr(100)).TypeProperty()).ID(fId1).Key(sfKey1).MustBuild()
+	sf1 := schema.NewField(schema.NewText(lo.ToPtr(100)).TypeProperty()).
+		ID(fId1).
+		Key(sfKey1).
+		MustBuild()
 
 	// number field
 	fId2 := id.NewFieldID()
@@ -32,10 +35,19 @@ func TestBuildProperties(t *testing.T) {
 	// asset field
 	gsfKey := id.NewKey("asset-key")
 	gsfId2 := id.NewFieldID()
-	gsf := schema.NewField(schema.NewAsset().TypeProperty()).ID(gsfId2).Key(gsfKey).Multiple(true).MustBuild()
+	gsf := schema.NewField(schema.NewAsset().TypeProperty()).
+		ID(gsfId2).
+		Key(gsfKey).
+		Multiple(true).
+		MustBuild()
 
 	// group schema
-	gs := schema.New().ID(id.NewSchemaID()).Workspace(wid).Project(pid).Fields([]*schema.Field{gsf}).MustBuild()
+	gs := schema.New().
+		ID(id.NewSchemaID()).
+		Workspace(wid).
+		Project(pid).
+		Fields([]*schema.Field{gsf}).
+		MustBuild()
 
 	// group
 	gid := id.NewGroupID()
@@ -45,7 +57,11 @@ func TestBuildProperties(t *testing.T) {
 	// group field
 	fId3 := id.NewFieldID()
 	sfKey3 := id.NewKey("group-key")
-	sf3 := schema.NewField(schema.NewGroup(g.ID()).TypeProperty()).ID(fId3).Key(sfKey3).Multiple(true).MustBuild()
+	sf3 := schema.NewField(schema.NewGroup(g.ID()).TypeProperty()).
+		ID(fId3).
+		Key(sfKey3).
+		Multiple(true).
+		MustBuild()
 
 	// bool field
 	fId4 := id.NewFieldID()
@@ -144,32 +160,83 @@ func TestBuildGroupSchemaMap(t *testing.T) {
 
 	textFieldID := id.NewFieldID()
 	textFieldKey := id.RandomKey()
-	textField := schema.NewField(schema.NewText(lo.ToPtr(100)).TypeProperty()).ID(textFieldID).Key(textFieldKey).MustBuild()
+	textField := schema.NewField(schema.NewText(lo.ToPtr(100)).TypeProperty()).
+		ID(textFieldID).
+		Key(textFieldKey).
+		MustBuild()
 
-	assetField1 := schema.NewField(schema.NewAsset().TypeProperty()).ID(id.NewFieldID()).Key(id.NewKey("asset-key-1")).Multiple(true).MustBuild()
-	groupSchema1 := schema.New().ID(id.NewSchemaID()).Workspace(wid).Project(pid).Fields([]*schema.Field{assetField1}).MustBuild()
+	assetField1 := schema.NewField(schema.NewAsset().TypeProperty()).
+		ID(id.NewFieldID()).
+		Key(id.NewKey("asset-key-1")).
+		Multiple(true).
+		MustBuild()
+	groupSchema1 := schema.New().
+		ID(id.NewSchemaID()).
+		Workspace(wid).
+		Project(pid).
+		Fields([]*schema.Field{assetField1}).
+		MustBuild()
 
 	groupID1 := id.NewGroupID()
 	groupKey1 := id.RandomKey()
-	group1 := group.New().ID(groupID1).Name("group-1").Project(pid).Key(groupKey1).Schema(groupSchema1.ID()).MustBuild()
+	group1 := group.New().
+		ID(groupID1).
+		Name("group-1").
+		Project(pid).
+		Key(groupKey1).
+		Schema(groupSchema1.ID()).
+		MustBuild()
 
 	groupFieldID1 := id.NewFieldID()
 	groupFieldKey1 := id.NewKey("group-key-1")
-	groupField1 := schema.NewField(schema.NewGroup(group1.ID()).TypeProperty()).ID(groupFieldID1).Key(groupFieldKey1).Multiple(true).MustBuild()
+	groupField1 := schema.NewField(schema.NewGroup(group1.ID()).TypeProperty()).
+		ID(groupFieldID1).
+		Key(groupFieldKey1).
+		Multiple(true).
+		MustBuild()
 
-	textField2 := schema.NewField(schema.NewText(nil).TypeProperty()).ID(id.NewFieldID()).Key(id.NewKey("text-key-2")).Multiple(false).MustBuild()
-	groupSchema2 := schema.New().ID(id.NewSchemaID()).Workspace(wid).Project(pid).Fields([]*schema.Field{textField2}).MustBuild()
+	textField2 := schema.NewField(schema.NewText(nil).TypeProperty()).
+		ID(id.NewFieldID()).
+		Key(id.NewKey("text-key-2")).
+		Multiple(false).
+		MustBuild()
+	groupSchema2 := schema.New().
+		ID(id.NewSchemaID()).
+		Workspace(wid).
+		Project(pid).
+		Fields([]*schema.Field{textField2}).
+		MustBuild()
 
 	groupID2 := id.NewGroupID()
 	groupKey2 := id.RandomKey()
-	group2 := group.New().ID(groupID2).Name("group-2").Project(pid).Key(groupKey2).Schema(groupSchema2.ID()).MustBuild()
+	group2 := group.New().
+		ID(groupID2).
+		Name("group-2").
+		Project(pid).
+		Key(groupKey2).
+		Schema(groupSchema2.ID()).
+		MustBuild()
 
 	groupFieldID2 := id.NewFieldID()
 	groupFieldKey2 := id.NewKey("group-key-2")
-	groupField2 := schema.NewField(schema.NewGroup(group2.ID()).TypeProperty()).ID(groupFieldID2).Key(groupFieldKey2).Multiple(false).MustBuild()
+	groupField2 := schema.NewField(schema.NewGroup(group2.ID()).TypeProperty()).
+		ID(groupFieldID2).
+		Key(groupFieldKey2).
+		Multiple(false).
+		MustBuild()
 
-	mainSchema := schema.New().ID(id.NewSchemaID()).Workspace(wid).Project(pid).Fields([]*schema.Field{textField, groupField1, groupField2}).MustBuild()
-	schemaPackage := schema.NewPackage(mainSchema, nil, map[id.GroupID]*schema.Schema{groupID1: groupSchema1, groupID2: groupSchema2}, nil)
+	mainSchema := schema.New().
+		ID(id.NewSchemaID()).
+		Workspace(wid).
+		Project(pid).
+		Fields([]*schema.Field{textField, groupField1, groupField2}).
+		MustBuild()
+	schemaPackage := schema.NewPackage(
+		mainSchema,
+		nil,
+		map[id.GroupID]*schema.Schema{groupID1: groupSchema1, groupID2: groupSchema2},
+		nil,
+	)
 
 	expected := map[id.GroupID]*schema.Schema{groupID1: groupSchema1, groupID2: groupSchema2}
 	result := BuildGroupSchemaMap(schemaPackage)

@@ -36,7 +36,11 @@ func (r *Model) Filtered(f repo.ProjectFilter) repo.Model {
 	}
 }
 
-func (r *Model) FindByProject(_ context.Context, pid id.ProjectID, _ *usecasex.Pagination) (model.List, *usecasex.PageInfo, error) {
+func (r *Model) FindByProject(
+	_ context.Context,
+	pid id.ProjectID,
+	_ *usecasex.Pagination,
+) (model.List, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
@@ -66,7 +70,13 @@ func (r *Model) FindByProject(_ context.Context, pid id.ProjectID, _ *usecasex.P
 	), nil
 }
 
-func (r *Model) FindByProjectAndKeyword(_ context.Context, pid id.ProjectID, k string, _ *model.Sort, _ *usecasex.Pagination) (model.List, *usecasex.PageInfo, error) {
+func (r *Model) FindByProjectAndKeyword(
+	_ context.Context,
+	pid id.ProjectID,
+	k string,
+	_ *model.Sort,
+	_ *usecasex.Pagination,
+) (model.List, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
@@ -129,7 +139,11 @@ func (r *Model) FindByKey(_ context.Context, pid id.ProjectID, key string) (*mod
 	return m, nil
 }
 
-func (r *Model) FindByIDOrKey(ctx context.Context, projectID id.ProjectID, q model.IDOrKey) (*model.Model, error) {
+func (r *Model) FindByIDOrKey(
+	ctx context.Context,
+	projectID id.ProjectID,
+	q model.IDOrKey,
+) (*model.Model, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -141,7 +155,8 @@ func (r *Model) FindByIDOrKey(ctx context.Context, projectID id.ProjectID, q mod
 	}
 
 	m := r.data.Find(func(_ id.ModelID, m *model.Model) bool {
-		return r.f.CanRead(m.Project()) && (modelID != nil && m.ID() == *modelID || key != nil && m.Key().String() == *key)
+		return r.f.CanRead(m.Project()) &&
+			(modelID != nil && m.ID() == *modelID || key != nil && m.Key().String() == *key)
 	})
 	if m == nil {
 		return nil, rerror.ErrNotFound
@@ -171,7 +186,8 @@ func (r *Model) FindBySchema(_ context.Context, sid id.SchemaID) (*model.Model, 
 	}
 
 	m := r.data.Find(func(_ id.ModelID, m *model.Model) bool {
-		return (m.Schema() == sid || (m.Metadata() != nil && *m.Metadata() == sid)) && r.f.CanRead(m.Project())
+		return (m.Schema() == sid || (m.Metadata() != nil && *m.Metadata() == sid)) &&
+			r.f.CanRead(m.Project())
 	})
 
 	if m != nil {

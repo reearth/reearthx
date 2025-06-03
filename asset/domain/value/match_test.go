@@ -70,7 +70,9 @@ func TestValue_Match(t *testing.T) {
 
 func TestOptional_Match(t *testing.T) {
 	var res any
-	(&Optional{t: TypeText, v: &Value{t: TypeText, v: "aaa"}}).Match(OptionalMatch{Match: Match{Text: func(v string) { res = v }}})
+	(&Optional{t: TypeText, v: &Value{t: TypeText, v: "aaa"}}).Match(
+		OptionalMatch{Match: Match{Text: func(v string) { res = v }}},
+	)
 	assert.Equal(t, "aaa", res)
 
 	res = nil

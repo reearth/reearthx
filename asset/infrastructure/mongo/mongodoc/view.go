@@ -126,14 +126,20 @@ func NewFilter(i *view.Condition) *FilterDocument {
 		return &FilterDocument{
 			ConditionType: "AND",
 			AndCondition: &AndConditionDocument{
-				Conditions: lo.Map(i.AndCondition.Conditions, func(c view.Condition, _ int) FilterDocument { return *NewFilter(&c) }),
+				Conditions: lo.Map(
+					i.AndCondition.Conditions,
+					func(c view.Condition, _ int) FilterDocument { return *NewFilter(&c) },
+				),
 			},
 		}
 	case i.OrCondition != nil:
 		return &FilterDocument{
 			ConditionType: "OR",
 			OrCondition: &OrConditionDocument{
-				Conditions: lo.Map(i.OrCondition.Conditions, func(c view.Condition, _ int) FilterDocument { return *NewFilter(&c) }),
+				Conditions: lo.Map(
+					i.OrCondition.Conditions,
+					func(c view.Condition, _ int) FilterDocument { return *NewFilter(&c) },
+				),
 			},
 		}
 	case i.BasicCondition != nil:
@@ -212,13 +218,19 @@ func (d *FilterDocument) Model() *view.Condition {
 	case "AND":
 		return &view.Condition{
 			AndCondition: &view.AndCondition{
-				Conditions: lo.Map(d.AndCondition.Conditions, func(c FilterDocument, _ int) view.Condition { return *c.Model() }),
+				Conditions: lo.Map(
+					d.AndCondition.Conditions,
+					func(c FilterDocument, _ int) view.Condition { return *c.Model() },
+				),
 			},
 		}
 	case "OR":
 		return &view.Condition{
 			OrCondition: &view.OrCondition{
-				Conditions: lo.Map(d.OrCondition.Conditions, func(c FilterDocument, _ int) view.Condition { return *c.Model() }),
+				Conditions: lo.Map(
+					d.OrCondition.Conditions,
+					func(c FilterDocument, _ int) view.Condition { return *c.Model() },
+				),
 			},
 		}
 	case "BASIC":

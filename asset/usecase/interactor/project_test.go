@@ -380,10 +380,21 @@ func TestProject_Update(t *testing.T) {
 	r2 := []workspace.Role{workspace.RoleOwner, workspace.RoleMaintainer}
 
 	pid1 := id.NewProjectID()
-	p1 := project.New().ID(pid1).Workspace(wid1).RequestRoles(r1).UpdatedAt(mocktime.Add(-time.Second)).MustBuild()
+	p1 := project.New().
+		ID(pid1).
+		Workspace(wid1).
+		RequestRoles(r1).
+		UpdatedAt(mocktime.Add(-time.Second)).
+		MustBuild()
 
 	pid2 := id.NewProjectID()
-	p2 := project.New().ID(pid2).Workspace(wid2).RequestRoles(r2).Alias("testAlias").UpdatedAt(mocktime).MustBuild()
+	p2 := project.New().
+		ID(pid2).
+		Workspace(wid2).
+		RequestRoles(r2).
+		Alias("testAlias").
+		UpdatedAt(mocktime).
+		MustBuild()
 
 	u := user.New().Name("aaa").NewID().Email("aaa@bbb.com").Workspace(wid1).MustBuild()
 	op := &usecase.Operator{

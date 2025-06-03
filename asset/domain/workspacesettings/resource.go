@@ -25,7 +25,11 @@ func (r *Resource) Terrain() *TerrainResource {
 	return r.terrain
 }
 
-func NewResource(resourceType ResourceType, tile *TileResource, terrain *TerrainResource) *Resource {
+func NewResource(
+	resourceType ResourceType,
+	tile *TileResource,
+	terrain *TerrainResource,
+) *Resource {
 	return &Resource{
 		resourceType: resourceType,
 		tile:         tile,

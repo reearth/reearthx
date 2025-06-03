@@ -19,7 +19,9 @@ func TestWorkspaceSettingsRepo_FindByID(t *testing.T) {
 
 	initDB := mongotest.Connect(t)
 	client := mongox.NewClientWithDatabase(initDB(t))
-	r := NewWorkspaceSettings(client).Filtered(repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{wid}, Writable: []accountdomain.WorkspaceID{wid}})
+	r := NewWorkspaceSettings(
+		client,
+	).Filtered(repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{wid}, Writable: []accountdomain.WorkspaceID{wid}})
 	ctx := context.Background()
 
 	err := r.Save(ctx, w.Clone())
@@ -39,7 +41,9 @@ func TestWorkspaceSettingsRepo_FindByIDs(t *testing.T) {
 
 	initDB := mongotest.Connect(t)
 	client := mongox.NewClientWithDatabase(initDB(t))
-	r := NewWorkspaceSettings(client).Filtered(repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{wid1, wid2}, Writable: []accountdomain.WorkspaceID{wid1, wid2}})
+	r := NewWorkspaceSettings(
+		client,
+	).Filtered(repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{wid1, wid2}, Writable: []accountdomain.WorkspaceID{wid1, wid2}})
 	ctx := context.Background()
 
 	err := r.Save(ctx, w1.Clone())
@@ -66,7 +70,9 @@ func TestWorkspaceSettingsRepo_Remove(t *testing.T) {
 
 	initDB := mongotest.Connect(t)
 	client := mongox.NewClientWithDatabase(initDB(t))
-	r := NewWorkspaceSettings(client).Filtered(repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{wid1}, Writable: []accountdomain.WorkspaceID{wid1}})
+	r := NewWorkspaceSettings(
+		client,
+	).Filtered(repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{wid1}, Writable: []accountdomain.WorkspaceID{wid1}})
 	ctx := context.Background()
 
 	err := r.Save(ctx, w1.Clone())

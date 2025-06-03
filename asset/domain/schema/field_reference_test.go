@@ -12,7 +12,11 @@ func TestNewReference(t *testing.T) {
 	m := id.NewModelID()
 	sid := id.NewSchemaID()
 	cf := id.NewFieldID().Ref()
-	assert.Equal(t, &FieldReference{modelID: m, schemaID: sid, correspondingFieldID: cf}, NewReference(m, sid, cf, nil))
+	assert.Equal(
+		t,
+		&FieldReference{modelID: m, schemaID: sid, correspondingFieldID: cf},
+		NewReference(m, sid, cf, nil),
+	)
 }
 
 func TestFieldReference_CorrespondingField(t *testing.T) {
@@ -64,7 +68,11 @@ func TestFieldReference_Clone(t *testing.T) {
 	m := id.NewModelID()
 	cf := id.NewFieldID().Ref()
 	assert.Nil(t, (*FieldReference)(nil).Clone())
-	assert.Equal(t, &FieldReference{modelID: m, correspondingFieldID: cf}, (&FieldReference{modelID: m, correspondingFieldID: cf}).Clone())
+	assert.Equal(
+		t,
+		&FieldReference{modelID: m, correspondingFieldID: cf},
+		(&FieldReference{modelID: m, correspondingFieldID: cf}).Clone(),
+	)
 }
 
 func TestFieldReference_Validate(t *testing.T) {

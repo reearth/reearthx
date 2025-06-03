@@ -51,7 +51,11 @@ func (f *FieldString) Validate(v *value.Value) error {
 	if f.maxLength != nil {
 		len := utf8.RuneCountInString(s)
 		if len > *f.maxLength {
-			return fmt.Errorf("value has %d characters, but it sholud be shorter than %d characters", len, *f.maxLength)
+			return fmt.Errorf(
+				"value has %d characters, but it sholud be shorter than %d characters",
+				len,
+				*f.maxLength,
+			)
 		}
 	}
 

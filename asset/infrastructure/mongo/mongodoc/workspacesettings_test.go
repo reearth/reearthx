@@ -13,7 +13,11 @@ func Test_NewWorkspaceSettings(t *testing.T) {
 	pp := workspacesettings.NewURLResourceProps("foo", "bar", "baz")
 	tt := workspacesettings.NewTileResource(rid, workspacesettings.TileTypeDefault, pp)
 	r := workspacesettings.NewResource(workspacesettings.ResourceTypeTile, tt, nil)
-	tiles := workspacesettings.NewResourceList([]*workspacesettings.Resource{r}, rid.Ref(), lo.ToPtr(true))
+	tiles := workspacesettings.NewResourceList(
+		[]*workspacesettings.Resource{r},
+		rid.Ref(),
+		lo.ToPtr(true),
+	)
 	ws := workspacesettings.New().NewID().Tiles(tiles).MustBuild()
 
 	wsid := ws.ID().String()
@@ -33,12 +37,20 @@ func Test_WorkspaceSettingsDocument_Model(t *testing.T) {
 	pp := workspacesettings.NewURLResourceProps("foo", "bar", "baz")
 	tt := workspacesettings.NewTileResource(rid, workspacesettings.TileTypeDefault, pp)
 	r := workspacesettings.NewResource(workspacesettings.ResourceTypeTile, tt, nil)
-	tiles := workspacesettings.NewResourceList([]*workspacesettings.Resource{r}, rid.Ref(), lo.ToPtr(true))
+	tiles := workspacesettings.NewResourceList(
+		[]*workspacesettings.Resource{r},
+		rid.Ref(),
+		lo.ToPtr(true),
+	)
 	rid2 := workspacesettings.NewResourceID()
 	pp2 := workspacesettings.NewCesiumResourceProps("foo", "bar", "baz", "test", "test")
 	tt2 := workspacesettings.NewTerrainResource(rid2, workspacesettings.TerrainTypeCesiumIon, pp2)
 	r2 := workspacesettings.NewResource(workspacesettings.ResourceTypeTerrain, nil, tt2)
-	terrains := workspacesettings.NewResourceList([]*workspacesettings.Resource{r2}, rid2.Ref(), lo.ToPtr(true))
+	terrains := workspacesettings.NewResourceList(
+		[]*workspacesettings.Resource{r2},
+		rid2.Ref(),
+		lo.ToPtr(true),
+	)
 	ws := workspacesettings.New().NewID().Tiles(tiles).Terrains(terrains).MustBuild()
 
 	wsd := &WorkspaceSettingsDocument{

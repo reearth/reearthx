@@ -9,7 +9,11 @@ import (
 )
 
 func TestNewText(t *testing.T) {
-	assert.Equal(t, &FieldText{s: &FieldString{t: value.TypeText, maxLength: lo.ToPtr(1)}}, NewText(lo.ToPtr(1)))
+	assert.Equal(
+		t,
+		&FieldText{s: &FieldString{t: value.TypeText, maxLength: lo.ToPtr(1)}},
+		NewText(lo.ToPtr(1)),
+	)
 }
 
 func TestFieldText_Type(t *testing.T) {
@@ -30,6 +34,13 @@ func TestFieldText_Clone(t *testing.T) {
 }
 
 func TestFieldText_Validate(t *testing.T) {
-	assert.NoError(t, (&FieldText{s: &FieldString{t: value.TypeText}}).Validate(value.TypeText.Value("aaa")))
-	assert.Equal(t, ErrInvalidValue, (&FieldText{s: &FieldString{t: value.TypeText}}).Validate(value.TypeTextArea.Value("")))
+	assert.NoError(
+		t,
+		(&FieldText{s: &FieldString{t: value.TypeText}}).Validate(value.TypeText.Value("aaa")),
+	)
+	assert.Equal(
+		t,
+		ErrInvalidValue,
+		(&FieldText{s: &FieldString{t: value.TypeText}}).Validate(value.TypeTextArea.Value("")),
+	)
 }

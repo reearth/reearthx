@@ -143,7 +143,11 @@ func TestThread_FindByIDs(t *testing.T) {
 		{
 			name: "0 count with thread for another workspaces",
 			seeds: thread.List{
-				thread.New().NewID().Workspace(accountdomain.NewWorkspaceID()).Comments([]*thread.Comment{}).MustBuild(),
+				thread.New().
+					NewID().
+					Workspace(accountdomain.NewWorkspaceID()).
+					Comments([]*thread.Comment{}).
+					MustBuild(),
 			},
 			arg:     []id.ThreadID{},
 			want:    nil,
@@ -162,8 +166,16 @@ func TestThread_FindByIDs(t *testing.T) {
 			name: "1 count with multi threads",
 			seeds: thread.List{
 				th1,
-				thread.New().NewID().Workspace(accountdomain.NewWorkspaceID()).Comments([]*thread.Comment{}).MustBuild(),
-				thread.New().NewID().Workspace(accountdomain.NewWorkspaceID()).Comments([]*thread.Comment{}).MustBuild(),
+				thread.New().
+					NewID().
+					Workspace(accountdomain.NewWorkspaceID()).
+					Comments([]*thread.Comment{}).
+					MustBuild(),
+				thread.New().
+					NewID().
+					Workspace(accountdomain.NewWorkspaceID()).
+					Comments([]*thread.Comment{}).
+					MustBuild(),
 			},
 			arg:     []id.ThreadID{id1},
 			want:    thread.List{th1},
@@ -174,8 +186,16 @@ func TestThread_FindByIDs(t *testing.T) {
 			seeds: thread.List{
 				th1,
 				th2,
-				thread.New().NewID().Workspace(accountdomain.NewWorkspaceID()).Comments([]*thread.Comment{}).MustBuild(),
-				thread.New().NewID().Workspace(accountdomain.NewWorkspaceID()).Comments([]*thread.Comment{}).MustBuild(),
+				thread.New().
+					NewID().
+					Workspace(accountdomain.NewWorkspaceID()).
+					Comments([]*thread.Comment{}).
+					MustBuild(),
+				thread.New().
+					NewID().
+					Workspace(accountdomain.NewWorkspaceID()).
+					Comments([]*thread.Comment{}).
+					MustBuild(),
 			},
 			arg:     []id.ThreadID{id1, id2},
 			want:    thread.List{th1, th2},
@@ -197,7 +217,11 @@ func TestThread_FindByIDs(t *testing.T) {
 			}
 			threadUC := NewThread(db, nil)
 
-			got, err := threadUC.FindByIDs(ctx, tc.arg, &usecase.Operator{AcOperator: &accountusecase.Operator{}})
+			got, err := threadUC.FindByIDs(
+				ctx,
+				tc.arg,
+				&usecase.Operator{AcOperator: &accountusecase.Operator{}},
+			)
 			if tc.wantErr != nil {
 				assert.Equal(t, tc.wantErr, err)
 				return
@@ -232,14 +256,24 @@ func TestThreadRepo_CreateThreadWithComment(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name:     "Save succeed",
-			arg:      interfaces.CreateThreadWithCommentInput{WorkspaceID: wid, ResourceID: i.ID().String(), ResourceType: rt, Content: content},
+			name: "Save succeed",
+			arg: interfaces.CreateThreadWithCommentInput{
+				WorkspaceID:  wid,
+				ResourceID:   i.ID().String(),
+				ResourceType: rt,
+				Content:      content,
+			},
 			operator: op,
 			wantErr:  nil,
 		},
 		{
 			name: "Save error: invalid workspace id",
-			arg:  interfaces.CreateThreadWithCommentInput{WorkspaceID: wid2, ResourceID: i.ID().String(), ResourceType: rt, Content: content},
+			arg: interfaces.CreateThreadWithCommentInput{
+				WorkspaceID:  wid2,
+				ResourceID:   i.ID().String(),
+				ResourceType: rt,
+				Content:      content,
+			},
 			operator: &usecase.Operator{
 				AcOperator: &accountusecase.Operator{
 					User:               &uid,
@@ -259,8 +293,13 @@ func TestThreadRepo_CreateThreadWithComment(t *testing.T) {
 			wantErr: interfaces.ErrOperationDenied,
 		},
 		{
-			name:     "operator succeed",
-			arg:      interfaces.CreateThreadWithCommentInput{WorkspaceID: wid, ResourceID: i.ID().String(), ResourceType: rt, Content: content},
+			name: "operator succeed",
+			arg: interfaces.CreateThreadWithCommentInput{
+				WorkspaceID:  wid,
+				ResourceID:   i.ID().String(),
+				ResourceType: rt,
+				Content:      content,
+			},
 			operator: op,
 			wantErr:  nil,
 		},
@@ -277,12 +316,16 @@ func TestThreadRepo_CreateThreadWithComment(t *testing.T) {
 			assert.NoError(t, err)
 
 			threadUC := NewThread(db, nil)
-			th, _, err := threadUC.CreateThreadWithComment(ctx, interfaces.CreateThreadWithCommentInput{
-				WorkspaceID:  tc.arg.WorkspaceID,
-				ResourceID:   tc.arg.ResourceID,
-				ResourceType: tc.arg.ResourceType,
-				Content:      tc.arg.Content,
-			}, tc.operator)
+			th, _, err := threadUC.CreateThreadWithComment(
+				ctx,
+				interfaces.CreateThreadWithCommentInput{
+					WorkspaceID:  tc.arg.WorkspaceID,
+					ResourceID:   tc.arg.ResourceID,
+					ResourceType: tc.arg.ResourceType,
+					Content:      tc.arg.Content,
+				},
+				tc.operator,
+			)
 			if tc.wantErr != nil {
 				assert.ErrorIs(t, err, tc.wantErr)
 				return
@@ -298,7 +341,11 @@ func TestThreadRepo_CreateThreadWithComment(t *testing.T) {
 }
 
 func TestThread_AddComment(t *testing.T) {
-	c1 := thread.NewComment(thread.NewCommentID(), operator.OperatorFromUser(accountdomain.NewUserID()), "aaa")
+	c1 := thread.NewComment(
+		thread.NewCommentID(),
+		operator.OperatorFromUser(accountdomain.NewUserID()),
+		"aaa",
+	)
 	wid := accountdomain.NewWorkspaceID()
 	th1 := thread.New().NewID().Workspace(wid).Comments([]*thread.Comment{}).MustBuild()
 	uid := accountdomain.NewUserID()
@@ -403,8 +450,16 @@ func TestThread_AddComment(t *testing.T) {
 }
 
 func TestThread_UpdateComment(t *testing.T) {
-	c1 := thread.NewComment(thread.NewCommentID(), operator.OperatorFromUser(accountdomain.NewUserID()), "aaa")
-	c2 := thread.NewComment(thread.NewCommentID(), operator.OperatorFromUser(accountdomain.NewUserID()), "test")
+	c1 := thread.NewComment(
+		thread.NewCommentID(),
+		operator.OperatorFromUser(accountdomain.NewUserID()),
+		"aaa",
+	)
+	c2 := thread.NewComment(
+		thread.NewCommentID(),
+		operator.OperatorFromUser(accountdomain.NewUserID()),
+		"test",
+	)
 	wid := accountdomain.NewWorkspaceID()
 	th1 := thread.New().NewID().Workspace(wid).Comments([]*thread.Comment{c1, c2}).MustBuild()
 	uid := accountdomain.NewUserID()
@@ -491,7 +546,13 @@ func TestThread_UpdateComment(t *testing.T) {
 			threadUC := NewThread(db, nil)
 			if tc.mockError && tc.wantErr != nil {
 				thid := id.NewThreadID()
-				_, _, err := threadUC.UpdateComment(ctx, thid, tc.args.comment.ID(), tc.args.content, tc.args.operator)
+				_, _, err := threadUC.UpdateComment(
+					ctx,
+					thid,
+					tc.args.comment.ID(),
+					tc.args.content,
+					tc.args.operator,
+				)
 				assert.Equal(t, tc.wantErr, err)
 				return
 			}
@@ -510,8 +571,16 @@ func TestThread_UpdateComment(t *testing.T) {
 }
 
 func TestThread_DeleteComment(t *testing.T) {
-	c1 := thread.NewComment(thread.NewCommentID(), operator.OperatorFromUser(accountdomain.NewUserID()), "aaa")
-	c2 := thread.NewComment(thread.NewCommentID(), operator.OperatorFromUser(accountdomain.NewUserID()), "test")
+	c1 := thread.NewComment(
+		thread.NewCommentID(),
+		operator.OperatorFromUser(accountdomain.NewUserID()),
+		"aaa",
+	)
+	c2 := thread.NewComment(
+		thread.NewCommentID(),
+		operator.OperatorFromUser(accountdomain.NewUserID()),
+		"test",
+	)
 	wid := accountdomain.NewWorkspaceID()
 	th1 := thread.New().NewID().Workspace(wid).Comments([]*thread.Comment{c1, c2}).MustBuild()
 	uid := accountdomain.NewUserID()
@@ -597,7 +666,13 @@ func TestThread_DeleteComment(t *testing.T) {
 			thread2, err := threadUC.FindByID(ctx, tc.seed.ID(), tc.args.operator)
 			assert.NoError(t, err)
 			assert.Equal(t, len(tc.seed.Comments())-1, len(thread2.Comments()))
-			assert.False(t, lo.ContainsBy(thread2.Comments(), func(cc *thread.Comment) bool { return cc.ID() == commentID }))
+			assert.False(
+				t,
+				lo.ContainsBy(
+					thread2.Comments(),
+					func(cc *thread.Comment) bool { return cc.ID() == commentID },
+				),
+			)
 		})
 	}
 }

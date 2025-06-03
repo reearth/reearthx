@@ -78,7 +78,8 @@ func (d *ProjectDocument) Model() (*project.Project, error) {
 
 	var imageURL *url.URL
 	if d.ImageURL != "" {
-		if imageURL, err = url.Parse(d.ImageURL); err != nil || imageURL.Host == "" || imageURL.Scheme == "" {
+		if imageURL, err = url.Parse(d.ImageURL); err != nil || imageURL.Host == "" ||
+			imageURL.Scheme == "" {
 			imageURL = nil
 		}
 	}
@@ -101,7 +102,11 @@ func (d *ProjectPublicationDocument) Model() *project.Publication {
 		return nil
 	}
 	if d.Token != nil {
-		return project.NewPublicationWithToken(project.PublicationScope(d.Scope), d.AssetPublic, *d.Token)
+		return project.NewPublicationWithToken(
+			project.PublicationScope(d.Scope),
+			d.AssetPublic,
+			*d.Token,
+		)
 	} else {
 		return project.NewPublication(project.PublicationScope(d.Scope), d.AssetPublic)
 	}

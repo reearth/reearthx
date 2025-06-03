@@ -35,19 +35,36 @@ func NewModel(r *repo.Container, g *gateway.Container) interfaces.Model {
 	}
 }
 
-func (i Model) FindByID(ctx context.Context, id id.ModelID, _ *usecase.Operator) (*model.Model, error) {
+func (i Model) FindByID(
+	ctx context.Context,
+	id id.ModelID,
+	_ *usecase.Operator,
+) (*model.Model, error) {
 	return i.repos.Model.FindByID(ctx, id)
 }
 
-func (i Model) FindBySchema(ctx context.Context, id id.SchemaID, _ *usecase.Operator) (*model.Model, error) {
+func (i Model) FindBySchema(
+	ctx context.Context,
+	id id.SchemaID,
+	_ *usecase.Operator,
+) (*model.Model, error) {
 	return i.repos.Model.FindBySchema(ctx, id)
 }
 
-func (i Model) FindByIDs(ctx context.Context, ids []id.ModelID, _ *usecase.Operator) (model.List, error) {
+func (i Model) FindByIDs(
+	ctx context.Context,
+	ids []id.ModelID,
+	_ *usecase.Operator,
+) (model.List, error) {
 	return i.repos.Model.FindByIDs(ctx, ids)
 }
 
-func (i Model) FindByProject(ctx context.Context, projectID id.ProjectID, pagination *usecasex.Pagination, _ *usecase.Operator) (model.List, *usecasex.PageInfo, error) {
+func (i Model) FindByProject(
+	ctx context.Context,
+	projectID id.ProjectID,
+	pagination *usecasex.Pagination,
+	_ *usecase.Operator,
+) (model.List, *usecasex.PageInfo, error) {
 	m, p, err := i.repos.Model.FindByProject(ctx, projectID, pagination)
 	if err != nil {
 		return nil, nil, err
@@ -55,23 +72,47 @@ func (i Model) FindByProject(ctx context.Context, projectID id.ProjectID, pagina
 	return m, p, nil
 }
 
-func (i Model) FindByProjectAndKeyword(ctx context.Context, params interfaces.FindByProjectAndKeywordParam, _ *usecase.Operator) (model.List, *usecasex.PageInfo, error) {
-	m, p, err := i.repos.Model.FindByProjectAndKeyword(ctx, params.ProjectID, params.Keyword, params.Sort, params.Pagination)
+func (i Model) FindByProjectAndKeyword(
+	ctx context.Context,
+	params interfaces.FindByProjectAndKeywordParam,
+	_ *usecase.Operator,
+) (model.List, *usecasex.PageInfo, error) {
+	m, p, err := i.repos.Model.FindByProjectAndKeyword(
+		ctx,
+		params.ProjectID,
+		params.Keyword,
+		params.Sort,
+		params.Pagination,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 	return m, p, nil
 }
 
-func (i Model) FindByKey(ctx context.Context, pid id.ProjectID, model string, _ *usecase.Operator) (*model.Model, error) {
+func (i Model) FindByKey(
+	ctx context.Context,
+	pid id.ProjectID,
+	model string,
+	_ *usecase.Operator,
+) (*model.Model, error) {
 	return i.repos.Model.FindByKey(ctx, pid, model)
 }
 
-func (i Model) FindByIDOrKey(ctx context.Context, p id.ProjectID, q model.IDOrKey, _ *usecase.Operator) (*model.Model, error) {
+func (i Model) FindByIDOrKey(
+	ctx context.Context,
+	p id.ProjectID,
+	q model.IDOrKey,
+	_ *usecase.Operator,
+) (*model.Model, error) {
 	return i.repos.Model.FindByIDOrKey(ctx, p, q)
 }
 
-func (i Model) Create(ctx context.Context, param interfaces.CreateModelParam, operator *usecase.Operator) (*model.Model, error) {
+func (i Model) Create(
+	ctx context.Context,
+	param interfaces.CreateModelParam,
+	operator *usecase.Operator,
+) (*model.Model, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *model.Model, err error) {
 			if !operator.IsMaintainingProject(param.ProjectId) {
@@ -81,7 +122,10 @@ func (i Model) Create(ctx context.Context, param interfaces.CreateModelParam, op
 		})
 }
 
-func (i Model) create(ctx context.Context, param interfaces.CreateModelParam) (*model.Model, error) {
+func (i Model) create(
+	ctx context.Context,
+	param interfaces.CreateModelParam,
+) (*model.Model, error) {
 	p, err := i.repos.Project.FindByID(ctx, param.ProjectId)
 	if err != nil {
 		return nil, err
@@ -123,7 +167,11 @@ func (i Model) create(ctx context.Context, param interfaces.CreateModelParam) (*
 	} else {
 		mb = mb.Key(id.RandomKey())
 	}
-	models, _, err := i.repos.Model.FindByProject(ctx, param.ProjectId, usecasex.CursorPagination{First: lo.ToPtr(int64(1000))}.Wrap())
+	models, _, err := i.repos.Model.FindByProject(
+		ctx,
+		param.ProjectId,
+		usecasex.CursorPagination{First: lo.ToPtr(int64(1000))}.Wrap(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +192,11 @@ func (i Model) create(ctx context.Context, param interfaces.CreateModelParam) (*
 	return m, nil
 }
 
-func (i Model) Update(ctx context.Context, param interfaces.UpdateModelParam, operator *usecase.Operator) (*model.Model, error) {
+func (i Model) Update(
+	ctx context.Context,
+	param interfaces.UpdateModelParam,
+	operator *usecase.Operator,
+) (*model.Model, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *model.Model, err error) {
 			m, err := i.repos.Model.FindByID(ctx, param.ModelID)
@@ -205,7 +257,11 @@ func (i Model) Delete(ctx context.Context, modelID id.ModelID, operator *usecase
 				return interfaces.ErrOperationDenied
 			}
 
-			models, _, err := i.repos.Model.FindByProject(ctx, m.Project(), usecasex.CursorPagination{First: lo.ToPtr(int64(1000))}.Wrap())
+			models, _, err := i.repos.Model.FindByProject(
+				ctx,
+				m.Project(),
+				usecasex.CursorPagination{First: lo.ToPtr(int64(1000))}.Wrap(),
+			)
 			if err != nil {
 				return err
 			}
@@ -220,13 +276,20 @@ func (i Model) Delete(ctx context.Context, modelID id.ModelID, operator *usecase
 		})
 }
 
-func (i Model) Publish(ctx context.Context, params []interfaces.PublishModelParam, operator *usecase.Operator) error {
+func (i Model) Publish(
+	ctx context.Context,
+	params []interfaces.PublishModelParam,
+	operator *usecase.Operator,
+) error {
 	if len(params) == 0 {
 		return rerror.ErrInvalidParams
 	}
 	return Run0(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) error {
-			mIds := lo.Map(params, func(p interfaces.PublishModelParam, _ int) id.ModelID { return p.ModelID })
+			mIds := lo.Map(
+				params,
+				func(p interfaces.PublishModelParam, _ int) id.ModelID { return p.ModelID },
+			)
 			ml, err := i.repos.Model.FindByIDs(ctx, mIds)
 			if err != nil {
 				return err
@@ -234,7 +297,9 @@ func (i Model) Publish(ctx context.Context, params []interfaces.PublishModelPara
 			if len(ml) != len(mIds) {
 				return rerror.ErrNotFound
 			}
-			if len(lo.UniqMap(ml, func(m *model.Model, _ int) id.ProjectID { return m.Project() })) != 1 {
+			if len(
+				lo.UniqMap(ml, func(m *model.Model, _ int) id.ProjectID { return m.Project() }),
+			) != 1 {
 				return rerror.ErrInvalidParams
 			}
 			if !operator.IsMaintainingProject(ml[0].Project()) {
@@ -256,7 +321,11 @@ func (i Model) Publish(ctx context.Context, params []interfaces.PublishModelPara
 		})
 }
 
-func (i Model) FindOrCreateSchema(ctx context.Context, param interfaces.FindOrCreateSchemaParam, operator *usecase.Operator) (*schema.Schema, error) {
+func (i Model) FindOrCreateSchema(
+	ctx context.Context,
+	param interfaces.FindOrCreateSchemaParam,
+	operator *usecase.Operator,
+) (*schema.Schema, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *schema.Schema, err error) {
 			var sid id.SchemaID
@@ -282,7 +351,12 @@ func (i Model) FindOrCreateSchema(ctx context.Context, param interfaces.FindOrCr
 							return nil, interfaces.ErrOperationDenied
 						}
 
-						s, err := schema.New().NewID().Workspace(p.Workspace()).Project(p.ID()).TitleField(nil).Build()
+						s, err := schema.New().
+							NewID().
+							Workspace(p.Workspace()).
+							Project(p.ID()).
+							TitleField(nil).
+							Build()
 						if err != nil {
 							return nil, err
 						}
@@ -316,7 +390,11 @@ func (i Model) FindOrCreateSchema(ctx context.Context, param interfaces.FindOrCr
 		})
 }
 
-func (i Model) UpdateOrder(ctx context.Context, ids id.ModelIDList, operator *usecase.Operator) (model.List, error) {
+func (i Model) UpdateOrder(
+	ctx context.Context,
+	ids id.ModelIDList,
+	operator *usecase.Operator,
+) (model.List, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ model.List, err error) {
 			if len(ids) == 0 {
@@ -341,7 +419,11 @@ func (i Model) UpdateOrder(ctx context.Context, ids id.ModelIDList, operator *us
 		})
 }
 
-func (i Model) Copy(ctx context.Context, params interfaces.CopyModelParam, operator *usecase.Operator) (*model.Model, error) {
+func (i Model) Copy(
+	ctx context.Context,
+	params interfaces.CopyModelParam,
+	operator *usecase.Operator,
+) (*model.Model, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (*model.Model, error) {
 			// Copy the model
@@ -432,7 +514,13 @@ func (i Model) Copy(ctx context.Context, params interfaces.CopyModelParam, opera
 		})
 }
 
-func (i Model) copyItems(ctx context.Context, oldSchemaID, newSchemaID id.SchemaID, newModelID id.ModelID, timestamp time.Time, operator *usecase.Operator) error {
+func (i Model) copyItems(
+	ctx context.Context,
+	oldSchemaID, newSchemaID id.SchemaID,
+	newModelID id.ModelID,
+	timestamp time.Time,
+	operator *usecase.Operator,
+) error {
 	collection := "item"
 	filter, changes, err := i.repos.Item.Copy(ctx, repo.CopyParams{
 		OldSchema:   oldSchemaID,
@@ -464,6 +552,11 @@ func (i Model) triggerCopyEvent(ctx context.Context, collection, filter, changes
 		return fmt.Errorf("failed to trigger copy event: %w", err)
 	}
 
-	log.Infof("model: successfully triggered copy event for collection %s, filter: %s, changes: %s", collection, filter, changes)
+	log.Infof(
+		"model: successfully triggered copy event for collection %s, filter: %s, changes: %s",
+		collection,
+		filter,
+		changes,
+	)
 	return nil
 }

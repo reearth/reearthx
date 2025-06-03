@@ -72,7 +72,11 @@ func (r *Model) FindByIDs(ctx context.Context, ids id.ModelIDList) (model.List, 
 	return prepare(ids, res), nil
 }
 
-func (r *Model) FindByProject(ctx context.Context, pid id.ProjectID, pagination *usecasex.Pagination) (model.List, *usecasex.PageInfo, error) {
+func (r *Model) FindByProject(
+	ctx context.Context,
+	pid id.ProjectID,
+	pagination *usecasex.Pagination,
+) (model.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(pid) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -82,7 +86,13 @@ func (r *Model) FindByProject(ctx context.Context, pid id.ProjectID, pagination 
 	}, nil, pagination)
 }
 
-func (r *Model) FindByProjectAndKeyword(ctx context.Context, pid id.ProjectID, k string, sort *model.Sort, pagination *usecasex.Pagination) (model.List, *usecasex.PageInfo, error) {
+func (r *Model) FindByProjectAndKeyword(
+	ctx context.Context,
+	pid id.ProjectID,
+	k string,
+	sort *model.Sort,
+	pagination *usecasex.Pagination,
+) (model.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(pid) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -93,14 +103,21 @@ func (r *Model) FindByProjectAndKeyword(ctx context.Context, pid id.ProjectID, k
 
 	if k != "" {
 		filter["name"] = bson.M{
-			"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(k)), Options: "i"},
+			"$regex": primitive.Regex{
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(k)),
+				Options: "i",
+			},
 		}
 	}
 
 	return r.paginate(ctx, filter, sortModels(sort), pagination)
 }
 
-func (r *Model) FindByKey(ctx context.Context, projectID id.ProjectID, key string) (*model.Model, error) {
+func (r *Model) FindByKey(
+	ctx context.Context,
+	projectID id.ProjectID,
+	key string,
+) (*model.Model, error) {
 	if len(key) == 0 {
 		return nil, rerror.ErrNotFound
 	}
@@ -114,7 +131,11 @@ func (r *Model) FindByKey(ctx context.Context, projectID id.ProjectID, key strin
 	})
 }
 
-func (r *Model) FindByIDOrKey(ctx context.Context, projectID id.ProjectID, q model.IDOrKey) (*model.Model, error) {
+func (r *Model) FindByIDOrKey(
+	ctx context.Context,
+	projectID id.ProjectID,
+	q model.IDOrKey,
+) (*model.Model, error) {
 	mid := q.ID()
 	key := q.Key()
 	if mid == nil && (key == nil || *key == "") {
@@ -185,7 +206,12 @@ func (r *Model) find(ctx context.Context, filter any) (model.List, error) {
 	return c.Result, nil
 }
 
-func (r *Model) paginate(ctx context.Context, filter bson.M, sort *usecasex.Sort, pagination *usecasex.Pagination) (model.List, *usecasex.PageInfo, error) {
+func (r *Model) paginate(
+	ctx context.Context,
+	filter bson.M,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (model.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewModelConsumer()
 	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), sort, pagination, c)
 	if err != nil {

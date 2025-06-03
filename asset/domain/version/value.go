@@ -30,7 +30,13 @@ func NewValue[T any](version Version, parents Versions, refs Refs, t time.Time, 
 	return res
 }
 
-func MustBeValue[T any](version Version, parents Versions, refs Refs, t time.Time, value T) *Value[T] {
+func MustBeValue[T any](
+	version Version,
+	parents Versions,
+	refs Refs,
+	t time.Time,
+	value T,
+) *Value[T] {
 	v := NewValue(version, parents, refs, t, value)
 	if v == nil {
 		panic("invalid version or parents")

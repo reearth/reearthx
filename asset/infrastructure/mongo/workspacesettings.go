@@ -36,7 +36,10 @@ func (r *WorkspaceSettingsRepo) Filtered(f repo.WorkspaceFilter) repo.WorkspaceS
 	}
 }
 
-func (r *WorkspaceSettingsRepo) FindByID(ctx context.Context, wid accountdomain.WorkspaceID) (*workspacesettings.WorkspaceSettings, error) {
+func (r *WorkspaceSettingsRepo) FindByID(
+	ctx context.Context,
+	wid accountdomain.WorkspaceID,
+) (*workspacesettings.WorkspaceSettings, error) {
 	if !r.f.CanRead(wid) {
 		return nil, repo.ErrOperationDenied
 	}
@@ -50,7 +53,10 @@ func (r *WorkspaceSettingsRepo) FindByID(ctx context.Context, wid accountdomain.
 	return res, nil
 }
 
-func (r *WorkspaceSettingsRepo) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspacesettings.List, error) {
+func (r *WorkspaceSettingsRepo) FindByIDs(
+	ctx context.Context,
+	ids accountdomain.WorkspaceIDList,
+) (workspacesettings.List, error) {
 	if ok := lo.EveryBy(ids, func(wid accountdomain.WorkspaceID) bool {
 		return r.f.CanRead(wid)
 	}); !ok {
@@ -74,7 +80,10 @@ func (r *WorkspaceSettingsRepo) FindByIDs(ctx context.Context, ids accountdomain
 	return filterWorkspaceSettings(ids, res), nil
 }
 
-func (r *WorkspaceSettingsRepo) Save(ctx context.Context, ws *workspacesettings.WorkspaceSettings) error {
+func (r *WorkspaceSettingsRepo) Save(
+	ctx context.Context,
+	ws *workspacesettings.WorkspaceSettings,
+) error {
 	if !r.f.CanWrite(ws.ID()) {
 		return repo.ErrOperationDenied
 	}
@@ -89,7 +98,10 @@ func (r *WorkspaceSettingsRepo) Remove(ctx context.Context, wid accountdomain.Wo
 	return r.client.RemoveOne(ctx, bson.M{"id": wid.String()})
 }
 
-func (r *WorkspaceSettingsRepo) find(ctx context.Context, filter any) ([]*workspacesettings.WorkspaceSettings, error) {
+func (r *WorkspaceSettingsRepo) find(
+	ctx context.Context,
+	filter any,
+) ([]*workspacesettings.WorkspaceSettings, error) {
 	c := mongodoc.NewWorkspaceSettingsConsumer()
 	if err := r.client.Find(ctx, filter, c); err != nil {
 		return nil, err
@@ -97,7 +109,10 @@ func (r *WorkspaceSettingsRepo) find(ctx context.Context, filter any) ([]*worksp
 	return c.Result, nil
 }
 
-func (r *WorkspaceSettingsRepo) findOne(ctx context.Context, filter any) (*workspacesettings.WorkspaceSettings, error) {
+func (r *WorkspaceSettingsRepo) findOne(
+	ctx context.Context,
+	filter any,
+) (*workspacesettings.WorkspaceSettings, error) {
 	c := mongodoc.NewWorkspaceSettingsConsumer()
 	if err := r.client.FindOne(ctx, filter, c); err != nil {
 		return nil, err
@@ -105,7 +120,10 @@ func (r *WorkspaceSettingsRepo) findOne(ctx context.Context, filter any) (*works
 	return c.Result[0], nil
 }
 
-func filterWorkspaceSettings(ids []accountdomain.WorkspaceID, rows []*workspacesettings.WorkspaceSettings) []*workspacesettings.WorkspaceSettings {
+func filterWorkspaceSettings(
+	ids []accountdomain.WorkspaceID,
+	rows []*workspacesettings.WorkspaceSettings,
+) []*workspacesettings.WorkspaceSettings {
 	res := make([]*workspacesettings.WorkspaceSettings, 0, len(ids))
 	for _, id := range ids {
 		for _, r := range rows {

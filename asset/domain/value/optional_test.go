@@ -9,7 +9,11 @@ import (
 func TestNewOptional(t *testing.T) {
 	assert.Nil(t, NewOptional(TypeAsset, TypeBool.Value(true)))
 	assert.Equal(t, &Optional{t: TypeBool}, NewOptional(TypeBool, nil))
-	assert.Equal(t, &Optional{t: TypeBool, v: TypeBool.Value(true)}, NewOptional(TypeBool, TypeBool.Value(true)))
+	assert.Equal(
+		t,
+		&Optional{t: TypeBool, v: TypeBool.Value(true)},
+		NewOptional(TypeBool, TypeBool.Value(true)),
+	)
 }
 
 func TestOptionalFrom(t *testing.T) {

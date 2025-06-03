@@ -22,7 +22,9 @@ func Test_propertyInteger_ToValue(t *testing.T) {
 			name: "zero",
 			args: []any{
 				0, 0.0, "0", json.Number("0"), json.Number("-0"),
-				lo.ToPtr(0), lo.ToPtr(0.0), lo.ToPtr("0"), lo.ToPtr(json.Number("0")), lo.ToPtr(json.Number("-0")),
+				lo.ToPtr(
+					0,
+				), lo.ToPtr(0.0), lo.ToPtr("0"), lo.ToPtr(json.Number("0")), lo.ToPtr(json.Number("-0")),
 			},
 			want1: int64(0),
 			want2: true,
@@ -86,8 +88,16 @@ func Test_propertyInteger_ToValue(t *testing.T) {
 			want2: true,
 		},
 		{
-			name:  "nil",
-			args:  []any{"foo", (*float64)(nil), (*string)(nil), (*int)(nil), (*json.Number)(nil), nil, math.NaN()},
+			name: "nil",
+			args: []any{
+				"foo",
+				(*float64)(nil),
+				(*string)(nil),
+				(*int)(nil),
+				(*json.Number)(nil),
+				nil,
+				math.NaN(),
+			},
 			want1: nil,
 			want2: false,
 		},

@@ -22,17 +22,50 @@ func TestCSVFromItems(t *testing.T) {
 	mid := id.NewModelID()
 	tid := id.NewThreadID()
 	pid := id.NewProjectID()
-	gst := schema.GeometryObjectSupportedTypeList{schema.GeometryObjectSupportedTypePoint, schema.GeometryObjectSupportedTypeLineString}
-	gest := schema.GeometryEditorSupportedTypeList{schema.GeometryEditorSupportedTypePoint, schema.GeometryEditorSupportedTypeLineString}
-	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).NewID().Name("geo1").Key(id.RandomKey()).MustBuild()
-	sf3 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).NewID().Name("geo2").Key(id.RandomKey()).MustBuild()
+	gst := schema.GeometryObjectSupportedTypeList{
+		schema.GeometryObjectSupportedTypePoint,
+		schema.GeometryObjectSupportedTypeLineString,
+	}
+	gest := schema.GeometryEditorSupportedTypeList{
+		schema.GeometryEditorSupportedTypePoint,
+		schema.GeometryEditorSupportedTypeLineString,
+	}
+	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).
+		NewID().
+		Name("geo1").
+		Key(id.RandomKey()).
+		MustBuild()
+	sf3 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).
+		NewID().
+		Name("geo2").
+		Key(id.RandomKey()).
+		MustBuild()
 	in4, _ := schema.NewInteger(lo.ToPtr(int64(1)), lo.ToPtr(int64(100)))
 	tp4 := in4.TypeProperty()
 	sf4 := schema.NewField(tp4).NewID().Name("age").Key(id.RandomKey()).MustBuild()
-	sf5 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("isMarried").Key(id.RandomKey()).MustBuild()
-	s1 := schema.New().ID(sid).Fields([]*schema.Field{sf1, sf3, sf4, sf5}).Workspace(accountdomain.NewWorkspaceID()).Project(pid).MustBuild()
-	fi1 := item.NewField(sf1.ID(), value.TypeGeometryObject.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").AsMultiple(), nil)
-	fi2 := item.NewField(sf3.ID(), value.TypeGeometryEditor.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").AsMultiple(), nil)
+	sf5 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("isMarried").
+		Key(id.RandomKey()).
+		MustBuild()
+	s1 := schema.New().
+		ID(sid).
+		Fields([]*schema.Field{sf1, sf3, sf4, sf5}).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(pid).
+		MustBuild()
+	fi1 := item.NewField(
+		sf1.ID(),
+		value.TypeGeometryObject.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").
+			AsMultiple(),
+		nil,
+	)
+	fi2 := item.NewField(
+		sf3.ID(),
+		value.TypeGeometryEditor.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").
+			AsMultiple(),
+		nil,
+	)
 	fi3 := item.NewField(sf4.ID(), value.TypeInteger.Value(30).AsMultiple(), nil)
 	fi4 := item.NewField(sf5.ID(), value.TypeBool.Value(true).AsMultiple(), nil)
 	i1 := item.New().
@@ -55,8 +88,16 @@ func TestCSVFromItems(t *testing.T) {
 	sid2 := id.NewSchemaID()
 	mid2 := id.NewModelID()
 	tid2 := id.NewThreadID()
-	sf2 := schema.NewField(schema.NewText(lo.ToPtr(10)).TypeProperty()).NewID().Key(id.RandomKey()).MustBuild()
-	s2 := schema.New().ID(sid).Fields([]*schema.Field{sf2}).Workspace(accountdomain.NewWorkspaceID()).Project(pid).MustBuild()
+	sf2 := schema.NewField(schema.NewText(lo.ToPtr(10)).TypeProperty()).
+		NewID().
+		Key(id.RandomKey()).
+		MustBuild()
+	s2 := schema.New().
+		ID(sid).
+		Fields([]*schema.Field{sf2}).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(pid).
+		MustBuild()
 	i2 := item.New().
 		ID(iid2).
 		Schema(sid2).
@@ -77,9 +118,21 @@ func TestCSVFromItems(t *testing.T) {
 	sid3 := id.NewSchemaID()
 	mid3 := id.NewModelID()
 	tid3 := id.NewThreadID()
-	gst2 := schema.GeometryObjectSupportedTypeList{schema.GeometryObjectSupportedTypeLineString, schema.GeometryObjectSupportedTypePolygon}
-	sf6 := schema.NewField(schema.NewGeometryObject(gst2).TypeProperty()).NewID().Name("geo3").Key(id.RandomKey()).MustBuild()
-	s3 := schema.New().ID(sid).Fields([]*schema.Field{sf6}).Workspace(accountdomain.NewWorkspaceID()).Project(pid).MustBuild()
+	gst2 := schema.GeometryObjectSupportedTypeList{
+		schema.GeometryObjectSupportedTypeLineString,
+		schema.GeometryObjectSupportedTypePolygon,
+	}
+	sf6 := schema.NewField(schema.NewGeometryObject(gst2).TypeProperty()).
+		NewID().
+		Name("geo3").
+		Key(id.RandomKey()).
+		MustBuild()
+	s3 := schema.New().
+		ID(sid).
+		Fields([]*schema.Field{sf6}).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(pid).
+		MustBuild()
 	i3 := item.New().
 		ID(iid3).
 		Schema(sid3).

@@ -9,11 +9,19 @@ import (
 )
 
 func TestNewMarkdown(t *testing.T) {
-	assert.Equal(t, &FieldMarkdown{s: &FieldString{t: value.TypeMarkdown, maxLength: lo.ToPtr(1)}}, NewMarkdown(lo.ToPtr(1)))
+	assert.Equal(
+		t,
+		&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown, maxLength: lo.ToPtr(1)}},
+		NewMarkdown(lo.ToPtr(1)),
+	)
 }
 
 func TestFieldMarkdown_Type(t *testing.T) {
-	assert.Equal(t, value.TypeMarkdown, (&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown}}).Type())
+	assert.Equal(
+		t,
+		value.TypeMarkdown,
+		(&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown}}).Type(),
+	)
 }
 
 func TestFieldMarkdown_TypeProperty(t *testing.T) {
@@ -30,6 +38,15 @@ func TestFieldMarkdown_Clone(t *testing.T) {
 }
 
 func TestFieldMarkdown_Validate(t *testing.T) {
-	assert.NoError(t, (&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown}}).Validate(value.TypeMarkdown.Value("aaa")))
-	assert.Equal(t, ErrInvalidValue, (&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown}}).Validate(value.TypeText.Value("")))
+	assert.NoError(
+		t,
+		(&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown}}).Validate(
+			value.TypeMarkdown.Value("aaa"),
+		),
+	)
+	assert.Equal(
+		t,
+		ErrInvalidValue,
+		(&FieldMarkdown{s: &FieldString{t: value.TypeMarkdown}}).Validate(value.TypeText.Value("")),
+	)
 }

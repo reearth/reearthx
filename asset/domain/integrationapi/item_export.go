@@ -9,7 +9,10 @@ import (
 )
 
 // GeoJSON
-func FeatureCollectionFromItems(ver item.VersionedList, s *schema.Schema) (*FeatureCollection, error) {
+func FeatureCollectionFromItems(
+	ver item.VersionedList,
+	s *schema.Schema,
+) (*FeatureCollection, error) {
 	fc, err := exporters.FeatureCollectionFromItems(ver, s)
 	if err != nil {
 		return nil, err

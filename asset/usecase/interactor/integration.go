@@ -30,7 +30,10 @@ func NewIntegration(r *repo.Container, g *gateway.Container) interfaces.Integrat
 	}
 }
 
-func (i Integration) FindByMe(ctx context.Context, operator *usecase.Operator) (integration.List, error) {
+func (i Integration) FindByMe(
+	ctx context.Context,
+	operator *usecase.Operator,
+) (integration.List, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -44,7 +47,11 @@ func (i Integration) FindByMe(ctx context.Context, operator *usecase.Operator) (
 		})
 }
 
-func (i Integration) FindByIDs(ctx context.Context, ids id.IntegrationIDList, operator *usecase.Operator) (integration.List, error) {
+func (i Integration) FindByIDs(
+	ctx context.Context,
+	ids id.IntegrationIDList,
+	operator *usecase.Operator,
+) (integration.List, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -58,7 +65,11 @@ func (i Integration) FindByIDs(ctx context.Context, ids id.IntegrationIDList, op
 		})
 }
 
-func (i Integration) Create(ctx context.Context, param interfaces.CreateIntegrationParam, operator *usecase.Operator) (*integration.Integration, error) {
+func (i Integration) Create(
+	ctx context.Context,
+	param interfaces.CreateIntegrationParam,
+	operator *usecase.Operator,
+) (*integration.Integration, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -85,7 +96,12 @@ func (i Integration) Create(ctx context.Context, param interfaces.CreateIntegrat
 		})
 }
 
-func (i Integration) Update(ctx context.Context, iId id.IntegrationID, param interfaces.UpdateIntegrationParam, operator *usecase.Operator) (*integration.Integration, error) {
+func (i Integration) Update(
+	ctx context.Context,
+	iId id.IntegrationID,
+	param interfaces.UpdateIntegrationParam,
+	operator *usecase.Operator,
+) (*integration.Integration, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -121,7 +137,11 @@ func (i Integration) Update(ctx context.Context, iId id.IntegrationID, param int
 		})
 }
 
-func (i Integration) Delete(ctx context.Context, integrationId id.IntegrationID, operator *usecase.Operator) error {
+func (i Integration) Delete(
+	ctx context.Context,
+	integrationId id.IntegrationID,
+	operator *usecase.Operator,
+) error {
 	if operator.AcOperator.User == nil {
 		return interfaces.ErrInvalidOperator
 	}
@@ -158,7 +178,11 @@ func (i Integration) Delete(ctx context.Context, integrationId id.IntegrationID,
 }
 
 // DeleteMany deletes multiple integration
-func (i Integration) DeleteMany(ctx context.Context, ids id.IntegrationIDList, operator *usecase.Operator) error {
+func (i Integration) DeleteMany(
+	ctx context.Context,
+	ids id.IntegrationIDList,
+	operator *usecase.Operator,
+) error {
 	if operator.AcOperator.User == nil {
 		return interfaces.ErrInvalidOperator
 	}
@@ -213,7 +237,11 @@ func (i Integration) DeleteMany(ctx context.Context, ids id.IntegrationIDList, o
 		})
 }
 
-func (i Integration) RegenerateToken(ctx context.Context, iId id.IntegrationID, operator *usecase.Operator) (*integration.Integration, error) {
+func (i Integration) RegenerateToken(
+	ctx context.Context,
+	iId id.IntegrationID,
+	operator *usecase.Operator,
+) (*integration.Integration, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -239,7 +267,12 @@ func (i Integration) RegenerateToken(ctx context.Context, iId id.IntegrationID, 
 		})
 }
 
-func (i Integration) CreateWebhook(ctx context.Context, iId id.IntegrationID, param interfaces.CreateWebhookParam, operator *usecase.Operator) (*integration.Webhook, error) {
+func (i Integration) CreateWebhook(
+	ctx context.Context,
+	iId id.IntegrationID,
+	param interfaces.CreateWebhookParam,
+	operator *usecase.Operator,
+) (*integration.Webhook, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -277,7 +310,13 @@ func (i Integration) CreateWebhook(ctx context.Context, iId id.IntegrationID, pa
 		})
 }
 
-func (i Integration) UpdateWebhook(ctx context.Context, iId id.IntegrationID, wId id.WebhookID, param interfaces.UpdateWebhookParam, operator *usecase.Operator) (*integration.Webhook, error) {
+func (i Integration) UpdateWebhook(
+	ctx context.Context,
+	iId id.IntegrationID,
+	wId id.WebhookID,
+	param interfaces.UpdateWebhookParam,
+	operator *usecase.Operator,
+) (*integration.Webhook, error) {
 	if operator.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -330,7 +369,12 @@ func (i Integration) UpdateWebhook(ctx context.Context, iId id.IntegrationID, wI
 		})
 }
 
-func (i Integration) DeleteWebhook(ctx context.Context, iId id.IntegrationID, wId id.WebhookID, operator *usecase.Operator) error {
+func (i Integration) DeleteWebhook(
+	ctx context.Context,
+	iId id.IntegrationID,
+	wId id.WebhookID,
+	operator *usecase.Operator,
+) error {
 	if operator.AcOperator.User == nil {
 		return interfaces.ErrInvalidOperator
 	}

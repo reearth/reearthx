@@ -158,7 +158,8 @@ func (s *Schema) HasGeometryFields() bool {
 	if s == nil {
 		return false
 	}
-	return len(s.FieldsByType(value.TypeGeometryObject)) > 0 || len(s.FieldsByType(value.TypeGeometryEditor)) > 0
+	return len(s.FieldsByType(value.TypeGeometryObject)) > 0 ||
+		len(s.FieldsByType(value.TypeGeometryEditor)) > 0
 }
 
 func (s *Schema) IsPointFieldSupported() bool {

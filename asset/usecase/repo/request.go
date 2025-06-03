@@ -19,7 +19,13 @@ type RequestFilter struct {
 
 type Request interface {
 	Filtered(ProjectFilter) Request
-	FindByProject(context.Context, id.ProjectID, RequestFilter, *usecasex.Sort, *usecasex.Pagination) (request.List, *usecasex.PageInfo, error)
+	FindByProject(
+		context.Context,
+		id.ProjectID,
+		RequestFilter,
+		*usecasex.Sort,
+		*usecasex.Pagination,
+	) (request.List, *usecasex.PageInfo, error)
 	FindByID(context.Context, id.RequestID) (*request.Request, error)
 	FindByIDs(context.Context, id.RequestIDList) (request.List, error)
 	FindByItems(context.Context, id.ItemIDList, *RequestFilter) (request.List, error)

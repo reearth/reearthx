@@ -34,8 +34,12 @@ func Test_propertyDateTime_ToValue(t *testing.T) {
 			want2: true,
 		},
 		{
-			name:  "integer",
-			args:  []any{now.Unix(), float64(now.Unix()), json.Number(fmt.Sprintf("%d", now.Unix()))},
+			name: "integer",
+			args: []any{
+				now.Unix(),
+				float64(now.Unix()),
+				json.Number(fmt.Sprintf("%d", now.Unix())),
+			},
 			want1: now,
 			want2: true,
 		},
@@ -46,8 +50,15 @@ func Test_propertyDateTime_ToValue(t *testing.T) {
 			want2: true,
 		},
 		{
-			name:  "nil",
-			args:  []any{"foo", (*float64)(nil), (*string)(nil), (*int)(nil), (*json.Number)(nil), nil},
+			name: "nil",
+			args: []any{
+				"foo",
+				(*float64)(nil),
+				(*string)(nil),
+				(*int)(nil),
+				(*json.Number)(nil),
+				nil,
+			},
 			want1: nil,
 			want2: false,
 		},
@@ -61,7 +72,9 @@ func Test_propertyDateTime_ToValue(t *testing.T) {
 			name: "pointers",
 			args: []any{
 				&now, lo.ToPtr(now.Format(time.RFC3339)), lo.ToPtr(now.Format(time.RFC3339Nano)),
-				lo.ToPtr(now.Unix()), lo.ToPtr(float64(now.Unix())), lo.ToPtr(json.Number(fmt.Sprintf("%d", now.Unix()))),
+				lo.ToPtr(
+					now.Unix(),
+				), lo.ToPtr(float64(now.Unix())), lo.ToPtr(json.Number(fmt.Sprintf("%d", now.Unix()))),
 			},
 			want1: now,
 			want2: true,
@@ -77,7 +90,13 @@ func Test_propertyDateTime_ToValue(t *testing.T) {
 			for i, v := range tt.args {
 				got1, got2 := p.ToValue(v)
 				if tt.want1 != nil {
-					assert.Equal(t, tt.want1.(time.Time).Unix(), got1.(time.Time).Unix(), "test %d", i)
+					assert.Equal(
+						t,
+						tt.want1.(time.Time).Unix(),
+						got1.(time.Time).Unix(),
+						"test %d",
+						i,
+					)
 				} else {
 					assert.Nil(t, got1, "test %d", i)
 				}

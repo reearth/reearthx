@@ -61,8 +61,23 @@ func TestFieldGeometryObject_Validate(t *testing.T) {
 	         ]
 	       ]
 				}`
-	assert.NoError(t, (&FieldGeometryObject{st: GeometryObjectSupportedTypeList{supportedType}}).Validate(value.TypeGeometryObject.Value(geojson)))
-	assert.Equal(t, (&FieldGeometryObject{st: GeometryObjectSupportedTypeList{supportedType}}).Validate(value.TypeGeometryObject.Value(geojson2)), ErrUnsupportedType)
+	assert.NoError(
+		t,
+		(&FieldGeometryObject{st: GeometryObjectSupportedTypeList{supportedType}}).Validate(
+			value.TypeGeometryObject.Value(geojson),
+		),
+	)
+	assert.Equal(
+		t,
+		(&FieldGeometryObject{st: GeometryObjectSupportedTypeList{supportedType}}).Validate(
+			value.TypeGeometryObject.Value(geojson2),
+		),
+		ErrUnsupportedType,
+	)
 	assert.Equal(t, ErrInvalidValue, (&FieldGeometryObject{}).Validate(value.TypeText.Value("{}")))
-	assert.Equal(t, ErrInvalidValue, (&FieldGeometryObject{}).Validate(value.TypeText.Value(float64(1))))
+	assert.Equal(
+		t,
+		ErrInvalidValue,
+		(&FieldGeometryObject{}).Validate(value.TypeText.Value(float64(1))),
+	)
 }

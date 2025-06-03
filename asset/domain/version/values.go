@@ -96,7 +96,8 @@ func (v *Values[V]) IsEmpty() bool {
 }
 
 func (v *Values[V]) Add(value V, parent *VersionOrRef) {
-	if v == nil || v.IsArchived() || parent != nil && parent.IsSpecialRef() && !parent.IsRef(Latest) {
+	if v == nil || v.IsArchived() ||
+		parent != nil && parent.IsSpecialRef() && !parent.IsRef(Latest) {
 		return
 	}
 

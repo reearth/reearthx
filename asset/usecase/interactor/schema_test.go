@@ -43,15 +43,31 @@ func TestModel_UpdateWithNewSchemaFields(t *testing.T) {
 	fId1 := id.NewFieldID()
 	sfKey1 := id.RandomKey()
 	sf1 := schema.NewField(schema.NewBool().TypeProperty()).ID(fId1).Key(sfKey1).MustBuild()
-	s1 := schema.New().NewID().Workspace(wid).Project(p.ID()).Fields([]*schema.Field{sf1}).MustBuild()
+	s1 := schema.New().
+		NewID().
+		Workspace(wid).
+		Project(p.ID()).
+		Fields([]*schema.Field{sf1}).
+		MustBuild()
 
 	fId2 := id.NewFieldID()
 	sfKey2 := id.RandomKey()
 	sf2 := schema.NewField(schema.NewBool().TypeProperty()).ID(fId2).Key(sfKey2).MustBuild()
-	s2 := schema.New().NewID().Workspace(wid).Project(p.ID()).Fields([]*schema.Field{sf2}).MustBuild()
+	s2 := schema.New().
+		NewID().
+		Workspace(wid).
+		Project(p.ID()).
+		Fields([]*schema.Field{sf2}).
+		MustBuild()
 
 	mId1 := id.NewModelID()
-	m1 := model.New().ID(mId1).Key(id.RandomKey()).Project(p.ID()).Schema(s1.ID()).Metadata(s1.ID().Ref()).MustBuild()
+	m1 := model.New().
+		ID(mId1).
+		Key(id.RandomKey()).
+		Project(p.ID()).
+		Schema(s1.ID()).
+		Metadata(s1.ID().Ref()).
+		MustBuild()
 
 	type args struct {
 		schemaId           id.SchemaID
@@ -203,7 +219,12 @@ func TestModel_UpdateWithNewSchemaFields(t *testing.T) {
 				assert.NoError(t, db.Schema.Save(ctx, s.Clone()))
 			}
 
-			got, err := u.CreateFields(ctx, tt.args.schemaId, tt.args.createFieldsParams, tt.args.operator)
+			got, err := u.CreateFields(
+				ctx,
+				tt.args.schemaId,
+				tt.args.createFieldsParams,
+				tt.args.operator,
+			)
 
 			if tt.wantErr != nil {
 				assert.Equal(t, tt.wantErr, err)

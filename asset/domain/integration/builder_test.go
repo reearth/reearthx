@@ -278,7 +278,13 @@ func TestBuilder_Description(t *testing.T) {
 			b := &Builder{
 				i: tt.fields.i,
 			}
-			assert.Equalf(t, tt.want, b.Description(tt.args.description), "Description(%v)", tt.args.description)
+			assert.Equalf(
+				t,
+				tt.want,
+				b.Description(tt.args.description),
+				"Description(%v)",
+				tt.args.description,
+			)
 		})
 	}
 }
@@ -333,7 +339,9 @@ func TestBuilder_LogoUrl(t *testing.T) {
 			name:   "set",
 			fields: fields{i: &Integration{}},
 			args:   args{logoURL: lo.Must(url.Parse("https://sub.hugo.com/dir?p=1#test"))},
-			want:   &Builder{i: &Integration{logoUrl: lo.Must(url.Parse("https://sub.hugo.com/dir?p=1#test"))}},
+			want: &Builder{
+				i: &Integration{logoUrl: lo.Must(url.Parse("https://sub.hugo.com/dir?p=1#test"))},
+			},
 		},
 		{
 			name:   "set",
@@ -384,7 +392,13 @@ func TestBuilder_Developer(t *testing.T) {
 			b := &Builder{
 				i: tt.fields.i,
 			}
-			assert.Equalf(t, tt.want, b.Developer(tt.args.developer), "Developer(%v)", tt.args.developer)
+			assert.Equalf(
+				t,
+				tt.want,
+				b.Developer(tt.args.developer),
+				"Developer(%v)",
+				tt.args.developer,
+			)
 		})
 	}
 }
@@ -506,7 +520,13 @@ func TestBuilder_UpdatedAt(t *testing.T) {
 			b := &Builder{
 				i: tt.fields.i,
 			}
-			assert.Equalf(t, tt.want, b.UpdatedAt(tt.args.updatedAt), "UpdatedAt(%v)", tt.args.updatedAt)
+			assert.Equalf(
+				t,
+				tt.want,
+				b.UpdatedAt(tt.args.updatedAt),
+				"UpdatedAt(%v)",
+				tt.args.updatedAt,
+			)
 		})
 	}
 }

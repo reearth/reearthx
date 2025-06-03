@@ -9,11 +9,19 @@ import (
 )
 
 func TestNewRichText(t *testing.T) {
-	assert.Equal(t, &FieldRichText{s: &FieldString{t: value.TypeRichText, maxLength: lo.ToPtr(1)}}, NewRichText(lo.ToPtr(1)))
+	assert.Equal(
+		t,
+		&FieldRichText{s: &FieldString{t: value.TypeRichText, maxLength: lo.ToPtr(1)}},
+		NewRichText(lo.ToPtr(1)),
+	)
 }
 
 func TestFieldRichText_Type(t *testing.T) {
-	assert.Equal(t, value.TypeRichText, (&FieldRichText{s: &FieldString{t: value.TypeRichText}}).Type())
+	assert.Equal(
+		t,
+		value.TypeRichText,
+		(&FieldRichText{s: &FieldString{t: value.TypeRichText}}).Type(),
+	)
 }
 
 func TestFieldRichText_TypeProperty(t *testing.T) {
@@ -30,6 +38,15 @@ func TestFieldRichText_Clone(t *testing.T) {
 }
 
 func TestFieldRichText_Validate(t *testing.T) {
-	assert.NoError(t, (&FieldRichText{s: &FieldString{t: value.TypeRichText}}).Validate(value.TypeRichText.Value("aaa")))
-	assert.Equal(t, ErrInvalidValue, (&FieldRichText{s: &FieldString{t: value.TypeRichText}}).Validate(value.TypeText.Value("")))
+	assert.NoError(
+		t,
+		(&FieldRichText{s: &FieldString{t: value.TypeRichText}}).Validate(
+			value.TypeRichText.Value("aaa"),
+		),
+	)
+	assert.Equal(
+		t,
+		ErrInvalidValue,
+		(&FieldRichText{s: &FieldString{t: value.TypeRichText}}).Validate(value.TypeText.Value("")),
+	)
 }

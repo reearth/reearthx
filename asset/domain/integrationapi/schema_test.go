@@ -25,13 +25,41 @@ func TestNewModel(t *testing.T) {
 	mockTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	pID := id.NewProjectID()
 	sf1 := schema.NewField(schema.NewText(nil).TypeProperty()).NewID().RandomKey().MustBuild()
-	sf2 := schema.NewField(lo.Must1(schema.NewInteger(nil, nil)).TypeProperty()).NewID().RandomKey().MustBuild()
-	s1 := schema.New().NewID().Project(pID).Workspace(accountdomain.NewWorkspaceID()).Fields([]*schema.Field{sf1, sf2}).MustBuild()
-	s2 := schema.New().NewID().Project(pID).Workspace(accountdomain.NewWorkspaceID()).Fields([]*schema.Field{sf1, sf2}).TitleField(sf1.ID().Ref()).MustBuild()
+	sf2 := schema.NewField(lo.Must1(schema.NewInteger(nil, nil)).TypeProperty()).
+		NewID().
+		RandomKey().
+		MustBuild()
+	s1 := schema.New().
+		NewID().
+		Project(pID).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Fields([]*schema.Field{sf1, sf2}).
+		MustBuild()
+	s2 := schema.New().
+		NewID().
+		Project(pID).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Fields([]*schema.Field{sf1, sf2}).
+		TitleField(sf1.ID().Ref()).
+		MustBuild()
 	schemaPackage1 := schema.NewPackage(s1, nil, nil, nil)
 	schemaPackage2 := schema.NewPackage(s2, nil, nil, nil)
-	model1 := model.New().ID(id.NewModelID()).Metadata(s1.ID().Ref()).Project(pID).Schema(s1.ID()).Key(id.NewKey("mmm123")).UpdatedAt(mockTime).MustBuild()
-	model2 := model.New().ID(id.NewModelID()).Metadata(s2.ID().Ref()).Project(pID).Schema(s2.ID()).Key(id.NewKey("mmm123")).UpdatedAt(mockTime).MustBuild()
+	model1 := model.New().
+		ID(id.NewModelID()).
+		Metadata(s1.ID().Ref()).
+		Project(pID).
+		Schema(s1.ID()).
+		Key(id.NewKey("mmm123")).
+		UpdatedAt(mockTime).
+		MustBuild()
+	model2 := model.New().
+		ID(id.NewModelID()).
+		Metadata(s2.ID().Ref()).
+		Project(pID).
+		Schema(s2.ID()).
+		Key(id.NewKey("mmm123")).
+		UpdatedAt(mockTime).
+		MustBuild()
 
 	tests := []struct {
 		name string

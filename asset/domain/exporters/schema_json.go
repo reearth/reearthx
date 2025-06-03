@@ -47,7 +47,10 @@ func NewSchemaJSON(id, title, description *string, pp map[string]SchemaJSONPrope
 	return res
 }
 
-func buildPropertiesMap(f schema.FieldList, gsMap map[id.GroupID]*schema.Schema) map[string]SchemaJSONProperties {
+func buildPropertiesMap(
+	f schema.FieldList,
+	gsMap map[id.GroupID]*schema.Schema,
+) map[string]SchemaJSONProperties {
 	properties := make(map[string]SchemaJSONProperties)
 	for _, field := range f {
 		fieldType, format := determineTypeAndFormat(field.Type())
@@ -115,7 +118,10 @@ func buildPropertiesMap(f schema.FieldList, gsMap map[id.GroupID]*schema.Schema)
 	return properties
 }
 
-func BuildProperties(f schema.FieldList, gsMap map[id.GroupID]*schema.Schema) map[string]SchemaJSONProperties {
+func BuildProperties(
+	f schema.FieldList,
+	gsMap map[id.GroupID]*schema.Schema,
+) map[string]SchemaJSONProperties {
 	return buildPropertiesMap(f, gsMap)
 }
 
@@ -136,7 +142,13 @@ func int64ToFloat64(input *int64) *float64 {
 
 func determineTypeAndFormat(t value.Type) (string, string) {
 	switch t {
-	case value.TypeText, value.TypeTextArea, value.TypeRichText, value.TypeMarkdown, value.TypeSelect, value.TypeTag, value.TypeReference:
+	case value.TypeText,
+		value.TypeTextArea,
+		value.TypeRichText,
+		value.TypeMarkdown,
+		value.TypeSelect,
+		value.TypeTag,
+		value.TypeReference:
 		return "string", ""
 	case value.TypeInteger:
 		return "integer", ""

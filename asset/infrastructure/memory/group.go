@@ -60,7 +60,12 @@ func (r *Group) FindByIDs(ctx context.Context, list id.GroupIDList) (group.List,
 	return group.List(result).SortByID(), nil
 }
 
-func (r *Group) Filter(ctx context.Context, pid id.ProjectID, _ *group.Sort, _ *usecasex.Pagination) (group.List, *usecasex.PageInfo, error) {
+func (r *Group) Filter(
+	ctx context.Context,
+	pid id.ProjectID,
+	_ *group.Sort,
+	_ *usecasex.Pagination,
+) (group.List, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
@@ -113,7 +118,11 @@ func (r *Group) FindByKey(ctx context.Context, pid id.ProjectID, key string) (*g
 	return g, nil
 }
 
-func (r *Group) FindByIDOrKey(ctx context.Context, pid id.ProjectID, g group.IDOrKey) (*group.Group, error) {
+func (r *Group) FindByIDOrKey(
+	ctx context.Context,
+	pid id.ProjectID,
+	g group.IDOrKey,
+) (*group.Group, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -125,7 +134,8 @@ func (r *Group) FindByIDOrKey(ctx context.Context, pid id.ProjectID, g group.IDO
 	}
 
 	m := r.data.Find(func(_ id.GroupID, m *group.Group) bool {
-		return r.f.CanRead(m.Project()) && (groupID != nil && m.ID() == *groupID || key != nil && m.Key().String() == *key)
+		return r.f.CanRead(m.Project()) &&
+			(groupID != nil && m.ID() == *groupID || key != nil && m.Key().String() == *key)
 	})
 	if m == nil {
 		return nil, rerror.ErrNotFound

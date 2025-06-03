@@ -40,7 +40,18 @@ func TestItemDocument_Model(t *testing.T) {
 				User:                 uId.StringRef(),
 				Integration:          nil,
 			},
-			want:    item.New().ID(iId).Project(pId).Schema(sId).UpdatedByUser(upId).UpdatedByIntegration(ipId).MetadataItem(miId).Thread(tId.Ref()).Model(mId).Timestamp(now).User(uId).MustBuild(),
+			want: item.New().
+				ID(iId).
+				Project(pId).
+				Schema(sId).
+				UpdatedByUser(upId).
+				UpdatedByIntegration(ipId).
+				MetadataItem(miId).
+				Thread(tId.Ref()).
+				Model(mId).
+				Timestamp(now).
+				User(uId).
+				MustBuild(),
 			wantErr: false,
 		},
 		{
@@ -56,7 +67,15 @@ func TestItemDocument_Model(t *testing.T) {
 				User:        nil,
 				Integration: gId.StringRef(),
 			},
-			want:    item.New().ID(iId).Project(pId).Schema(sId).Thread(tId.Ref()).Model(mId).Timestamp(now).Integration(gId).MustBuild(),
+			want: item.New().
+				ID(iId).
+				Project(pId).
+				Schema(sId).
+				Thread(tId.Ref()).
+				Model(mId).
+				Timestamp(now).
+				Integration(gId).
+				MustBuild(),
 			wantErr: false,
 		},
 		{
@@ -150,7 +169,15 @@ func TestNewItem(t *testing.T) {
 	}{
 		{
 			name: "new",
-			i:    item.New().ID(iId).Project(pId).Schema(sId).Thread(tId.Ref()).Model(mId).Timestamp(now).User(uId).MustBuild(),
+			i: item.New().
+				ID(iId).
+				Project(pId).
+				Schema(sId).
+				Thread(tId.Ref()).
+				Model(mId).
+				Timestamp(now).
+				User(uId).
+				MustBuild(),
 			want: &ItemDocument{
 				ID:          iId.String(),
 				Project:     pId.String(),
@@ -194,7 +221,15 @@ func TestNewItems(t *testing.T) {
 		{
 			name: "new arrat",
 			items: item.List{
-				item.New().ID(iId).Project(pId).Schema(sId).Thread(tId.Ref()).Model(mId).Timestamp(now).User(uId).MustBuild(),
+				item.New().
+					ID(iId).
+					Project(pId).
+					Schema(sId).
+					Thread(tId.Ref()).
+					Model(mId).
+					Timestamp(now).
+					User(uId).
+					MustBuild(),
 			},
 			want: []*ItemDocument{
 				{

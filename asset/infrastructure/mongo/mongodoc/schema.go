@@ -186,16 +186,22 @@ func NewSchema(s *schema.Schema) (*SchemaDocument, string) {
 			URL: func(fp *schema.FieldURL) {},
 			GeometryObject: func(fp *schema.FieldGeometryObject) {
 				fd.TypeProperty.GeometryObject = &FieldGeometryObjectPropertyDocument{
-					SupportedTypes: lo.Map(fp.SupportedTypes(), func(item schema.GeometryObjectSupportedType, _ int) string {
-						return item.String()
-					}),
+					SupportedTypes: lo.Map(
+						fp.SupportedTypes(),
+						func(item schema.GeometryObjectSupportedType, _ int) string {
+							return item.String()
+						},
+					),
 				}
 			},
 			GeometryEditor: func(fp *schema.FieldGeometryEditor) {
 				fd.TypeProperty.GeometryEditor = &FieldGeometryEditorPropertyDocument{
-					SupportedTypes: lo.Map(fp.SupportedTypes(), func(item schema.GeometryEditorSupportedType, _ int) string {
-						return item.String()
-					}),
+					SupportedTypes: lo.Map(
+						fp.SupportedTypes(),
+						func(item schema.GeometryEditorSupportedType, _ int) string {
+							return item.String()
+						},
+					),
 				}
 			},
 		})
@@ -229,13 +235,16 @@ func (d *SchemaDocument) Model() (*schema.Schema, error) {
 		tpd := fd.TypeProperty
 		var tags schema.TagList
 		if tpd.Tag != nil {
-			tags, err = util.TryMap(tpd.Tag.Tags, func(tag FieldTagValueDocument) (*schema.Tag, error) {
-				tid, err := id.TagIDFrom(tag.ID)
-				if err != nil {
-					return nil, err
-				}
-				return schema.NewTagWithID(tid, tag.Name, schema.TagColorFrom(tag.Color))
-			})
+			tags, err = util.TryMap(
+				tpd.Tag.Tags,
+				func(tag FieldTagValueDocument) (*schema.Tag, error) {
+					tid, err := id.TagIDFrom(tag.ID)
+					if err != nil {
+						return nil, err
+					}
+					return schema.NewTagWithID(tid, tag.Name, schema.TagColorFrom(tag.Color))
+				},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -307,11 +316,13 @@ func (d *SchemaDocument) Model() (*schema.Schema, error) {
 		case value.TypeGeometryObject:
 			tp = schema.NewGeometryObject(lo.Map(tpd.GeometryObject.SupportedTypes, func(item string, _ int) schema.GeometryObjectSupportedType {
 				return schema.GeometryObjectSupportedTypeFrom(item)
-			})).TypeProperty()
+			})).
+				TypeProperty()
 		case value.TypeGeometryEditor:
 			tp = schema.NewGeometryEditor(lo.Map(tpd.GeometryEditor.SupportedTypes, func(item string, _ int) schema.GeometryEditorSupportedType {
 				return schema.GeometryEditorSupportedTypeFrom(item)
-			})).TypeProperty()
+			})).
+				TypeProperty()
 
 		}
 

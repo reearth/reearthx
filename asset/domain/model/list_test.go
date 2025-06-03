@@ -48,7 +48,11 @@ func TestList_OrderByIDs(t *testing.T) {
 	mod2 := New().NewID().Project(pid).Schema(sid2).Key(id.NewKey("key2")).Order(0).MustBuild()
 	mod3 := New().NewID().Project(pid).Schema(sid3).Key(id.NewKey("key3")).Order(0).MustBuild()
 	mods := List{mod1, mod2, mod3}
-	assert.Equal(t, List{mod2, mod1, mod3}, mods.OrderByIDs(id.ModelIDList{mod2.ID(), mod1.ID(), mod3.ID()}))
+	assert.Equal(
+		t,
+		List{mod2, mod1, mod3},
+		mods.OrderByIDs(id.ModelIDList{mod2.ID(), mod1.ID(), mod3.ID()}),
+	)
 	assert.Equal(t, id.ProjectIDList{pid}, mods.Projects())
 }
 
@@ -68,9 +72,24 @@ func TestList_Remove(t *testing.T) {
 
 func TestList_Ordered(t *testing.T) {
 	pid := id.NewProjectID()
-	m1 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key1")).Order(0).MustBuild()
-	m2 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key2")).Order(1).MustBuild()
-	m3 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key3")).Order(2).MustBuild()
+	m1 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key1")).
+		Order(0).
+		MustBuild()
+	m2 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key2")).
+		Order(1).
+		MustBuild()
+	m3 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key3")).
+		Order(2).
+		MustBuild()
 	models := List{m3, m1, m2}
 	ordered := models.Ordered()
 	assert.NotEqual(t, models, ordered)
@@ -79,9 +98,24 @@ func TestList_Ordered(t *testing.T) {
 
 func TestList_Model(t *testing.T) {
 	pid := id.NewProjectID()
-	m1 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key1")).Order(0).MustBuild()
-	m2 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key2")).Order(1).MustBuild()
-	m3 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key3")).Order(2).MustBuild()
+	m1 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key1")).
+		Order(0).
+		MustBuild()
+	m2 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key2")).
+		Order(1).
+		MustBuild()
+	m3 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key3")).
+		Order(2).
+		MustBuild()
 	models := List{m3, m1, m2}
 	assert.Equal(t, m1, models.Model(m1.ID()))
 	assert.Nil(t, models.Model(id.NewModelID()))

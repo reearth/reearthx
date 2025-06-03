@@ -60,7 +60,12 @@ func (r *Group) FindByIDs(ctx context.Context, list id.GroupIDList) (group.List,
 	return prepareGroups(list, res), nil
 }
 
-func (r *Group) Filter(ctx context.Context, pid id.ProjectID, sort *group.Sort, pagination *usecasex.Pagination) (group.List, *usecasex.PageInfo, error) {
+func (r *Group) Filter(
+	ctx context.Context,
+	pid id.ProjectID,
+	sort *group.Sort,
+	pagination *usecasex.Pagination,
+) (group.List, *usecasex.PageInfo, error) {
 	if !r.f.CanRead(pid) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -82,7 +87,11 @@ func (r *Group) FindByProject(ctx context.Context, pid id.ProjectID) (group.List
 	return res, nil
 }
 
-func (r *Group) FindByKey(ctx context.Context, projectID id.ProjectID, key string) (*group.Group, error) {
+func (r *Group) FindByKey(
+	ctx context.Context,
+	projectID id.ProjectID,
+	key string,
+) (*group.Group, error) {
 	if len(key) == 0 {
 		return nil, rerror.ErrNotFound
 	}
@@ -96,7 +105,11 @@ func (r *Group) FindByKey(ctx context.Context, projectID id.ProjectID, key strin
 	})
 }
 
-func (r *Group) FindByIDOrKey(ctx context.Context, pid id.ProjectID, g group.IDOrKey) (*group.Group, error) {
+func (r *Group) FindByIDOrKey(
+	ctx context.Context,
+	pid id.ProjectID,
+	g group.IDOrKey,
+) (*group.Group, error) {
 	gid := g.ID()
 	key := g.Key()
 	if gid == nil && (key == nil || *key == "") {
@@ -167,7 +180,12 @@ func (r *Group) writeFilter(filter interface{}) interface{} {
 	return applyProjectFilter(filter, r.f.Writable)
 }
 
-func (r *Group) paginate(ctx context.Context, filter bson.M, sort *usecasex.Sort, pagination *usecasex.Pagination) (group.List, *usecasex.PageInfo, error) {
+func (r *Group) paginate(
+	ctx context.Context,
+	filter bson.M,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (group.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewGroupConsumer()
 	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), sort, pagination, c)
 	if err != nil {

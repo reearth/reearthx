@@ -70,7 +70,11 @@ func (r *Asset) FindByIDs(_ context.Context, ids id.AssetIDList) (asset.List, er
 	return res, nil
 }
 
-func (r *Asset) Search(_ context.Context, id id.ProjectID, filter repo.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+func (r *Asset) Search(
+	_ context.Context,
+	id id.ProjectID,
+	filter repo.AssetFilter,
+) (asset.List, *usecasex.PageInfo, error) {
 	if !r.projectFilter.CanRead(id) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -148,7 +152,11 @@ func (r *Asset) BatchDelete(_ context.Context, ids id.AssetIDList) error {
 	return nil
 }
 
-func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f gateway.File) error {
+func (r *Asset) RemoveByProjectWithFile(
+	ctx context.Context,
+	pid id.ProjectID,
+	f gateway.File,
+) error {
 	r.data.FindAll(func(id id.AssetID, a *asset.Asset) bool {
 		if r.workspaceFilter.CanWrite(a.Workspace()) {
 			if a.Project() == pid {
@@ -160,16 +168,23 @@ func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f
 	return nil
 }
 
-func (r *Asset) FindByWorkspaceProject(_ context.Context, wid accountdomain.WorkspaceID, pid *id.ProjectID, filter repo.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+func (r *Asset) FindByWorkspaceProject(
+	_ context.Context,
+	wid accountdomain.WorkspaceID,
+	pid *id.ProjectID,
+	filter repo.AssetFilter,
+) ([]*asset.Asset, *usecasex.PageInfo, error) {
 	if !r.workspaceFilter.CanRead(wid) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
 
 	result := r.data.FindAll(func(k id.AssetID, v *asset.Asset) bool {
 		if pid != nil {
-			return v.Project() == *pid && v.CoreSupport() && (filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
+			return v.Project() == *pid && v.CoreSupport() &&
+				(filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
 		}
-		return v.Workspace() == wid && v.CoreSupport() && (filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
+		return v.Workspace() == wid && v.CoreSupport() &&
+			(filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
 	})
 
 	if filter.SortType != nil {
@@ -205,7 +220,10 @@ func (r *Asset) FindByWorkspaceProject(_ context.Context, wid accountdomain.Work
 	), nil
 }
 
-func (r *Asset) TotalSizeByWorkspace(_ context.Context, wid accountdomain.WorkspaceID) (t int64, err error) {
+func (r *Asset) TotalSizeByWorkspace(
+	_ context.Context,
+	wid accountdomain.WorkspaceID,
+) (t int64, err error) {
 	if !r.workspaceFilter.CanRead(wid) {
 		return 0, nil
 	}
@@ -219,13 +237,18 @@ func (r *Asset) TotalSizeByWorkspace(_ context.Context, wid accountdomain.Worksp
 	return
 }
 
-func (r *Asset) FindByWorkspace(_ context.Context, wid accountdomain.WorkspaceID, filter repo.AssetFilter) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+func (r *Asset) FindByWorkspace(
+	_ context.Context,
+	wid accountdomain.WorkspaceID,
+	filter repo.AssetFilter,
+) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
 	if !r.workspaceFilter.CanRead(wid) {
 		return nil, interfaces.NewPageBasedInfo(0, 1, 1), nil
 	}
 
 	result := r.data.FindAll(func(k id.AssetID, v *asset.Asset) bool {
-		return v.Workspace() == wid && (filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
+		return v.Workspace() == wid &&
+			(filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
 	})
 
 	if filter.SortType != nil {

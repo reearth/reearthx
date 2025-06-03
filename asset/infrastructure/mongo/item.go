@@ -64,13 +64,21 @@ func (r *Item) Init() error {
 	)
 }
 
-func (r *Item) FindByID(ctx context.Context, id id.ItemID, ref *version.Ref) (item.Versioned, error) {
+func (r *Item) FindByID(
+	ctx context.Context,
+	id id.ItemID,
+	ref *version.Ref,
+) (item.Versioned, error) {
 	return r.findOne(ctx, bson.M{
 		"id": id.String(),
 	}, ref)
 }
 
-func (r *Item) FindByIDs(ctx context.Context, ids id.ItemIDList, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) FindByIDs(
+	ctx context.Context,
+	ids id.ItemIDList,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -88,21 +96,38 @@ func (r *Item) FindByIDs(ctx context.Context, ids id.ItemIDList, ref *version.Re
 	return filterItems(ids, res), nil
 }
 
-func (r *Item) FindBySchema(ctx context.Context, schemaID id.SchemaID, ref *version.Ref, sort *usecasex.Sort, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) FindBySchema(
+	ctx context.Context,
+	schemaID id.SchemaID,
+	ref *version.Ref,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	res, pi, err := r.paginate(ctx, bson.M{
 		"schema": schemaID.String(),
 	}, ref, sort, pagination)
 	return res, pi, err
 }
 
-func (r *Item) FindByModel(ctx context.Context, modelID id.ModelID, ref *version.Ref, sort *usecasex.Sort, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) FindByModel(
+	ctx context.Context,
+	modelID id.ModelID,
+	ref *version.Ref,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	res, pi, err := r.paginate(ctx, bson.M{
 		"modelid": modelID.String(),
 	}, ref, sort, pagination)
 	return res, pi, err
 }
 
-func (r *Item) FindByModelAndValue(ctx context.Context, modelID id.ModelID, fields []repo.FieldAndValue, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) FindByModelAndValue(
+	ctx context.Context,
+	modelID id.ModelID,
+	fields []repo.FieldAndValue,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	filters := make([]bson.M, 0, len(fields))
 	for _, f := range fields {
 		v := mongodoc.NewMultipleValue(f.Value)
@@ -142,15 +167,27 @@ func (r *Item) FindByModelAndValue(ctx context.Context, modelID id.ModelID, fiel
 	return r.find(ctx, bson.M{"$or": filters}, ref)
 }
 
-func (r *Item) FindByAssets(ctx context.Context, al id.AssetIDList, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) FindByAssets(
+	ctx context.Context,
+	al id.AssetIDList,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	if al.Len() == 0 {
 		return nil, nil
 	}
 
-	return r.aggregate(ctx, []any{bson.M{"$match": bson.M{"assets": bson.M{"$in": al.Strings()}}}}, ref)
+	return r.aggregate(
+		ctx,
+		[]any{bson.M{"$match": bson.M{"assets": bson.M{"$in": al.Strings()}}}},
+		ref,
+	)
 }
 
-func (r *Item) FindVersionByID(ctx context.Context, itemID id.ItemID, ver version.VersionOrRef) (item.Versioned, error) {
+func (r *Item) FindVersionByID(
+	ctx context.Context,
+	itemID id.ItemID,
+	ver version.VersionOrRef,
+) (item.Versioned, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.Find(ctx, r.readFilter(bson.M{
 		"id": itemID.String(),
@@ -161,7 +198,10 @@ func (r *Item) FindVersionByID(ctx context.Context, itemID id.ItemID, ver versio
 	return c.Result[0], nil
 }
 
-func (r *Item) FindAllVersionsByID(ctx context.Context, itemID id.ItemID) (item.VersionedList, error) {
+func (r *Item) FindAllVersionsByID(
+	ctx context.Context,
+	itemID id.ItemID,
+) (item.VersionedList, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.Find(ctx, r.readFilter(bson.M{
 		"id": itemID.String(),
@@ -172,7 +212,10 @@ func (r *Item) FindAllVersionsByID(ctx context.Context, itemID id.ItemID) (item.
 	return c.Result, nil
 }
 
-func (r *Item) FindAllVersionsByIDs(ctx context.Context, ids id.ItemIDList) (item.VersionedList, error) {
+func (r *Item) FindAllVersionsByIDs(
+	ctx context.Context,
+	ids id.ItemIDList,
+) (item.VersionedList, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.Find(ctx, r.readFilter(bson.M{
 		"id": bson.M{
@@ -217,7 +260,12 @@ func (r *Item) SaveAll(ctx context.Context, items item.List) error {
 	return r.client.SaveMany(ctx, ids, lo.ToAnySlice(docs))
 }
 
-func (r *Item) UpdateRef(ctx context.Context, item id.ItemID, ref version.Ref, vr *version.VersionOrRef) error {
+func (r *Item) UpdateRef(
+	ctx context.Context,
+	item id.ItemID,
+	ref version.Ref,
+	vr *version.VersionOrRef,
+) error {
 	return r.client.UpdateRef(ctx, item.String(), ref, vr)
 }
 
@@ -235,18 +283,44 @@ func (r *Item) Archive(ctx context.Context, id id.ItemID, pid id.ProjectID, b bo
 	}, b)
 }
 
-func (r *Item) paginate(ctx context.Context, filter bson.M, ref *version.Ref, sort *usecasex.Sort, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) paginate(
+	ctx context.Context,
+	filter bson.M,
+	ref *version.Ref,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	c := mongodoc.NewVersionedItemConsumer()
-	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), version.Eq(ref.OrLatest().OrVersion()), sort, pagination, c)
+	pageInfo, err := r.client.Paginate(
+		ctx,
+		r.readFilter(filter),
+		version.Eq(ref.OrLatest().OrVersion()),
+		sort,
+		pagination,
+		c,
+	)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
 	return c.Result, pageInfo, nil
 }
 
-func (r *Item) paginateAggregation(ctx context.Context, pipeline []any, ref *version.Ref, sort *usecasex.Sort, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) paginateAggregation(
+	ctx context.Context,
+	pipeline []any,
+	ref *version.Ref,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	c := mongodoc.NewVersionedItemConsumer()
-	pageInfo, err := r.client.PaginateAggregation(ctx, applyProjectFilterToPipeline(pipeline, r.f.Readable), version.Eq(ref.OrLatest().OrVersion()), sort, pagination, c)
+	pageInfo, err := r.client.PaginateAggregation(
+		ctx,
+		applyProjectFilterToPipeline(pipeline, r.f.Readable),
+		version.Eq(ref.OrLatest().OrVersion()),
+		sort,
+		pagination,
+		c,
+	)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
@@ -261,7 +335,11 @@ func (r *Item) find(ctx context.Context, filter any, ref *version.Ref) (item.Ver
 	return c.Result, nil
 }
 
-func (r *Item) aggregate(ctx context.Context, pipeline []any, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) aggregate(
+	ctx context.Context,
+	pipeline []any,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.Aggregate(ctx, applyProjectFilterToPipeline(pipeline, r.f.Readable), version.Eq(ref.OrLatest().OrVersion()), c); err != nil {
 		return nil, err
@@ -278,7 +356,9 @@ func (r *Item) findOne(ctx context.Context, filter any, ref *version.Ref) (item.
 }
 
 func (r *Item) Copy(ctx context.Context, params repo.CopyParams) (*string, *string, error) {
-	filter, err := json.Marshal(bson.M{"schema": params.OldSchema.String(), "__r": bson.M{"$in": []string{"latest"}}})
+	filter, err := json.Marshal(
+		bson.M{"schema": params.OldSchema.String(), "__r": bson.M{"$in": []string{"latest"}}},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -297,8 +377,10 @@ func (r *Item) Copy(ctx context.Context, params repo.CopyParams) (*string, *stri
 			Value: params.NewModel.String(),
 		},
 		"timestamp": {
-			Type:  task.ChangeTypeSet,
-			Value: params.Timestamp.UTC().Format("2006-01-02T15:04:05.000+00:00"), // TODO: should use a better way to format
+			Type: task.ChangeTypeSet,
+			Value: params.Timestamp.UTC().
+				Format("2006-01-02T15:04:05.000+00:00"),
+			// TODO: should use a better way to format
 		},
 		"updatedbyuser": {
 			Type:  task.ChangeTypeSet,

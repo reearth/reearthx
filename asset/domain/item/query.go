@@ -18,7 +18,13 @@ type Query struct {
 	model   id.ModelID
 }
 
-func NewQuery(project id.ProjectID, model id.ModelID, schema *id.SchemaID, keyword string, ref *version.Ref) *Query {
+func NewQuery(
+	project id.ProjectID,
+	model id.ModelID,
+	schema *id.SchemaID,
+	keyword string,
+	ref *version.Ref,
+) *Query {
 	return &Query{
 		project: project,
 		schema:  schema,

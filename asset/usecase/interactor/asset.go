@@ -69,7 +69,11 @@ func NewAsset(r *repo.Container, g *gateway.Container) interfaces.Asset {
 	}
 }
 
-func NewAssetWithHostAdapter(r *repo.Container, g *gateway.Container, hostAdapter HostAdapter) interfaces.Asset {
+func NewAssetWithHostAdapter(
+	r *repo.Container,
+	g *gateway.Container,
+	hostAdapter HostAdapter,
+) interfaces.Asset {
 	return &Asset{
 		repos:       r,
 		gateways:    g,
@@ -77,7 +81,11 @@ func NewAssetWithHostAdapter(r *repo.Container, g *gateway.Container, hostAdapte
 	}
 }
 
-func (i *Asset) FindByID(ctx context.Context, aid id.AssetID, _ *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) FindByID(
+	ctx context.Context,
+	aid id.AssetID,
+	_ *usecase.Operator,
+) (*asset.Asset, error) {
 	a, err := i.repos.Asset.FindByID(ctx, aid)
 	if err != nil {
 		return nil, err
@@ -88,7 +96,11 @@ func (i *Asset) FindByID(ctx context.Context, aid id.AssetID, _ *usecase.Operato
 	return a, nil
 }
 
-func (i *Asset) FindByUUID(ctx context.Context, uuid string, _ *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) FindByUUID(
+	ctx context.Context,
+	uuid string,
+	_ *usecase.Operator,
+) (*asset.Asset, error) {
 	a, err := i.repos.Asset.FindByUUID(ctx, uuid)
 	if err != nil {
 		return nil, err
@@ -99,7 +111,11 @@ func (i *Asset) FindByUUID(ctx context.Context, uuid string, _ *usecase.Operator
 	return a, nil
 }
 
-func (i *Asset) FindByIDs(ctx context.Context, assets []id.AssetID, _ *usecase.Operator) (asset.List, error) {
+func (i *Asset) FindByIDs(
+	ctx context.Context,
+	assets []id.AssetID,
+	_ *usecase.Operator,
+) (asset.List, error) {
 	al, err := i.repos.Asset.FindByIDs(ctx, assets)
 	if err != nil {
 		return nil, err
@@ -110,7 +126,12 @@ func (i *Asset) FindByIDs(ctx context.Context, assets []id.AssetID, _ *usecase.O
 	return al, nil
 }
 
-func (i *Asset) Search(ctx context.Context, projectID id.ProjectID, filter interfaces.AssetFilter, _ *usecase.Operator) (asset.List, *usecasex.PageInfo, error) {
+func (i *Asset) Search(
+	ctx context.Context,
+	projectID id.ProjectID,
+	filter interfaces.AssetFilter,
+	_ *usecase.Operator,
+) (asset.List, *usecasex.PageInfo, error) {
 	al, pi, err := i.repos.Asset.Search(ctx, projectID, repo.AssetFilter{
 		Sort:         filter.Sort,
 		Keyword:      filter.Keyword,
@@ -126,7 +147,11 @@ func (i *Asset) Search(ctx context.Context, projectID id.ProjectID, filter inter
 	return al, pi, nil
 }
 
-func (i *Asset) FindFileByID(ctx context.Context, aid id.AssetID, _ *usecase.Operator) (*asset.File, error) {
+func (i *Asset) FindFileByID(
+	ctx context.Context,
+	aid id.AssetID,
+	_ *usecase.Operator,
+) (*asset.File, error) {
 	_, err := i.repos.Asset.FindByID(ctx, aid)
 	if err != nil {
 		return nil, err
@@ -140,7 +165,11 @@ func (i *Asset) FindFileByID(ctx context.Context, aid id.AssetID, _ *usecase.Ope
 	return files, nil
 }
 
-func (i *Asset) FindFilesByIDs(ctx context.Context, ids id.AssetIDList, _ *usecase.Operator) (map[id.AssetID]*asset.File, error) {
+func (i *Asset) FindFilesByIDs(
+	ctx context.Context,
+	ids id.AssetIDList,
+	_ *usecase.Operator,
+) (map[id.AssetID]*asset.File, error) {
 	_, err := i.repos.Asset.FindByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
@@ -154,7 +183,12 @@ func (i *Asset) FindFilesByIDs(ctx context.Context, ids id.AssetIDList, _ *useca
 	return files, nil
 }
 
-func (i *Asset) DownloadByID(ctx context.Context, aid id.AssetID, headers map[string]string, _ *usecase.Operator) (io.ReadCloser, map[string]string, error) {
+func (i *Asset) DownloadByID(
+	ctx context.Context,
+	aid id.AssetID,
+	headers map[string]string,
+	_ *usecase.Operator,
+) (io.ReadCloser, map[string]string, error) {
 	a, err := i.repos.Asset.FindByID(ctx, aid)
 	if err != nil {
 		return nil, nil, err
@@ -168,7 +202,11 @@ func (i *Asset) DownloadByID(ctx context.Context, aid id.AssetID, headers map[st
 	return f, headers, nil
 }
 
-func (i *Asset) Create(ctx context.Context, inp interfaces.CreateAssetParam, op *usecase.Operator) (result *asset.Asset, afile *asset.File, err error) {
+func (i *Asset) Create(
+	ctx context.Context,
+	inp interfaces.CreateAssetParam,
+	op *usecase.Operator,
+) (result *asset.Asset, afile *asset.File, err error) {
 	if op.AcOperator.User == nil && op.Integration == nil {
 		return nil, nil, interfaces.ErrInvalidOperator
 	}
@@ -214,7 +252,9 @@ func (i *Asset) Create(ctx context.Context, inp interfaces.CreateAssetParam, op 
 					return nil, nil, err
 				}
 				if u.Expired(time.Now()) {
-					return nil, nil, rerror.ErrInternalBy(fmt.Errorf("expired upload token: %s", uuid))
+					return nil, nil, rerror.ErrInternalBy(
+						fmt.Errorf("expired upload token: %s", uuid),
+					)
 				}
 				file, err = i.gateways.File.UploadedAsset(ctx, u)
 				if err != nil {
@@ -301,7 +341,11 @@ func (i *Asset) Create(ctx context.Context, inp interfaces.CreateAssetParam, op 
 	return a, f, nil
 }
 
-func (i *Asset) Decompress(ctx context.Context, aId id.AssetID, operator *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) Decompress(
+	ctx context.Context,
+	aId id.AssetID,
+	operator *usecase.Operator,
+) (*asset.Asset, error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -341,72 +385,92 @@ func (i *Asset) Decompress(ctx context.Context, aId id.AssetID, operator *usecas
 	)
 }
 
-func (i *Asset) Publish(ctx context.Context, aId id.AssetID, operator *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) Publish(
+	ctx context.Context,
+	aId id.AssetID,
+	operator *usecase.Operator,
+) (*asset.Asset, error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*asset.Asset, error) {
-		a, err := i.repos.Asset.FindByID(ctx, aId)
-		if err != nil {
-			return nil, err
-		}
+	return Run1(
+		ctx,
+		operator,
+		i.repos,
+		Usecase().Transaction(),
+		func(ctx context.Context) (*asset.Asset, error) {
+			a, err := i.repos.Asset.FindByID(ctx, aId)
+			if err != nil {
+				return nil, err
+			}
 
-		if a != nil {
-			a.SetAccessInfoResolver(i.gateways.File.GetAccessInfoResolver())
-		}
+			if a != nil {
+				a.SetAccessInfoResolver(i.gateways.File.GetAccessInfoResolver())
+			}
 
-		if !operator.CanUpdate(a) {
-			return nil, interfaces.ErrOperationDenied
-		}
+			if !operator.CanUpdate(a) {
+				return nil, interfaces.ErrOperationDenied
+			}
 
-		err = i.gateways.File.PublishAsset(ctx, a.UUID(), a.FileName())
-		if err != nil {
-			return nil, err
-		}
+			err = i.gateways.File.PublishAsset(ctx, a.UUID(), a.FileName())
+			if err != nil {
+				return nil, err
+			}
 
-		a.UpdatePublic(true)
+			a.UpdatePublic(true)
 
-		if err := i.repos.Asset.Save(ctx, a); err != nil {
-			return nil, err
-		}
+			if err := i.repos.Asset.Save(ctx, a); err != nil {
+				return nil, err
+			}
 
-		return a, nil
-	})
+			return a, nil
+		},
+	)
 }
 
-func (i *Asset) Unpublish(ctx context.Context, aId id.AssetID, operator *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) Unpublish(
+	ctx context.Context,
+	aId id.AssetID,
+	operator *usecase.Operator,
+) (*asset.Asset, error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*asset.Asset, error) {
-		a, err := i.repos.Asset.FindByID(ctx, aId)
-		if err != nil {
-			return nil, err
-		}
+	return Run1(
+		ctx,
+		operator,
+		i.repos,
+		Usecase().Transaction(),
+		func(ctx context.Context) (*asset.Asset, error) {
+			a, err := i.repos.Asset.FindByID(ctx, aId)
+			if err != nil {
+				return nil, err
+			}
 
-		if a != nil {
-			a.SetAccessInfoResolver(i.gateways.File.GetAccessInfoResolver())
-		}
+			if a != nil {
+				a.SetAccessInfoResolver(i.gateways.File.GetAccessInfoResolver())
+			}
 
-		if !operator.CanUpdate(a) {
-			return nil, interfaces.ErrOperationDenied
-		}
+			if !operator.CanUpdate(a) {
+				return nil, interfaces.ErrOperationDenied
+			}
 
-		err = i.gateways.File.UnpublishAsset(ctx, a.UUID(), a.FileName())
-		if err != nil {
-			return nil, err
-		}
+			err = i.gateways.File.UnpublishAsset(ctx, a.UUID(), a.FileName())
+			if err != nil {
+				return nil, err
+			}
 
-		a.UpdatePublic(false)
+			a.UpdatePublic(false)
 
-		if err := i.repos.Asset.Save(ctx, a); err != nil {
-			return nil, err
-		}
+			if err := i.repos.Asset.Save(ctx, a); err != nil {
+				return nil, err
+			}
 
-		return a, nil
-	})
+			return a, nil
+		},
+	)
 }
 
 type wrappedUploadCursor struct {
@@ -436,7 +500,11 @@ func wrapUploadCursor(uuid, cursor string) string {
 	return wrappedUploadCursor{UUID: uuid, Cursor: cursor}.String()
 }
 
-func (i *Asset) CreateUpload(ctx context.Context, inp interfaces.CreateAssetUploadParam, op *usecase.Operator) (*interfaces.AssetUpload, error) {
+func (i *Asset) CreateUpload(
+	ctx context.Context,
+	inp interfaces.CreateAssetUploadParam,
+	op *usecase.Operator,
+) (*interfaces.AssetUpload, error) {
 	if op.AcOperator.User == nil && op.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -529,7 +597,10 @@ func (i *Asset) CreateUpload(ctx context.Context, inp interfaces.CreateAssetUplo
 
 func (i *Asset) triggerDecompressEvent(ctx context.Context, a *asset.Asset, f *asset.File) error {
 	if i.gateways.TaskRunner == nil {
-		log.Infof("asset: decompression of asset %s was skipped because task runner is not configured", a.ID())
+		log.Infof(
+			"asset: decompression of asset %s was skipped because task runner is not configured",
+			a.ID(),
+		)
 		return nil
 	}
 
@@ -549,7 +620,11 @@ func (i *Asset) triggerDecompressEvent(ctx context.Context, a *asset.Asset, f *a
 	return nil
 }
 
-func (i *Asset) Update(ctx context.Context, inp interfaces.UpdateAssetParam, operator *usecase.Operator) (result *asset.Asset, err error) {
+func (i *Asset) Update(
+	ctx context.Context,
+	inp interfaces.UpdateAssetParam,
+	operator *usecase.Operator,
+) (result *asset.Asset, err error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -584,7 +659,12 @@ func (i *Asset) Update(ctx context.Context, inp interfaces.UpdateAssetParam, ope
 	)
 }
 
-func (i *Asset) UpdateFiles(ctx context.Context, aid id.AssetID, s *asset.ArchiveExtractionStatus, op *usecase.Operator) (*asset.Asset, error) {
+func (i *Asset) UpdateFiles(
+	ctx context.Context,
+	aid id.AssetID,
+	s *asset.ArchiveExtractionStatus,
+	op *usecase.Operator,
+) (*asset.Asset, error) {
 	if op.AcOperator.User == nil && op.Integration == nil && !op.Machine {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -693,7 +773,11 @@ func shouldSkipUpdate(from, to *asset.ArchiveExtractionStatus) bool {
 	return from.String() == to.String()
 }
 
-func (i *Asset) Delete(ctx context.Context, aId id.AssetID, operator *usecase.Operator) (result id.AssetID, err error) {
+func (i *Asset) Delete(
+	ctx context.Context,
+	aId id.AssetID,
+	operator *usecase.Operator,
+) (result id.AssetID, err error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return aId, interfaces.ErrInvalidOperator
 	}
@@ -745,7 +829,11 @@ func (i *Asset) Delete(ctx context.Context, aId id.AssetID, operator *usecase.Op
 }
 
 // BatchDelete deletes assets in batch based on multiple asset IDs
-func (i *Asset) BatchDelete(ctx context.Context, assetIDs id.AssetIDList, operator *usecase.Operator) (result []id.AssetID, err error) {
+func (i *Asset) BatchDelete(
+	ctx context.Context,
+	assetIDs id.AssetIDList,
+	operator *usecase.Operator,
+) (result []id.AssetID, err error) {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return assetIDs, interfaces.ErrInvalidOperator
 	}
@@ -807,7 +895,12 @@ func (i *Asset) RetryDecompression(ctx context.Context, id string) error {
 	return i.gateways.TaskRunner.Retry(ctx, id)
 }
 
-func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.File, data *[]byte, newProject *project.Project) (*[]byte, error) {
+func (i *Asset) ImportAssetFiles(
+	ctx context.Context,
+	assets map[string]*zip.File,
+	data *[]byte,
+	newProject *project.Project,
+) (*[]byte, error) {
 	var currentHost string
 	if i.hostAdapter != nil {
 		currentHost = i.hostAdapter.CurrentHost(ctx)
@@ -901,7 +994,15 @@ func (i *Asset) ImportAssetFiles(ctx context.Context, assets map[string]*zip.Fil
 	return data, nil
 }
 
-func (i *Asset) FindByWorkspaceProject(ctx context.Context, tid accountdomain.WorkspaceID, pid *id.ProjectID, keyword *string, sort *asset.SortType, p *usecasex.Pagination, operator *usecase.Operator) ([]*asset.Asset, *usecasex.PageInfo, error) {
+func (i *Asset) FindByWorkspaceProject(
+	ctx context.Context,
+	tid accountdomain.WorkspaceID,
+	pid *id.ProjectID,
+	keyword *string,
+	sort *asset.SortType,
+	p *usecasex.Pagination,
+	operator *usecase.Operator,
+) ([]*asset.Asset, *usecasex.PageInfo, error) {
 	return Run2(
 		ctx, operator, i.repos,
 		Usecase().WithReadableWorkspaces(tid),
@@ -915,7 +1016,13 @@ func (i *Asset) FindByWorkspaceProject(ctx context.Context, tid accountdomain.Wo
 	)
 }
 
-func (i *Asset) FindByWorkspace(ctx context.Context, tid accountdomain.WorkspaceID, keyword *string, sort *asset.SortType, p *interfaces.PaginationParam) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+func (i *Asset) FindByWorkspace(
+	ctx context.Context,
+	tid accountdomain.WorkspaceID,
+	keyword *string,
+	sort *asset.SortType,
+	p *interfaces.PaginationParam,
+) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
 	var pagination *usecasex.Pagination
 	if p != nil && p.Page != nil {
 		pagination = usecasex.OffsetPagination{

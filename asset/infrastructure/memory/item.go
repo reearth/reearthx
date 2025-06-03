@@ -32,7 +32,11 @@ func NewItem() repo.Item {
 	}
 }
 
-func (r *Item) FindByAssets(_ context.Context, list id.AssetIDList, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) FindByAssets(
+	_ context.Context,
+	list id.AssetIDList,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -56,7 +60,11 @@ func (r *Item) Filtered(filter repo.ProjectFilter) repo.Item {
 	}
 }
 
-func (r *Item) FindByID(_ context.Context, itemID id.ItemID, ref *version.Ref) (item.Versioned, error) {
+func (r *Item) FindByID(
+	_ context.Context,
+	itemID id.ItemID,
+	ref *version.Ref,
+) (item.Versioned, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -68,7 +76,13 @@ func (r *Item) FindByID(_ context.Context, itemID id.ItemID, ref *version.Ref) (
 	return item, nil
 }
 
-func (r *Item) FindBySchema(_ context.Context, schemaID id.SchemaID, ref *version.Ref, sort *usecasex.Sort, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) FindBySchema(
+	_ context.Context,
+	schemaID id.SchemaID,
+	ref *version.Ref,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
@@ -85,7 +99,13 @@ func (r *Item) FindBySchema(_ context.Context, schemaID id.SchemaID, ref *versio
 	return res, nil, nil
 }
 
-func (r *Item) FindByModel(_ context.Context, modelID id.ModelID, ref *version.Ref, sort *usecasex.Sort, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) FindByModel(
+	_ context.Context,
+	modelID id.ModelID,
+	ref *version.Ref,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
@@ -103,7 +123,11 @@ func (r *Item) FindByModel(_ context.Context, modelID id.ModelID, ref *version.R
 	return res, nil, nil
 }
 
-func (r *Item) FindByIDs(_ context.Context, list id.ItemIDList, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) FindByIDs(
+	_ context.Context,
+	list id.ItemIDList,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -111,7 +135,11 @@ func (r *Item) FindByIDs(_ context.Context, list id.ItemIDList, ref *version.Ref
 	return r.data.LoadAll(list, lo.ToPtr(ref.OrLatest().OrVersion())), nil
 }
 
-func (r *Item) FindVersionByID(_ context.Context, itemID id.ItemID, ver version.VersionOrRef) (item.Versioned, error) {
+func (r *Item) FindVersionByID(
+	_ context.Context,
+	itemID id.ItemID,
+	ver version.VersionOrRef,
+) (item.Versioned, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -135,7 +163,10 @@ func (r *Item) FindAllVersionsByID(_ context.Context, id id.ItemID) (item.Versio
 	}), nil
 }
 
-func (r *Item) FindAllVersionsByIDs(_ context.Context, ids id.ItemIDList) (item.VersionedList, error) {
+func (r *Item) FindAllVersionsByIDs(
+	_ context.Context,
+	ids id.ItemIDList,
+) (item.VersionedList, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -191,7 +222,12 @@ func (r *Item) SaveAll(_ context.Context, il item.List) error {
 	return nil
 }
 
-func (r *Item) UpdateRef(_ context.Context, item id.ItemID, ref version.Ref, vr *version.VersionOrRef) error {
+func (r *Item) UpdateRef(
+	_ context.Context,
+	item id.ItemID,
+	ref version.Ref,
+	vr *version.VersionOrRef,
+) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -230,7 +266,12 @@ func (r *Item) IsArchived(_ context.Context, itemID id.ItemID) (bool, error) {
 	return r.data.IsArchived(itemID), nil
 }
 
-func (r *Item) Archive(_ context.Context, itemID id.ItemID, projectID id.ProjectID, archived bool) error {
+func (r *Item) Archive(
+	_ context.Context,
+	itemID id.ItemID,
+	projectID id.ProjectID,
+	archived bool,
+) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -263,7 +304,12 @@ func sortItems(items []*version.Value[*item.Item]) {
 	})
 }
 
-func (r *Item) Search(_ context.Context, sp schema.Package, q *item.Query, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) Search(
+	_ context.Context,
+	sp schema.Package,
+	q *item.Query,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	// TODO: support filters, sort, and pagination
 	if r.err != nil {
 		return nil, nil, r.err
@@ -295,7 +341,12 @@ func (r *Item) Search(_ context.Context, sp schema.Package, q *item.Query, pagin
 	return res, nil, nil
 }
 
-func (r *Item) FindByModelAndValue(_ context.Context, modelID id.ModelID, fields []repo.FieldAndValue, ref *version.Ref) (item.VersionedList, error) {
+func (r *Item) FindByModelAndValue(
+	_ context.Context,
+	modelID id.ModelID,
+	fields []repo.FieldAndValue,
+	ref *version.Ref,
+) (item.VersionedList, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -338,8 +389,10 @@ func (r *Item) Copy(ctx context.Context, params repo.CopyParams) (*string, *stri
 			Value: params.NewModel.String(),
 		},
 		"timestamp": {
-			Type:  task.ChangeTypeSet,
-			Value: params.Timestamp.UTC().Format("2006-01-02T15:04:05.000+00:00"), // TODO: should use a better way to format
+			Type: task.ChangeTypeSet,
+			Value: params.Timestamp.UTC().
+				Format("2006-01-02T15:04:05.000+00:00"),
+			// TODO: should use a better way to format
 		},
 		"updatedbyuser": {
 			Type:  task.ChangeTypeSet,

@@ -9,7 +9,13 @@ import (
 func TestFile_FileType(t *testing.T) {
 	c := NewFile().Build()
 	fl := []*File{NewFile().Build()}
-	f := NewFile().Name("aaa.txt").Path("/aaa.txt").Size(10).GuessContentType().Files(fl).Children([]*File{c}).Build()
+	f := NewFile().Name("aaa.txt").
+		Path("/aaa.txt").
+		Size(10).
+		GuessContentType().
+		Files(fl).
+		Children([]*File{c}).
+		Build()
 
 	assert.Equal(t, "aaa.txt", f.Name())
 	assert.Equal(t, uint64(10), f.Size())
@@ -106,7 +112,11 @@ func TestFile_SetFiles(t *testing.T) {
 	assert.Equal(t, files, root.files)
 
 	root2 := NewFile().Path("aaa.zip").Build()
-	files2 := []*File{NewFile().Path("aaa.zip").Build(), NewFile().Path("aaa/a/a.txt").Build(), NewFile().Path("aaa/b.txt").Build()}
+	files2 := []*File{
+		NewFile().Path("aaa.zip").Build(),
+		NewFile().Path("aaa/a/a.txt").Build(),
+		NewFile().Path("aaa/b.txt").Build(),
+	}
 	expected := []*File{NewFile().Path("aaa/a/a.txt").Build(), NewFile().Path("aaa/b.txt").Build()}
 	root2.SetFiles(files2)
 	assert.Equal(t, expected, root2.files)
@@ -155,8 +165,18 @@ func Test_FoldFiles(t *testing.T) {
 				{name: "hello", path: "/hello", size: 0, contentType: "", children: []*File{
 					{name: "c.txt", path: "/hello/c.txt", size: 20, contentType: "text/plain"},
 					{name: "good", path: "/hello/good", size: 0, contentType: "", children: []*File{
-						{name: "a.txt", path: "/hello/good/a.txt", size: 10, contentType: "text/plain"},
-						{name: "b.txt", path: "/hello/good/b.txt", size: 10, contentType: "text/plain"},
+						{
+							name:        "a.txt",
+							path:        "/hello/good/a.txt",
+							size:        10,
+							contentType: "text/plain",
+						},
+						{
+							name:        "b.txt",
+							path:        "/hello/good/b.txt",
+							size:        10,
+							contentType: "text/plain",
+						},
 					}},
 				}},
 			},
@@ -177,10 +197,25 @@ func Test_FoldFiles(t *testing.T) {
 				{
 					name: "hello", path: "/hello", size: 0, contentType: "", children: []*File{
 						{name: "hello", path: "/hello/hello", children: []*File{
-							{name: "a.txt", path: "/hello/hello/a.txt", size: 10, contentType: "text/plain"},
-							{name: "b.txt", path: "/hello/hello/b.txt", size: 10, contentType: "text/plain"},
+							{
+								name:        "a.txt",
+								path:        "/hello/hello/a.txt",
+								size:        10,
+								contentType: "text/plain",
+							},
+							{
+								name:        "b.txt",
+								path:        "/hello/hello/b.txt",
+								size:        10,
+								contentType: "text/plain",
+							},
 							{name: "c", path: "/hello/hello/c", children: []*File{
-								{name: "d.txt", path: "/hello/hello/c/d.txt", size: 20, contentType: "text/plain"},
+								{
+									name:        "d.txt",
+									path:        "/hello/hello/c/d.txt",
+									size:        20,
+									contentType: "text/plain",
+								},
 							}},
 						}},
 					},
@@ -207,7 +242,12 @@ func Test_FoldFiles(t *testing.T) {
 				{name: "hello_a", path: "/hello_a", children: []*File{
 					{name: "b.txt", path: "/hello_a/b.txt", size: 10, contentType: "text/plain"},
 					{name: "c", path: "/hello_a/c", children: []*File{
-						{name: "d.txt", path: "/hello_a/c/d.txt", size: 20, contentType: "text/plain"},
+						{
+							name:        "d.txt",
+							path:        "/hello_a/c/d.txt",
+							size:        20,
+							contentType: "text/plain",
+						},
 					}},
 				}},
 			},

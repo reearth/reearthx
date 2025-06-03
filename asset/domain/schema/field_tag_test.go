@@ -46,8 +46,15 @@ func TestFieldTag_Clone(t *testing.T) {
 
 func TestFieldTag_Validate(t *testing.T) {
 	tag := NewTag("xyz", TagColorVolcano)
-	assert.NoError(t, (&FieldTag{tags: TagList{tag}}).Validate(value.TypeTag.Value(tag.ID().String())))
-	assert.Equal(t, ErrInvalidValue, (&FieldTag{tags: TagList{tag}}).Validate(value.TypeTag.Value("aaa")))
+	assert.NoError(
+		t,
+		(&FieldTag{tags: TagList{tag}}).Validate(value.TypeTag.Value(tag.ID().String())),
+	)
+	assert.Equal(
+		t,
+		ErrInvalidValue,
+		(&FieldTag{tags: TagList{tag}}).Validate(value.TypeTag.Value("aaa")),
+	)
 	assert.Equal(t, ErrInvalidValue, (&FieldTag{}).Validate(value.TypeText.Value("")))
 }
 

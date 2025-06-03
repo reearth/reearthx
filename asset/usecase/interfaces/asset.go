@@ -80,13 +80,32 @@ type Asset interface {
 	FindByID(context.Context, id.AssetID, *usecase.Operator) (*asset.Asset, error)
 	FindByUUID(context.Context, string, *usecase.Operator) (*asset.Asset, error)
 	FindByIDs(context.Context, []id.AssetID, *usecase.Operator) (asset.List, error)
-	Search(context.Context, id.ProjectID, AssetFilter, *usecase.Operator) (asset.List, *usecasex.PageInfo, error)
+	Search(
+		context.Context,
+		id.ProjectID,
+		AssetFilter,
+		*usecase.Operator,
+	) (asset.List, *usecasex.PageInfo, error)
 	FindFileByID(context.Context, id.AssetID, *usecase.Operator) (*asset.File, error)
-	FindFilesByIDs(context.Context, id.AssetIDList, *usecase.Operator) (map[id.AssetID]*asset.File, error)
-	DownloadByID(context.Context, id.AssetID, map[string]string, *usecase.Operator) (io.ReadCloser, map[string]string, error)
+	FindFilesByIDs(
+		context.Context,
+		id.AssetIDList,
+		*usecase.Operator,
+	) (map[id.AssetID]*asset.File, error)
+	DownloadByID(
+		context.Context,
+		id.AssetID,
+		map[string]string,
+		*usecase.Operator,
+	) (io.ReadCloser, map[string]string, error)
 	Create(context.Context, CreateAssetParam, *usecase.Operator) (*asset.Asset, *asset.File, error)
 	Update(context.Context, UpdateAssetParam, *usecase.Operator) (*asset.Asset, error)
-	UpdateFiles(context.Context, id.AssetID, *asset.ArchiveExtractionStatus, *usecase.Operator) (*asset.Asset, error)
+	UpdateFiles(
+		context.Context,
+		id.AssetID,
+		*asset.ArchiveExtractionStatus,
+		*usecase.Operator,
+	) (*asset.Asset, error)
 	Delete(context.Context, id.AssetID, *usecase.Operator) (id.AssetID, error)
 	BatchDelete(context.Context, id.AssetIDList, *usecase.Operator) ([]id.AssetID, error)
 	Decompress(context.Context, id.AssetID, *usecase.Operator) (*asset.Asset, error)
@@ -95,9 +114,28 @@ type Asset interface {
 	CreateUpload(context.Context, CreateAssetUploadParam, *usecase.Operator) (*AssetUpload, error)
 	RetryDecompression(context.Context, string) error
 
-	FindByWorkspaceProject(context.Context, accountdomain.WorkspaceID, *id.ProjectID, *string, *asset.SortType, *usecasex.Pagination, *usecase.Operator) ([]*asset.Asset, *usecasex.PageInfo, error)
-	ImportAssetFiles(context.Context, map[string]*zip.File, *[]byte, *project.Project) (*[]byte, error)
+	FindByWorkspaceProject(
+		context.Context,
+		accountdomain.WorkspaceID,
+		*id.ProjectID,
+		*string,
+		*asset.SortType,
+		*usecasex.Pagination,
+		*usecase.Operator,
+	) ([]*asset.Asset, *usecasex.PageInfo, error)
+	ImportAssetFiles(
+		context.Context,
+		map[string]*zip.File,
+		*[]byte,
+		*project.Project,
+	) (*[]byte, error)
 
-	FindByWorkspace(context.Context, accountdomain.WorkspaceID, *string, *asset.SortType, *PaginationParam) ([]*asset.Asset, *PageBasedInfo, error)
+	FindByWorkspace(
+		context.Context,
+		accountdomain.WorkspaceID,
+		*string,
+		*asset.SortType,
+		*PaginationParam,
+	) ([]*asset.Asset, *PageBasedInfo, error)
 	Fetch(context.Context, []id.AssetID) ([]*asset.Asset, error)
 }

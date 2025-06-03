@@ -36,7 +36,11 @@ func (r *Project) Filtered(f repo.WorkspaceFilter) repo.Project {
 	}
 }
 
-func (r *Project) FindByWorkspaces(_ context.Context, wids accountdomain.WorkspaceIDList, _ *usecasex.Pagination) (project.List, *usecasex.PageInfo, error) {
+func (r *Project) FindByWorkspaces(
+	_ context.Context,
+	wids accountdomain.WorkspaceIDList,
+	_ *usecasex.Pagination,
+) (project.List, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
@@ -89,7 +93,10 @@ func (r *Project) FindByID(_ context.Context, pid id.ProjectID) (*project.Projec
 	return nil, rerror.ErrNotFound
 }
 
-func (r *Project) FindByIDOrAlias(_ context.Context, q project.IDOrAlias) (*project.Project, error) {
+func (r *Project) FindByIDOrAlias(
+	_ context.Context,
+	q project.IDOrAlias,
+) (*project.Project, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -101,7 +108,8 @@ func (r *Project) FindByIDOrAlias(_ context.Context, q project.IDOrAlias) (*proj
 	}
 
 	p := r.data.Find(func(k id.ProjectID, v *project.Project) bool {
-		return (pid != nil && k == *pid || alias != nil && v.Alias() == *alias) && r.f.CanRead(v.Workspace())
+		return (pid != nil && k == *pid || alias != nil && v.Alias() == *alias) &&
+			r.f.CanRead(v.Workspace())
 	})
 
 	if p != nil {
@@ -130,7 +138,10 @@ func (r *Project) IsAliasAvailable(_ context.Context, name string) (bool, error)
 	return true, nil
 }
 
-func (r *Project) FindByPublicAPIToken(ctx context.Context, token string) (*project.Project, error) {
+func (r *Project) FindByPublicAPIToken(
+	ctx context.Context,
+	token string,
+) (*project.Project, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -145,7 +156,10 @@ func (r *Project) FindByPublicAPIToken(ctx context.Context, token string) (*proj
 	return nil, rerror.ErrNotFound
 }
 
-func (r *Project) CountByWorkspace(_ context.Context, workspace accountdomain.WorkspaceID) (c int, err error) {
+func (r *Project) CountByWorkspace(
+	_ context.Context,
+	workspace accountdomain.WorkspaceID,
+) (c int, err error) {
 	if r.err != nil {
 		return 0, r.err
 	}

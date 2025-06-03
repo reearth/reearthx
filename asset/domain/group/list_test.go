@@ -49,15 +49,34 @@ func TestList_OrderByIDs(t *testing.T) {
 	group2 := New().NewID().Project(pid).Schema(sid2).Key(id.NewKey("key2")).Order(0).MustBuild()
 	group3 := New().NewID().Project(pid).Schema(sid3).Key(id.NewKey("key3")).Order(0).MustBuild()
 	groups := List{group1, group2, group3}
-	assert.Equal(t, List{group2, group1, group3}, groups.OrderByIDs(id.GroupIDList{group2.ID(), group1.ID(), group3.ID()}))
+	assert.Equal(
+		t,
+		List{group2, group1, group3},
+		groups.OrderByIDs(id.GroupIDList{group2.ID(), group1.ID(), group3.ID()}),
+	)
 	assert.Equal(t, id.ProjectIDList{pid, pid, pid}, groups.Projects())
 }
 
 func TestList_Ordered(t *testing.T) {
 	pid := id.NewProjectID()
-	g1 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key1")).Order(0).MustBuild()
-	g2 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key2")).Order(1).MustBuild()
-	g3 := New().NewID().Project(pid).Schema(id.NewSchemaID()).Key(id.NewKey("key3")).Order(2).MustBuild()
+	g1 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key1")).
+		Order(0).
+		MustBuild()
+	g2 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key2")).
+		Order(1).
+		MustBuild()
+	g3 := New().NewID().
+		Project(pid).
+		Schema(id.NewSchemaID()).
+		Key(id.NewKey("key3")).
+		Order(2).
+		MustBuild()
 	groups := List{g3, g1, g2}
 	ordered := groups.Ordered()
 	assert.NotEqual(t, groups, ordered)

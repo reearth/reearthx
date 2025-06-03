@@ -44,7 +44,10 @@ func TestCollection_FindOne(t *testing.T) {
 
 	// latest
 	consumer := &mongox.SliceConsumer[d]{}
-	assert.NoError(t, col.FindOne(ctx, bson.M{"a": "b"}, version.Eq(version.Latest.OrVersion()), consumer))
+	assert.NoError(
+		t,
+		col.FindOne(ctx, bson.M{"a": "b"}, version.Eq(version.Latest.OrVersion()), consumer),
+	)
 	assert.Equal(t, d{
 		A: "b",
 	}, consumer.Result[0])
@@ -56,12 +59,19 @@ func TestCollection_FindOne(t *testing.T) {
 
 	// ref
 	consumer3 := &mongox.SliceConsumer[d]{}
-	assert.NoError(t, col.FindOne(ctx, bson.M{"a": "b"}, version.Eq(version.Ref("aaa").OrVersion()), consumer3))
+	assert.NoError(
+		t,
+		col.FindOne(ctx, bson.M{"a": "b"}, version.Eq(version.Ref("aaa").OrVersion()), consumer3),
+	)
 	assert.Equal(t, d{A: "b"}, consumer3.Result[0])
 
 	// not found
 	consumer4 := &mongox.SliceConsumer[d]{}
-	assert.Equal(t, rerror.ErrNotFound, col.FindOne(ctx, bson.M{"a": "b"}, version.Eq(version.Ref("x").OrVersion()), consumer4))
+	assert.Equal(
+		t,
+		rerror.ErrNotFound,
+		col.FindOne(ctx, bson.M{"a": "b"}, version.Eq(version.Ref("x").OrVersion()), consumer4),
+	)
 	assert.Empty(t, consumer4.Result)
 }
 
@@ -136,12 +146,18 @@ func TestCollection_Find(t *testing.T) {
 
 	// ref
 	consumer3 := &mongox.SliceConsumer[d]{}
-	assert.NoError(t, col.Find(ctx, bson.M{"a": "b"}, version.Eq(version.Ref("aaa").OrVersion()), consumer3))
+	assert.NoError(
+		t,
+		col.Find(ctx, bson.M{"a": "b"}, version.Eq(version.Ref("aaa").OrVersion()), consumer3),
+	)
 	assert.Equal(t, []d{{A: "b", B: "c"}}, consumer3.Result)
 
 	// not found
 	consumer4 := &mongox.SliceConsumer[d]{}
-	assert.NoError(t, col.Find(ctx, bson.M{"a": "c"}, version.Eq(version.Latest.OrVersion()), consumer4))
+	assert.NoError(
+		t,
+		col.Find(ctx, bson.M{"a": "c"}, version.Eq(version.Latest.OrVersion()), consumer4),
+	)
 	assert.Empty(t, consumer4.Result)
 }
 
@@ -243,22 +259,38 @@ func TestCollection_CountAggregation(t *testing.T) {
 	})
 
 	// all
-	count, err := col.CountAggregation(ctx, []any{bson.M{"$match": bson.M{"a": "b"}}}, version.All())
+	count, err := col.CountAggregation(
+		ctx,
+		[]any{bson.M{"$match": bson.M{"a": "b"}}},
+		version.All(),
+	)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 
 	// version
-	count, err = col.CountAggregation(ctx, []any{bson.M{"$match": bson.M{"a": "b"}}}, version.Eq(vx.OrRef()))
+	count, err = col.CountAggregation(
+		ctx,
+		[]any{bson.M{"$match": bson.M{"a": "b"}}},
+		version.Eq(vx.OrRef()),
+	)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 
 	// ref
-	count, err = col.CountAggregation(ctx, []any{bson.M{"$match": bson.M{"a": "b"}}}, version.Eq(version.Latest.OrVersion()))
+	count, err = col.CountAggregation(
+		ctx,
+		[]any{bson.M{"$match": bson.M{"a": "b"}}},
+		version.Eq(version.Latest.OrVersion()),
+	)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 
 	// not found
-	count, err = col.CountAggregation(ctx, []any{bson.M{"$match": bson.M{"a": "c"}}}, version.Eq(version.Latest.OrVersion()))
+	count, err = col.CountAggregation(
+		ctx,
+		[]any{bson.M{"$match": bson.M{"a": "c"}}},
+		version.Eq(version.Latest.OrVersion()),
+	)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 }
@@ -317,7 +349,17 @@ func TestCollection_Paginate(t *testing.T) {
 		consumer,
 	)
 	assert.NoError(t, err)
-	assert.Equal(t, usecasex.NewPageInfo(2, usecasex.Cursor("a").Ref(), usecasex.Cursor("b").Ref(), false, false), pi)
+	assert.Equal(
+		t,
+		usecasex.NewPageInfo(
+			2,
+			usecasex.Cursor("a").Ref(),
+			usecasex.Cursor("b").Ref(),
+			false,
+			false,
+		),
+		pi,
+	)
 	assert.Equal(t, []d{{ID: "a", A: "b"}, {ID: "b", A: "a"}}, consumer.Result)
 }
 
@@ -375,7 +417,17 @@ func TestCollection_PaginateAggregation(t *testing.T) {
 		consumer,
 	)
 	assert.NoError(t, err)
-	assert.Equal(t, usecasex.NewPageInfo(2, usecasex.Cursor("a").Ref(), usecasex.Cursor("b").Ref(), false, false), pi)
+	assert.Equal(
+		t,
+		usecasex.NewPageInfo(
+			2,
+			usecasex.Cursor("a").Ref(),
+			usecasex.Cursor("b").Ref(),
+			false,
+			false,
+		),
+		pi,
+	)
 	assert.Equal(t, []d{{ID: "a", A: "b"}, {ID: "b", A: "a"}}, consumer.Result)
 }
 
@@ -470,7 +522,10 @@ func TestCollection_SaveOne(t *testing.T) {
 	assert.Equal(t, Data{ID: "x", A: "aaa"}, data)
 
 	// next version
-	assert.NoError(t, col.SaveOne(ctx, "x", Data{ID: "x", A: "bbb"}, version.Latest.OrVersion().Ref()))
+	assert.NoError(
+		t,
+		col.SaveOne(ctx, "x", Data{ID: "x", A: "bbb"}, version.Latest.OrVersion().Ref()),
+	)
 
 	cur = c.FindOne(ctx, bson.M{"id": "x", refsKey: bson.M{"$in": []string{"latest"}}})
 	meta2 := Meta{}
@@ -498,8 +553,15 @@ func TestCollection_SaveOne(t *testing.T) {
 	assert.Equal(t, Data{ID: "x", A: "aaa"}, data3)
 
 	// set test ref to the first item
-	_, _ = c.UpdateOne(ctx, bson.M{"id": "x", versionKey: meta1.Version}, bson.M{"$set": bson.M{refsKey: []version.Ref{"test"}}})
-	assert.NoError(t, col.SaveOne(ctx, "x", Data{ID: "x", A: "ccc"}, version.Ref("test").OrVersion().Ref()))
+	_, _ = c.UpdateOne(
+		ctx,
+		bson.M{"id": "x", versionKey: meta1.Version},
+		bson.M{"$set": bson.M{refsKey: []version.Ref{"test"}}},
+	)
+	assert.NoError(
+		t,
+		col.SaveOne(ctx, "x", Data{ID: "x", A: "ccc"}, version.Ref("test").OrVersion().Ref()),
+	)
 
 	cur = c.FindOne(ctx, bson.M{"id": "x", refsKey: bson.M{"$in": []string{"test"}}})
 	meta4 := Meta{}
@@ -585,7 +647,11 @@ func TestCollection_SaveAll(t *testing.T) {
 
 	// should fail when there is an archived doc
 	assert.NoError(t, col.ArchiveOne(ctx, bson.M{"id": "x"}, true))
-	assert.ErrorIs(t, col.SaveMany(ctx, []string{"x"}, []any{Data{ID: "x", A: "ccc"}}), version.ErrArchived)
+	assert.ErrorIs(
+		t,
+		col.SaveMany(ctx, []string{"x"}, []any{Data{ID: "x", A: "ccc"}}),
+		version.ErrArchived,
+	)
 }
 
 func TestCollection_DeleteRef(t *testing.T) {
@@ -779,7 +845,12 @@ func TestCollection_Meta(t *testing.T) {
 	v1, v2, v3 := version.New(), version.New(), version.New()
 	_, _ = c.InsertMany(ctx, []any{
 		bson.M{"id": "x", versionKey: v1},
-		bson.M{"id": "x", versionKey: v2, parentsKey: []version.Version{v1}, refsKey: []string{"latest"}},
+		bson.M{
+			"id":       "x",
+			versionKey: v2,
+			parentsKey: []version.Version{v1},
+			refsKey:    []string{"latest"},
+		},
 	})
 
 	got, err := col.meta(ctx, "x", v1.OrRef().Ref())

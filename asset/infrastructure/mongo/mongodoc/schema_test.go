@@ -70,7 +70,17 @@ func TestSchemaDocument_Model(t *testing.T) {
 			},
 		},
 	}
-	sf := schema.NewField(schema.NewText(max).TypeProperty()).ID(fid).Name("test").Description("").Order(0).Key(id.NewKey("test")).Unique(true).Multiple(true).Required(true).DefaultValue(nil).MustBuild()
+	sf := schema.NewField(schema.NewText(max).TypeProperty()).
+		ID(fid).
+		Name("test").
+		Description("").
+		Order(0).
+		Key(id.NewKey("test")).
+		Unique(true).
+		Multiple(true).
+		Required(true).
+		DefaultValue(nil).
+		MustBuild()
 
 	tests := []struct {
 		name    string
@@ -87,7 +97,13 @@ func TestSchemaDocument_Model(t *testing.T) {
 				Fields:     []FieldDocument{fd},
 				TitleField: fid.StringRef(),
 			},
-			want:    schema.New().ID(sId).Workspace(wId).Project(PId).Fields(schema.FieldList{sf}).TitleField(fid.Ref()).MustBuild(),
+			want: schema.New().
+				ID(sId).
+				Workspace(wId).
+				Project(PId).
+				Fields(schema.FieldList{sf}).
+				TitleField(fid.Ref()).
+				MustBuild(),
 			wantErr: false,
 		},
 	}

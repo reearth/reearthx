@@ -123,7 +123,10 @@ func (t *Geometry_Coordinates) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-func FeatureCollectionFromItems(ver item.VersionedList, s *schema.Schema) (*FeatureCollection, error) {
+func FeatureCollectionFromItems(
+	ver item.VersionedList,
+	s *schema.Schema,
+) (*FeatureCollection, error) {
 	if !s.HasGeometryFields() {
 		return nil, noGeometryFieldError
 	}
@@ -229,7 +232,12 @@ func toGeoJsonSingleValue(vv *value.Value) (any, bool) {
 	}
 
 	switch vv.Type() {
-	case value.TypeText, value.TypeTextArea, value.TypeRichText, value.TypeMarkdown, value.TypeSelect, value.TypeTag:
+	case value.TypeText,
+		value.TypeTextArea,
+		value.TypeRichText,
+		value.TypeMarkdown,
+		value.TypeSelect,
+		value.TypeTag:
 		v, ok := vv.ValueString()
 		if !ok {
 			return "", false

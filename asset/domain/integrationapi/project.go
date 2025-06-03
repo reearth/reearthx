@@ -16,13 +16,16 @@ func NewProject(p *project.Project) Project {
 
 	var requestRoles *[]ProjectRequestRole = nil
 	if len(p.RequestRoles()) > 0 {
-		r := lo.FilterMap(p.RequestRoles(), func(r workspace.Role, _ int) (ProjectRequestRole, bool) {
-			role := ToRequestRole(r)
-			if role != nil {
-				return *role, true
-			}
-			return "", false
-		})
+		r := lo.FilterMap(
+			p.RequestRoles(),
+			func(r workspace.Role, _ int) (ProjectRequestRole, bool) {
+				role := ToRequestRole(r)
+				if role != nil {
+					return *role, true
+				}
+				return "", false
+			},
+		)
 		requestRoles = &r
 	}
 

@@ -88,7 +88,8 @@ func TestAssetFileRepo_FindByID(t *testing.T) {
 			}
 			assert.Equal(t, tc.want, got)
 
-			c, _ := db.Collection("asset").CountDocuments(ctx, bson.M{"id": aid.String(), "hoge": "bar"})
+			c, _ := db.Collection("asset").
+				CountDocuments(ctx, bson.M{"id": aid.String(), "hoge": "bar"})
 			assert.Equal(t, int64(1), c)
 		})
 	}

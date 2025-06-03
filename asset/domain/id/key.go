@@ -38,7 +38,11 @@ func RandomKey() Key {
 }
 
 func (k Key) IsValid() bool {
-	return k.key != "" && !slices.Contains(ngKeys, k.key) // && !strings.HasPrefix(k.key, "_") && !strings.HasPrefix(k.key, "-")
+	return k.key != "" &&
+		!slices.Contains(
+			ngKeys,
+			k.key,
+		) // && !strings.HasPrefix(k.key, "_") && !strings.HasPrefix(k.key, "-")
 }
 
 func (k Key) IsURLCompatible() bool {

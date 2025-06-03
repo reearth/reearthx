@@ -81,10 +81,22 @@ func TestFeatureCollectionFromItems(t *testing.T) {
 	mid := id.NewModelID()
 	tid := id.NewThreadID()
 	pid := id.NewProjectID()
-	gst := schema.GeometryObjectSupportedTypeList{schema.GeometryObjectSupportedTypePoint, schema.GeometryObjectSupportedTypeLineString}
-	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).NewID().Name("geo1").Key(id.RandomKey()).MustBuild()
+	gst := schema.GeometryObjectSupportedTypeList{
+		schema.GeometryObjectSupportedTypePoint,
+		schema.GeometryObjectSupportedTypeLineString,
+	}
+	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).
+		NewID().
+		Name("geo1").
+		Key(id.RandomKey()).
+		MustBuild()
 
-	s1 := schema.New().ID(sid).Fields([]*schema.Field{sf1}).Workspace(accountdomain.NewWorkspaceID()).Project(pid).MustBuild()
+	s1 := schema.New().
+		ID(sid).
+		Fields([]*schema.Field{sf1}).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(pid).
+		MustBuild()
 	str := "{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}"
 	fi1 := item.NewField(sf1.ID(), value.TypeGeometryObject.Value(str).AsMultiple(), nil)
 
@@ -118,7 +130,9 @@ func TestFeatureCollectionFromItems(t *testing.T) {
 						Id: &iid,
 						Geometry: &Geometry{
 							Coordinates: &Geometry_Coordinates{
-								union: json.RawMessage([]byte("[139.28179282584915,36.58570985749664]")),
+								union: json.RawMessage(
+									[]byte("[139.28179282584915,36.58570985749664]"),
+								),
 							},
 							Type: lo.ToPtr(GeometryTypePoint),
 						},
@@ -148,7 +162,14 @@ func TestFeatureCollectionFromItems(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			result, err := FeatureCollectionFromItems(tt.inputVer, tt.inputSchema)
-			assert.Equal(t, tt.expected, result, "FeatureCollectionFromItems() expected %v but got %v", tt.expected, result)
+			assert.Equal(
+				t,
+				tt.expected,
+				result,
+				"FeatureCollectionFromItems() expected %v but got %v",
+				tt.expected,
+				result,
+			)
 			if tt.expectError {
 				assert.Error(t, err, "Expected an error but got none")
 			} else {

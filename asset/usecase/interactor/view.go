@@ -29,11 +29,19 @@ func (i View) FindByID(ctx context.Context, id view.ID, _ *usecase.Operator) (*v
 	return i.repos.View.FindByID(ctx, id)
 }
 
-func (i View) FindByIDs(ctx context.Context, ids view.IDList, _ *usecase.Operator) (view.List, error) {
+func (i View) FindByIDs(
+	ctx context.Context,
+	ids view.IDList,
+	_ *usecase.Operator,
+) (view.List, error) {
 	return i.repos.View.FindByIDs(ctx, ids)
 }
 
-func (i View) FindByModel(ctx context.Context, mID view.ModelID, _ *usecase.Operator) (view.List, error) {
+func (i View) FindByModel(
+	ctx context.Context,
+	mID view.ModelID,
+	_ *usecase.Operator,
+) (view.List, error) {
 	v, err := i.repos.View.FindByModel(ctx, mID)
 	if err != nil {
 		return nil, err
@@ -41,7 +49,11 @@ func (i View) FindByModel(ctx context.Context, mID view.ModelID, _ *usecase.Oper
 	return v.Ordered(), nil
 }
 
-func (i View) Create(ctx context.Context, param interfaces.CreateViewParam, op *usecase.Operator) (*view.View, error) {
+func (i View) Create(
+	ctx context.Context,
+	param interfaces.CreateViewParam,
+	op *usecase.Operator,
+) (*view.View, error) {
 	if op.AcOperator.User == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
@@ -93,7 +105,12 @@ func (i View) Create(ctx context.Context, param interfaces.CreateViewParam, op *
 		})
 }
 
-func (i View) Update(ctx context.Context, id view.ID, param interfaces.UpdateViewParam, op *usecase.Operator) (*view.View, error) {
+func (i View) Update(
+	ctx context.Context,
+	id view.ID,
+	param interfaces.UpdateViewParam,
+	op *usecase.Operator,
+) (*view.View, error) {
 	return Run1(ctx, op, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *view.View, err error) {
 			v, err := i.repos.View.FindByID(ctx, id)
@@ -120,7 +137,11 @@ func (i View) Update(ctx context.Context, id view.ID, param interfaces.UpdateVie
 		})
 }
 
-func (i View) UpdateOrder(ctx context.Context, ids view.IDList, operator *usecase.Operator) (view.List, error) {
+func (i View) UpdateOrder(
+	ctx context.Context,
+	ids view.IDList,
+	operator *usecase.Operator,
+) (view.List, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ view.List, err error) {
 			if len(ids) == 0 {

@@ -72,11 +72,19 @@ func Test_ToProjectPublicationScope(t *testing.T) {
 	})
 
 	t.Run("private", func(t *testing.T) {
-		assert.Equal(t, lo.ToPtr(PRIVATE), ToProjectPublicationScope(project.PublicationScopePrivate))
+		assert.Equal(
+			t,
+			lo.ToPtr(PRIVATE),
+			ToProjectPublicationScope(project.PublicationScopePrivate),
+		)
 	})
 
 	t.Run("limited", func(t *testing.T) {
-		assert.Equal(t, lo.ToPtr(LIMITED), ToProjectPublicationScope(project.PublicationScopeLimited))
+		assert.Equal(
+			t,
+			lo.ToPtr(LIMITED),
+			ToProjectPublicationScope(project.PublicationScopeLimited),
+		)
 	})
 
 	t.Run("unknown scope", func(t *testing.T) {

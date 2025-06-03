@@ -160,16 +160,22 @@ func TestMatchTypeProperty(t *testing.T) {
 		{
 			name: "GeometryObject",
 			args: args{
-				tp: &TypeProperty{t: value.TypeGeometryObject, geometryObject: &FieldGeometryObject{}},
-				m:  m,
+				tp: &TypeProperty{
+					t:              value.TypeGeometryObject,
+					geometryObject: &FieldGeometryObject{},
+				},
+				m: m,
 			},
 			want: "GeometryObject",
 		},
 		{
 			name: "GeometryEditor",
 			args: args{
-				tp: &TypeProperty{t: value.TypeGeometryEditor, geometryEditor: &FieldGeometryEditor{}},
-				m:  m,
+				tp: &TypeProperty{
+					t:              value.TypeGeometryEditor,
+					geometryEditor: &FieldGeometryEditor{},
+				},
+				m: m,
 			},
 			want: "GeometryEditor",
 		},
@@ -340,16 +346,22 @@ func TestMatchTypeProperty1(t *testing.T) {
 		{
 			name: "GeometryObject",
 			args: args{
-				tp: &TypeProperty{t: value.TypeGeometryObject, geometryObject: &FieldGeometryObject{}},
-				m:  m,
+				tp: &TypeProperty{
+					t:              value.TypeGeometryObject,
+					geometryObject: &FieldGeometryObject{},
+				},
+				m: m,
 			},
 			want: "GeometryObject",
 		},
 		{
 			name: "GeometryEditor",
 			args: args{
-				tp: &TypeProperty{t: value.TypeGeometryEditor, geometryEditor: &FieldGeometryEditor{}},
-				m:  m,
+				tp: &TypeProperty{
+					t:              value.TypeGeometryEditor,
+					geometryEditor: &FieldGeometryEditor{},
+				},
+				m: m,
 			},
 			want: "GeometryEditor",
 		},
@@ -486,7 +498,10 @@ func TestTypeProperty_Validate(t *testing.T) {
 		{
 			name: "Reference",
 			args: args{
-				tp:    &TypeProperty{t: value.TypeReference, reference: NewReference(id.NewModelID(), id.NewSchemaID(), nil, nil)},
+				tp: &TypeProperty{
+					t:         value.TypeReference,
+					reference: NewReference(id.NewModelID(), id.NewSchemaID(), nil, nil),
+				},
 				value: value.TypeReference.Value(id.NewItemID()),
 			},
 			want: nil,
@@ -502,7 +517,10 @@ func TestTypeProperty_Validate(t *testing.T) {
 		{
 			name: "GeometryObject",
 			args: args{
-				tp: &TypeProperty{t: value.TypeGeometryObject, geometryObject: NewGeometryObject(GeometryObjectSupportedTypeList{"POINT"})},
+				tp: &TypeProperty{
+					t:              value.TypeGeometryObject,
+					geometryObject: NewGeometryObject(GeometryObjectSupportedTypeList{"POINT"}),
+				},
 				value: value.TypeGeometryObject.Value(`{
 				"type": "Point",
 				"coordinates": [102.0, 0.5]
@@ -513,7 +531,10 @@ func TestTypeProperty_Validate(t *testing.T) {
 		{
 			name: "GeometryEditor",
 			args: args{
-				tp: &TypeProperty{t: value.TypeGeometryEditor, geometryEditor: NewGeometryEditor(GeometryEditorSupportedTypeList{"POINT"})},
+				tp: &TypeProperty{
+					t:              value.TypeGeometryEditor,
+					geometryEditor: NewGeometryEditor(GeometryEditorSupportedTypeList{"POINT"}),
+				},
 				value: value.TypeGeometryEditor.Value(`{
 				"type": "Point",
 				"coordinates": [102.0, 0.5]

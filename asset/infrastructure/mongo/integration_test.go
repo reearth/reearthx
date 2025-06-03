@@ -23,8 +23,24 @@ func testSuite() (now time.Time, uri *url.URL, uId accountdomain.UserID, iId1, i
 	uId = accountdomain.NewUserID()
 	iId1 = id.NewIntegrationID()
 	iId2 = id.NewIntegrationID()
-	i1 = integration.New().ID(iId1).Name("i1").Webhook([]*integration.Webhook{}).Developer(uId).Type(integration.TypePrivate).LogoUrl(uri).UpdatedAt(now).MustBuild()
-	i2 = integration.New().ID(iId2).Name("i2").Webhook([]*integration.Webhook{}).Developer(uId).Type(integration.TypePrivate).LogoUrl(uri).UpdatedAt(now).MustBuild()
+	i1 = integration.New().
+		ID(iId1).
+		Name("i1").
+		Webhook([]*integration.Webhook{}).
+		Developer(uId).
+		Type(integration.TypePrivate).
+		LogoUrl(uri).
+		UpdatedAt(now).
+		MustBuild()
+	i2 = integration.New().
+		ID(iId2).
+		Name("i2").
+		Webhook([]*integration.Webhook{}).
+		Developer(uId).
+		Type(integration.TypePrivate).
+		LogoUrl(uri).
+		UpdatedAt(now).
+		MustBuild()
 	return
 }
 

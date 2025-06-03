@@ -32,11 +32,22 @@ type UpdateGroupParam struct {
 type Group interface {
 	FindByID(context.Context, id.GroupID, *usecase.Operator) (*group.Group, error)
 	FindByIDs(context.Context, id.GroupIDList, *usecase.Operator) (group.List, error)
-	Filter(context.Context, id.ProjectID, *group.Sort, *usecasex.Pagination, *usecase.Operator) (group.List, *usecasex.PageInfo, error)
+	Filter(
+		context.Context,
+		id.ProjectID,
+		*group.Sort,
+		*usecasex.Pagination,
+		*usecase.Operator,
+	) (group.List, *usecasex.PageInfo, error)
 	FindByProject(context.Context, id.ProjectID, *usecase.Operator) (group.List, error)
 	FindByModel(context.Context, id.ModelID, *usecase.Operator) (group.List, error)
 	FindByKey(context.Context, id.ProjectID, string, *usecase.Operator) (*group.Group, error)
-	FindByIDOrKey(context.Context, id.ProjectID, group.IDOrKey, *usecase.Operator) (*group.Group, error)
+	FindByIDOrKey(
+		context.Context,
+		id.ProjectID,
+		group.IDOrKey,
+		*usecase.Operator,
+	) (*group.Group, error)
 	Create(context.Context, CreateGroupParam, *usecase.Operator) (*group.Group, error)
 	Update(context.Context, UpdateGroupParam, *usecase.Operator) (*group.Group, error)
 	UpdateOrder(context.Context, id.GroupIDList, *usecase.Operator) (group.List, error)

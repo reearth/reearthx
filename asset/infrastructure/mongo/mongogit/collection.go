@@ -29,11 +29,21 @@ func (c *Collection) Client() *mongox.Collection {
 	return c.client
 }
 
-func (c *Collection) FindOne(ctx context.Context, filter any, q version.Query, consumer mongox.Consumer) error {
+func (c *Collection) FindOne(
+	ctx context.Context,
+	filter any,
+	q version.Query,
+	consumer mongox.Consumer,
+) error {
 	return c.client.FindOne(ctx, apply(q, filter), consumer)
 }
 
-func (c *Collection) Find(ctx context.Context, filter any, q version.Query, consumer mongox.Consumer) error {
+func (c *Collection) Find(
+	ctx context.Context,
+	filter any,
+	q version.Query,
+	consumer mongox.Consumer,
+) error {
 	opt := options.Find().SetCollation(&options.Collation{
 		Locale:   "simple",
 		Strength: 1,
@@ -41,7 +51,12 @@ func (c *Collection) Find(ctx context.Context, filter any, q version.Query, cons
 	return c.client.Find(ctx, apply(q, filter), consumer, opt)
 }
 
-func (c *Collection) Aggregate(ctx context.Context, pipeline []any, q version.Query, consumer mongox.Consumer) error {
+func (c *Collection) Aggregate(
+	ctx context.Context,
+	pipeline []any,
+	q version.Query,
+	consumer mongox.Consumer,
+) error {
 	opt := options.Aggregate().SetCollation(&options.Collation{
 		Locale:   "simple",
 		Strength: 1,
@@ -49,7 +64,14 @@ func (c *Collection) Aggregate(ctx context.Context, pipeline []any, q version.Qu
 	return c.client.Aggregate(ctx, applyToPipeline(q, pipeline), consumer, opt)
 }
 
-func (c *Collection) Paginate(ctx context.Context, filter any, q version.Query, s *usecasex.Sort, p *usecasex.Pagination, consumer mongox.Consumer) (*usecasex.PageInfo, error) {
+func (c *Collection) Paginate(
+	ctx context.Context,
+	filter any,
+	q version.Query,
+	s *usecasex.Sort,
+	p *usecasex.Pagination,
+	consumer mongox.Consumer,
+) (*usecasex.PageInfo, error) {
 	return c.client.Paginate(ctx, apply(q, filter), s, p, consumer)
 }
 
@@ -57,7 +79,14 @@ func (c *Collection) Count(ctx context.Context, filter any, q version.Query) (in
 	return c.client.Count(ctx, apply(q, filter))
 }
 
-func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, q version.Query, s *usecasex.Sort, p *usecasex.Pagination, consumer mongox.Consumer) (*usecasex.PageInfo, error) {
+func (c *Collection) PaginateAggregation(
+	ctx context.Context,
+	pipeline []any,
+	q version.Query,
+	s *usecasex.Sort,
+	p *usecasex.Pagination,
+	consumer mongox.Consumer,
+) (*usecasex.PageInfo, error) {
 	opt := options.Aggregate().SetCollation(&options.Collation{
 		Locale:   "simple",
 		Strength: 1,
@@ -65,11 +94,20 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, q 
 	return c.client.PaginateAggregation(ctx, applyToPipeline(q, pipeline), s, p, consumer, opt)
 }
 
-func (c *Collection) CountAggregation(ctx context.Context, pipeline []any, q version.Query) (int64, error) {
+func (c *Collection) CountAggregation(
+	ctx context.Context,
+	pipeline []any,
+	q version.Query,
+) (int64, error) {
 	return c.client.CountAggregation(ctx, applyToPipeline(q, pipeline))
 }
 
-func (c *Collection) SaveOne(ctx context.Context, id string, d any, parent *version.VersionOrRef) error {
+func (c *Collection) SaveOne(
+	ctx context.Context,
+	id string,
+	d any,
+	parent *version.VersionOrRef,
+) error {
 	q := bson.M{
 		"id":    id,
 		metaKey: true,
@@ -173,7 +211,12 @@ func (c *Collection) SaveMany(ctx context.Context, ids []string, docs []any) err
 	return nil
 }
 
-func (c *Collection) SaveAll(ctx context.Context, ids []string, docs []any, parents []*version.VersionOrRef) error {
+func (c *Collection) SaveAll(
+	ctx context.Context,
+	ids []string,
+	docs []any,
+	parents []*version.VersionOrRef,
+) error {
 	// TODO: optimize to use bulk write
 	if len(ids) != len(docs) || (parents != nil && len(ids) != len(parents)) {
 		return rerror.ErrInvalidParams
@@ -206,7 +249,12 @@ func (c *Collection) DeleteRef(ctx context.Context, ids []string, ref version.Re
 	return nil
 }
 
-func (c *Collection) UpdateRef(ctx context.Context, id string, ref version.Ref, dest *version.VersionOrRef) error {
+func (c *Collection) UpdateRef(
+	ctx context.Context,
+	id string,
+	ref version.Ref,
+	dest *version.VersionOrRef,
+) error {
 	if err := c.DeleteRef(ctx, []string{id}, ref); err != nil {
 		return err
 	}
@@ -265,7 +313,11 @@ func (c *Collection) ArchiveOne(ctx context.Context, filter bson.M, archived boo
 	return nil
 }
 
-func (c *Collection) Timestamp(ctx context.Context, filter any, q version.Query) (time.Time, error) {
+func (c *Collection) Timestamp(
+	ctx context.Context,
+	filter any,
+	q version.Query,
+) (time.Time, error) {
 	consumer := mongox.SliceConsumer[Meta]{}
 	f := apply(q, filter)
 	if err := c.client.Find(ctx, f, &consumer, options.Find().SetLimit(1).SetSort(bson.D{{Key: "_id", Value: -1}})); err != nil {
@@ -342,5 +394,8 @@ func (c *Collection) metas(ctx context.Context, ids []string) (map[string]*Meta,
 	if err := c.client.Find(ctx, q, &consumer); err != nil && !errors.Is(err, rerror.ErrNotFound) {
 		return nil, err
 	}
-	return lo.SliceToMap(consumer.Result, func(m Document[*idDoc]) (string, *Meta) { return m.Data.ID, &m.Meta }), nil
+	return lo.SliceToMap(
+		consumer.Result,
+		func(m Document[*idDoc]) (string, *Meta) { return m.Data.ID, &m.Meta },
+	), nil
 }

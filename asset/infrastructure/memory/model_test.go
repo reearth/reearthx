@@ -57,7 +57,13 @@ func TestModelRepo_FindByID(t *testing.T) {
 		{
 			name: "Not found",
 			seeds: model.List{
-				model.New().NewID().Project(pid1).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(pid1).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id.NewModelID(),
 			want:    nil,
@@ -76,8 +82,20 @@ func TestModelRepo_FindByID(t *testing.T) {
 			name: "Found 2",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id1,
 			want:    m1,
@@ -87,11 +105,26 @@ func TestModelRepo_FindByID(t *testing.T) {
 			name: "project filter operation success",
 			seeds: model.List{
 				m1.Clone(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
-			arg:     id1,
-			filter:  &repo.ProjectFilter{Readable: []id.ProjectID{pid1}, Writable: []id.ProjectID{pid1}},
+			arg: id1,
+			filter: &repo.ProjectFilter{
+				Readable: []id.ProjectID{pid1},
+				Writable: []id.ProjectID{pid1},
+			},
 			want:    m1,
 			wantErr: nil,
 		},
@@ -99,8 +132,20 @@ func TestModelRepo_FindByID(t *testing.T) {
 			name: "project filter operation denied",
 			seeds: model.List{
 				m1.Clone(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id1,
 			filter:  &repo.ProjectFilter{Readable: []id.ProjectID{}, Writable: []id.ProjectID{}},
@@ -163,7 +208,13 @@ func TestModelRepo_FindByIDs(t *testing.T) {
 		{
 			name: "0 count with model for another workspaces",
 			seeds: model.List{
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id.ModelIDList{},
 			want:    nil,
@@ -182,8 +233,20 @@ func TestModelRepo_FindByIDs(t *testing.T) {
 			name: "1 count with multi models",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id.ModelIDList{id1},
 			want:    model.List{m1},
@@ -194,8 +257,20 @@ func TestModelRepo_FindByIDs(t *testing.T) {
 			seeds: model.List{
 				m1,
 				m2,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id.ModelIDList{id1, id2},
 			want:    model.List{m1, m2},
@@ -205,11 +280,26 @@ func TestModelRepo_FindByIDs(t *testing.T) {
 			name: "project filter operation success",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
-			arg:     id.ModelIDList{id1},
-			filter:  &repo.ProjectFilter{Readable: []id.ProjectID{pid1}, Writable: []id.ProjectID{pid1}},
+			arg: id.ModelIDList{id1},
+			filter: &repo.ProjectFilter{
+				Readable: []id.ProjectID{pid1},
+				Writable: []id.ProjectID{pid1},
+			},
 			want:    model.List{m1},
 			wantErr: nil,
 		},
@@ -217,8 +307,20 @@ func TestModelRepo_FindByIDs(t *testing.T) {
 			name: "project filter operation denied",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			arg:     id.ModelIDList{id1},
 			filter:  &repo.ProjectFilter{Readable: []id.ProjectID{}, Writable: []id.ProjectID{}},
@@ -288,7 +390,13 @@ func TestModelRepo_FindByProject(t *testing.T) {
 		{
 			name: "0 count with model for another projects",
 			seeds: model.List{
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			args:    args{id.NewProjectID(), nil},
 			want:    nil,
@@ -307,8 +415,20 @@ func TestModelRepo_FindByProject(t *testing.T) {
 			name: "1 count with multi models",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			args:    args{pid1, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
 			want:    model.List{m1},
@@ -319,8 +439,20 @@ func TestModelRepo_FindByProject(t *testing.T) {
 			seeds: model.List{
 				m1,
 				m2,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			args:    args{pid1, usecasex.CursorPagination{First: lo.ToPtr(int64(2))}.Wrap()},
 			want:    model.List{m1, m2},
@@ -330,11 +462,26 @@ func TestModelRepo_FindByProject(t *testing.T) {
 			name: "project filter operation success",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
-			args:    args{pid1, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
-			filter:  &repo.ProjectFilter{Readable: []id.ProjectID{pid1}, Writable: []id.ProjectID{pid1}},
+			args: args{pid1, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
+			filter: &repo.ProjectFilter{
+				Readable: []id.ProjectID{pid1},
+				Writable: []id.ProjectID{pid1},
+			},
 			want:    model.List{m1},
 			wantErr: nil,
 		},
@@ -342,8 +489,20 @@ func TestModelRepo_FindByProject(t *testing.T) {
 			name: "project filter operation denied",
 			seeds: model.List{
 				m1,
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
-				model.New().NewID().Project(id.NewProjectID()).Schema(sid1).Key(k).UpdatedAt(mocknow).MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
+				model.New().
+					NewID().
+					Project(id.NewProjectID()).
+					Schema(sid1).
+					Key(k).
+					UpdatedAt(mocknow).
+					MustBuild(),
 			},
 			args:    args{pid1, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
 			filter:  &repo.ProjectFilter{Readable: []id.ProjectID{}, Writable: []id.ProjectID{}},

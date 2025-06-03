@@ -16,7 +16,10 @@ func NewVersionedSyncMap[K comparable, V any]() *VersionedSyncMap[K, V] {
 	}
 }
 
-func (m *VersionedSyncMap[K, V]) Load(key K, vr version.VersionOrRef) (res *version.Value[V], _ bool) {
+func (m *VersionedSyncMap[K, V]) Load(
+	key K,
+	vr version.VersionOrRef,
+) (res *version.Value[V], _ bool) {
 	v, ok := m.m.Load(key)
 	if !ok {
 		return
@@ -28,7 +31,10 @@ func (m *VersionedSyncMap[K, V]) Load(key K, vr version.VersionOrRef) (res *vers
 	return vv, true
 }
 
-func (m *VersionedSyncMap[K, V]) LoadAll(keys []K, vr *version.VersionOrRef) (res []*version.Value[V]) {
+func (m *VersionedSyncMap[K, V]) LoadAll(
+	keys []K,
+	vr *version.VersionOrRef,
+) (res []*version.Value[V]) {
 	m.Range(func(k K, v *version.Values[V]) bool {
 		for _, kk := range keys {
 			if k == kk {
@@ -136,7 +142,9 @@ func (m *VersionedSyncMap[K, V]) Find(f func(k K, v *version.Values[V]) bool) *v
 	return m.m.Find(f)
 }
 
-func (m *VersionedSyncMap[K, V]) FindAll(f func(k K, v *version.Values[V]) bool) []*version.Values[V] {
+func (m *VersionedSyncMap[K, V]) FindAll(
+	f func(k K, v *version.Values[V]) bool,
+) []*version.Values[V] {
 	return m.m.FindAll(f)
 }
 

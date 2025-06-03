@@ -165,7 +165,11 @@ func TestField_SetDefaultValue(t *testing.T) {
 	assert.Nil(t, f.defaultValue)
 	assert.Nil(t, f.DefaultValue())
 
-	assert.ErrorContains(t, f.SetDefaultValue(value.TypeText.Value("aaa").AsMultiple()), "it sholud be shorter than 1 characters")
+	assert.ErrorContains(
+		t,
+		f.SetDefaultValue(value.TypeText.Value("aaa").AsMultiple()),
+		"it sholud be shorter than 1 characters",
+	)
 	assert.Nil(t, f.defaultValue)
 	assert.Nil(t, f.DefaultValue())
 }
@@ -178,5 +182,9 @@ func TestField_Validate(t *testing.T) {
 	f.required = true
 	assert.Same(t, ErrValueRequired, f.Validate(nil))
 
-	assert.ErrorContains(t, f.Validate(value.TypeText.Value("aaa").AsMultiple()), "it sholud be shorter than 1 characters")
+	assert.ErrorContains(
+		t,
+		f.Validate(value.TypeText.Value("aaa").AsMultiple()),
+		"it sholud be shorter than 1 characters",
+	)
 }

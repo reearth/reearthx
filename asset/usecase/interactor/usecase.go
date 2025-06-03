@@ -50,7 +50,13 @@ func (u *uc) Transaction() *uc {
 	return u
 }
 
-func Run0(ctx context.Context, op *usecase.Operator, r *repo.Container, e *uc, f func(context.Context) error) (err error) {
+func Run0(
+	ctx context.Context,
+	op *usecase.Operator,
+	r *repo.Container,
+	e *uc,
+	f func(context.Context) error,
+) (err error) {
 	_, _, _, err = Run3(
 		ctx, op, r, e,
 		func(ctx context.Context) (_, _, _ any, err error) {
@@ -60,7 +66,13 @@ func Run0(ctx context.Context, op *usecase.Operator, r *repo.Container, e *uc, f
 	return
 }
 
-func Run1[A any](ctx context.Context, op *usecase.Operator, r *repo.Container, e *uc, f func(context.Context) (A, error)) (a A, err error) {
+func Run1[A any](
+	ctx context.Context,
+	op *usecase.Operator,
+	r *repo.Container,
+	e *uc,
+	f func(context.Context) (A, error),
+) (a A, err error) {
 	a, _, _, err = Run3(
 		ctx, op, r, e,
 		func(ctx context.Context) (a A, _, _ any, err error) {
@@ -70,7 +82,13 @@ func Run1[A any](ctx context.Context, op *usecase.Operator, r *repo.Container, e
 	return
 }
 
-func Run2[A, B any](ctx context.Context, op *usecase.Operator, r *repo.Container, e *uc, f func(context.Context) (A, B, error)) (a A, b B, err error) {
+func Run2[A, B any](
+	ctx context.Context,
+	op *usecase.Operator,
+	r *repo.Container,
+	e *uc,
+	f func(context.Context) (A, B, error),
+) (a A, b B, err error) {
 	a, b, _, err = Run3(
 		ctx, op, r, e,
 		func(ctx context.Context) (a A, b B, _ any, err error) {
@@ -80,7 +98,13 @@ func Run2[A, B any](ctx context.Context, op *usecase.Operator, r *repo.Container
 	return
 }
 
-func Run3[A, B, C any](ctx context.Context, op *usecase.Operator, r *repo.Container, e *uc, f func(context.Context) (A, B, C, error)) (a A, b B, c C, err error) {
+func Run3[A, B, C any](
+	ctx context.Context,
+	op *usecase.Operator,
+	r *repo.Container,
+	e *uc,
+	f func(context.Context) (A, B, C, error),
+) (a A, b B, c C, err error) {
 	if err = e.checkPermission(op); err != nil {
 		return
 	}

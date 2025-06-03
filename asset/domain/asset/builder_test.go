@@ -323,6 +323,12 @@ func TestBuilder_NewID(t *testing.T) {
 	pid := NewProjectID()
 	uid := accountdomain.NewUserID()
 	var size uint64 = 15
-	a := New().NewID().Project(pid).CreatedByUser(uid).Size(size).Thread(NewThreadID().Ref()).NewUUID().MustBuild()
+	a := New().NewID().
+		Project(pid).
+		CreatedByUser(uid).
+		Size(size).
+		Thread(NewThreadID().Ref()).
+		NewUUID().
+		MustBuild()
 	assert.False(t, a.id.IsNil())
 }

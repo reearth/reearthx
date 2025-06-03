@@ -89,8 +89,11 @@ func TestProjectRepo_CountByWorkspace(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     tid1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}, Writable: []accountdomain.WorkspaceID{}},
+			arg: tid1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    0,
 			wantErr: nil,
 		},
@@ -256,8 +259,11 @@ func TestProjectRepo_FindByID(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     id1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}, Writable: []accountdomain.WorkspaceID{}},
+			arg: id1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    nil,
 			wantErr: nil,
 		},
@@ -268,8 +274,11 @@ func TestProjectRepo_FindByID(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     id1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{tid1}, Writable: []accountdomain.WorkspaceID{}},
+			arg: id1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{tid1},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    p1,
 			wantErr: nil,
 		},
@@ -388,8 +397,11 @@ func TestProjectRepo_FindByIDs(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     []id.ProjectID{id1, id2},
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}, Writable: []accountdomain.WorkspaceID{}},
+			arg: []id.ProjectID{id1, id2},
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    nil,
 			wantErr: nil,
 		},
@@ -401,8 +413,11 @@ func TestProjectRepo_FindByIDs(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     []id.ProjectID{id1, id2},
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{tid1}, Writable: []accountdomain.WorkspaceID{}},
+			arg: []id.ProjectID{id1, id2},
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{tid1},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    project.List{p1, p2},
 			wantErr: nil,
 		},
@@ -529,8 +544,11 @@ func TestProjectRepo_IsAliasAvailable(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     "xyz123",
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}, Writable: []accountdomain.WorkspaceID{}},
+			arg: "xyz123",
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    false,
 			wantErr: nil,
 		},
@@ -541,8 +559,11 @@ func TestProjectRepo_IsAliasAvailable(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     "xyz123",
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{tid1}, Writable: []accountdomain.WorkspaceID{}},
+			arg: "xyz123",
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{tid1},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    false,
 			wantErr: nil,
 		},
@@ -626,7 +647,10 @@ func TestProjectRepo_FindByWorkspaces(t *testing.T) {
 			seeds: project.List{
 				p1,
 			},
-			args:    args{accountdomain.WorkspaceIDList{tid1}, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
+			args: args{
+				accountdomain.WorkspaceIDList{tid1},
+				usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap(),
+			},
 			filter:  nil,
 			want:    project.List{p1},
 			wantErr: nil,
@@ -638,7 +662,10 @@ func TestProjectRepo_FindByWorkspaces(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			args:    args{accountdomain.WorkspaceIDList{tid1}, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
+			args: args{
+				accountdomain.WorkspaceIDList{tid1},
+				usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap(),
+			},
 			filter:  nil,
 			want:    project.List{p1},
 			wantErr: nil,
@@ -651,7 +678,10 @@ func TestProjectRepo_FindByWorkspaces(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			args:    args{accountdomain.WorkspaceIDList{tid1}, usecasex.CursorPagination{First: lo.ToPtr(int64(2))}.Wrap()},
+			args: args{
+				accountdomain.WorkspaceIDList{tid1},
+				usecasex.CursorPagination{First: lo.ToPtr(int64(2))}.Wrap(),
+			},
 			filter:  nil,
 			want:    project.List{p1, p2},
 			wantErr: nil,
@@ -664,7 +694,10 @@ func TestProjectRepo_FindByWorkspaces(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			args:    args{accountdomain.WorkspaceIDList{tid1}, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
+			args: args{
+				accountdomain.WorkspaceIDList{tid1},
+				usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap(),
+			},
 			filter:  nil,
 			want:    project.List{p1, p2},
 			wantErr: nil,
@@ -677,7 +710,10 @@ func TestProjectRepo_FindByWorkspaces(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			args:    args{accountdomain.WorkspaceIDList{tid1}, usecasex.CursorPagination{Last: lo.ToPtr(int64(1))}.Wrap()},
+			args: args{
+				accountdomain.WorkspaceIDList{tid1},
+				usecasex.CursorPagination{Last: lo.ToPtr(int64(1))}.Wrap(),
+			},
 			filter:  nil,
 			want:    project.List{p1, p2},
 			wantErr: nil,
@@ -689,8 +725,14 @@ func TestProjectRepo_FindByWorkspaces(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			args:    args{accountdomain.WorkspaceIDList{tid1}, usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap()},
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}, Writable: []accountdomain.WorkspaceID{}},
+			args: args{
+				accountdomain.WorkspaceIDList{tid1},
+				usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap(),
+			},
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    nil,
 			wantErr: nil,
 		},
@@ -787,8 +829,11 @@ func TestProjectRepo_Remove(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     id1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}, Writable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()}},
+			arg: id1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+				Writable: []accountdomain.WorkspaceID{accountdomain.NewWorkspaceID()},
+			},
 			wantErr: rerror.ErrNotFound,
 		},
 		{
@@ -798,8 +843,11 @@ func TestProjectRepo_Remove(t *testing.T) {
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 				project.New().NewID().Workspace(accountdomain.NewWorkspaceID()).MustBuild(),
 			},
-			arg:     id1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{}, Writable: []accountdomain.WorkspaceID{tid1}},
+			arg: id1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{},
+				Writable: []accountdomain.WorkspaceID{tid1},
+			},
 			wantErr: nil,
 		},
 		{
@@ -843,7 +891,11 @@ func TestProjectRepo_Remove(t *testing.T) {
 func TestProjectRepo_Save(t *testing.T) {
 	tid1 := accountdomain.NewWorkspaceID()
 	id1 := id.NewProjectID()
-	p1 := project.New().ID(id1).Workspace(tid1).UpdatedAt(time.Now().Truncate(time.Millisecond).UTC()).MustBuild()
+	p1 := project.New().
+		ID(id1).
+		Workspace(tid1).
+		UpdatedAt(time.Now().Truncate(time.Millisecond).UTC()).
+		MustBuild()
 
 	tests := []struct {
 		name    string
@@ -869,8 +921,11 @@ func TestProjectRepo_Save(t *testing.T) {
 			seeds: project.List{
 				p1,
 			},
-			arg:     p1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{}, Writable: []accountdomain.WorkspaceID{}},
+			arg: p1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{},
+				Writable: []accountdomain.WorkspaceID{},
+			},
 			want:    nil,
 			wantErr: repo.ErrOperationDenied,
 		},
@@ -879,8 +934,11 @@ func TestProjectRepo_Save(t *testing.T) {
 			seeds: project.List{
 				p1,
 			},
-			arg:     p1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{tid1}, Writable: []accountdomain.WorkspaceID{tid1}},
+			arg: p1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{tid1},
+				Writable: []accountdomain.WorkspaceID{tid1},
+			},
 			want:    p1,
 			wantErr: nil,
 		},
@@ -889,8 +947,11 @@ func TestProjectRepo_Save(t *testing.T) {
 			seeds: project.List{
 				p1,
 			},
-			arg:     p1,
-			filter:  &repo.WorkspaceFilter{Readable: []accountdomain.WorkspaceID{}, Writable: []accountdomain.WorkspaceID{tid1}},
+			arg: p1,
+			filter: &repo.WorkspaceFilter{
+				Readable: []accountdomain.WorkspaceID{},
+				Writable: []accountdomain.WorkspaceID{tid1},
+			},
 			want:    p1,
 			wantErr: nil,
 		},

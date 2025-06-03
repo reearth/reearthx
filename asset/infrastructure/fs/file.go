@@ -70,7 +70,12 @@ func NewFileWithACL(fs afero.Fs, publicBase, privateBase string) (gateway.File, 
 	return fr, nil
 }
 
-func (f *fileRepo) ReadAsset(ctx context.Context, fileUUID string, fn string, h map[string]string) (io.ReadCloser, map[string]string, error) {
+func (f *fileRepo) ReadAsset(
+	ctx context.Context,
+	fileUUID string,
+	fn string,
+	h map[string]string,
+) (io.ReadCloser, map[string]string, error) {
 	if fileUUID == "" || fn == "" {
 		return nil, nil, rerror.ErrNotFound
 	}
@@ -85,7 +90,8 @@ func (f *fileRepo) RemoveAsset(ctx context.Context, u *url.URL) error {
 		return nil
 	}
 	p := sanitize.Path(u.Path)
-	if p == "" || f.urlBase == nil || u.Scheme != f.urlBase.Scheme || u.Host != f.urlBase.Host || path.Dir(p) != filepath.Join(f.urlBase.Path, assetDir) {
+	if p == "" || f.urlBase == nil || u.Scheme != f.urlBase.Scheme || u.Host != f.urlBase.Host ||
+		path.Dir(p) != filepath.Join(f.urlBase.Path, assetDir) {
 		return gateway.ErrInvalidFile
 	}
 	return f.delete(filepath.Join(assetDir, filepath.Base(p)))
@@ -198,7 +204,10 @@ func (f *fileRepo) GetBaseURL() string {
 	return f.publicBase.String()
 }
 
-func (f *fileRepo) IssueUploadAssetLink(_ context.Context, _ gateway.IssueUploadAssetParam) (*gateway.UploadAssetLink, error) {
+func (f *fileRepo) IssueUploadAssetLink(
+	_ context.Context,
+	_ gateway.IssueUploadAssetParam,
+) (*gateway.UploadAssetLink, error) {
 	return nil, gateway.ErrUnsupportedOperation
 }
 
@@ -208,7 +217,11 @@ func (f *fileRepo) UploadedAsset(_ context.Context, _ *asset.Upload) (*file.File
 
 // helpers
 
-func (f *fileRepo) Read(_ context.Context, filename string, _ map[string]string) (io.ReadCloser, map[string]string, error) {
+func (f *fileRepo) Read(
+	_ context.Context,
+	filename string,
+	_ map[string]string,
+) (io.ReadCloser, map[string]string, error) {
 	if filename == "" {
 		return nil, nil, rerror.ErrNotFound
 	}

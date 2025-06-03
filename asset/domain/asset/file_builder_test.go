@@ -42,7 +42,13 @@ func TestFileBuilder_Build(t *testing.T) {
 	c := []*File{NewFile().Build()}
 	fl := []*File{NewFile().Build()}
 	// ContentType should be filled automatically
-	f := NewFile().Name("aaa").Path("/aaa.jpg").Size(1000).GuessContentType().Files(fl).Children(c).Build()
+	f := NewFile().Name("aaa").
+		Path("/aaa.jpg").
+		Size(1000).
+		GuessContentType().
+		Files(fl).
+		Children(c).
+		Build()
 	assert.Equal(t, "aaa", f.Name())
 	assert.Equal(t, "/aaa.jpg", f.Path())
 	assert.Equal(t, uint64(1000), f.Size())

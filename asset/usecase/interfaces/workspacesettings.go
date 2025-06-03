@@ -20,7 +20,15 @@ type DeleteWorkspaceSettingsParam struct {
 }
 
 type WorkspaceSettings interface {
-	Fetch(context.Context, accountdomain.WorkspaceIDList, *usecase.Operator) (workspacesettings.List, error)
-	UpdateOrCreate(context.Context, UpdateOrCreateWorkspaceSettingsParam, *usecase.Operator) (*workspacesettings.WorkspaceSettings, error)
+	Fetch(
+		context.Context,
+		accountdomain.WorkspaceIDList,
+		*usecase.Operator,
+	) (workspacesettings.List, error)
+	UpdateOrCreate(
+		context.Context,
+		UpdateOrCreateWorkspaceSettingsParam,
+		*usecase.Operator,
+	) (*workspacesettings.WorkspaceSettings, error)
 	Delete(context.Context, DeleteWorkspaceSettingsParam, *usecase.Operator) error
 }

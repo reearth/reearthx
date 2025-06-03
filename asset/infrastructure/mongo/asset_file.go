@@ -74,7 +74,10 @@ func (r *AssetFile) FindByID(ctx context.Context, id id.AssetID) (*asset.File, e
 	return f, nil
 }
 
-func (r *AssetFile) FindByIDs(ctx context.Context, ids id.AssetIDList) (map[id.AssetID]*asset.File, error) {
+func (r *AssetFile) FindByIDs(
+	ctx context.Context,
+	ids id.AssetIDList,
+) (map[id.AssetID]*asset.File, error) {
 	filesMap := make(map[id.AssetID]*asset.File)
 
 	c := &mongodoc.AssetAndFileConsumer{}
@@ -139,7 +142,12 @@ func (r *AssetFile) Save(ctx context.Context, id id.AssetID, file *asset.File) e
 	return nil
 }
 
-func (r *AssetFile) SaveFlat(ctx context.Context, id id.AssetID, parent *asset.File, files []*asset.File) error {
+func (r *AssetFile) SaveFlat(
+	ctx context.Context,
+	id id.AssetID,
+	parent *asset.File,
+	files []*asset.File,
+) error {
 	doc := mongodoc.NewFile(parent)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
 		"id": id.String(),

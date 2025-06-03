@@ -79,7 +79,12 @@ func toCSVValue(vv *value.Value) string {
 	}
 
 	switch vv.Type() {
-	case value.TypeText, value.TypeTextArea, value.TypeRichText, value.TypeMarkdown, value.TypeSelect, value.TypeTag:
+	case value.TypeText,
+		value.TypeTextArea,
+		value.TypeRichText,
+		value.TypeMarkdown,
+		value.TypeSelect,
+		value.TypeTag:
 		v, ok := vv.ValueString()
 		if !ok {
 			return ""

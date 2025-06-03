@@ -14,7 +14,11 @@ type TerrainResource struct {
 	id    ResourceID
 }
 
-func NewTerrainResource(id ResourceID, rtype TerrainType, props CesiumResourceProps) *TerrainResource {
+func NewTerrainResource(
+	id ResourceID,
+	rtype TerrainType,
+	props CesiumResourceProps,
+) *TerrainResource {
 	return &TerrainResource{
 		id:    id.Clone(),
 		rtype: rtype,

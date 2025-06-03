@@ -31,15 +31,27 @@ func NewGroup(r *repo.Container, g *gateway.Container) interfaces.Group {
 	}
 }
 
-func (i Group) FindByID(ctx context.Context, id id.GroupID, operator *usecase.Operator) (*group.Group, error) {
+func (i Group) FindByID(
+	ctx context.Context,
+	id id.GroupID,
+	operator *usecase.Operator,
+) (*group.Group, error) {
 	return i.repos.Group.FindByID(ctx, id)
 }
 
-func (i Group) FindByIDs(ctx context.Context, ids id.GroupIDList, operator *usecase.Operator) (group.List, error) {
+func (i Group) FindByIDs(
+	ctx context.Context,
+	ids id.GroupIDList,
+	operator *usecase.Operator,
+) (group.List, error) {
 	return i.repos.Group.FindByIDs(ctx, ids)
 }
 
-func (i Group) FindByProject(ctx context.Context, projectID id.ProjectID, operator *usecase.Operator) (group.List, error) {
+func (i Group) FindByProject(
+	ctx context.Context,
+	projectID id.ProjectID,
+	operator *usecase.Operator,
+) (group.List, error) {
 	g, err := i.repos.Group.FindByProject(ctx, projectID)
 	if err != nil {
 		return nil, err
@@ -47,7 +59,13 @@ func (i Group) FindByProject(ctx context.Context, projectID id.ProjectID, operat
 	return g.Ordered(), nil
 }
 
-func (i Group) Filter(ctx context.Context, projectID id.ProjectID, sort *group.Sort, pagination *usecasex.Pagination, operator *usecase.Operator) (group.List, *usecasex.PageInfo, error) {
+func (i Group) Filter(
+	ctx context.Context,
+	projectID id.ProjectID,
+	sort *group.Sort,
+	pagination *usecasex.Pagination,
+	operator *usecase.Operator,
+) (group.List, *usecasex.PageInfo, error) {
 	g, p, err := i.repos.Group.Filter(ctx, projectID, sort, pagination)
 	if err != nil {
 		return nil, nil, err
@@ -55,15 +73,29 @@ func (i Group) Filter(ctx context.Context, projectID id.ProjectID, sort *group.S
 	return g, p, nil
 }
 
-func (i Group) FindByKey(ctx context.Context, pid id.ProjectID, group string, operator *usecase.Operator) (*group.Group, error) {
+func (i Group) FindByKey(
+	ctx context.Context,
+	pid id.ProjectID,
+	group string,
+	operator *usecase.Operator,
+) (*group.Group, error) {
 	return i.repos.Group.FindByKey(ctx, pid, group)
 }
 
-func (i Group) FindByIDOrKey(ctx context.Context, pid id.ProjectID, idOrKey group.IDOrKey, operator *usecase.Operator) (*group.Group, error) {
+func (i Group) FindByIDOrKey(
+	ctx context.Context,
+	pid id.ProjectID,
+	idOrKey group.IDOrKey,
+	operator *usecase.Operator,
+) (*group.Group, error) {
 	return i.repos.Group.FindByIDOrKey(ctx, pid, idOrKey)
 }
 
-func (i Group) Create(ctx context.Context, param interfaces.CreateGroupParam, operator *usecase.Operator) (*group.Group, error) {
+func (i Group) Create(
+	ctx context.Context,
+	param interfaces.CreateGroupParam,
+	operator *usecase.Operator,
+) (*group.Group, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *group.Group, err error) {
 			if !operator.IsMaintainingProject(param.ProjectId) {
@@ -80,7 +112,12 @@ func (i Group) Create(ctx context.Context, param interfaces.CreateGroupParam, op
 			if g != nil {
 				return nil, id.ErrDuplicatedKey
 			}
-			s, err := schema.New().NewID().Workspace(p.Workspace()).Project(p.ID()).TitleField(nil).Build()
+			s, err := schema.New().
+				NewID().
+				Workspace(p.Workspace()).
+				Project(p.ID()).
+				TitleField(nil).
+				Build()
 			if err != nil {
 				return nil, err
 			}
@@ -122,7 +159,11 @@ func (i Group) Create(ctx context.Context, param interfaces.CreateGroupParam, op
 		})
 }
 
-func (i Group) Update(ctx context.Context, param interfaces.UpdateGroupParam, operator *usecase.Operator) (*group.Group, error) {
+func (i Group) Update(
+	ctx context.Context,
+	param interfaces.UpdateGroupParam,
+	operator *usecase.Operator,
+) (*group.Group, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ *group.Group, err error) {
 			g, err := i.repos.Group.FindByID(ctx, param.GroupID)
@@ -200,7 +241,11 @@ func (i Group) Delete(ctx context.Context, groupID id.GroupID, operator *usecase
 		})
 }
 
-func (i Group) FindModelsByGroup(ctx context.Context, groupID id.GroupID, op *usecase.Operator) (model.List, error) {
+func (i Group) FindModelsByGroup(
+	ctx context.Context,
+	groupID id.GroupID,
+	op *usecase.Operator,
+) (model.List, error) {
 	g, err := i.repos.Group.FindByID(ctx, groupID)
 	if err != nil {
 		return nil, err
@@ -208,7 +253,11 @@ func (i Group) FindModelsByGroup(ctx context.Context, groupID id.GroupID, op *us
 	return i.getModelsByGroup(ctx, g)
 }
 
-func (i Group) FindByModel(ctx context.Context, modelID id.ModelID, operator *usecase.Operator) (group.List, error) {
+func (i Group) FindByModel(
+	ctx context.Context,
+	modelID id.ModelID,
+	operator *usecase.Operator,
+) (group.List, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (group.List, error) {
 			m, err := i.repos.Model.FindByID(ctx, modelID)
@@ -243,7 +292,11 @@ func (i Group) FindByModel(ctx context.Context, modelID id.ModelID, operator *us
 }
 
 func (i Group) getModelsByGroup(ctx context.Context, g *group.Group) (res model.List, err error) {
-	models, _, err := i.repos.Model.FindByProject(ctx, g.Project(), usecasex.CursorPagination{First: lo.ToPtr(int64(10))}.Wrap())
+	models, _, err := i.repos.Model.FindByProject(
+		ctx,
+		g.Project(),
+		usecasex.CursorPagination{First: lo.ToPtr(int64(10))}.Wrap(),
+	)
 	if err != nil && !errors.Is(err, rerror.ErrNotFound) {
 		return nil, err
 	}
@@ -271,7 +324,11 @@ func (i Group) getModelsByGroup(ctx context.Context, g *group.Group) (res model.
 	return
 }
 
-func (i Group) UpdateOrder(ctx context.Context, ids id.GroupIDList, operator *usecase.Operator) (group.List, error) {
+func (i Group) UpdateOrder(
+	ctx context.Context,
+	ids id.GroupIDList,
+	operator *usecase.Operator,
+) (group.List, error) {
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(),
 		func(ctx context.Context) (_ group.List, err error) {
 			if len(ids) == 0 {

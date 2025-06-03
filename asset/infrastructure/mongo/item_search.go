@@ -21,12 +21,23 @@ import (
 	"go.opencensus.io/trace"
 )
 
-func (r *Item) Search(ctx context.Context, sp schema.Package, query *item.Query, pagination *usecasex.Pagination) (item.VersionedList, *usecasex.PageInfo, error) {
+func (r *Item) Search(
+	ctx context.Context,
+	sp schema.Package,
+	query *item.Query,
+	pagination *usecasex.Pagination,
+) (item.VersionedList, *usecasex.PageInfo, error) {
 	_, span := trace.StartSpan(ctx, "mongo/item/search")
 	t := time.Now()
 	defer func() { span.End(); log.Infof("trace: mongo/item/search %s", time.Since(t)) }()
 
-	res, pi, err := r.paginateAggregation(ctx, buildPipeline(query, sp), query.Ref(), sort(query), pagination)
+	res, pi, err := r.paginateAggregation(
+		ctx,
+		buildPipeline(query, sp),
+		query.Ref(),
+		sort(query),
+		pagination,
+	)
 	return res, pi, err
 }
 
@@ -188,7 +199,12 @@ func lookupReferencedField(f schema.Field, tfID id.FieldID) []any {
 		},
 		bson.M{
 			"$set": bson.M{
-				"__temp.fields." + f.ID().String(): bson.M{"$arrayElemAt": bson.A{"$__temp.&" + f.ID().String() + ".__temp.fields." + tfID.String(), 0}},
+				"__temp.fields." + f.ID().String(): bson.M{
+					"$arrayElemAt": bson.A{
+						"$__temp.&" + f.ID().String() + ".__temp.fields." + tfID.String(),
+						0,
+					},
+				},
 				// "__temp.fields." + f.ID().String(): "$__temp.&" + f.ID().String() + ".__temp.fields." + tfID.String(),
 			},
 		},
@@ -270,7 +286,10 @@ func resetTime(dateField string) bson.M {
 }
 
 func textFilterStage(keyword string, sp schema.Package) any {
-	regex := primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(keyword)), Options: "i"}
+	regex := primitive.Regex{
+		Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(keyword)),
+		Options: "i",
+	}
 	var f []bson.M
 	for _, k := range textSearchFieldKeys(sp) {
 		f = append(f, bson.M{k: regex})
@@ -335,7 +354,9 @@ func filterMultiple(c *view.Condition, _ schema.Package) bson.M {
 	case view.MultipleOperatorNotIncludesAny:
 		f[fieldKey(c.MultipleCondition.Field)] = bson.M{"$nin": c.MultipleCondition.Value}
 	case view.MultipleOperatorNotIncludesAll:
-		f[fieldKey(c.MultipleCondition.Field)] = bson.M{"$not": bson.M{"$all": c.MultipleCondition.Value}}
+		f[fieldKey(c.MultipleCondition.Field)] = bson.M{
+			"$not": bson.M{"$all": c.MultipleCondition.Value},
+		}
 	}
 	return f
 }
@@ -400,17 +421,31 @@ func filterString(c *view.Condition, _ schema.Package) bson.M {
 	f := bson.M{}
 	switch c.StringCondition.Op {
 	case view.StringOperatorContains:
-		f[fieldKey(c.StringCondition.Field)] = bson.M{"$regex": fmt.Sprintf(".*%s.*", regexp.QuoteMeta(c.StringCondition.Value))}
+		f[fieldKey(c.StringCondition.Field)] = bson.M{
+			"$regex": fmt.Sprintf(".*%s.*", regexp.QuoteMeta(c.StringCondition.Value)),
+		}
 	case view.StringOperatorNotContains:
-		f[fieldKey(c.StringCondition.Field)] = bson.M{"$not": bson.M{"$regex": fmt.Sprintf(".*%s.*", regexp.QuoteMeta(c.StringCondition.Value))}}
+		f[fieldKey(c.StringCondition.Field)] = bson.M{
+			"$not": bson.M{
+				"$regex": fmt.Sprintf(".*%s.*", regexp.QuoteMeta(c.StringCondition.Value)),
+			},
+		}
 	case view.StringOperatorStartsWith:
-		f[fieldKey(c.StringCondition.Field)] = bson.M{"$regex": fmt.Sprintf("^%s", regexp.QuoteMeta(c.StringCondition.Value))}
+		f[fieldKey(c.StringCondition.Field)] = bson.M{
+			"$regex": fmt.Sprintf("^%s", regexp.QuoteMeta(c.StringCondition.Value)),
+		}
 	case view.StringOperatorNotStartsWith:
-		f[fieldKey(c.StringCondition.Field)] = bson.M{"$not": bson.M{"$regex": fmt.Sprintf("^%s", regexp.QuoteMeta(c.StringCondition.Value))}}
+		f[fieldKey(c.StringCondition.Field)] = bson.M{
+			"$not": bson.M{"$regex": fmt.Sprintf("^%s", regexp.QuoteMeta(c.StringCondition.Value))},
+		}
 	case view.StringOperatorEndsWith:
-		f[fieldKey(c.StringCondition.Field)] = bson.M{"$regex": fmt.Sprintf("%s$", regexp.QuoteMeta(c.StringCondition.Value))}
+		f[fieldKey(c.StringCondition.Field)] = bson.M{
+			"$regex": fmt.Sprintf("%s$", regexp.QuoteMeta(c.StringCondition.Value)),
+		}
 	case view.StringOperatorNotEndsWith:
-		f[fieldKey(c.StringCondition.Field)] = bson.M{"$not": bson.M{"$regex": fmt.Sprintf("%s$", regexp.QuoteMeta(c.StringCondition.Value))}}
+		f[fieldKey(c.StringCondition.Field)] = bson.M{
+			"$not": bson.M{"$regex": fmt.Sprintf("%s$", regexp.QuoteMeta(c.StringCondition.Value))},
+		}
 	}
 	return f
 }
@@ -441,9 +476,15 @@ func filterBasic(c *view.Condition, sp schema.Package) bson.M {
 	f := bson.M{}
 	switch c.BasicCondition.Op {
 	case view.BasicOperatorEquals:
-		f[fieldKey(c.BasicCondition.Field)] = fieldValue(c.BasicCondition.Field, c.BasicCondition.Value, sp)
+		f[fieldKey(c.BasicCondition.Field)] = fieldValue(
+			c.BasicCondition.Field,
+			c.BasicCondition.Value,
+			sp,
+		)
 	case view.BasicOperatorNotEquals:
-		f[fieldKey(c.BasicCondition.Field)] = bson.M{"$ne": fieldValue(c.BasicCondition.Field, c.BasicCondition.Value, sp)}
+		f[fieldKey(c.BasicCondition.Field)] = bson.M{
+			"$ne": fieldValue(c.BasicCondition.Field, c.BasicCondition.Value, sp),
+		}
 	}
 	return f
 }

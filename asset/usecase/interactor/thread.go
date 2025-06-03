@@ -23,7 +23,11 @@ func NewThread(r *repo.Container, g *gateway.Container) interfaces.Thread {
 	}
 }
 
-func (i *Thread) FindByID(ctx context.Context, aid id.ThreadID, op *usecase.Operator) (*thread.Thread, error) {
+func (i *Thread) FindByID(
+	ctx context.Context,
+	aid id.ThreadID,
+	op *usecase.Operator,
+) (*thread.Thread, error) {
 	return Run1(
 		ctx, op, i.repos,
 		Usecase().Transaction(),
@@ -33,11 +37,19 @@ func (i *Thread) FindByID(ctx context.Context, aid id.ThreadID, op *usecase.Oper
 	)
 }
 
-func (i *Thread) FindByIDs(ctx context.Context, threads []id.ThreadID, operator *usecase.Operator) (thread.List, error) {
+func (i *Thread) FindByIDs(
+	ctx context.Context,
+	threads []id.ThreadID,
+	operator *usecase.Operator,
+) (thread.List, error) {
 	return i.repos.Thread.FindByIDs(ctx, threads)
 }
 
-func (i *Thread) CreateThreadWithComment(ctx context.Context, input interfaces.CreateThreadWithCommentInput, op *usecase.Operator) (*thread.Thread, *thread.Comment, error) {
+func (i *Thread) CreateThreadWithComment(
+	ctx context.Context,
+	input interfaces.CreateThreadWithCommentInput,
+	op *usecase.Operator,
+) (*thread.Thread, *thread.Comment, error) {
 	return Run2(
 		ctx, op, i.repos,
 		Usecase().WithWritableWorkspaces(input.WorkspaceID).Transaction(),
@@ -61,7 +73,12 @@ func (i *Thread) CreateThreadWithComment(ctx context.Context, input interfaces.C
 	)
 }
 
-func (i *Thread) linkThreadToResource(ctx context.Context, thID thread.ID, resourceType interfaces.ResourceType, resourceID string) error {
+func (i *Thread) linkThreadToResource(
+	ctx context.Context,
+	thID thread.ID,
+	resourceType interfaces.ResourceType,
+	resourceID string,
+) error {
 	switch resourceType {
 	case interfaces.ResourceTypeItem:
 		iid, err := id.ItemIDFrom(resourceID)
@@ -109,7 +126,12 @@ func (i *Thread) linkThreadToResource(ctx context.Context, thID thread.ID, resou
 	return nil
 }
 
-func (i *Thread) AddComment(ctx context.Context, thid id.ThreadID, content string, op *usecase.Operator) (*thread.Thread, *thread.Comment, error) {
+func (i *Thread) AddComment(
+	ctx context.Context,
+	thid id.ThreadID,
+	content string,
+	op *usecase.Operator,
+) (*thread.Thread, *thread.Comment, error) {
 	if op.AcOperator.User == nil && op.Integration == nil {
 		return nil, nil, interfaces.ErrInvalidOperator
 	}
@@ -122,7 +144,12 @@ func (i *Thread) AddComment(ctx context.Context, thid id.ThreadID, content strin
 	)
 }
 
-func (i *Thread) addComment(ctx context.Context, thid id.ThreadID, content string, op *usecase.Operator) (*thread.Thread, *thread.Comment, error) {
+func (i *Thread) addComment(
+	ctx context.Context,
+	thid id.ThreadID,
+	content string,
+	op *usecase.Operator,
+) (*thread.Thread, *thread.Comment, error) {
 	th, err := i.repos.Thread.FindByID(ctx, thid)
 	if err != nil {
 		return nil, nil, err
@@ -144,7 +171,13 @@ func (i *Thread) addComment(ctx context.Context, thid id.ThreadID, content strin
 	return th, comment, nil
 }
 
-func (i *Thread) UpdateComment(ctx context.Context, thid id.ThreadID, cid id.CommentID, content string, op *usecase.Operator) (*thread.Thread, *thread.Comment, error) {
+func (i *Thread) UpdateComment(
+	ctx context.Context,
+	thid id.ThreadID,
+	cid id.CommentID,
+	content string,
+	op *usecase.Operator,
+) (*thread.Thread, *thread.Comment, error) {
 	if op.AcOperator.User == nil && op.Integration == nil {
 		return nil, nil, interfaces.ErrInvalidOperator
 	}
@@ -174,7 +207,12 @@ func (i *Thread) UpdateComment(ctx context.Context, thid id.ThreadID, cid id.Com
 	)
 }
 
-func (i *Thread) DeleteComment(ctx context.Context, thid id.ThreadID, cid id.CommentID, op *usecase.Operator) (*thread.Thread, error) {
+func (i *Thread) DeleteComment(
+	ctx context.Context,
+	thid id.ThreadID,
+	cid id.CommentID,
+	op *usecase.Operator,
+) (*thread.Thread, error) {
 	if op.AcOperator.User == nil && op.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}

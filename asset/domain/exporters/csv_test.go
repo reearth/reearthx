@@ -18,16 +18,44 @@ import (
 func TestBuildCSVHeaders(t *testing.T) {
 	sid := id.NewSchemaID()
 	pid := id.NewProjectID()
-	gst := schema.GeometryObjectSupportedTypeList{schema.GeometryObjectSupportedTypePoint, schema.GeometryObjectSupportedTypeLineString}
-	gest := schema.GeometryEditorSupportedTypeList{schema.GeometryEditorSupportedTypePoint, schema.GeometryEditorSupportedTypeLineString}
-	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).NewID().Name("geo1").Key(id.RandomKey()).MustBuild()
-	sf2 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).NewID().Name("geo2").Key(id.RandomKey()).MustBuild()
+	gst := schema.GeometryObjectSupportedTypeList{
+		schema.GeometryObjectSupportedTypePoint,
+		schema.GeometryObjectSupportedTypeLineString,
+	}
+	gest := schema.GeometryEditorSupportedTypeList{
+		schema.GeometryEditorSupportedTypePoint,
+		schema.GeometryEditorSupportedTypeLineString,
+	}
+	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).
+		NewID().
+		Name("geo1").
+		Key(id.RandomKey()).
+		MustBuild()
+	sf2 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).
+		NewID().
+		Name("geo2").
+		Key(id.RandomKey()).
+		MustBuild()
 	in4, _ := schema.NewInteger(lo.ToPtr(int64(1)), lo.ToPtr(int64(100)))
 	tp4 := in4.TypeProperty()
 	sf3 := schema.NewField(tp4).NewID().Name("age").Key(id.RandomKey()).MustBuild()
-	sf4 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("isMarried").Key(id.RandomKey()).MustBuild()
-	s1 := schema.New().ID(sid).Fields([]*schema.Field{sf1, sf3, sf4}).Workspace(accountdomain.NewWorkspaceID()).Project(pid).MustBuild()
-	s2 := schema.New().ID(sid).Fields([]*schema.Field{sf1, sf2, sf3, sf4}).Workspace(accountdomain.NewWorkspaceID()).Project(pid).MustBuild()
+	sf4 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("isMarried").
+		Key(id.RandomKey()).
+		MustBuild()
+	s1 := schema.New().
+		ID(sid).
+		Fields([]*schema.Field{sf1, sf3, sf4}).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(pid).
+		MustBuild()
+	s2 := schema.New().
+		ID(sid).
+		Fields([]*schema.Field{sf1, sf2, sf3, sf4}).
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(pid).
+		MustBuild()
 
 	// Test with geometry fields
 	headers1 := BuildCSVHeaders(s1)
@@ -44,16 +72,44 @@ func TestRowFromItem(t *testing.T) {
 	mid := id.NewModelID()
 	tid := id.NewThreadID()
 	pid := id.NewProjectID()
-	gst := schema.GeometryObjectSupportedTypeList{schema.GeometryObjectSupportedTypePoint, schema.GeometryObjectSupportedTypeLineString}
-	gest := schema.GeometryEditorSupportedTypeList{schema.GeometryEditorSupportedTypePoint, schema.GeometryEditorSupportedTypeLineString}
-	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).NewID().Name("geo1").Key(id.RandomKey()).MustBuild()
-	sf2 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).NewID().Name("geo2").Key(id.RandomKey()).MustBuild()
+	gst := schema.GeometryObjectSupportedTypeList{
+		schema.GeometryObjectSupportedTypePoint,
+		schema.GeometryObjectSupportedTypeLineString,
+	}
+	gest := schema.GeometryEditorSupportedTypeList{
+		schema.GeometryEditorSupportedTypePoint,
+		schema.GeometryEditorSupportedTypeLineString,
+	}
+	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).
+		NewID().
+		Name("geo1").
+		Key(id.RandomKey()).
+		MustBuild()
+	sf2 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).
+		NewID().
+		Name("geo2").
+		Key(id.RandomKey()).
+		MustBuild()
 	in4, _ := schema.NewInteger(lo.ToPtr(int64(1)), lo.ToPtr(int64(100)))
 	tp4 := in4.TypeProperty()
 	sf3 := schema.NewField(tp4).NewID().Name("age").Key(id.RandomKey()).MustBuild()
-	sf4 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("isMarried").Key(id.RandomKey()).MustBuild()
-	fi1 := item.NewField(sf1.ID(), value.TypeGeometryObject.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").AsMultiple(), nil)
-	fi2 := item.NewField(sf2.ID(), value.TypeGeometryEditor.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").AsMultiple(), nil)
+	sf4 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("isMarried").
+		Key(id.RandomKey()).
+		MustBuild()
+	fi1 := item.NewField(
+		sf1.ID(),
+		value.TypeGeometryObject.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").
+			AsMultiple(),
+		nil,
+	)
+	fi2 := item.NewField(
+		sf2.ID(),
+		value.TypeGeometryEditor.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").
+			AsMultiple(),
+		nil,
+	)
 	fi3 := item.NewField(sf3.ID(), value.TypeInteger.Value(30).AsMultiple(), nil)
 	fi4 := item.NewField(sf4.ID(), value.TypeBool.Value(true).AsMultiple(), nil)
 	i1 := item.New().
@@ -94,7 +150,11 @@ func TestRowFromItem(t *testing.T) {
 		MustBuild()
 	row3, ok3 := RowFromItem(i3, []*schema.Field{sf3, sf4})
 	assert.True(t, ok3)
-	assert.Equal(t, []string{i1.ID().String(), "36.58570985749664", "139.28179282584915", "30", "true"}, row3)
+	assert.Equal(
+		t,
+		[]string{i1.ID().String(), "36.58570985749664", "139.28179282584915", "30", "true"},
+		row3,
+	)
 }
 
 func TestExtractFirstPointField(t *testing.T) {
@@ -103,16 +163,44 @@ func TestExtractFirstPointField(t *testing.T) {
 	mid := id.NewModelID()
 	tid := id.NewThreadID()
 	pid := id.NewProjectID()
-	gst := schema.GeometryObjectSupportedTypeList{schema.GeometryObjectSupportedTypePoint, schema.GeometryObjectSupportedTypeLineString}
-	gest := schema.GeometryEditorSupportedTypeList{schema.GeometryEditorSupportedTypePoint, schema.GeometryEditorSupportedTypeLineString}
-	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).NewID().Name("geo1").Key(id.RandomKey()).MustBuild()
-	sf2 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).NewID().Name("geo2").Key(id.RandomKey()).MustBuild()
+	gst := schema.GeometryObjectSupportedTypeList{
+		schema.GeometryObjectSupportedTypePoint,
+		schema.GeometryObjectSupportedTypeLineString,
+	}
+	gest := schema.GeometryEditorSupportedTypeList{
+		schema.GeometryEditorSupportedTypePoint,
+		schema.GeometryEditorSupportedTypeLineString,
+	}
+	sf1 := schema.NewField(schema.NewGeometryObject(gst).TypeProperty()).
+		NewID().
+		Name("geo1").
+		Key(id.RandomKey()).
+		MustBuild()
+	sf2 := schema.NewField(schema.NewGeometryEditor(gest).TypeProperty()).
+		NewID().
+		Name("geo2").
+		Key(id.RandomKey()).
+		MustBuild()
 	in4, _ := schema.NewInteger(lo.ToPtr(int64(1)), lo.ToPtr(int64(100)))
 	tp4 := in4.TypeProperty()
 	sf3 := schema.NewField(tp4).NewID().Name("age").Key(id.RandomKey()).MustBuild()
-	sf4 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("isMarried").Key(id.RandomKey()).MustBuild()
-	fi1 := item.NewField(sf1.ID(), value.TypeGeometryObject.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").AsMultiple(), nil)
-	fi2 := item.NewField(sf2.ID(), value.TypeGeometryEditor.Value("{\"coordinates\": [[[138.90306434425662,36.11737907906834],[138.90306434425662,36.33622175736386],[138.67187898370287,36.33622175736386],[138.67187898370287,36.11737907906834],[138.90306434425662,36.11737907906834]]],\"type\": \"Polygon\"}").AsMultiple(), nil)
+	sf4 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("isMarried").
+		Key(id.RandomKey()).
+		MustBuild()
+	fi1 := item.NewField(
+		sf1.ID(),
+		value.TypeGeometryObject.Value("{\"coordinates\":[139.28179282584915,36.58570985749664],\"type\":\"Point\"}").
+			AsMultiple(),
+		nil,
+	)
+	fi2 := item.NewField(
+		sf2.ID(),
+		value.TypeGeometryEditor.Value("{\"coordinates\": [[[138.90306434425662,36.11737907906834],[138.90306434425662,36.33622175736386],[138.67187898370287,36.33622175736386],[138.67187898370287,36.11737907906834],[138.90306434425662,36.11737907906834]]],\"type\": \"Polygon\"}").
+			AsMultiple(),
+		nil,
+	)
 	fi3 := item.NewField(sf3.ID(), value.TypeInteger.Value(30).AsMultiple(), nil)
 	fi4 := item.NewField(sf4.ID(), value.TypeBool.Value(true).AsMultiple(), nil)
 	i1 := item.New().
@@ -159,7 +247,10 @@ func TestExtractFirstPointField(t *testing.T) {
 }
 
 func TestToCSVProp(t *testing.T) {
-	sf1 := schema.NewField(schema.NewText(lo.ToPtr(10)).TypeProperty()).NewID().Key(id.RandomKey()).MustBuild()
+	sf1 := schema.NewField(schema.NewText(lo.ToPtr(10)).TypeProperty()).
+		NewID().
+		Key(id.RandomKey()).
+		MustBuild()
 	if1 := item.NewField(sf1.ID(), value.TypeText.Value("test").AsMultiple(), nil)
 	s1 := toCSVProp(if1)
 	assert.Equal(t, "test", s1)
@@ -178,14 +269,22 @@ func TestToCSVProp(t *testing.T) {
 	assert.True(t, ok3)
 
 	v4 := true
-	sf4 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("age").Key(id.RandomKey()).MustBuild()
+	sf4 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("age").
+		Key(id.RandomKey()).
+		MustBuild()
 	if4 := item.NewField(sf4.ID(), value.TypeBool.Value(v4).AsMultiple(), nil)
 	s4, ok4 := toGeoJsonSingleValue(if4.Value().First())
 	assert.Equal(t, true, s4)
 	assert.True(t, ok4)
 
 	v5 := false
-	sf5 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("age").Key(id.RandomKey()).MustBuild()
+	sf5 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("age").
+		Key(id.RandomKey()).
+		MustBuild()
 	if5 := item.NewField(sf5.ID(), value.TypeBool.Value(v5).AsMultiple(), nil)
 	s5, ok5 := toGeoJsonSingleValue(if5.Value().First())
 	assert.Equal(t, false, s5)
@@ -193,12 +292,18 @@ func TestToCSVProp(t *testing.T) {
 }
 
 func TestToCSVValue(t *testing.T) {
-	sf1 := schema.NewField(schema.NewText(lo.ToPtr(10)).TypeProperty()).NewID().Key(id.RandomKey()).MustBuild()
+	sf1 := schema.NewField(schema.NewText(lo.ToPtr(10)).TypeProperty()).
+		NewID().
+		Key(id.RandomKey()).
+		MustBuild()
 	if1 := item.NewField(sf1.ID(), value.TypeText.Value("test").AsMultiple(), nil)
 	s1 := toCSVValue(if1.Value().First())
 	assert.Equal(t, "test", s1)
 
-	sf2 := schema.NewField(schema.NewTextArea(lo.ToPtr(10)).TypeProperty()).NewID().Key(id.RandomKey()).MustBuild()
+	sf2 := schema.NewField(schema.NewTextArea(lo.ToPtr(10)).TypeProperty()).
+		NewID().
+		Key(id.RandomKey()).
+		MustBuild()
 	if2 := item.NewField(sf2.ID(), value.TypeTextArea.Value("test").AsMultiple(), nil)
 	s2 := toCSVValue(if2.Value().First())
 	assert.Equal(t, "test", s2)
@@ -216,13 +321,24 @@ func TestToCSVValue(t *testing.T) {
 
 	gid := id.NewGroupID()
 	igid := id.NewItemGroupID()
-	sf5 := schema.NewField(schema.NewGroup(gid).TypeProperty()).NewID().Key(id.RandomKey()).Multiple(true).MustBuild()
-	if5 := item.NewField(sf5.ID(), value.MultipleFrom(value.TypeGroup, []*value.Value{value.TypeGroup.Value(igid)}), nil)
+	sf5 := schema.NewField(schema.NewGroup(gid).TypeProperty()).
+		NewID().
+		Key(id.RandomKey()).
+		Multiple(true).
+		MustBuild()
+	if5 := item.NewField(
+		sf5.ID(),
+		value.MultipleFrom(value.TypeGroup, []*value.Value{value.TypeGroup.Value(igid)}),
+		nil,
+	)
 	s5 := toCSVValue(if5.Value().First())
 	assert.Empty(t, s5)
 
 	v6 := id.NewItemID()
-	sf6 := schema.NewField(schema.NewReference(id.NewModelID(), id.NewSchemaID(), nil, nil).TypeProperty()).NewID().Key(id.RandomKey()).MustBuild()
+	sf6 := schema.NewField(schema.NewReference(id.NewModelID(), id.NewSchemaID(), nil, nil).TypeProperty()).
+		NewID().
+		Key(id.RandomKey()).
+		MustBuild()
 	if6 := item.NewField(sf6.ID(), value.TypeReference.Value(v6).AsMultiple(), nil)
 	s6 := toCSVValue(if6.Value().First())
 	assert.Empty(t, s6)
@@ -244,13 +360,21 @@ func TestToCSVValue(t *testing.T) {
 	assert.Equal(t, "30.123", s8)
 
 	v9 := true
-	sf9 := schema.NewField(schema.NewBool().TypeProperty()).NewID().Name("age").Key(id.RandomKey()).MustBuild()
+	sf9 := schema.NewField(schema.NewBool().TypeProperty()).
+		NewID().
+		Name("age").
+		Key(id.RandomKey()).
+		MustBuild()
 	if9 := item.NewField(sf9.ID(), value.TypeBool.Value(v9).AsMultiple(), nil)
 	s9 := toCSVValue(if9.Value().First())
 	assert.Equal(t, "true", s9)
 
 	v10 := time.Now()
-	sf10 := schema.NewField(schema.NewDateTime().TypeProperty()).NewID().Name("age").Key(id.RandomKey()).MustBuild()
+	sf10 := schema.NewField(schema.NewDateTime().TypeProperty()).
+		NewID().
+		Name("age").
+		Key(id.RandomKey()).
+		MustBuild()
 	if10 := item.NewField(sf10.ID(), value.TypeDateTime.Value(v10).AsMultiple(), nil)
 	s10 := toCSVValue(if10.Value().First())
 	assert.Equal(t, v10.Format(time.RFC3339), s10)

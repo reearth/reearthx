@@ -46,15 +46,17 @@ func NewItemConsumer() *ItemConsumer {
 type VersionedItemConsumer = mongox.SliceFuncConsumer[*mongogit.Document[*ItemDocument], *version.Value[*item.Item]]
 
 func NewVersionedItemConsumer() *VersionedItemConsumer {
-	return mongox.NewSliceFuncConsumer(func(d *mongogit.Document[*ItemDocument]) (*version.Value[*item.Item], error) {
-		itm, err := d.Data.Model()
-		if err != nil {
-			return nil, err
-		}
+	return mongox.NewSliceFuncConsumer(
+		func(d *mongogit.Document[*ItemDocument]) (*version.Value[*item.Item], error) {
+			itm, err := d.Data.Model()
+			if err != nil {
+				return nil, err
+			}
 
-		v := mongogit.ToValue(d.Meta, itm)
-		return v, nil
-	})
+			v := mongogit.ToValue(d.Meta, itm)
+			return v, nil
+		},
+	)
 }
 
 func NewItem(i *item.Item) (*ItemDocument, string) {

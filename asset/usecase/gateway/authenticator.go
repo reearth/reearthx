@@ -7,5 +7,8 @@ import (
 )
 
 type Authenticator interface {
-	UpdateUser(context.Context, accountgateway.AuthenticatorUpdateUserParam) (accountgateway.AuthenticatorUser, error)
+	UpdateUser(
+		context.Context,
+		accountgateway.AuthenticatorUpdateUserParam,
+	) (accountgateway.AuthenticatorUser, error)
 }

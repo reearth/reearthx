@@ -70,7 +70,11 @@ func (ir *ImportRes) Into() interfaces.ImportItemsResponse {
 
 // endregion
 
-func (i Item) Import(ctx context.Context, param interfaces.ImportItemsParam, operator *usecase.Operator) (interfaces.ImportItemsResponse, error) {
+func (i Item) Import(
+	ctx context.Context,
+	param interfaces.ImportItemsParam,
+	operator *usecase.Operator,
+) (interfaces.ImportItemsResponse, error) {
 	res := NewImportRes()
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return res.Into(), interfaces.ErrInvalidOperator
@@ -131,7 +135,11 @@ func (i Item) Import(ctx context.Context, param interfaces.ImportItemsParam, ope
 				return res.Into(), fmt.Errorf("error decoding JSON object: %v", err)
 			}
 
-			fieldsParams, err := guessSchemaFields(param.SP, orderedMap, param.Format == interfaces.ImportFormatTypeGeoJSON)
+			fieldsParams, err := guessSchemaFields(
+				param.SP,
+				orderedMap,
+				param.Format == interfaces.ImportFormatTypeGeoJSON,
+			)
 			if err != nil {
 				return res.Into(), fmt.Errorf("error guessing schema fields: %v", err)
 			}
@@ -155,7 +163,12 @@ func (i Item) Import(ctx context.Context, param interfaces.ImportItemsParam, ope
 		jsonChunk = append(jsonChunk, obj)
 
 		if count == chunkSize || !decoder.More() {
-			items, err := itemsParamsFrom(jsonChunk, param.Format == interfaces.ImportFormatTypeGeoJSON, param.GeoField, param.SP)
+			items, err := itemsParamsFrom(
+				jsonChunk,
+				param.Format == interfaces.ImportFormatTypeGeoJSON,
+				param.GeoField,
+				param.SP,
+			)
 			if err != nil {
 				return res.Into(), err
 			}
@@ -170,7 +183,14 @@ func (i Item) Import(ctx context.Context, param interfaces.ImportItemsParam, ope
 	return res.Into(), nil
 }
 
-func (i Item) TriggerImportJob(ctx context.Context, aId id.AssetID, mId id.ModelID, format, strategy, geoFieldKey string, mutateSchema bool, operator *usecase.Operator) error {
+func (i Item) TriggerImportJob(
+	ctx context.Context,
+	aId id.AssetID,
+	mId id.ModelID,
+	format, strategy, geoFieldKey string,
+	mutateSchema bool,
+	operator *usecase.Operator,
+) error {
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return interfaces.ErrInvalidOperator
 	}
@@ -203,7 +223,16 @@ func (i Item) TriggerImportJob(ctx context.Context, aId id.AssetID, mId id.Model
 	return nil
 }
 
-func (i Item) saveChunk(ctx context.Context, prj *project.Project, m *model.Model, s *schema.Schema, param interfaces.ImportItemsParam, items []interfaces.ImportItemParam, res *ImportRes, operator *usecase.Operator) error {
+func (i Item) saveChunk(
+	ctx context.Context,
+	prj *project.Project,
+	m *model.Model,
+	s *schema.Schema,
+	param interfaces.ImportItemsParam,
+	items []interfaces.ImportItemParam,
+	res *ImportRes,
+	operator *usecase.Operator,
+) error {
 	itemsIds := lo.FilterMap(items, func(i interfaces.ImportItemParam, _ int) (item.ID, bool) {
 		if i.ItemId != nil {
 			return *i.ItemId, true
@@ -383,7 +412,11 @@ func (i Item) saveChunk(ctx context.Context, prj *project.Project, m *model.Mode
 	return err
 }
 
-func (i Item) updateSchema(ctx context.Context, s *schema.Schema, params []interfaces.CreateFieldParam) (schema.FieldList, error) {
+func (i Item) updateSchema(
+	ctx context.Context,
+	s *schema.Schema,
+	params []interfaces.CreateFieldParam,
+) (schema.FieldList, error) {
 	var fields schema.FieldList
 	for _, fieldParam := range params {
 		if fieldParam.Key == "" || s.HasFieldByKey(fieldParam.Key) {
@@ -415,7 +448,11 @@ func (i Item) updateSchema(ctx context.Context, s *schema.Schema, params []inter
 	return fields, nil
 }
 
-func guessSchemaFields(sp schema.Package, orderedMap *orderedmap.OrderedMap, isGeoJson bool) ([]interfaces.CreateFieldParam, error) {
+func guessSchemaFields(
+	sp schema.Package,
+	orderedMap *orderedmap.OrderedMap,
+	isGeoJson bool,
+) ([]interfaces.CreateFieldParam, error) {
 	fields := make([]interfaces.CreateFieldParam, 0)
 	if isGeoJson {
 		properties, ok := orderedMap.Get("properties")
@@ -515,7 +552,12 @@ func isAssignable(vt1, vt2 value.Type) bool {
 	return false
 }
 
-func itemsParamsFrom(chunk []map[string]any, isGeoJson bool, geoField *string, sp schema.Package) ([]interfaces.ImportItemParam, error) {
+func itemsParamsFrom(
+	chunk []map[string]any,
+	isGeoJson bool,
+	geoField *string,
+	sp schema.Package,
+) ([]interfaces.ImportItemParam, error) {
 	if isGeoJson && geoField == nil {
 		return nil, rerror.ErrInvalidParams
 	}

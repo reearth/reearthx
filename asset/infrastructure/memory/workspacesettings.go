@@ -29,14 +29,19 @@ func (r *WorkspaceSettingsRepo) Filtered(f repo.WorkspaceFilter) repo.WorkspaceS
 	}
 }
 
-func (r *WorkspaceSettingsRepo) FindByID(ctx context.Context, wid accountdomain.WorkspaceID) (*workspacesettings.WorkspaceSettings, error) {
+func (r *WorkspaceSettingsRepo) FindByID(
+	ctx context.Context,
+	wid accountdomain.WorkspaceID,
+) (*workspacesettings.WorkspaceSettings, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	ws := r.data.Find(func(k accountdomain.WorkspaceID, v *workspacesettings.WorkspaceSettings) bool {
-		return k == wid && r.f.CanRead(v.ID())
-	})
+	ws := r.data.Find(
+		func(k accountdomain.WorkspaceID, v *workspacesettings.WorkspaceSettings) bool {
+			return k == wid && r.f.CanRead(v.ID())
+		},
+	)
 
 	if ws != nil {
 		return ws, nil
@@ -44,19 +49,27 @@ func (r *WorkspaceSettingsRepo) FindByID(ctx context.Context, wid accountdomain.
 	return nil, rerror.ErrNotFound
 }
 
-func (r *WorkspaceSettingsRepo) FindByIDs(ctx context.Context, ids accountdomain.WorkspaceIDList) (workspacesettings.List, error) {
+func (r *WorkspaceSettingsRepo) FindByIDs(
+	ctx context.Context,
+	ids accountdomain.WorkspaceIDList,
+) (workspacesettings.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
 
-	result := r.data.FindAll(func(k accountdomain.WorkspaceID, i *workspacesettings.WorkspaceSettings) bool {
-		return ids.Has(k) && r.f.CanRead(i.ID())
-	})
+	result := r.data.FindAll(
+		func(k accountdomain.WorkspaceID, i *workspacesettings.WorkspaceSettings) bool {
+			return ids.Has(k) && r.f.CanRead(i.ID())
+		},
+	)
 
 	return workspacesettings.List(result).SortByID(), nil
 }
 
-func (r *WorkspaceSettingsRepo) Save(ctx context.Context, ws *workspacesettings.WorkspaceSettings) error {
+func (r *WorkspaceSettingsRepo) Save(
+	ctx context.Context,
+	ws *workspacesettings.WorkspaceSettings,
+) error {
 	if r.err != nil {
 		return r.err
 	}

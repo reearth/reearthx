@@ -20,7 +20,12 @@ type FieldReference struct {
 	schemaID             id.SchemaID
 }
 
-func NewReference(mID id.ModelID, sID id.SchemaID, cfID *id.FieldID, cf *CorrespondingField) *FieldReference {
+func NewReference(
+	mID id.ModelID,
+	sID id.SchemaID,
+	cfID *id.FieldID,
+	cf *CorrespondingField,
+) *FieldReference {
 	return &FieldReference{
 		modelID:              mID,
 		schemaID:             sID,

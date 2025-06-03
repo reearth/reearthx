@@ -12,7 +12,12 @@ type Package struct {
 	referencedSchemas List
 }
 
-func NewPackage(s *Schema, meta *Schema, groupSchemas map[id.GroupID]*Schema, referencedSchemas List) *Package {
+func NewPackage(
+	s *Schema,
+	meta *Schema,
+	groupSchemas map[id.GroupID]*Schema,
+	referencedSchemas List,
+) *Package {
 	return &Package{
 		schema:            s,
 		metaSchema:        meta,

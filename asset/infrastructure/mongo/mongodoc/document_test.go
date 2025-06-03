@@ -48,8 +48,15 @@ func TestNewDocument(t *testing.T) {
 func TestModelFrom(t *testing.T) {
 	u := user.New().NewID().Email("hoge@example.com").Name("John").MustBuild()
 	now := time.Now().Truncate(time.Millisecond).UTC()
-	a := asset.New().NewID().Project(project.NewID()).Size(100).CreatedAt(now).NewUUID().CreatedByUser(u.ID()).
-		Thread(id.NewThreadID().Ref()).MustBuild()
+	a := asset.New().
+		NewID().
+		Project(project.NewID()).
+		Size(100).
+		CreatedAt(now).
+		NewUUID().
+		CreatedByUser(u.ID()).
+		Thread(id.NewThreadID().Ref()).
+		MustBuild()
 
 	// should success
 	doc, _, err := NewDocument(a)

@@ -98,9 +98,23 @@ func TestWebhookBuilder_Build(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:    "full",
-			fields:  fields{w: &Webhook{id: wId, updatedAt: now, active: true, name: "xyz", trigger: WebhookTrigger{}}},
-			want:    &Webhook{id: wId, updatedAt: now, active: true, name: "xyz", trigger: WebhookTrigger{}},
+			name: "full",
+			fields: fields{
+				w: &Webhook{
+					id:        wId,
+					updatedAt: now,
+					active:    true,
+					name:      "xyz",
+					trigger:   WebhookTrigger{},
+				},
+			},
+			want: &Webhook{
+				id:        wId,
+				updatedAt: now,
+				active:    true,
+				name:      "xyz",
+				trigger:   WebhookTrigger{},
+			},
 			wantErr: nil,
 		},
 	}
@@ -183,9 +197,23 @@ func TestWebhookBuilder_MustBuild(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name:    "full",
-			fields:  fields{w: &Webhook{id: wId, updatedAt: now, active: true, name: "xyz", trigger: WebhookTrigger{}}},
-			want:    &Webhook{id: wId, updatedAt: now, active: true, name: "xyz", trigger: WebhookTrigger{}},
+			name: "full",
+			fields: fields{
+				w: &Webhook{
+					id:        wId,
+					updatedAt: now,
+					active:    true,
+					name:      "xyz",
+					trigger:   WebhookTrigger{},
+				},
+			},
+			want: &Webhook{
+				id:        wId,
+				updatedAt: now,
+				active:    true,
+				name:      "xyz",
+				trigger:   WebhookTrigger{},
+			},
 			wantErr: nil,
 		},
 	}
@@ -320,7 +348,13 @@ func TestWebhookBuilder_UpdatedAt(t *testing.T) {
 			b := &WebhookBuilder{
 				w: tt.fields.w,
 			}
-			assert.Equalf(t, tt.want, b.UpdatedAt(tt.args.updatedAt), "UpdatedAt(%v)", tt.args.updatedAt)
+			assert.Equalf(
+				t,
+				tt.want,
+				b.UpdatedAt(tt.args.updatedAt),
+				"UpdatedAt(%v)",
+				tt.args.updatedAt,
+			)
 		})
 	}
 }
@@ -342,7 +376,9 @@ func TestWebhookBuilder_Url(t *testing.T) {
 			name:   "set",
 			fields: fields{w: &Webhook{}},
 			args:   args{url: lo.Must(url.Parse("https://sub.hugo.com/dir?p=1#test"))},
-			want:   &WebhookBuilder{w: &Webhook{url: lo.Must(url.Parse("https://sub.hugo.com/dir?p=1#test"))}},
+			want: &WebhookBuilder{
+				w: &Webhook{url: lo.Must(url.Parse("https://sub.hugo.com/dir?p=1#test"))},
+			},
 		},
 	}
 	for _, tt := range tests {

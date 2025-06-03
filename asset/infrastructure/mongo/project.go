@@ -78,7 +78,11 @@ func (r *ProjectRepo) FindByIDs(ctx context.Context, ids id.ProjectIDList) (proj
 	return filterProjects(ids, res), nil
 }
 
-func (r *ProjectRepo) FindByWorkspaces(ctx context.Context, ids accountdomain.WorkspaceIDList, pagination *usecasex.Pagination) (project.List, *usecasex.PageInfo, error) {
+func (r *ProjectRepo) FindByWorkspaces(
+	ctx context.Context,
+	ids accountdomain.WorkspaceIDList,
+	pagination *usecasex.Pagination,
+) (project.List, *usecasex.PageInfo, error) {
 	return r.paginate(ctx, bson.M{
 		"workspace": bson.M{
 			"$in": ids.Strings(),
@@ -86,7 +90,10 @@ func (r *ProjectRepo) FindByWorkspaces(ctx context.Context, ids accountdomain.Wo
 	}, pagination)
 }
 
-func (r *ProjectRepo) FindByIDOrAlias(ctx context.Context, id project.IDOrAlias) (*project.Project, error) {
+func (r *ProjectRepo) FindByIDOrAlias(
+	ctx context.Context,
+	id project.IDOrAlias,
+) (*project.Project, error) {
 	pid := id.ID()
 	alias := id.Alias()
 	if pid == nil && (alias == nil || *alias == "") {
@@ -116,7 +123,10 @@ func (r *ProjectRepo) IsAliasAvailable(ctx context.Context, name string) (bool, 
 	return c == 0 && err == nil, err
 }
 
-func (r *ProjectRepo) FindByPublicAPIToken(ctx context.Context, token string) (*project.Project, error) {
+func (r *ProjectRepo) FindByPublicAPIToken(
+	ctx context.Context,
+	token string,
+) (*project.Project, error) {
 	if token == "" {
 		return nil, rerror.ErrNotFound
 	}
@@ -125,7 +135,10 @@ func (r *ProjectRepo) FindByPublicAPIToken(ctx context.Context, token string) (*
 	})
 }
 
-func (r *ProjectRepo) CountByWorkspace(ctx context.Context, workspace accountdomain.WorkspaceID) (int, error) {
+func (r *ProjectRepo) CountByWorkspace(
+	ctx context.Context,
+	workspace accountdomain.WorkspaceID,
+) (int, error) {
 	count, err := r.client.Count(ctx, bson.M{
 		"workspace": workspace.String(),
 	})
@@ -160,7 +173,11 @@ func (r *ProjectRepo) findOne(ctx context.Context, filter any) (*project.Project
 	return c.Result[0], nil
 }
 
-func (r *ProjectRepo) paginate(ctx context.Context, filter bson.M, pagination *usecasex.Pagination) (project.List, *usecasex.PageInfo, error) {
+func (r *ProjectRepo) paginate(
+	ctx context.Context,
+	filter bson.M,
+	pagination *usecasex.Pagination,
+) (project.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewProjectConsumer()
 	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), nil, pagination, c)
 	if err != nil {

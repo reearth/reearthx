@@ -33,7 +33,13 @@ func TestList_Clone(t *testing.T) {
 	pid := NewProjectID()
 	uid := accountdomain.NewUserID()
 
-	a := New().NewID().Project(pid).CreatedByUser(uid).Size(1000).Thread(NewThreadID().Ref()).NewUUID().MustBuild()
+	a := New().NewID().
+		Project(pid).
+		CreatedByUser(uid).
+		Size(1000).
+		Thread(NewThreadID().Ref()).
+		NewUUID().
+		MustBuild()
 
 	list := List{a}
 	got := list.Clone()
@@ -45,7 +51,13 @@ func TestList_Map(t *testing.T) {
 	pid := NewProjectID()
 	uid := accountdomain.NewUserID()
 
-	a := New().NewID().Project(pid).CreatedByUser(uid).Size(1000).Thread(NewThreadID().Ref()).NewUUID().MustBuild()
+	a := New().NewID().
+		Project(pid).
+		CreatedByUser(uid).
+		Size(1000).
+		Thread(NewThreadID().Ref()).
+		NewUUID().
+		MustBuild()
 
 	assert.Equal(t, Map{
 		a.ID(): a,
@@ -56,8 +68,20 @@ func TestList_Map(t *testing.T) {
 func TestList_IDs(t *testing.T) {
 	pid := NewProjectID()
 	uid := accountdomain.NewUserID()
-	a1 := New().NewID().Project(pid).CreatedByUser(uid).Size(1000).Thread(NewThreadID().Ref()).NewUUID().MustBuild()
-	a2 := New().NewID().Project(pid).CreatedByUser(uid).Size(1000).Thread(NewThreadID().Ref()).NewUUID().MustBuild()
+	a1 := New().NewID().
+		Project(pid).
+		CreatedByUser(uid).
+		Size(1000).
+		Thread(NewThreadID().Ref()).
+		NewUUID().
+		MustBuild()
+	a2 := New().NewID().
+		Project(pid).
+		CreatedByUser(uid).
+		Size(1000).
+		Thread(NewThreadID().Ref()).
+		NewUUID().
+		MustBuild()
 	al := List{a1, a2}
 	assert.Equal(t, al.IDs(), id.AssetIDList{a1.ID(), a2.ID()})
 }

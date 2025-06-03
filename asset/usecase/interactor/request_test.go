@@ -341,7 +341,14 @@ func TestRequest_FindByProject(t *testing.T) {
 			}
 			requestUC := NewRequest(db, nil)
 
-			got, _, err := requestUC.FindByProject(ctx, tc.args.pid, tc.args.filter, nil, nil, tc.args.operator)
+			got, _, err := requestUC.FindByProject(
+				ctx,
+				tc.args.pid,
+				tc.args.filter,
+				nil,
+				nil,
+				tc.args.operator,
+			)
 			if tc.wantErr != nil {
 				assert.Equal(t, tc.wantErr, err)
 				return
@@ -359,9 +366,19 @@ func TestRequest_Approve(t *testing.T) {
 	// TODO: add error cases
 	wid := accountdomain.NewWorkspaceID()
 	prj := project.New().NewID().MustBuild()
-	s := schema.New().NewID().Workspace(accountdomain.NewWorkspaceID()).Project(prj.ID()).MustBuild()
+	s := schema.New().
+		NewID().
+		Workspace(accountdomain.NewWorkspaceID()).
+		Project(prj.ID()).
+		MustBuild()
 	m := model.New().NewID().Schema(s.ID()).RandomKey().MustBuild()
-	i := item.New().NewID().Schema(s.ID()).Model(m.ID()).Project(prj.ID()).Thread(id.NewThreadID().Ref()).MustBuild()
+	i := item.New().
+		NewID().
+		Schema(s.ID()).
+		Model(m.ID()).
+		Project(prj.ID()).
+		Thread(id.NewThreadID().Ref()).
+		MustBuild()
 	u := user.New().Name("aaa").NewID().Email("aaa@bbb.com").Workspace(wid).MustBuild()
 
 	ctx := context.Background()
@@ -408,6 +425,12 @@ func TestRequest_Approve(t *testing.T) {
 	itemUC := NewItem(db, nil)
 	itm, err := itemUC.FindByID(ctx, i.ID(), op)
 	assert.NoError(t, err)
-	expected := version.MustBeValue(itm.Version(), nil, version.NewRefs(version.Public, version.Latest), now, i)
+	expected := version.MustBeValue(
+		itm.Version(),
+		nil,
+		version.NewRefs(version.Public, version.Latest),
+		now,
+		i,
+	)
 	assert.Equal(t, expected, itm)
 }

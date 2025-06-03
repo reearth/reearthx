@@ -28,22 +28,36 @@ func NewIntegration(client *mongox.Client) repo.Integration {
 }
 
 func (r *Integration) Init() error {
-	return createIndexes(context.Background(), r.client, integrationIndexes, integrationUniqueIndexes)
+	return createIndexes(
+		context.Background(),
+		r.client,
+		integrationIndexes,
+		integrationUniqueIndexes,
+	)
 }
 
-func (r *Integration) FindByID(ctx context.Context, integrationID id.IntegrationID) (*integration.Integration, error) {
+func (r *Integration) FindByID(
+	ctx context.Context,
+	integrationID id.IntegrationID,
+) (*integration.Integration, error) {
 	return r.findOne(ctx, bson.M{
 		"id": integrationID.String(),
 	})
 }
 
-func (r *Integration) FindByToken(ctx context.Context, token string) (*integration.Integration, error) {
+func (r *Integration) FindByToken(
+	ctx context.Context,
+	token string,
+) (*integration.Integration, error) {
 	return r.findOne(ctx, bson.M{
 		"token": token,
 	})
 }
 
-func (r *Integration) FindByIDs(ctx context.Context, ids id.IntegrationIDList) (integration.List, error) {
+func (r *Integration) FindByIDs(
+	ctx context.Context,
+	ids id.IntegrationIDList,
+) (integration.List, error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
@@ -69,7 +83,10 @@ func (r *Integration) FindByIDs(ctx context.Context, ids id.IntegrationIDList) (
 	}), nil
 }
 
-func (r *Integration) FindByUser(ctx context.Context, userID accountdomain.UserID) (integration.List, error) {
+func (r *Integration) FindByUser(
+	ctx context.Context,
+	userID accountdomain.UserID,
+) (integration.List, error) {
 	return r.find(ctx, bson.M{
 		"developer": userID.String(),
 	})

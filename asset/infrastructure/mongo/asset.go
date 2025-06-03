@@ -107,7 +107,11 @@ func (r *Asset) FindByIDs(ctx context.Context, ids id.AssetIDList) (asset.List, 
 	return filterAssets(ids, res), nil
 }
 
-func (r *Asset) Search(ctx context.Context, pID id.ProjectID, filter repo.AssetFilter) (asset.List, *usecasex.PageInfo, error) {
+func (r *Asset) Search(
+	ctx context.Context,
+	pID id.ProjectID,
+	filter repo.AssetFilter,
+) (asset.List, *usecasex.PageInfo, error) {
 	if !r.projectFilter.CanRead(pID) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -118,7 +122,10 @@ func (r *Asset) Search(ctx context.Context, pID id.ProjectID, filter repo.AssetF
 
 	if filter.Keyword != nil && *filter.Keyword != "" {
 		filters["filename"] = bson.M{
-			"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword)), Options: "i"},
+			"$regex": primitive.Regex{
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*filter.Keyword)),
+				Options: "i",
+			},
 		}
 	}
 
@@ -175,9 +182,21 @@ func (r *Asset) BatchDelete(ctx context.Context, ids id.AssetIDList) error {
 	return r.client.RemoveAll(ctx, r.writeFilter(filter))
 }
 
-func (r *Asset) paginate(ctx context.Context, filter any, sort *usecasex.Sort, pagination *usecasex.Pagination) ([]*asset.Asset, *usecasex.PageInfo, error) {
+func (r *Asset) paginate(
+	ctx context.Context,
+	filter any,
+	sort *usecasex.Sort,
+	pagination *usecasex.Pagination,
+) ([]*asset.Asset, *usecasex.PageInfo, error) {
 	c := mongodoc.NewAssetConsumer()
-	pageInfo, err := r.client.Paginate(ctx, r.readFilter(filter), sort, pagination, c, options.Find().SetProjection(bson.M{"file": 0}))
+	pageInfo, err := r.client.Paginate(
+		ctx,
+		r.readFilter(filter),
+		sort,
+		pagination,
+		c,
+		options.Find().SetProjection(bson.M{"file": 0}),
+	)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
@@ -215,7 +234,12 @@ func filterAssets(ids []id.AssetID, rows []*asset.Asset) []*asset.Asset {
 	return res
 }
 
-func (r *Asset) FindByWorkspaceProject(ctx context.Context, id accountdomain.WorkspaceID, projectId *id.ProjectID, uFilter repo.AssetFilter) ([]*asset.Asset, *usecasex.PageInfo, error) {
+func (r *Asset) FindByWorkspaceProject(
+	ctx context.Context,
+	id accountdomain.WorkspaceID,
+	projectId *id.ProjectID,
+	uFilter repo.AssetFilter,
+) ([]*asset.Asset, *usecasex.PageInfo, error) {
 	if !r.workspaceFilter.CanRead(id) {
 		return nil, usecasex.EmptyPageInfo(), nil
 	}
@@ -258,7 +282,10 @@ func (r *Asset) FindByWorkspaceProject(ctx context.Context, id accountdomain.Wor
 	return r.paginate(ctx, filter, uFilter.Sort, uFilter.Pagination)
 }
 
-func (r *Asset) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.WorkspaceID) (int64, error) {
+func (r *Asset) TotalSizeByWorkspace(
+	ctx context.Context,
+	wid accountdomain.WorkspaceID,
+) (int64, error) {
 	if !r.workspaceFilter.CanRead(wid) {
 		return 0, repo.ErrOperationDenied
 	}
@@ -288,7 +315,11 @@ func (r *Asset) TotalSizeByWorkspace(ctx context.Context, wid accountdomain.Work
 	return res.Size, nil
 }
 
-func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f gateway.File) error {
+func (r *Asset) RemoveByProjectWithFile(
+	ctx context.Context,
+	pid id.ProjectID,
+	f gateway.File,
+) error {
 	projectAssets, err := r.find(ctx, bson.M{
 		"coresupport": true,
 		"project":     pid.String(),
@@ -323,7 +354,11 @@ func (r *Asset) RemoveByProjectWithFile(ctx context.Context, pid id.ProjectID, f
 	return nil
 }
 
-func (r *Asset) FindByWorkspace(ctx context.Context, id accountdomain.WorkspaceID, uFilter repo.AssetFilter) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+func (r *Asset) FindByWorkspace(
+	ctx context.Context,
+	id accountdomain.WorkspaceID,
+	uFilter repo.AssetFilter,
+) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
 	if !r.workspaceFilter.CanRead(id) {
 		return nil, interfaces.NewPageBasedInfo(0, 1, 1), nil
 	}
@@ -334,7 +369,10 @@ func (r *Asset) FindByWorkspace(ctx context.Context, id accountdomain.WorkspaceI
 
 	if uFilter.Keyword != nil {
 		filter = mongox.And(filter, "name", bson.M{
-			"$regex": primitive.Regex{Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)), Options: "i"},
+			"$regex": primitive.Regex{
+				Pattern: fmt.Sprintf(".*%s.*", regexp.QuoteMeta(*uFilter.Keyword)),
+				Options: "i",
+			},
 		})
 	}
 
@@ -349,7 +387,12 @@ func (r *Asset) writeFilter(filter interface{}) interface{} {
 	return applyProjectFilter(filter, r.projectFilter.Writable)
 }
 
-func (r *Asset) paginate_flow(ctx context.Context, filter any, sort *asset.SortType, pagination *usecasex.Pagination) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
+func (r *Asset) paginate_flow(
+	ctx context.Context,
+	filter any,
+	sort *asset.SortType,
+	pagination *usecasex.Pagination,
+) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
 	c := mongodoc.NewAssetConsumer()
 
 	if pagination != nil && pagination.Offset != nil {

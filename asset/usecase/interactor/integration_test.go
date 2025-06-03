@@ -47,9 +47,30 @@ func testSuite() testData {
 	uri := lo.Must(url.Parse("https://sub.hugo2.com/dir?p=1#test"))
 	iId1 := id.NewIntegrationID()
 	iId2 := id.NewIntegrationID()
-	i1 := integration.New().ID(iId1).Name("i1").Developer(uId).Type(integration.TypePrivate).LogoUrl(uri).UpdatedAt(now).MustBuild()
-	i2 := integration.New().ID(iId2).Name("i2").Developer(uId).Type(integration.TypePrivate).LogoUrl(uri).UpdatedAt(now).MustBuild()
-	i3 := integration.New().ID(iId2).Name("i3").Developer(accountdomain.NewUserID()).Type(integration.TypePrivate).LogoUrl(uri).UpdatedAt(now).MustBuild()
+	i1 := integration.New().
+		ID(iId1).
+		Name("i1").
+		Developer(uId).
+		Type(integration.TypePrivate).
+		LogoUrl(uri).
+		UpdatedAt(now).
+		MustBuild()
+	i2 := integration.New().
+		ID(iId2).
+		Name("i2").
+		Developer(uId).
+		Type(integration.TypePrivate).
+		LogoUrl(uri).
+		UpdatedAt(now).
+		MustBuild()
+	i3 := integration.New().
+		ID(iId2).
+		Name("i3").
+		Developer(accountdomain.NewUserID()).
+		Type(integration.TypePrivate).
+		LogoUrl(uri).
+		UpdatedAt(now).
+		MustBuild()
 	return testData{
 		Now:  now,
 		Op:   op,
@@ -668,7 +689,13 @@ func TestIntegration_CreateWebhook(t *testing.T) {
 					Trigger: &interfaces.WebhookTriggerParam{},
 				},
 			},
-			want:    integration.NewWebhookBuilder().NewID().Name("w1").Url(ts.Uri).Active(true).Trigger(integration.WebhookTrigger{}).MustBuild(),
+			want: integration.NewWebhookBuilder().
+				NewID().
+				Name("w1").
+				Url(ts.Uri).
+				Active(true).
+				Trigger(integration.WebhookTrigger{}).
+				MustBuild(),
 			wantErr: nil,
 		},
 		{
@@ -775,7 +802,14 @@ func TestIntegration_UpdateWebhook(t *testing.T) {
 					Secret:  lo.ToPtr("secret_test"),
 				},
 			},
-			want:    integration.NewWebhookBuilder().ID(wId).Name("w1").Secret("secret_test").Url(ts.Uri).Active(true).Trigger(integration.WebhookTrigger{}).MustBuild(),
+			want: integration.NewWebhookBuilder().
+				ID(wId).
+				Name("w1").
+				Secret("secret_test").
+				Url(ts.Uri).
+				Active(true).
+				Trigger(integration.WebhookTrigger{}).
+				MustBuild(),
 			wantErr: nil,
 		},
 		{
@@ -917,7 +951,12 @@ func TestIntegration_DeleteWebhook(t *testing.T) {
 					Trigger: &interfaces.WebhookTriggerParam{},
 				},
 			},
-			want:    integration.NewWebhookBuilder().ID(wId).Name("w1").Url(ts.Uri).Active(true).MustBuild(),
+			want: integration.NewWebhookBuilder().
+				ID(wId).
+				Name("w1").
+				Url(ts.Uri).
+				Active(true).
+				MustBuild(),
 			wantErr: nil,
 		},
 		{

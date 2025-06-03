@@ -31,9 +31,15 @@ func New(r *repo.Container, g *gateway.Container,
 	config ContainerConfig,
 ) interfaces.Container {
 	return interfaces.Container{
-		Asset:             NewAsset(r, g),
-		Workspace:         accountinteractor.NewWorkspace(ar, nil),
-		User:              accountinteractor.NewMultiUser(ar, ag, config.SignupSecret, config.AuthSrvUIDomain, ar.Users),
+		Asset:     NewAsset(r, g),
+		Workspace: accountinteractor.NewWorkspace(ar, nil),
+		User: accountinteractor.NewMultiUser(
+			ar,
+			ag,
+			config.SignupSecret,
+			config.AuthSrvUIDomain,
+			ar.Users,
+		),
 		Project:           NewProject(r, g),
 		Item:              NewItem(r, g),
 		View:              NewView(r, g),
@@ -66,7 +72,12 @@ func (e *Event) EventProject() *event.Project {
 	}
 }
 
-func createEvent(ctx context.Context, r *repo.Container, g *gateway.Container, e Event) (*event.Event[any], error) {
+func createEvent(
+	ctx context.Context,
+	r *repo.Container,
+	g *gateway.Container,
+	e Event,
+) (*event.Event[any], error) {
 	evs, err := createEvents(ctx, r, g, []Event{e})
 	if err != nil {
 		return nil, err
@@ -74,10 +85,21 @@ func createEvent(ctx context.Context, r *repo.Container, g *gateway.Container, e
 	return evs[0], nil
 }
 
-func createEvents(ctx context.Context, r *repo.Container, g *gateway.Container, el []Event) (event.List, error) {
+func createEvents(
+	ctx context.Context,
+	r *repo.Container,
+	g *gateway.Container,
+	el []Event,
+) (event.List, error) {
 	evl := make(event.List, 0, len(el))
 	for _, e := range el {
-		ev, err := event.New[any]().NewID().Object(e.Object).Type(e.Type).Project(e.EventProject()).Timestamp(util.Now()).Operator(e.Operator).Build()
+		ev, err := event.New[any]().NewID().
+			Object(e.Object).
+			Type(e.Type).
+			Project(e.EventProject()).
+			Timestamp(util.Now()).
+			Operator(e.Operator).
+			Build()
 		if err != nil {
 			return nil, err
 		}
@@ -95,11 +117,23 @@ func createEvents(ctx context.Context, r *repo.Container, g *gateway.Container, 
 	return evl, nil
 }
 
-func webhook(ctx context.Context, r *repo.Container, g *gateway.Container, e Event, ev *event.Event[any]) error {
+func webhook(
+	ctx context.Context,
+	r *repo.Container,
+	g *gateway.Container,
+	e Event,
+	ev *event.Event[any],
+) error {
 	return webhooks(ctx, r, g, []Event{e}, event.List{ev})
 }
 
-func webhooks(ctx context.Context, r *repo.Container, g *gateway.Container, el []Event, evl event.List) error {
+func webhooks(
+	ctx context.Context,
+	r *repo.Container,
+	g *gateway.Container,
+	el []Event,
+	evl event.List,
+) error {
 	if g == nil || g.TaskRunner == nil {
 		log.Infof("asset: webhook was not sent because task runner is not configured")
 		return nil
@@ -112,9 +146,12 @@ func webhooks(ctx context.Context, r *repo.Container, g *gateway.Container, el [
 		return err
 	}
 
-	iIds, err := util.TryMap(ws.Members().IntegrationIDs(), func(iid workspace.IntegrationID) (id.IntegrationID, error) {
-		return id.IntegrationIDFrom(iid.String())
-	})
+	iIds, err := util.TryMap(
+		ws.Members().IntegrationIDs(),
+		func(iid workspace.IntegrationID) (id.IntegrationID, error) {
+			return id.IntegrationIDFrom(iid.String())
+		},
+	)
 	if err != nil {
 		return err
 	}

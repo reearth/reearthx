@@ -129,12 +129,38 @@ type Item interface {
 	FindByID(context.Context, id.ItemID, *usecase.Operator) (item.Versioned, error)
 	FindPublicByID(context.Context, id.ItemID, *usecase.Operator) (item.Versioned, error)
 	FindByIDs(context.Context, id.ItemIDList, *usecase.Operator) (item.VersionedList, error)
-	FindByAssets(context.Context, id.AssetIDList, *usecase.Operator) (map[id.AssetID]item.VersionedList, error)
-	FindBySchema(context.Context, id.SchemaID, *usecasex.Sort, *usecasex.Pagination, *usecase.Operator) (item.VersionedList, *usecasex.PageInfo, error)
-	FindPublicByModel(context.Context, id.ModelID, *usecasex.Pagination, *usecase.Operator) (item.VersionedList, *usecasex.PageInfo, error)
-	FindVersionByID(context.Context, id.ItemID, version.VersionOrRef, *usecase.Operator) (item.Versioned, error)
+	FindByAssets(
+		context.Context,
+		id.AssetIDList,
+		*usecase.Operator,
+	) (map[id.AssetID]item.VersionedList, error)
+	FindBySchema(
+		context.Context,
+		id.SchemaID,
+		*usecasex.Sort,
+		*usecasex.Pagination,
+		*usecase.Operator,
+	) (item.VersionedList, *usecasex.PageInfo, error)
+	FindPublicByModel(
+		context.Context,
+		id.ModelID,
+		*usecasex.Pagination,
+		*usecase.Operator,
+	) (item.VersionedList, *usecasex.PageInfo, error)
+	FindVersionByID(
+		context.Context,
+		id.ItemID,
+		version.VersionOrRef,
+		*usecase.Operator,
+	) (item.Versioned, error)
 	FindAllVersionsByID(context.Context, id.ItemID, *usecase.Operator) (item.VersionedList, error)
-	Search(context.Context, schema.Package, *item.Query, *usecasex.Pagination, *usecase.Operator) (item.VersionedList, *usecasex.PageInfo, error)
+	Search(
+		context.Context,
+		schema.Package,
+		*item.Query,
+		*usecasex.Pagination,
+		*usecase.Operator,
+	) (item.VersionedList, *usecasex.PageInfo, error)
 	ItemStatus(context.Context, id.ItemIDList, *usecase.Operator) (map[id.ItemID]item.Status, error)
 	LastModifiedByModel(context.Context, id.ModelID, *usecase.Operator) (time.Time, error)
 	IsItemReferenced(context.Context, id.ItemID, id.FieldID, *usecase.Operator) (bool, error)
@@ -144,9 +170,30 @@ type Item interface {
 	Publish(context.Context, id.ItemIDList, *usecase.Operator) (item.VersionedList, error)
 	Unpublish(context.Context, id.ItemIDList, *usecase.Operator) (item.VersionedList, error)
 	Import(context.Context, ImportItemsParam, *usecase.Operator) (ImportItemsResponse, error)
-	TriggerImportJob(context.Context, id.AssetID, id.ModelID, string, string, string, bool, *usecase.Operator) error
+	TriggerImportJob(
+		context.Context,
+		id.AssetID,
+		id.ModelID,
+		string,
+		string,
+		string,
+		bool,
+		*usecase.Operator,
+	) error
 	// ItemsAsCSV exports items data in content to csv file by schema package.
-	ItemsAsCSV(context.Context, *schema.Package, *int, *int, *usecase.Operator) (ExportItemsToCSVResponse, error)
+	ItemsAsCSV(
+		context.Context,
+		*schema.Package,
+		*int,
+		*int,
+		*usecase.Operator,
+	) (ExportItemsToCSVResponse, error)
 	// ItemsAsGeoJSON converts items to Geo JSON type given thge schema package.
-	ItemsAsGeoJSON(context.Context, *schema.Package, *int, *int, *usecase.Operator) (ExportItemsToGeoJSONResponse, error)
+	ItemsAsGeoJSON(
+		context.Context,
+		*schema.Package,
+		*int,
+		*int,
+		*usecase.Operator,
+	) (ExportItemsToGeoJSONResponse, error)
 }

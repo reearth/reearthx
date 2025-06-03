@@ -38,14 +38,21 @@ type UpdateProjectPublicationParam struct {
 
 var (
 	ErrProjectAliasIsNotSet    error = rerror.NewE(i18n.T("project alias is not set"))
-	ErrProjectAliasAlreadyUsed error = rerror.NewE(i18n.T("project alias is already used by another project"))
-	ErrInvalidProject                = rerror.NewE(i18n.T("invalid project"))
+	ErrProjectAliasAlreadyUsed error = rerror.NewE(
+		i18n.T("project alias is already used by another project"),
+	)
+	ErrInvalidProject = rerror.NewE(i18n.T("invalid project"))
 )
 
 type Project interface {
 	Fetch(context.Context, []id.ProjectID, *usecase.Operator) (project.List, error)
 	FindByIDOrAlias(context.Context, project.IDOrAlias, *usecase.Operator) (*project.Project, error)
-	FindByWorkspace(context.Context, accountdomain.WorkspaceID, *usecasex.Pagination, *usecase.Operator) (project.List, *usecasex.PageInfo, error)
+	FindByWorkspace(
+		context.Context,
+		accountdomain.WorkspaceID,
+		*usecasex.Pagination,
+		*usecase.Operator,
+	) (project.List, *usecasex.PageInfo, error)
 	Create(context.Context, CreateProjectParam, *usecase.Operator) (*project.Project, error)
 	Update(context.Context, UpdateProjectParam, *usecase.Operator) (*project.Project, error)
 	CheckAlias(context.Context, string) (bool, error)

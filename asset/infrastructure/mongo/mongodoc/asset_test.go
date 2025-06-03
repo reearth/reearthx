@@ -37,7 +37,15 @@ func TestAssetDocument_Model(t *testing.T) {
 				Thread:                  tId.StringRef(),
 				ArchiveExtractionStatus: "",
 			},
-			want:    asset.New().ID(aId).Project(pId).CreatedByUser(uId).CreatedAt(now).Thread(tId.Ref()).UUID(uuId.String()).Size(123).MustBuild(),
+			want: asset.New().
+				ID(aId).
+				Project(pId).
+				CreatedByUser(uId).
+				CreatedAt(now).
+				Thread(tId.Ref()).
+				UUID(uuId.String()).
+				Size(123).
+				MustBuild(),
 			wantErr: false,
 		},
 	}
@@ -68,7 +76,16 @@ func TestNewAsset(t *testing.T) {
 	}{
 		{
 			name: "new",
-			a:    asset.New().ID(aId).Project(pId).CreatedByUser(uId).CreatedAt(now).Thread(tId.Ref()).UUID(uuId.String()).Size(123).Public(true).MustBuild(),
+			a: asset.New().
+				ID(aId).
+				Project(pId).
+				CreatedByUser(uId).
+				CreatedAt(now).
+				Thread(tId.Ref()).
+				UUID(uuId.String()).
+				Size(123).
+				Public(true).
+				MustBuild(),
 			want: &AssetDocument{
 				ID:                      aId.String(),
 				Project:                 pId.String(),

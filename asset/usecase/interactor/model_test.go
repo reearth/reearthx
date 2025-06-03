@@ -140,7 +140,12 @@ func TestModel_CheckKey(t *testing.T) {
 			name: "with different key",
 			seeds: seeds{
 				model: []*model.Model{
-					model.New().NewID().Key(id.RandomKey()).Project(pId).Schema(id.NewSchemaID()).MustBuild(),
+					model.New().
+						NewID().
+						Key(id.RandomKey()).
+						Project(pId).
+						Schema(id.NewSchemaID()).
+						MustBuild(),
 				},
 			},
 			args: args{
@@ -155,7 +160,12 @@ func TestModel_CheckKey(t *testing.T) {
 			name: "with same key",
 			seeds: seeds{
 				model: []*model.Model{
-					model.New().NewID().Key(id.NewKey("test123")).Project(pId).Schema(id.NewSchemaID()).MustBuild(),
+					model.New().
+						NewID().
+						Key(id.NewKey("test123")).
+						Project(pId).
+						Schema(id.NewSchemaID()).
+						MustBuild(),
 				},
 			},
 			args: args{
@@ -170,7 +180,12 @@ func TestModel_CheckKey(t *testing.T) {
 			name: "with same key different project",
 			seeds: seeds{
 				model: []*model.Model{
-					model.New().NewID().Key(id.NewKey("test123")).Project(pId).Schema(id.NewSchemaID()).MustBuild(),
+					model.New().
+						NewID().
+						Key(id.NewKey("test123")).
+						Project(pId).
+						Schema(id.NewSchemaID()).
+						MustBuild(),
 				},
 			},
 			args: args{
@@ -628,12 +643,28 @@ func TestModel_Copy(t *testing.T) {
 	fId1 := id.NewFieldID()
 	sfKey1 := id.RandomKey()
 	sf1 := schema.NewField(schema.NewBool().TypeProperty()).ID(fId1).Key(sfKey1).MustBuild()
-	s1 := schema.New().NewID().Workspace(wid).Project(p.ID()).Fields([]*schema.Field{sf1}).MustBuild()
+	s1 := schema.New().
+		NewID().
+		Workspace(wid).
+		Project(p.ID()).
+		Fields([]*schema.Field{sf1}).
+		MustBuild()
 	fId2 := id.NewFieldID()
 	sfKey2 := id.RandomKey()
 	sf2 := schema.NewField(schema.NewBool().TypeProperty()).ID(fId2).Key(sfKey2).MustBuild()
-	s2 := schema.New().NewID().Workspace(wid).Project(p.ID()).Fields([]*schema.Field{sf2}).MustBuild()
-	m := model.New().NewID().Key(id.RandomKey()).Project(p.ID()).Schema(s1.ID()).Metadata(s2.ID().Ref()).MustBuild()
+	s2 := schema.New().
+		NewID().
+		Workspace(wid).
+		Project(p.ID()).
+		Fields([]*schema.Field{sf2}).
+		MustBuild()
+	m := model.New().
+		NewID().
+		Key(id.RandomKey()).
+		Project(p.ID()).
+		Schema(s1.ID()).
+		Metadata(s2.ID().Ref()).
+		MustBuild()
 
 	ctx := context.Background()
 	db := memory.New()
@@ -701,7 +732,10 @@ func TestModel_Copy(t *testing.T) {
 				Name:    lo.ToPtr("Copied Model"),
 			},
 			setupMock: func() {
-				mRunner.EXPECT().Run(ctx, gomock.Any()).Times(1).Return(errors.New("task runner error"))
+				mRunner.EXPECT().
+					Run(ctx, gomock.Any()).
+					Times(1).
+					Return(errors.New("task runner error"))
 			},
 			wantErr: true,
 			validate: func(t *testing.T, got *model.Model) {
