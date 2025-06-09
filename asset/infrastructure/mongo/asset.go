@@ -155,9 +155,9 @@ func (r *Asset) Save(ctx context.Context, asset *asset.Asset) error {
 		return repo.ErrOperationDenied
 	}
 
-	doc, id := mongodoc.NewAsset(asset)
+	doc, i := mongodoc.NewAsset(asset)
 	_, err := r.client.Client().UpdateOne(ctx, bson.M{
-		"id": id,
+		"id": i,
 	}, bson.M{
 		"$set": doc,
 	}, options.Update().SetUpsert(true))
@@ -221,10 +221,10 @@ func (r *Asset) findOne(ctx context.Context, filter interface{}) (*asset.Asset, 
 
 func filterAssets(ids []id.AssetID, rows []*asset.Asset) []*asset.Asset {
 	res := make([]*asset.Asset, 0, len(ids))
-	for _, id := range ids {
+	for _, i := range ids {
 		var r2 *asset.Asset
 		for _, r := range rows {
-			if r.ID() == id {
+			if r.ID() == i {
 				r2 = r
 				break
 			}
@@ -376,7 +376,7 @@ func (r *Asset) FindByWorkspace(
 		})
 	}
 
-	return r.paginate_flow(ctx, filter, uFilter.SortType, uFilter.Pagination)
+	return r.paginateFlow(ctx, filter, uFilter.SortType, uFilter.Pagination)
 }
 
 func (r *Asset) readFilter(filter interface{}) interface{} {
@@ -387,7 +387,7 @@ func (r *Asset) writeFilter(filter interface{}) interface{} {
 	return applyProjectFilter(filter, r.projectFilter.Writable)
 }
 
-func (r *Asset) paginate_flow(
+func (r *Asset) paginateFlow(
 	ctx context.Context,
 	filter any,
 	sort *asset.SortType,

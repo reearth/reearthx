@@ -19,10 +19,10 @@ type Asset struct {
 	accessInfoResolver      *AccessInfoResolver
 	fileName                string
 	uuid                    string
-	url                     string
-	contentType             string // flow
+	url                     string // viz
+	contentType             string // flow & viz
 	name                    string // flow
-	size                    uint64
+	size                    uint64 // viz
 	id                      ID
 	project                 ProjectID
 	workspace               accountdomain.WorkspaceID

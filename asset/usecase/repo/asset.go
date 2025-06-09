@@ -32,13 +32,13 @@ type Asset interface {
 	BatchDelete(context.Context, id.AssetIDList) error
 
 	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error)
-	RemoveByProjectWithFile(context.Context, id.ProjectID, gateway.File) error
+	RemoveByProjectWithFile(context.Context, id.ProjectID, gateway.File) error // viz
 	FindByWorkspaceProject(
 		context.Context,
 		accountdomain.WorkspaceID,
 		*id.ProjectID,
 		AssetFilter,
-	) ([]*asset.Asset, *usecasex.PageInfo, error)
+	) ([]*asset.Asset, *usecasex.PageInfo, error) // viz
 	FindByWorkspace(
 		context.Context,
 		accountdomain.WorkspaceID,
@@ -46,6 +46,7 @@ type Asset interface {
 	) ([]*asset.Asset, *interfaces.PageBasedInfo, error) // flow
 }
 
+// cms
 type AssetFile interface {
 	FindByID(context.Context, id.AssetID) (*asset.File, error)
 	FindByIDs(context.Context, id.AssetIDList) (map[id.AssetID]*asset.File, error)
