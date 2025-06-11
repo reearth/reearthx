@@ -39,6 +39,8 @@ var (
 	assetUniqueIndexes = []string{"id", "uuid"}
 )
 
+var _ repo.Asset = &Asset{}
+
 type Asset struct {
 	hostAdapter     HostAdapter
 	client          *mongox.Collection

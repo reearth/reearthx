@@ -8,7 +8,9 @@ import (
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/integration"
 	"github.com/reearth/reearthx/asset/domain/operator"
+	"github.com/reearth/reearthx/asset/domain/policy"
 	"github.com/reearth/reearthx/asset/domain/project"
+	"github.com/reearth/reearthx/util"
 )
 
 type Operator struct {
@@ -20,6 +22,8 @@ type Operator struct {
 	WritableProjects     project.IDList
 	OwningProjects       project.IDList
 	MaintainableProjects project.IDList
+
+	DefaultPolicy *policy.ID
 
 	Machine bool
 }
@@ -182,4 +186,14 @@ func (o *Operator) RoleByProject(pid id.ProjectID) workspace.Role {
 		return workspace.RoleReader
 	}
 	return ""
+}
+
+func (o *Operator) Policy(p *policy.ID) *policy.ID {
+	if p == nil && o.DefaultPolicy != nil && *o.DefaultPolicy != "" {
+		return util.CloneRef(o.DefaultPolicy)
+	}
+	if p != nil && *p == "" {
+		return nil
+	}
+	return p
 }

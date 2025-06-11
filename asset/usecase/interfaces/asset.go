@@ -24,6 +24,8 @@ type AssetFilterType string
 type CreateAssetParam struct {
 	File              *file.File
 	Token             string
+	CoreSupport       bool
+	WorkspaceID       accountdomain.WorkspaceID // viz
 	ProjectID         idx.ID[id.Project]
 	SkipDecompression bool
 }
@@ -99,6 +101,7 @@ type Asset interface {
 		*usecase.Operator,
 	) (io.ReadCloser, map[string]string, error)
 	Create(context.Context, CreateAssetParam, *usecase.Operator) (*asset.Asset, *asset.File, error)
+	CreateWithWorkspace(context.Context, CreateAssetParam, *usecase.Operator) (*asset.Asset, *asset.File, error)
 	Update(context.Context, UpdateAssetParam, *usecase.Operator) (*asset.Asset, error)
 	UpdateFiles(
 		context.Context,
@@ -128,7 +131,7 @@ type Asset interface {
 		map[string]*zip.File,
 		*[]byte,
 		*project.Project,
-	) (*[]byte, error)
+	) (*[]byte, error) // viz
 
 	FindByWorkspace(
 		context.Context,

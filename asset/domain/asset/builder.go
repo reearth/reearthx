@@ -115,6 +115,11 @@ func (b *Builder) Size(size uint64) *Builder {
 	return b
 }
 
+func (b *Builder) URL(url string) *Builder {
+	b.a.url = url
+	return b
+}
+
 func (b *Builder) Type(t *PreviewType) *Builder {
 	b.a.previewType = t
 	return b

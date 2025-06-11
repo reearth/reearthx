@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9ea77200-abc8-4d9a-b57a-952c6c32850f" name="Changes" comment="feat(asset): enhance asset management with workspace filtering and import functionality">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asset/infrastructure/mongo/asset.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/infrastructure/mongo/asset.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asset/usecase/interactor/asset.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/usecase/interactor/asset.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asset/usecase/interfaces/asset.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/usecase/interfaces/asset.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/asset/usecase/operator.go" beforeDir="false" afterPath="$PROJECT_DIR$/asset/usecase/operator.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -201,8 +204,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-3b128438d3f6-4b567d62c776-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.25410.140" />
-        <option value="bundled-js-predefined-d6986cc7102b-6a121458b545-JavaScript-GO-251.25410.140" />
+        <option value="bundled-gosdk-3b128438d3f6-4b567d62c776-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.26094.127" />
+        <option value="bundled-js-predefined-d6986cc7102b-b26f3e71634d-JavaScript-GO-251.26094.127" />
       </set>
     </attachedChunks>
   </component>

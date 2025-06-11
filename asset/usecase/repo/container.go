@@ -28,6 +28,7 @@ type Container struct {
 	Event             Event
 	Request           Request
 	Group             Group
+	Policy            Policy
 	WorkspaceSettings WorkspaceSettings
 	Transaction       usecasex.Transaction
 }

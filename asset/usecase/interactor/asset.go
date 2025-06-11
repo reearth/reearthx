@@ -341,6 +341,73 @@ func (i *Asset) Create(
 	return a, f, nil
 }
 
+func (i *Asset) CreateWithWorkspace(ctx context.Context, inp interfaces.CreateAssetParam, operator *usecase.Operator) (result *asset.Asset, afile *asset.File, err error) {
+	if inp.File == nil {
+		return nil, nil, interfaces.ErrFileNotIncluded
+	}
+
+	ws, err := i.repos.Workspace.FindByID(ctx, inp.WorkspaceID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !operator.IsWritableWorkspace(ws.ID()) {
+		return nil, nil, interfaces.ErrOperationDenied
+	}
+
+	uploadURL, size, err := i.gateways.File.UploadAsset(ctx, inp.File)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// enforce policy
+	if policyID := operator.Policy(ws.Policy()); policyID != nil {
+		p, err := i.repos.Policy.FindByID(ctx, *policyID)
+		if err != nil {
+			return nil, nil, err
+		}
+		s, err := i.repos.Asset.TotalSizeByWorkspace(ctx, ws.ID())
+		if err != nil {
+			return nil, nil, err
+		}
+		if err := p.EnforceAssetStorageSize(s + size); err != nil {
+			if parsedURL, parseErr := url.Parse(uploadURL); parseErr == nil {
+				_ = i.gateways.File.RemoveAsset(ctx, parsedURL)
+			}
+			return nil, nil, err
+		}
+	}
+
+	a, err := asset.New().
+		NewID().
+		Workspace(inp.WorkspaceID).
+		Project(inp.ProjectID).
+		Name(path.Base(inp.File.Path)).
+		Size(uint64(size)).
+		URL(uploadURL).
+		CoreSupport(inp.CoreSupport).
+		CreatedByUser(*operator.AcOperator.User).
+		Build()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	f := asset.NewFile().
+		Name(inp.File.Name).
+		Path(inp.File.Name).
+		Size(uint64(inp.File.Size)).
+		ContentType(inp.File.ContentType).
+		GuessContentTypeIfEmpty().
+		ContentEncoding(inp.File.ContentEncoding).
+		Build()
+
+	if err := i.repos.Asset.Save(ctx, a); err != nil {
+		return nil, nil, err
+	}
+
+	return a, f, nil
+}
+
 func (i *Asset) Decompress(
 	ctx context.Context,
 	aId id.AssetID,
