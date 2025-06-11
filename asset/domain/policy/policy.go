@@ -16,8 +16,6 @@ type Policy struct {
 }
 
 type Option struct {
-	ID                    ID
-	Name                  string
 	ProjectCount          *int
 	MemberCount           *int
 	PublishedProjectCount *int
@@ -28,6 +26,8 @@ type Option struct {
 	NLSLayersCount        *int
 	PageCount             *int
 	BlocksCount           *int
+	ID                    ID
+	Name                  string
 }
 
 func New(opts Option) *Policy {

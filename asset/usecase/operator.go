@@ -16,14 +16,15 @@ import (
 type Operator struct {
 	Integration *integration.ID
 
-	AcOperator           *accountusecase.Operator
+	AcOperator *accountusecase.Operator
+
+	DefaultPolicy *policy.ID
+
 	Lang                 string
 	ReadableProjects     project.IDList
 	WritableProjects     project.IDList
 	OwningProjects       project.IDList
 	MaintainableProjects project.IDList
-
-	DefaultPolicy *policy.ID
 
 	Machine bool
 }
