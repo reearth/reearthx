@@ -39,13 +39,13 @@ func TestCommon_createEvent(t *testing.T) {
 	wh := integration.NewWebhookBuilder().NewID().Name("aaa").
 		Url(lo.Must(url.Parse("https://example.com"))).Active(true).
 		Trigger(integration.WebhookTrigger{event.AssetCreate: true}).MustBuild()
-	integration := integration.New().
+	integrationInstance := integration.New().
 		NewID().
 		Developer(uID).
 		Name("xxx").
 		Webhook([]*integration.Webhook{wh}).
 		MustBuild()
-	iid, err := accountdomain.IntegrationIDFrom(integration.ID().String())
+	iid, err := accountdomain.IntegrationIDFrom(integrationInstance.ID().String())
 	assert.NoError(t, err)
 	lo.Must0(ws.Members().AddIntegration(iid, workspace.RoleOwner, uID))
 
@@ -59,12 +59,12 @@ func TestCommon_createEvent(t *testing.T) {
 
 	ctx := context.Background()
 	lo.Must0(db.Workspace.Save(ctx, ws))
-	lo.Must0(db.Integration.Save(ctx, integration))
+	lo.Must0(db.Integration.Save(ctx, integrationInstance))
 	mRunner.EXPECT().Run(ctx, gomock.Any()).Times(1).Return(nil)
 
 	ev, err := createEvent(ctx, db, gw, Event{
 		Workspace: ws.ID(),
-		Type:      event.Type(event.AssetCreate),
+		Type:      event.AssetCreate,
 		Object:    a,
 		Operator:  operator.OperatorFromUser(uID),
 	})
@@ -79,7 +79,7 @@ func TestCommon_createEvent(t *testing.T) {
 
 	ev, err = createEvent(ctx, db, gw, Event{
 		Workspace: ws.ID(),
-		Type:      event.Type(event.AssetCreate),
+		Type:      event.AssetCreate,
 		Object:    a,
 		Operator:  operator.Operator{},
 	})
@@ -97,9 +97,9 @@ func TestCommon_webhook(t *testing.T) {
 	wh := integration.NewWebhookBuilder().NewID().Name("aaa").
 		Url(lo.Must(url.Parse("https://example.com"))).Active(true).
 		Trigger(integration.WebhookTrigger{event.AssetCreate: true}).MustBuild()
-	integration := integration.New().NewID().Developer(uID).Name("xxx").
+	integrationInstance := integration.New().NewID().Developer(uID).Name("xxx").
 		Webhook([]*integration.Webhook{wh}).MustBuild()
-	iid, err := accountdomain.IntegrationIDFrom(integration.ID().String())
+	iid, err := accountdomain.IntegrationIDFrom(integrationInstance.ID().String())
 	assert.NoError(t, err)
 	lo.Must0(ws.Members().AddIntegration(iid, workspace.RoleOwner, uID))
 	ev := event.New[any]().NewID().Timestamp(now).Type(event.AssetCreate).
@@ -127,7 +127,7 @@ func TestCommon_webhook(t *testing.T) {
 	err = webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
 	assert.NoError(t, err)
 
-	lo.Must0(db.Integration.Save(ctx, integration))
+	lo.Must0(db.Integration.Save(ctx, integrationInstance))
 	mRunner.EXPECT().Run(ctx, task.WebhookPayload{
 		Webhook: wh,
 		Event:   ev,
