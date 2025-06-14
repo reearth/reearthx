@@ -990,72 +990,79 @@ func (i *Asset) ImportAssetFiles(
 			continue
 		}
 		realName := assetNames[beforeName]
-		readCloser, err := zipFile.Open()
-		if err != nil {
-			return nil, err
-		}
 
-		defer func() {
-			if cerr := readCloser.Close(); cerr != nil {
-				fmt.Printf("Error closing file: %v\n", cerr)
+		if err := func() error {
+			readCloser, err := zipFile.Open()
+			if err != nil {
+				return err
 			}
-		}()
 
-		file := &file.File{
-			Content:     readCloser,
-			Path:        realName,
-			Size:        int64(zipFile.UncompressedSize64),
-			ContentType: http.DetectContentType([]byte(zipFile.Name)),
-		}
-
-		uploadURL, size, err := i.gateways.File.UploadAsset(ctx, file)
-		if err != nil {
-			return nil, err
-		}
-
-		// Project logo update will be at this time
-		if newProject.ImageURL() != nil {
-			if path.Base(newProject.ImageURL().Path) == beforeName {
-				parsedURL, err := url.Parse(uploadURL)
-				if err != nil {
-					return nil, err
+			defer func() {
+				if err := readCloser.Close(); err != nil {
+					fmt.Printf("Error closing fileToUpload: %v\n", err)
 				}
-				newProject.SetImageURL(parsedURL)
-				err = i.repos.Project.Save(ctx, newProject)
-				if err != nil {
-					return nil, err
+			}()
+
+			fileToUpload := &file.File{
+				Content:     readCloser,
+				Path:        realName,
+				Size:        int64(zipFile.UncompressedSize64),
+				ContentType: http.DetectContentType([]byte(zipFile.Name)),
+			}
+
+			uploadURL, size, err := i.gateways.File.UploadAsset(ctx, fileToUpload)
+			if err != nil {
+				return err
+			}
+
+			// Project logo update will be at this time
+			if newProject.ImageURL() != nil {
+				if path.Base(newProject.ImageURL().Path) == beforeName {
+					parsedURL, err := url.Parse(uploadURL)
+					if err != nil {
+						return err
+					}
+					newProject.SetImageURL(parsedURL)
+					err = i.repos.Project.Save(ctx, newProject)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
 
-		systemUserID := accountdomain.NewUserID()
+			systemUserID := accountdomain.NewUserID()
 
-		a, err := asset.New().
-			NewID().
-			Project(newProject.ID()).
-			Workspace(newProject.Workspace()).
-			Name(path.Base(realName)).
-			Size(uint64(size)).
-			UUID(uploadURL).
-			CreatedByUser(systemUserID).
-			Build()
-		if err != nil {
+			a, err := asset.New().
+				NewID().
+				Project(newProject.ID()).
+				Workspace(newProject.Workspace()).
+				Name(path.Base(realName)).
+				Size(uint64(size)).
+				UUID(uploadURL).
+				CreatedByUser(systemUserID).
+				Build()
+			if err != nil {
+				return err
+			}
+
+			if err := i.repos.Asset.Save(ctx, a); err != nil {
+				return err
+			}
+
+			parsedURL, err := url.Parse(uploadURL)
+			if err != nil {
+				return err
+			}
+			afterName := path.Base(parsedURL.Path)
+
+			beforeUrl := fmt.Sprintf("%s/assets/%s", currentHost, beforeName)
+			afterUrl := fmt.Sprintf("%s/assets/%s", currentHost, afterName)
+			*data = bytes.ReplaceAll(*data, []byte(beforeUrl), []byte(afterUrl))
+
+			return nil
+		}(); err != nil {
 			return nil, err
 		}
-
-		if err := i.repos.Asset.Save(ctx, a); err != nil {
-			return nil, err
-		}
-
-		parsedURL, err := url.Parse(uploadURL)
-		if err != nil {
-			return nil, err
-		}
-		afterName := path.Base(parsedURL.Path)
-
-		beforeUrl := fmt.Sprintf("%s/assets/%s", currentHost, beforeName)
-		afterUrl := fmt.Sprintf("%s/assets/%s", currentHost, afterName)
-		*data = bytes.ReplaceAll(*data, []byte(beforeUrl), []byte(afterUrl))
 	}
 
 	return data, nil
