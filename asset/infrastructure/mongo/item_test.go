@@ -270,11 +270,8 @@ func TestItem_FindByIDs(t *testing.T) {
 
 			repo := NewItem(client)
 			ctx := context.Background()
-			// @TODO create SaveAll func
-			for _, i := range tc.RepoData {
-				err := repo.Save(ctx, i)
-				assert.NoError(tt, err)
-			}
+			err := repo.SaveAll(ctx, tc.RepoData)
+			assert.NoError(tt, err)
 
 			got, _ := repo.FindByIDs(ctx, tc.Input, nil)
 			assert.Equal(tt, tc.Expected, got.Unwrap())

@@ -363,7 +363,6 @@ func TestRequest_Approve(t *testing.T) {
 	now := util.Now()
 	defer util.MockNow(now)()
 
-	// TODO: add error cases
 	wid := accountdomain.NewWorkspaceID()
 	prj := project.New().NewID().MustBuild()
 	s := schema.New().
@@ -381,56 +380,112 @@ func TestRequest_Approve(t *testing.T) {
 		MustBuild()
 	u := user.New().Name("aaa").NewID().Email("aaa@bbb.com").Workspace(wid).MustBuild()
 
-	ctx := context.Background()
-	db := memory.New()
-	// if tc.mockRequestErr {
-	//	memory.SetRequestError(db.Request, tc.wantErr)
-	// }
-	err := db.Project.Save(ctx, prj)
-	assert.NoError(t, err)
-	err = db.Schema.Save(ctx, s)
-	assert.NoError(t, err)
-	err = db.Model.Save(ctx, m)
-	assert.NoError(t, err)
-	err = db.Item.Save(ctx, i)
-	assert.NoError(t, err)
-
-	vi, err := db.Item.FindByID(ctx, i.ID(), nil)
-	assert.NoError(t, err)
-	ri, _ := request.NewItem(i.ID(), lo.ToPtr(vi.Version().String()))
-	req1 := request.New().
-		NewID().
-		Workspace(wid).
-		Project(prj.ID()).
-		Reviewers(accountdomain.UserIDList{u.ID()}).
-		CreatedBy(accountdomain.NewUserID()).
-		Thread(id.NewThreadID().Ref()).
-		Items(request.ItemList{ri}).
-		Title("foo").
-		MustBuild()
-	op := &usecase.Operator{
-		AcOperator: &accountusecase.Operator{
-			User:             lo.ToPtr(u.ID()),
-			OwningWorkspaces: accountdomain.WorkspaceIDList{wid},
+	tests := []struct {
+		name           string
+		mockRequestErr bool
+		mockItemErr    bool
+		wantErr        error
+		setupData      bool
+		operator       *usecase.Operator
+	}{
+		{
+			name:      "successful approval",
+			setupData: true,
+			operator: &usecase.Operator{
+				AcOperator: &accountusecase.Operator{
+					User:             lo.ToPtr(u.ID()),
+					OwningWorkspaces: accountdomain.WorkspaceIDList{wid},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:           "request not found",
+			setupData:      false,
+			mockRequestErr: true,
+			operator: &usecase.Operator{
+				AcOperator: &accountusecase.Operator{
+					User:             lo.ToPtr(u.ID()),
+					OwningWorkspaces: accountdomain.WorkspaceIDList{wid},
+				},
+			},
+			wantErr: rerror.ErrNotFound,
+		},
+		{
+			name:      "unauthorized user",
+			setupData: true,
+			operator: &usecase.Operator{
+				AcOperator: &accountusecase.Operator{
+					User:             lo.ToPtr(accountdomain.NewUserID()),
+					OwningWorkspaces: accountdomain.WorkspaceIDList{},
+				},
+			},
+			wantErr: interfaces.ErrInvalidOperator,
 		},
 	}
 
-	err = db.Request.Save(ctx, req1)
-	assert.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			db := memory.New()
 
-	requestUC := NewRequest(db, nil)
-	_, err = requestUC.Approve(ctx, req1.ID(), op)
-	assert.NoError(t, err)
+			if tt.mockRequestErr && !tt.setupData {
+				memory.SetRequestError(db.Request, tt.wantErr)
+			}
 
-	itemUC := NewItem(db, nil)
-	itm, err := itemUC.FindByID(ctx, i.ID(), op)
-	assert.NoError(t, err)
-	expected := version.MustBeValue(
-		itm.Version(),
-		nil,
-		version.NewRefs(version.Public, version.Latest),
-		now,
-		i,
-	)
-	assert.Equal(t, expected, itm)
+			if tt.setupData {
+				err := db.Project.Save(ctx, prj)
+				assert.NoError(t, err)
+				err = db.Schema.Save(ctx, s)
+				assert.NoError(t, err)
+				err = db.Model.Save(ctx, m)
+				assert.NoError(t, err)
+				err = db.Item.Save(ctx, i)
+				assert.NoError(t, err)
+
+				vi, err := db.Item.FindByID(ctx, i.ID(), nil)
+				assert.NoError(t, err)
+				ri, _ := request.NewItem(i.ID(), lo.ToPtr(vi.Version().String()))
+				req1 := request.New().
+					NewID().
+					Workspace(wid).
+					Project(prj.ID()).
+					Reviewers(accountdomain.UserIDList{u.ID()}).
+					CreatedBy(accountdomain.NewUserID()).
+					Thread(id.NewThreadID().Ref()).
+					Items(request.ItemList{ri}).
+					Title("foo").
+					MustBuild()
+
+				err = db.Request.Save(ctx, req1)
+				assert.NoError(t, err)
+
+				requestUC := NewRequest(db, nil)
+				_, err = requestUC.Approve(ctx, req1.ID(), tt.operator)
+
+				if tt.wantErr != nil {
+					assert.ErrorIs(t, err, tt.wantErr)
+					return
+				}
+
+				assert.NoError(t, err)
+
+				itemUC := NewItem(db, nil)
+				itm, err := itemUC.FindByID(ctx, i.ID(), tt.operator)
+				assert.NoError(t, err)
+				expected := version.MustBeValue(
+					itm.Version(),
+					nil,
+					version.NewRefs(version.Public, version.Latest),
+					now,
+					i,
+				)
+				assert.Equal(t, expected, itm)
+			} else {
+				requestUC := NewRequest(db, nil)
+				_, err := requestUC.Approve(ctx, id.NewRequestID(), tt.operator)
+				assert.ErrorIs(t, err, tt.wantErr)
+			}
+		})
+	}
 }
