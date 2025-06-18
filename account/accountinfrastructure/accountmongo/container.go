@@ -55,6 +55,8 @@ func Init(r *accountrepo.Container) error {
 	return util.Try(
 		r.Workspace.(*Workspace).Init,
 		r.User.(*User).Init,
+		r.Role.(*Role).Init,
+		r.Permittable.(*Permittable).Init,
 	)
 }
 
