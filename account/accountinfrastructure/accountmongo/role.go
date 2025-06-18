@@ -28,8 +28,8 @@ func NewRole(client *mongox.Client) accountrepo.Role {
 	}
 }
 
-func (r *Role) Init(ctx context.Context) error {
-	return createIndexes(ctx, r.client, roleIndexes, roleUniqueIndexes)
+func (r *Role) Init() error {
+	return createIndexes(context.Background(), r.client, roleIndexes, roleUniqueIndexes)
 }
 
 func (r *Role) FindAll(ctx context.Context) (role.List, error) {

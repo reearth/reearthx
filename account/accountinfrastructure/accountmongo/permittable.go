@@ -30,8 +30,8 @@ func NewPermittable(client *mongox.Client) accountrepo.Permittable {
 	}
 }
 
-func (r *Permittable) Init(ctx context.Context) error {
-	return createIndexes(ctx, r.client, newPermittableIndexes, newPermittableUniqueIndexes)
+func (r *Permittable) Init() error {
+	return createIndexes(context.Background(), r.client, newPermittableIndexes, newPermittableUniqueIndexes)
 }
 
 func (r *Permittable) FindByUserID(ctx context.Context, id user.ID) (*permittable.Permittable, error) {
