@@ -70,6 +70,7 @@ func TestUser_Signup(t *testing.T) {
 				Name("NAME").
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
 				Personal(true).
+				Metadata(workspace.NewMetadata()).
 				MustBuild(),
 			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
 			wantMailSubject: "email verification",
@@ -148,6 +149,7 @@ func TestUser_Signup(t *testing.T) {
 				Name("NAME").
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
 				Personal(true).
+				Metadata(workspace.NewMetadata()).
 				MustBuild(),
 			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
 			wantMailSubject: "email verification",
@@ -189,6 +191,7 @@ func TestUser_Signup(t *testing.T) {
 				Name("NAME").
 				Members(map[user.ID]workspace.Member{uid: {Role: workspace.RoleOwner, Disabled: false, InvitedBy: uid}}).
 				Personal(true).
+				Metadata(workspace.NewMetadata()).
 				MustBuild(),
 			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
 			wantMailSubject: "email verification",
