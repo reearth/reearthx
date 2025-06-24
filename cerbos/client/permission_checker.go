@@ -12,15 +12,10 @@ type PermissionChecker struct {
 	DashboardURL string
 }
 
-type PermissionCheckerParams struct {
-	Service      string
-	DashboardURL string
-}
-
-func NewPermissionChecker(params PermissionCheckerParams) *PermissionChecker {
+func NewPermissionChecker(service string, dashboardURL string) *PermissionChecker {
 	return &PermissionChecker{
-		Service:      params.Service,
-		DashboardURL: params.DashboardURL,
+		Service:      service,
+		DashboardURL: dashboardURL,
 	}
 }
 
