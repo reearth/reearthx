@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	IDErrInternal       = "internal"
-	IDErrNotFound       = "not found"
-	IDErrAlreadyExists  = "already exists"
-	IDErrInvalidParams  = "invalid params"
-	IDErrNotImplemented = "not implemented"
+	IDErrInternal         = "internal"
+	IDErrNotFound         = "not found"
+	IDErrAlreadyExists    = "already exists"
+	IDErrInvalidParams    = "invalid params"
+	IDErrNotImplemented   = "not implemented"
+	IDErrPermissionDenied = "permission denied"
 )
 
 var (
@@ -29,12 +30,15 @@ var (
 	ErrInvalidParams = WrapE(&i18n.Message{ID: IDErrInvalidParams}, ErrInvalidParamsRaw)
 	// ErrNotImplemented indicates unimplemented.
 	ErrNotImplemented = WrapE(&i18n.Message{ID: IDErrNotImplemented}, ErrNotImplementedRaw)
+	// ErrPermissionDenied indicates permission denied.
+	ErrPermissionDenied = WrapE(&i18n.Message{ID: IDErrPermissionDenied}, ErrPermissionDeniedRaw)
 
-	errInternalRaw       = errors.New("internal")
-	ErrNotFoundRaw       = errors.New("not found")
-	ErrAlreadyExistsRaw  = errors.New("already exists")
-	ErrInvalidParamsRaw  = errors.New("invalid params")
-	ErrNotImplementedRaw = errors.New("not implemented")
+	errInternalRaw         = errors.New("internal")
+	ErrNotFoundRaw         = errors.New("not found")
+	ErrAlreadyExistsRaw    = errors.New("already exists")
+	ErrInvalidParamsRaw    = errors.New("invalid params")
+	ErrNotImplementedRaw   = errors.New("not implemented")
+	ErrPermissionDeniedRaw = errors.New("permission denied")
 )
 
 func IsInternal(err error) bool {
