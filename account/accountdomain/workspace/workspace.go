@@ -29,6 +29,9 @@ func (w *Workspace) Email() string {
 }
 
 func (w *Workspace) Metadata() *Metadata {
+	if w.metadata == nil {
+		return NewMetadata()
+	}
 	return w.metadata
 }
 

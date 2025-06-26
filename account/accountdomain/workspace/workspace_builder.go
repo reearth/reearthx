@@ -36,6 +36,8 @@ func (b *Builder) Build() (*Workspace, error) {
 
 	if b.w.metadata != nil {
 		b.w.SetMetadata(b.w.metadata)
+	} else {
+		b.w.SetMetadata(NewMetadata())
 	}
 	b.w.members.fixed = b.personal
 	return b.w, nil
