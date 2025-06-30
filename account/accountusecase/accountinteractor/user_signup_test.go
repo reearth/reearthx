@@ -57,7 +57,6 @@ func TestUser_Signup(t *testing.T) {
 				return user.New().
 					ID(uid).
 					Workspace(tid).
-					Name("NAME").
 					Auths(u.Auths()).
 					Metadata(u.Metadata()).
 					Email("aaa@bbb.com").
@@ -72,7 +71,7 @@ func TestUser_Signup(t *testing.T) {
 				Personal(true).
 				Metadata(workspace.NewMetadata()).
 				MustBuild(),
-			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
+			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: ""}},
 			wantMailSubject: "email verification",
 			wantMailContent: "https://reearth.io/?user-verification-token=CODECODE",
 			wantError:       nil,
@@ -136,7 +135,6 @@ func TestUser_Signup(t *testing.T) {
 				return user.New().
 					ID(uid).
 					Workspace(tid).
-					Name("NAME").
 					Auths(u.Auths()).
 					Metadata(u.Metadata()).
 					Email("aaa@bbb.com").
@@ -151,7 +149,7 @@ func TestUser_Signup(t *testing.T) {
 				Personal(true).
 				Metadata(workspace.NewMetadata()).
 				MustBuild(),
-			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
+			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: ""}},
 			wantMailSubject: "email verification",
 			wantMailContent: "/?user-verification-token=CODECODE",
 			wantError:       nil,
@@ -178,7 +176,6 @@ func TestUser_Signup(t *testing.T) {
 				return user.New().
 					ID(uid).
 					Workspace(tid).
-					Name("NAME").
 					Auths(u.Auths()).
 					Email("aaa@bbb.com").
 					PasswordPlainText("PAss00!!").
@@ -193,7 +190,7 @@ func TestUser_Signup(t *testing.T) {
 				Personal(true).
 				Metadata(workspace.NewMetadata()).
 				MustBuild(),
-			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: "NAME"}},
+			wantMailTo:      []mailer.Contact{{Email: "aaa@bbb.com", Name: ""}},
 			wantMailSubject: "email verification",
 			wantMailContent: "/?user-verification-token=CODECODE",
 			wantError:       nil,

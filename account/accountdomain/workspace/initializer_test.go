@@ -36,7 +36,6 @@ func TestInit(t *testing.T) {
 			ExpectedUser: user.New().
 				ID(uid).
 				Email("xx@yy.zz").
-				Name("nnn").
 				Workspace(tid).
 				Auths([]user.Auth{expectedSub}).
 				MustBuild(),
@@ -61,7 +60,6 @@ func TestInit(t *testing.T) {
 			ExpectedUser: user.New().
 				ID(uid).
 				Email("xx@yy.zz").
-				Name("nnn").
 				Workspace(tid).
 				Auths([]user.Auth{expectedSub}).
 				MustBuild(),
@@ -86,7 +84,6 @@ func TestInit(t *testing.T) {
 			ExpectedUser: user.New().
 				NewID().
 				Email("xx@yy.zz").
-				Name("nnn").
 				Workspace(tid).
 				Auths([]user.Auth{expectedSub}).
 				MustBuild(),
