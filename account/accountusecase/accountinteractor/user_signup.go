@@ -122,6 +122,15 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 		}
 		sub = ui.Sub
 		email = ui.Email
+		if name == "" {
+			name = ui.Nickname
+		}
+		if name == "" {
+			name = ui.Name
+		}
+		if name == "" {
+			name = ui.Email
+		}
 	}
 
 	eu, err := i.repos.User.FindByEmail(ctx, param.Email)
