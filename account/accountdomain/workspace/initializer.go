@@ -40,6 +40,7 @@ func Init(p InitParams) (*user.User, *Workspace, error) {
 
 	b := user.New().
 		ID(*p.UserID).
+		Name(p.Name).
 		Email(p.Email).
 		Metadata(metadata).
 		Auths([]user.Auth{*p.Sub})
