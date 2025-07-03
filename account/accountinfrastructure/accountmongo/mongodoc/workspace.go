@@ -52,7 +52,7 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		}
 	}
 
-	var metadataDoc *WorkspaceMetadataDocument
+	metadataDoc := &WorkspaceMetadataDocument{}
 	if ws.Metadata() != nil {
 		metadataDoc = &WorkspaceMetadataDocument{
 			Description:  ws.Metadata().Description(),
@@ -122,7 +122,7 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		policy = workspace.PolicyID(d.Policy).Ref()
 	}
 
-	var metadata *workspace.Metadata
+	metadata := &workspace.Metadata{}
 	if d.Metadata != nil {
 		metadata = workspace.MetadataFrom(d.Metadata.Description, d.Metadata.Website, d.Metadata.Location, d.Metadata.BillingEmail, d.Metadata.PhotoURL)
 	}
