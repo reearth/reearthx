@@ -100,6 +100,10 @@ func (m *Members) IntegrationIDs() []IntegrationID {
 	return integrations
 }
 
+func (m *Members) IntegrationCount() int {
+	return len(m.integrations)
+}
+
 func (m *Members) HasUser(u UserID) bool {
 	_, ok := m.users[u]
 	return ok
