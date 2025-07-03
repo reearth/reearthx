@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	mongotest.Env = "REEARTH_CMS_DB"
+	mongotest.Env = "REEARTH_DB"
 }
 
 func TestCollection_FindOne(t *testing.T) {
