@@ -250,7 +250,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			args = append(args,
 				"status", res.Status,
 				"bytes_out", res.Size,
-				"letency", latency.Microseconds(),
+				"latency", latency.Microseconds(),
 				"latency_human", latencyHuman,
 			)
 
