@@ -180,10 +180,10 @@ func (r *Asset) FindByWorkspaceProject(
 
 	result := r.data.FindAll(func(k id.AssetID, v *asset.Asset) bool {
 		if pid != nil {
-			return v.Project() == *pid && v.CoreSupport() &&
+			return v.Project() == *pid &&
 				(filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
 		}
-		return v.Workspace() == wid && v.CoreSupport() &&
+		return v.Workspace() == wid &&
 			(filter.Keyword == nil || strings.Contains(v.Name(), *filter.Keyword))
 	})
 
