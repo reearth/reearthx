@@ -113,6 +113,57 @@ func TestMembers_Count(t *testing.T) {
 	assert.False(t, (&Members{users: map[UserID]Member{uid: {Role: RoleOwner}}}).IsEmpty())
 }
 
+func TestMembers_IntegrationCount(t *testing.T) {
+	tests := []struct {
+		name         string
+		integrations map[IntegrationID]Member
+		expected     int
+	}{
+		{
+			name:         "empty integrations",
+			integrations: nil,
+			expected:     0,
+		},
+		{
+			name:         "empty integrations map",
+			integrations: map[IntegrationID]Member{},
+			expected:     0,
+		},
+		{
+			name: "single integration",
+			integrations: map[IntegrationID]Member{
+				NewIntegrationID(): {Role: RoleOwner},
+			},
+			expected: 1,
+		},
+		{
+			name: "multiple integrations",
+			integrations: map[IntegrationID]Member{
+				NewIntegrationID(): {Role: RoleOwner},
+				NewIntegrationID(): {Role: RoleMaintainer},
+				NewIntegrationID(): {Role: RoleReader},
+			},
+			expected: 3,
+		},
+		{
+			name: "mixed roles",
+			integrations: map[IntegrationID]Member{
+				NewIntegrationID(): {Role: RoleOwner, InvitedBy: NewUserID()},
+				NewIntegrationID(): {Role: RoleReader, InvitedBy: NewUserID()},
+			},
+			expected: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			m := &Members{integrations: tt.integrations}
+			assert.Equal(t, tt.expected, m.IntegrationCount())
+		})
+	}
+}
+
 func TestMembers_Fixed(t *testing.T) {
 	assert.True(t, (&Members{fixed: true}).Fixed())
 	assert.False(t, (&Members{fixed: false}).Fixed())
