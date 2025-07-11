@@ -385,7 +385,6 @@ func (i *Asset) CreateWithWorkspace(ctx context.Context, inp interfaces.CreateAs
 		Name(path.Base(inp.File.Path)).
 		Size(uint64(size)).
 		URL(uploadURL).
-		CoreSupport(inp.CoreSupport).
 		CreatedByUser(*operator.AcOperator.User).
 		Build()
 	if err != nil {
