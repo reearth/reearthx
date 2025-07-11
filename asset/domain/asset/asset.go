@@ -28,7 +28,6 @@ type Asset struct {
 	workspace               accountdomain.WorkspaceID
 	flatFiles               bool
 	public                  bool
-	coreSupport             bool // flow
 }
 
 type AccessInfoResolver = func(*Asset) *AccessInfo
@@ -56,13 +55,6 @@ func (a *Asset) ContentType() string {
 	return a.contentType
 }
 
-func (a *Asset) CoreSupport() bool {
-	if a == nil {
-		return false
-	}
-
-	return a.coreSupport
-}
 
 func (a *Asset) ID() ID {
 	return a.id

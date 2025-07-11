@@ -24,7 +24,6 @@ type AssetFilterType string
 type CreateAssetParam struct {
 	File              *file.File
 	Token             string
-	CoreSupport       bool
 	WorkspaceID       accountdomain.WorkspaceID // viz
 	ProjectID         idx.ID[id.Project]
 	SkipDecompression bool
