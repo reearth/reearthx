@@ -6,6 +6,7 @@ import (
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 )
 
 type MultiUser []User
@@ -44,6 +45,24 @@ func (u MultiUser) FindByIDs(ctx context.Context, ids user.IDList) (user.List, e
 		}
 	}
 	return res, nil
+}
+
+func (u MultiUser) FindByIDsWithPagination(ctx context.Context, list user.IDList, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+	res := user.List{}
+	var pageInfo *usecasex.PageInfo
+	for _, r := range u {
+		if r, pi, err := r.FindByIDsWithPagination(ctx, list, pagination); err != nil {
+			return nil, nil, err
+		} else {
+			res = append(res, r...)
+			if pageInfo == nil {
+				pageInfo = pi
+			} else {
+				pageInfo.TotalCount += pi.TotalCount
+			}
+		}
+	}
+	return res, pageInfo, nil
 }
 
 func (u MultiUser) FindBySub(ctx context.Context, sub string) (*user.User, error) {

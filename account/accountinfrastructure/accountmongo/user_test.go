@@ -10,6 +10,7 @@ import (
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/mongox/mongotest"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -634,4 +635,146 @@ func TestUserRepo_Remove(t *testing.T) {
 
 	err = repo.Remove(ctx, user1.ID())
 	assert.NoError(t, err)
+}
+
+func TestUserRepo_FindByIDsWithPagination(t *testing.T) {
+	wsid := user.NewWorkspaceID()
+
+	// Create test users
+	user1 := user.New().NewID().Email("user1@test.com").Workspace(wsid).Name("user1").MustBuild()
+	user2 := user.New().NewID().Email("user2@test.com").Workspace(wsid).Name("user2").MustBuild()
+	user3 := user.New().NewID().Email("user3@test.com").Workspace(wsid).Name("user3").MustBuild()
+	user4 := user.New().NewID().Email("user4@test.com").Workspace(wsid).Name("user4").MustBuild()
+	user5 := user.New().NewID().Email("user5@test.com").Workspace(wsid).Name("user5").MustBuild()
+
+	users := []*user.User{user1, user2, user3, user4, user5}
+
+	tests := []struct {
+		name          string
+		ids           accountdomain.UserIDList
+		pagination    *usecasex.Pagination
+		expectedCount int64
+		expectedUsers int
+		expectedNext  bool
+		expectedPrev  bool
+	}{
+		{
+			name:          "nil pagination returns no results",
+			ids:           accountdomain.UserIDList{user1.ID(), user2.ID(), user3.ID(), user4.ID(), user5.ID()},
+			pagination:    nil,
+			expectedCount: 0,
+			expectedUsers: 0, // mongox.Paginate returns early with no results when pagination is nil
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+		{
+			name:          "offset pagination first page",
+			ids:           accountdomain.UserIDList{user1.ID(), user2.ID(), user3.ID(), user4.ID(), user5.ID()},
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 2,
+			expectedNext:  true,
+			expectedPrev:  false,
+		},
+		{
+			name:          "offset pagination second page",
+			ids:           accountdomain.UserIDList{user1.ID(), user2.ID(), user3.ID(), user4.ID(), user5.ID()},
+			pagination:    usecasex.OffsetPagination{Offset: 2, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 2,
+			expectedNext:  true,
+			expectedPrev:  false, // MongoDB pagination doesn't efficiently determine hasPreviousPage for offset
+		},
+		{
+			name:          "offset pagination last page",
+			ids:           accountdomain.UserIDList{user1.ID(), user2.ID(), user3.ID(), user4.ID(), user5.ID()},
+			pagination:    usecasex.OffsetPagination{Offset: 4, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 1,
+			expectedNext:  false,
+			expectedPrev:  false, // MongoDB pagination doesn't efficiently determine hasPreviousPage for offset
+		},
+		{
+			name:          "offset pagination beyond range",
+			ids:           accountdomain.UserIDList{user1.ID(), user2.ID(), user3.ID(), user4.ID(), user5.ID()},
+			pagination:    usecasex.OffsetPagination{Offset: 10, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 0,
+			expectedNext:  false,
+			expectedPrev:  false, // MongoDB pagination doesn't efficiently determine hasPreviousPage for offset
+		},
+		{
+			name:          "empty ids list",
+			ids:           accountdomain.UserIDList{},
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 0,
+			expectedUsers: 0,
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+		{
+			name:          "partial ids match",
+			ids:           accountdomain.UserIDList{user1.ID(), user3.ID()},
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 2,
+			expectedUsers: 2,
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+		{
+			name:          "non-existent ids",
+			ids:           accountdomain.UserIDList{user.NewID(), user.NewID()},
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 0,
+			expectedUsers: 0,
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+	}
+
+	init := mongotest.Connect(t)
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+			repo := NewUser(client)
+			ctx := context.Background()
+
+			// Save all test users to the database
+			for _, u := range users {
+				err := repo.Save(ctx, u)
+				assert.NoError(t, err)
+			}
+
+			result, pageInfo, err := repo.FindByIDsWithPagination(ctx, tt.ids, tt.pagination)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedUsers, len(result))
+
+			if tt.pagination == nil {
+				assert.Nil(t, pageInfo)
+			} else {
+				assert.NotNil(t, pageInfo)
+				assert.Equal(t, tt.expectedCount, pageInfo.TotalCount)
+				assert.Equal(t, tt.expectedNext, pageInfo.HasNextPage)
+				assert.Equal(t, tt.expectedPrev, pageInfo.HasPreviousPage)
+			}
+
+			// Verify that returned users are from the requested IDs
+			for _, resultUser := range result {
+				assert.True(t, tt.ids.Has(resultUser.ID()), "returned user should be in requested IDs")
+			}
+
+			// Verify user data integrity
+			for _, resultUser := range result {
+				assert.NotNil(t, resultUser.ID())
+				assert.NotEmpty(t, resultUser.Email())
+				assert.NotEmpty(t, resultUser.Name())
+				assert.Equal(t, wsid, resultUser.Workspace())
+			}
+		})
+	}
 }

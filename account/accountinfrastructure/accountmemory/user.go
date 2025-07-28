@@ -7,6 +7,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"github.com/reearth/reearthx/util"
 )
 
@@ -51,6 +52,68 @@ func (r *User) FindByIDs(_ context.Context, ids user.IDList) (user.List, error) 
 	})
 
 	return res, nil
+}
+
+func (r *User) FindByIDsWithPagination(_ context.Context, ids user.IDList, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+	if r.err != nil {
+		return nil, nil, r.err
+	}
+
+	if pagination == nil {
+		users := r.data.FindAll(func(key user.ID, value *user.User) bool {
+			return ids.Has(key)
+		})
+		return users, nil, nil
+	}
+
+	allUsers := r.data.FindAll(func(key user.ID, value *user.User) bool {
+		return ids.Has(key)
+	})
+
+	totalCount := int64(len(allUsers))
+
+	var offset int64
+	var limit int64 = 20
+
+	if pagination.Offset != nil {
+		offset = pagination.Offset.Offset
+		limit = pagination.Offset.Limit
+	} else if pagination.Cursor != nil {
+		if pagination.Cursor.First != nil {
+			limit = *pagination.Cursor.First
+		} else if pagination.Cursor.Last != nil {
+			limit = *pagination.Cursor.Last
+			// For "last" pagination, we want the last N items
+			if totalCount > limit {
+				offset = totalCount - limit
+			}
+		}
+	}
+
+	var pagedUsers user.List
+	start := offset
+	end := offset + limit
+
+	if start < totalCount {
+		if end > totalCount {
+			end = totalCount
+		}
+		pagedUsers = allUsers[start:end]
+	}
+
+	var hasNextPage, hasPreviousPage bool
+	if pagination.Cursor != nil && pagination.Cursor.Last != nil {
+		// For "last" pagination: has previous if we're not showing all items from the beginning
+		hasPreviousPage = offset > 0
+		hasNextPage = false // "last" pagination doesn't have a next page
+	} else {
+		hasNextPage = end < totalCount
+		hasPreviousPage = offset > 0
+	}
+
+	pageInfo := usecasex.NewPageInfo(totalCount, nil, nil, hasNextPage, hasPreviousPage)
+
+	return pagedUsers, pageInfo, nil
 }
 
 func (r *User) FindByID(_ context.Context, v user.ID) (*user.User, error) {
