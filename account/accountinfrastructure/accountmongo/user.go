@@ -10,6 +10,7 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -62,6 +63,14 @@ func (r *User) FindByIDs(ctx context.Context, ids user.IDList) (user.List, error
 		return nil, err
 	}
 	return filterUsers(ids, res), nil
+}
+
+func (r *User) FindByIDsWithPagination(ctx context.Context, ids user.IDList, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+	filter := bson.M{
+		"id": bson.M{"$in": ids.Strings()},
+	}
+
+	return r.paginate(ctx, filter, pagination)
 }
 
 func (r *User) FindBySub(ctx context.Context, auth0sub string) (*user.User, error) {
@@ -211,4 +220,13 @@ func filterUsers(ids []user.ID, rows []*user.User) []*user.User {
 		res = append(res, r2)
 	}
 	return res
+}
+
+func (r *User) paginate(ctx context.Context, filter bson.M, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+	c := mongodoc.NewUserConsumer(r.host)
+	pageInfo, err := r.client.Paginate(ctx, filter, nil, pagination, c)
+	if err != nil {
+		return nil, nil, rerror.ErrInternalBy(err)
+	}
+	return c.Result, pageInfo, nil
 }

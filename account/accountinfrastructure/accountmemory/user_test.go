@@ -10,6 +10,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/usecasex"
 	"github.com/reearth/reearthx/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -449,4 +450,174 @@ func TestUser_Remove(t *testing.T) {
 	wantErr := errors.New("test")
 	SetUserError(r, wantErr)
 	assert.Same(t, wantErr, r.Remove(ctx, u.ID()))
+}
+
+func TestUser_FindByIDsWithPagination(t *testing.T) {
+	ctx := context.Background()
+
+	// Create test users
+	u1 := user.New().NewID().Name("user1").Email("user1@test.com").MustBuild()
+	u2 := user.New().NewID().Name("user2").Email("user2@test.com").MustBuild()
+	u3 := user.New().NewID().Name("user3").Email("user3@test.com").MustBuild()
+	u4 := user.New().NewID().Name("user4").Email("user4@test.com").MustBuild()
+	u5 := user.New().NewID().Name("user5").Email("user5@test.com").MustBuild()
+
+	users := []*user.User{u1, u2, u3, u4, u5}
+
+	r := &User{
+		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+	}
+
+	// Store all users
+	for _, u := range users {
+		r.data.Store(u.ID(), u)
+	}
+
+	ids := accountdomain.UserIDList{u1.ID(), u2.ID(), u3.ID(), u4.ID(), u5.ID()}
+
+	tests := []struct {
+		name          string
+		ids           accountdomain.UserIDList
+		pagination    *usecasex.Pagination
+		expectedCount int64
+		expectedUsers int
+		expectedNext  bool
+		expectedPrev  bool
+		mockErr       bool
+		wantErr       error
+	}{
+		{
+			name:          "nil pagination returns all users",
+			ids:           ids,
+			pagination:    nil,
+			expectedCount: 0,
+			expectedUsers: 5,
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+		{
+			name:          "offset pagination first page",
+			ids:           ids,
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 2,
+			expectedNext:  true,
+			expectedPrev:  false,
+		},
+		{
+			name:          "offset pagination second page",
+			ids:           ids,
+			pagination:    usecasex.OffsetPagination{Offset: 2, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 2,
+			expectedNext:  true,
+			expectedPrev:  true,
+		},
+		{
+			name:          "offset pagination last page",
+			ids:           ids,
+			pagination:    usecasex.OffsetPagination{Offset: 4, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 1,
+			expectedNext:  false,
+			expectedPrev:  true,
+		},
+		{
+			name:          "offset pagination beyond range",
+			ids:           ids,
+			pagination:    usecasex.OffsetPagination{Offset: 10, Limit: 2}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 0,
+			expectedNext:  false,
+			expectedPrev:  true,
+		},
+		{
+			name:          "cursor pagination with first",
+			ids:           ids,
+			pagination:    usecasex.CursorPagination{First: &[]int64{3}[0]}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 3,
+			expectedNext:  true,
+			expectedPrev:  false,
+		},
+		{
+			name:          "cursor pagination with last",
+			ids:           ids,
+			pagination:    usecasex.CursorPagination{Last: &[]int64{2}[0]}.Wrap(),
+			expectedCount: 5,
+			expectedUsers: 2,
+			expectedNext:  false,
+			expectedPrev:  true,
+		},
+		{
+			name:          "empty ids list",
+			ids:           accountdomain.UserIDList{},
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 0,
+			expectedUsers: 0,
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+		{
+			name:          "partial ids match",
+			ids:           accountdomain.UserIDList{u1.ID(), u3.ID()},
+			pagination:    usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			expectedCount: 2,
+			expectedUsers: 2,
+			expectedNext:  false,
+			expectedPrev:  false,
+		},
+		{
+			name:       "mock error",
+			ids:        ids,
+			pagination: usecasex.OffsetPagination{Offset: 0, Limit: 2}.Wrap(),
+			mockErr:    true,
+			wantErr:    errors.New("test error"),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Create fresh repository for each test
+			testRepo := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+
+			// Store all users
+			for _, u := range users {
+				testRepo.data.Store(u.ID(), u)
+			}
+
+			if tt.mockErr {
+				SetUserError(testRepo, tt.wantErr)
+			}
+
+			result, pageInfo, err := testRepo.FindByIDsWithPagination(ctx, tt.ids, tt.pagination)
+
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr, err)
+				assert.Nil(t, result)
+				assert.Nil(t, pageInfo)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedUsers, len(result))
+
+			if tt.pagination == nil {
+				assert.Nil(t, pageInfo)
+			} else {
+				assert.NotNil(t, pageInfo)
+				assert.Equal(t, tt.expectedCount, pageInfo.TotalCount)
+				assert.Equal(t, tt.expectedNext, pageInfo.HasNextPage)
+				assert.Equal(t, tt.expectedPrev, pageInfo.HasPreviousPage)
+			}
+
+			// Verify that returned users are from the requested IDs
+			for _, resultUser := range result {
+				assert.True(t, tt.ids.Has(resultUser.ID()), "returned user should be in requested IDs")
+			}
+		})
+	}
 }
