@@ -148,6 +148,10 @@ func (r *Workspace) FindByAlias(_ context.Context, alias string) (*workspace.Wor
 	}), rerror.ErrNotFound)
 }
 
+func (r *Workspace) CheckWorkspaceAliasUnique(ctx context.Context, excludeSelfWorkspaceID workspace.ID, alias string) error {
+	return nil
+}
+
 func (r *Workspace) Create(_ context.Context, t *workspace.Workspace) error {
 	if r.err != nil {
 		return r.err

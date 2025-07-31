@@ -21,6 +21,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// export REEARTH_DB=mongodb://localhost
+// go test -v -run TestWorkspace_Create ./account/accountusecase/accountinteractor/...
+
 func TestWorkspace_Create(t *testing.T) {
 	ctx := context.Background()
 
@@ -30,7 +33,8 @@ func TestWorkspace_Create(t *testing.T) {
 	_ = db.User.Save(ctx, u)
 	workspaceUC := NewWorkspace(db, nil)
 	op := &accountusecase.Operator{User: lo.ToPtr(u.ID())}
-	ws, err := workspaceUC.Create(ctx, "workspace name", u.ID(), op)
+	alias1 := "test alias1"
+	ws, err := workspaceUC.Create(ctx, "workspace name", u.ID(), &alias1, op)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, ws)
@@ -43,14 +47,43 @@ func TestWorkspace_Create(t *testing.T) {
 	assert.NotEmpty(t, resultWorkspaces)
 	assert.Equal(t, resultWorkspaces[0].ID(), ws.ID())
 	assert.Equal(t, resultWorkspaces[0].Name(), "workspace name")
+	assert.Equal(t, resultWorkspaces[0].Alias(), "test alias1")
 	assert.Equal(t, workspace.IDList{resultWorkspaces[0].ID()}, op.OwningWorkspaces)
 
 	// mock workspace error
 	wantErr := errors.New("test")
 	accountmemory.SetWorkspaceError(db.Workspace, wantErr)
-	workspace2, err := workspaceUC.Create(ctx, "workspace name 2", u.ID(), op)
+	alias2 := "test alias1"
+	workspace2, err := workspaceUC.Create(ctx, "workspace name 2", u.ID(), &alias2, op)
 	assert.Nil(t, workspace2)
 	assert.Equal(t, wantErr, err)
+}
+
+func TestWorkspace_Create_Defalt(t *testing.T) {
+	ctx := context.Background()
+
+	db := accountmemory.New()
+
+	u := user.New().NewID().Name("aaa").Email("aaa@bbb.com").Workspace(accountdomain.NewWorkspaceID()).MustBuild()
+	_ = db.User.Save(ctx, u)
+	workspaceUC := NewWorkspace(db, nil)
+	op := &accountusecase.Operator{User: lo.ToPtr(u.ID())}
+
+	ws, err := workspaceUC.Create(ctx, "workspace name", u.ID(), nil, op)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, ws)
+
+	resultWorkspaces, _ := workspaceUC.Fetch(ctx, []workspace.ID{ws.ID()}, &accountusecase.Operator{
+		ReadableWorkspaces: []workspace.ID{ws.ID()},
+	})
+
+	assert.NotNil(t, resultWorkspaces)
+	assert.NotEmpty(t, resultWorkspaces)
+	assert.Equal(t, resultWorkspaces[0].ID(), ws.ID())
+	assert.Equal(t, resultWorkspaces[0].Name(), "workspace name")
+	assert.Equal(t, resultWorkspaces[0].Alias(), "w-"+ws.ID().String())
+	assert.Equal(t, workspace.IDList{resultWorkspaces[0].ID()}, op.OwningWorkspaces)
 }
 
 func TestWorkspace_Fetch(t *testing.T) {
@@ -259,11 +292,14 @@ func TestWorkspace_FindByUser(t *testing.T) {
 	}
 }
 
+//  go test -v -run TestWorkspace_Update ./account/accountusecase/accountinteractor/...
+
 func TestWorkspace_Update(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	id1 := accountdomain.NewWorkspaceID()
+	w1alias := "test-xxxxxxxx"
 	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
-	w1Updated := workspace.New().ID(id1).Name("WW1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).MustBuild()
+	w1Updated := workspace.New().ID(id1).Alias(w1alias).Name("WW1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
 	w2 := workspace.New().ID(id2).Name("W2").MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
@@ -281,6 +317,7 @@ func TestWorkspace_Update(t *testing.T) {
 		args  struct {
 			wId      workspace.ID
 			newName  string
+			newAlias *string
 			operator *accountusecase.Operator
 		}
 		want             *workspace.Workspace
@@ -293,10 +330,12 @@ func TestWorkspace_Update(t *testing.T) {
 			args: struct {
 				wId      workspace.ID
 				newName  string
+				newAlias *string
 				operator *accountusecase.Operator
 			}{
 				wId:      id1,
 				newName:  "WW1",
+				newAlias: &w1alias,
 				operator: op,
 			},
 			want:    w1Updated,
@@ -308,10 +347,12 @@ func TestWorkspace_Update(t *testing.T) {
 			args: struct {
 				wId      workspace.ID
 				newName  string
+				newAlias *string
 				operator *accountusecase.Operator
 			}{
 				wId:      id2,
 				newName:  "WW2",
+				newAlias: nil,
 				operator: op,
 			},
 			want:    nil,
@@ -323,10 +364,12 @@ func TestWorkspace_Update(t *testing.T) {
 			args: struct {
 				wId      workspace.ID
 				newName  string
+				newAlias *string
 				operator *accountusecase.Operator
 			}{
 				wId:      id3,
 				newName:  "WW3",
+				newAlias: nil,
 				operator: op,
 			},
 			want:    nil,
@@ -337,6 +380,7 @@ func TestWorkspace_Update(t *testing.T) {
 			args: struct {
 				wId      workspace.ID
 				newName  string
+				newAlias *string
 				operator *accountusecase.Operator
 			}{
 				operator: op,
@@ -362,7 +406,7 @@ func TestWorkspace_Update(t *testing.T) {
 			}
 			workspaceUC := NewWorkspace(db, nil)
 
-			got, err := workspaceUC.Update(ctx, tc.args.wId, tc.args.newName, tc.args.operator)
+			got, err := workspaceUC.Update(ctx, tc.args.wId, tc.args.newName, tc.args.newAlias, tc.args.operator)
 			if tc.wantErr != nil {
 				assert.Equal(t, tc.wantErr, err)
 				assert.Nil(t, got)

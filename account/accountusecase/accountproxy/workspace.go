@@ -44,7 +44,7 @@ func (w *Workspace) FindByUser(ctx context.Context, userID accountdomain.UserID,
 	return ToWorkspaces(ws)
 }
 
-func (w *Workspace) Create(ctx context.Context, name string, userID accountdomain.UserID, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) Create(ctx context.Context, name string, userID accountdomain.UserID, alias *string, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := CreateWorkspace(ctx, w.gql, CreateWorkspaceInput{Name: name})
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (w *Workspace) Create(ctx context.Context, name string, userID accountdomai
 	return ToWorkspace(res.CreateWorkspace.Workspace.FragmentWorkspace)
 }
 
-func (w *Workspace) Update(ctx context.Context, id workspace.ID, name string, op *accountusecase.Operator) (*workspace.Workspace, error) {
+func (w *Workspace) Update(ctx context.Context, id workspace.ID, name string, alias *string, op *accountusecase.Operator) (*workspace.Workspace, error) {
 	res, err := UpdateWorkspace(ctx, w.gql, UpdateWorkspaceInput{WorkspaceId: id.String(), Name: name})
 	if err != nil {
 		return nil, err

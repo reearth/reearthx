@@ -46,7 +46,7 @@ func (i *Workspace) FindByUser(ctx context.Context, id workspace.UserID, operato
 	return filterWorkspaces(res, operator, err, true, true)
 }
 
-func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace.UserID, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace.UserID, alias *string, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -63,11 +63,23 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace
 		return nil, err
 	}
 
+	newId := accountdomain.NewWorkspaceID()
+
+	newAlias := fmt.Sprintf("w-%s", newId.String())
+	if alias != nil {
+		err := i.repos.Workspace.CheckWorkspaceAliasUnique(ctx, newId, *alias)
+		if err != nil {
+			return nil, err
+		}
+		newAlias = *alias
+	}
+
 	return Run1(ctx, operator, i.repos, Usecase().Transaction(), func(ctx context.Context) (*workspace.Workspace, error) {
 		ws, err := workspace.New().
-			NewID().
+			ID(newId).
 			Name(name).
 			Metadata(workspace.NewMetadata()).
+			Alias(newAlias).
 			Build()
 		if err != nil {
 			return nil, err
@@ -87,7 +99,7 @@ func (i *Workspace) Create(ctx context.Context, name string, firstUser workspace
 	})
 }
 
-func (i *Workspace) Update(ctx context.Context, id workspace.ID, name string, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
+func (i *Workspace) Update(ctx context.Context, id workspace.ID, name string, alias *string, operator *accountusecase.Operator) (_ *workspace.Workspace, err error) {
 	if operator.User == nil {
 		return nil, accountinterfaces.ErrInvalidOperator
 	}
@@ -111,8 +123,15 @@ func (i *Workspace) Update(ctx context.Context, id workspace.ID, name string, op
 
 		ws.Rename(name)
 
-		err = i.repos.Workspace.Save(ctx, ws)
-		if err != nil {
+		if alias != nil {
+			err := i.repos.Workspace.CheckWorkspaceAliasUnique(ctx, ws.ID(), *alias)
+			if err != nil {
+				return nil, err
+			}
+			ws.UpdateAlias(*alias)
+		}
+
+		if err = i.repos.Workspace.Save(ctx, ws); err != nil {
 			return nil, err
 		}
 
