@@ -1,3 +1,5 @@
+TEST_DIR ?= ./...
+
 help:
 	@echo "Usage:"
 	@echo "  make <target>"
@@ -11,5 +13,14 @@ lint:
 
 test:
 	go test -race -short -v ./...
+
+test-debug:
+	go test -v -timeout 10s ${TEST_DIR} | tee test.log
+
+gql:
+	cd account && go generate ./...
+
+gql-client:
+	cd account/accountusecase/accountproxy && go generate
 
 .PHONY: lint test

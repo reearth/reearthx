@@ -20,8 +20,8 @@ var (
 type Workspace interface {
 	Fetch(context.Context, workspace.IDList, *accountusecase.Operator) (workspace.List, error)
 	FindByUser(context.Context, user.ID, *accountusecase.Operator) (workspace.List, error)
-	Create(context.Context, string, user.ID, *accountusecase.Operator) (*workspace.Workspace, error)
-	Update(context.Context, workspace.ID, string, *accountusecase.Operator) (*workspace.Workspace, error)
+	Create(context.Context, string, user.ID, *string, *accountusecase.Operator) (*workspace.Workspace, error)
+	Update(context.Context, workspace.ID, string, *string, *accountusecase.Operator) (*workspace.Workspace, error)
 	AddUserMember(context.Context, workspace.ID, map[user.ID]workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
 	AddIntegrationMember(context.Context, workspace.ID, workspace.IntegrationID, workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)
 	UpdateUserMember(context.Context, workspace.ID, user.ID, workspace.Role, *accountusecase.Operator) (*workspace.Workspace, error)

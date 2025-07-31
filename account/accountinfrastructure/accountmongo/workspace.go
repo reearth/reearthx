@@ -2,6 +2,7 @@ package accountmongo
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/reearth/reearthx/account/accountdomain"
@@ -147,6 +148,25 @@ func (r *Workspace) FindByAlias(ctx context.Context, alias string) (*workspace.W
 		return nil, rerror.ErrNotFound
 	}
 	return w, nil
+}
+
+func (r *Workspace) CheckWorkspaceAliasUnique(ctx context.Context, excludeSelfWorkspaceID workspace.ID, alias string) error {
+
+	filter := bson.M{
+		"alias": alias,
+		"id":    bson.M{"$ne": excludeSelfWorkspaceID.String()},
+	}
+
+	count, err := r.client.Count(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return errors.New("alias is already used in another workspace")
+	}
+
+	return nil
 }
 
 func (r *Workspace) Create(ctx context.Context, workspace *workspace.Workspace) error {

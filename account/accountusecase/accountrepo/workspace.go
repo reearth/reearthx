@@ -19,6 +19,7 @@ type Workspace interface {
 	FindByIntegration(context.Context, workspace.IntegrationID) (workspace.List, error)
 	// FindByIntegrations finds workspace list based on integrations IDs
 	FindByIntegrations(context.Context, workspace.IntegrationIDList) (workspace.List, error)
+	CheckWorkspaceAliasUnique(context.Context, workspace.ID, string) error
 	Create(context.Context, *workspace.Workspace) error
 	Save(context.Context, *workspace.Workspace) error
 	SaveAll(context.Context, workspace.List) error

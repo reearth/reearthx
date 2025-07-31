@@ -1,6 +1,7 @@
 type Workspace implements Node {
     id: ID!
     name: String!
+    alias: String
     members: [WorkspaceMember!]!
     metadata: WorkspaceMetadata!
     personal: Boolean!
@@ -44,11 +45,13 @@ enum Role {
 
 input CreateWorkspaceInput {
     name: String!
+    alias: String
 }
 
 input UpdateWorkspaceInput {
     workspaceId: ID!
     name: String!
+    alias: String
 }
 
 input MemberInput {
