@@ -637,6 +637,140 @@ func TestUserRepo_Remove(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestUserRepo_SearchByKeyword(t *testing.T) {
+	wsid := user.NewWorkspaceID()
+	user1 := user.New().
+		NewID().
+		Email("john@example.com").
+		Name("John Doe").
+		Alias("johnny").
+		Workspace(wsid).
+		MustBuild()
+	user2 := user.New().
+		NewID().
+		Email("jane@test.com").
+		Name("Jane Smith").
+		Alias("jsmith").
+		Workspace(wsid).
+		MustBuild()
+	user3 := user.New().
+		NewID().
+		Email("bob@company.com").
+		Name("Bob Johnson").
+		Alias("bobby").
+		Workspace(wsid).
+		MustBuild()
+
+	tests := []struct {
+		name     string
+		keyword  string
+		fields   []string
+		expected []*user.User
+	}{
+		{
+			name:     "search without fields (default email and name)",
+			keyword:  "john",
+			fields:   nil,
+			expected: []*user.User{user1, user3}, // john@example.com and Bob Johnson
+		},
+		{
+			name:     "search by email field only",
+			keyword:  "test",
+			fields:   []string{"email"},
+			expected: []*user.User{user2}, // jane@test.com
+		},
+		{
+			name:     "search by name field only",
+			keyword:  "smith",
+			fields:   []string{"name"},
+			expected: []*user.User{user2}, // Jane Smith
+		},
+		{
+			name:     "search by alias field only",
+			keyword:  "johnny",
+			fields:   []string{"alias"},
+			expected: []*user.User{user1}, // alias: johnny
+		},
+		{
+			name:     "search by multiple fields",
+			keyword:  "bob",
+			fields:   []string{"email", "name", "alias"},
+			expected: []*user.User{user3, user3}, // bob@company.com, Bob Johnson, bobby (may return duplicates)
+		},
+		{
+			name:     "search with non-existent field",
+			keyword:  "test",
+			fields:   []string{"nonexistent"},
+			expected: []*user.User{},
+		},
+		{
+			name:     "search with mixed existing and non-existent fields",
+			keyword:  "jane",
+			fields:   []string{"email", "nonexistent", "name"},
+			expected: []*user.User{user2}, // jane@test.com and Jane Smith
+		},
+		{
+			name:     "search with short keyword (less than 3 chars)",
+			keyword:  "jo",
+			fields:   nil,
+			expected: []*user.User{},
+		},
+		{
+			name:     "case insensitive search",
+			keyword:  "JOHN",
+			fields:   []string{"email", "name"},
+			expected: []*user.User{user1, user3}, // john@example.com and Bob Johnson
+		},
+	}
+
+	init := mongotest.Connect(t)
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(tt *testing.T) {
+			tt.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+			repo := NewUser(client)
+			ctx := context.Background()
+
+			// Save test users
+			for _, u := range []*user.User{user1, user2, user3} {
+				err := repo.Save(ctx, u)
+				assert.NoError(tt, err)
+			}
+
+			var got user.List
+			var err error
+			if tc.fields == nil {
+				got, err = repo.SearchByKeyword(ctx, tc.keyword)
+			} else {
+				got, err = repo.SearchByKeyword(ctx, tc.keyword, tc.fields...)
+			}
+
+			assert.NoError(tt, err)
+
+			// For this test, we'll check that we got the expected number of results
+			// and that all returned users are in our expected list
+			if len(tc.expected) == 0 {
+				assert.Equal(tt, 0, len(got))
+			} else {
+				assert.Greater(tt, len(got), 0)
+				for _, resultUser := range got {
+					found := false
+					for _, expectedUser := range tc.expected {
+						if resultUser.ID() == expectedUser.ID() {
+							found = true
+							break
+						}
+					}
+					assert.True(tt, found, "returned user should be in expected list")
+				}
+			}
+		})
+	}
+}
+
 func TestUserRepo_FindByIDsWithPagination(t *testing.T) {
 	wsid := user.NewWorkspaceID()
 

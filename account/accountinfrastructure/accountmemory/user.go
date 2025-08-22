@@ -210,7 +210,7 @@ func (r *User) FindByAlias(_ context.Context, alias string) (*user.User, error) 
 	}), rerror.ErrNotFound)
 }
 
-func (r *User) SearchByKeyword(_ context.Context, keyword string) (user.List, error) {
+func (r *User) SearchByKeyword(_ context.Context, keyword string, fields ...string) (user.List, error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -219,11 +219,30 @@ func (r *User) SearchByKeyword(_ context.Context, keyword string) (user.List, er
 		return nil, nil
 	}
 
+	if len(fields) == 0 {
+		fields = []string{"email", "name"}
+	}
+
 	keyword = strings.TrimSpace(strings.ToLower(keyword))
 
 	return rerror.ErrIfNil(r.data.FindAll(func(key user.ID, value *user.User) bool {
-		return strings.Contains(strings.ToLower(value.Email()), keyword) ||
-			strings.Contains(strings.ToLower(value.Name()), keyword)
+		for _, field := range fields {
+			var fieldValue string
+			switch field {
+			case "email":
+				fieldValue = value.Email()
+			case "name":
+				fieldValue = value.Name()
+			case "alias":
+				fieldValue = value.Alias()
+			default:
+				continue
+			}
+			if strings.Contains(strings.ToLower(fieldValue), keyword) {
+				return true
+			}
+		}
+		return false
 	}), rerror.ErrNotFound)
 }
 
