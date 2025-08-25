@@ -838,18 +838,16 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 	userID := accountdomain.NewUserID()
 	u := user.New().NewID().Name("aaa").Email("a@b.c").MustBuild()
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w1 := workspace.New().ID(id1).Name("W1").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleMaintainer}}).Personal(false).MustBuild()
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}, u.ID(): {Role: workspace.RoleReader}}).Personal(false).MustBuild()
+	w2 := workspace.New().ID(id2).Name("W2").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleMaintainer}, u.ID(): {Role: workspace.RoleReader}}).Personal(false).MustBuild()
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(true).MustBuild()
-	id4 := accountdomain.NewWorkspaceID()
-	w4 := workspace.New().ID(id4).Name("W4").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}).Personal(false).MustBuild()
+	w3 := workspace.New().ID(id3).Name("W3").Members(map[user.ID]workspace.Member{userID: {Role: workspace.RoleMaintainer}}).Personal(true).MustBuild()
 
 	op := &accountusecase.Operator{
-		User:               &userID,
-		ReadableWorkspaces: []workspace.ID{id1, id2},
-		OwningWorkspaces:   []workspace.ID{id1},
+		User:                   &userID,
+		ReadableWorkspaces:     []workspace.ID{id1, id2},
+		MaintainableWorkspaces: []workspace.ID{id1},
 	}
 
 	tests := []struct {
@@ -879,7 +877,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 				operator: op,
 			},
 			wantErr: workspace.ErrTargetUserNotInTheWorkspace,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleMaintainer}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
 		},
 		{
 			name:       "Remove",
@@ -895,7 +893,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 				operator: op,
 			},
 			wantErr: nil,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, nil, false),
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleMaintainer}}, nil, false),
 		},
 		{
 			name:       "Remove personal workspace",
@@ -911,23 +909,7 @@ func TestWorkspace_RemoveMember(t *testing.T) {
 				operator: op,
 			},
 			wantErr: workspace.ErrCannotModifyPersonalWorkspace,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
-		},
-		{
-			name:       "Remove single member",
-			seeds:      workspace.List{w4},
-			usersSeeds: []*user.User{u},
-			args: struct {
-				wId      workspace.ID
-				uId      user.ID
-				operator *accountusecase.Operator
-			}{
-				wId:      id4,
-				uId:      userID,
-				operator: op,
-			},
-			wantErr: accountinterfaces.ErrOwnerCannotLeaveTheWorkspace,
-			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleOwner}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
+			want:    workspace.NewMembersWith(map[user.ID]workspace.Member{userID: {Role: workspace.RoleMaintainer}}, map[accountdomain.IntegrationID]workspace.Member{}, false),
 		},
 		{
 			name: "mock error",
