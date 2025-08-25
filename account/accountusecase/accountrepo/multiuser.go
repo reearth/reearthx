@@ -95,10 +95,10 @@ func (u MultiUser) FindByNameOrEmail(ctx context.Context, nameOrEmail string) (*
 	})
 }
 
-func (u MultiUser) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
+func (u MultiUser) SearchByKeyword(ctx context.Context, keyword string, fields ...string) (user.List, error) {
 	res := user.List{}
 	for _, r := range u {
-		if r, err := r.SearchByKeyword(ctx, keyword); err != nil {
+		if r, err := r.SearchByKeyword(ctx, keyword, fields...); err != nil {
 			return nil, err
 		} else {
 			res = append(res, r...)

@@ -116,13 +116,23 @@ func (r *User) FindByAlias(ctx context.Context, alias string) (*user.User, error
 	return r.findOne(ctx, bson.M{"alias": alias})
 }
 
-func (r *User) SearchByKeyword(ctx context.Context, keyword string) (user.List, error) {
+func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...string) (user.List, error) {
 	if len(keyword) < 3 {
 		return nil, nil
 	}
+	
+	if len(fields) == 0 {
+		fields = []string{"email", "name"}
+	}
+	
 	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
+	orConditions := make([]bson.M, len(fields))
+	for i, field := range fields {
+		orConditions[i] = bson.M{field: regex}
+	}
+	
 	return r.find(ctx,
-		bson.M{"$or": []bson.M{{"email": regex}, {"name": regex}}},
+		bson.M{"$or": orConditions},
 		options.Find().SetLimit(10).SetSort(bson.M{"name": 1}),
 	)
 }
