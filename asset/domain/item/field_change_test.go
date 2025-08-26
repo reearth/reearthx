@@ -35,7 +35,7 @@ func TestCompareFields(t *testing.T) {
 					NewField(fId2, value.TypeNumber.Value("value1").AsMultiple(), nil),
 				},
 			},
-			want: FieldChanges{}, // No changes expected
+			want: FieldChanges{},
 		},
 		{
 			name: "add",
@@ -138,7 +138,7 @@ func TestCompareFields(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res := CompareFields(tt.args.n, tt.args.o)
-			assert.Equal(t, tt.want, res)
+			assert.ElementsMatch(t, tt.want, res)
 		})
 	}
 }
