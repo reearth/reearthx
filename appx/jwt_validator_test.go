@@ -21,22 +21,28 @@ import (
 )
 
 func TestMultiValidator(t *testing.T) {
-	key := lo.Must(rsa.GenerateKey(rand.Reader, 2048))
+	// httpmock.Activate()
+	// t.Cleanup(func() {
+	// 	httpmock.DeactivateAndReset()
+	// })
 
-	httpmock.Activate()
-	t.Cleanup(func() {
-		httpmock.DeactivateAndReset()
-	})
+	httpmock.Reset()
+
+	key := lo.Must(rsa.GenerateKey(rand.Reader, 2048))
 
 	httpmock.RegisterResponder(
 		http.MethodGet,
 		"https://example.com/.well-known/openid-configuration",
-		util.DR(httpmock.NewJsonResponder(http.StatusOK, map[string]string{"jwks_uri": "https://example.com/jwks"})),
+		util.DR(httpmock.NewJsonResponder(http.StatusOK, map[string]string{
+			"jwks_uri": "https://example.com/jwks",
+		})),
 	)
 	httpmock.RegisterResponder(
 		http.MethodGet,
 		"https://example2.com/.well-known/openid-configuration",
-		util.DR(httpmock.NewJsonResponder(http.StatusOK, map[string]string{"jwks_uri": "https://example.com/jwks"})),
+		util.DR(httpmock.NewJsonResponder(http.StatusOK, map[string]string{
+			"jwks_uri": "https://example.com/jwks",
+		})),
 	)
 	httpmock.RegisterResponder(
 		http.MethodGet,
@@ -54,7 +60,8 @@ func TestMultiValidator(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	expiry := time.Now().Add(time.Hour * 24).Unix()
+	expiry := time.Now().Add(24 * time.Hour).Unix()
+
 	claims := jwt.MapClaims{
 		"exp":            expiry,
 		"iss":            "https://example.com/",
@@ -133,13 +140,10 @@ func TestMultiValidator(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, res)
 
-		// Check if the error is a combination of multiple errors
 		var multiErr interface{ Unwrap() []error }
 		assert.ErrorAs(t, err, &multiErr)
 		errs := multiErr.Unwrap()
 		assert.Len(t, errs, 2)
-
-		// Check if both errors are related to invalid token
 		for _, e := range errs {
 			assert.Contains(t, e.Error(), "invalid JWT")
 		}
@@ -190,7 +194,6 @@ func TestMultiValidator(t *testing.T) {
 		assert.ErrorAs(t, err, &multiErr)
 		errs := multiErr.Unwrap()
 		assert.Len(t, errs, 2)
-
 		for _, e := range errs {
 			assert.Contains(t, e.Error(), "invalid JWT")
 		}
@@ -219,13 +222,11 @@ func TestMultiValidator(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		// Test with valid token
-		res, err := v.ValidateToken(context.Background(), tokenString)
+		res, err := v.ValidateToken(context.Background(), tokenString) // valid
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 
-		// Test with invalid token
-		res, err = v.ValidateToken(context.Background(), "invalid.token")
+		res, err = v.ValidateToken(context.Background(), "invalid.token") // invalid
 		assert.Error(t, err)
 		assert.Nil(t, res)
 	})
@@ -235,6 +236,9 @@ func TestMultiValidator(t *testing.T) {
 			{ISS: "https://example.com/", AUD: []string{"a", "b"}, ALG: &jwt.SigningMethodRS256.Name},
 			{ISS: "https://example2.com/", AUD: []string{"c"}, ALG: &jwt.SigningMethodRS256.Name},
 		})
+		assert.NoError(t, err)
+
+		_, err = v.ValidateToken(context.Background(), tokenString)
 		assert.NoError(t, err)
 
 		var wg sync.WaitGroup
