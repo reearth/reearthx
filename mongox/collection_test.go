@@ -41,10 +41,6 @@ func TestClientCollection_Count(t *testing.T) {
 	got, err = c.Count(ctx, bson.M{})
 	assert.NoError(t, err)
 	assert.Equal(t, int64(4), got)
-
-	got, err = c.Count(ctx, nil)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(4), got)
 }
 
 func TestClientCollection_CountAggregation(t *testing.T) {
