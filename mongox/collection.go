@@ -84,8 +84,8 @@ func (c *Collection) FindOne(ctx context.Context, filter any, consumer Consumer,
 	return nil
 }
 
-func (c *Collection) Count(ctx context.Context, filter any) (int64, error) {
-	count, err := c.collection.CountDocuments(ctx, filter)
+func (c *Collection) Count(ctx context.Context, filter any, options ...*options.CountOptions) (int64, error) {
+	count, err := c.collection.CountDocuments(ctx, filter, options...)
 	if err != nil {
 		return 0, wrapError(ctx, err)
 	}

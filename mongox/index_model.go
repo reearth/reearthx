@@ -17,6 +17,7 @@ type Index struct {
 	Name               string
 	Key                bson.D
 	Unique             bool
+	CaseInsensitive    bool
 	ExpireAfterSeconds *int32
 	Filter             bson.M `bson:"partialFilterExpression"`
 }
@@ -40,6 +41,15 @@ func TTLIndexFromKey(key string, expireAfterSeconds int32) Index {
 		Name:               prefix + key,
 		Key:                toKeyBSON(key),
 		ExpireAfterSeconds: &expireAfterSeconds,
+	}
+}
+
+func CaseInsensitiveIndexFromKey(key string, unique bool) Index {
+	return Index{
+		Name:            prefix + key,
+		Key:             toKeyBSON(key),
+		Unique:          unique,
+		CaseInsensitive: true,
 	}
 }
 
@@ -83,6 +93,12 @@ func (i Index) Model() mongo.IndexModel {
 	}
 	if i.ExpireAfterSeconds != nil {
 		o.SetExpireAfterSeconds(*i.ExpireAfterSeconds)
+	}
+	if i.CaseInsensitive {
+		o.SetCollation(&options.Collation{
+			Locale:   "en",
+			Strength: 2,
+		})
 	}
 	return mongo.IndexModel{
 		Keys:    i.Key,
