@@ -28,6 +28,17 @@ func TestIndexFromKey(t *testing.T) {
 	}}, IndexFromKeys([]string{"!a,b"}, true))
 }
 
+func TestCaseInsensitiveIndexFromKey(t *testing.T) {
+	assert.Equal(t, Index{
+		Name: "re_a,b.c",
+		Key: bson.D{
+			{Key: "a", Value: 1},
+			{Key: "b.c", Value: 1},
+		},
+		CaseInsensitive: true,
+	}, CaseInsensitiveIndexFromKey("a,b.c", false))
+}
+
 func TestToKeyBSON(t *testing.T) {
 	assert.Equal(
 		t,
@@ -47,7 +58,10 @@ func TestIndex_Model(t *testing.T) {
 			{Key: "a", Value: -1},
 			{Key: "b.c", Value: 1},
 		},
-		Options: options.Index().SetName("aaa").SetUnique(true).SetPartialFilterExpression(bson.M{
+		Options: options.Index().SetName("aaa").SetUnique(true).SetCollation(&options.Collation{
+			Locale:   "en",
+			Strength: 2,
+		}).SetPartialFilterExpression(bson.M{
 			"a": "A",
 			"b": "B",
 		}),
@@ -62,6 +76,7 @@ func TestIndex_Model(t *testing.T) {
 			"a": "A",
 			"b": "B",
 		},
+		CaseInsensitive: true,
 	}.Model())
 }
 
