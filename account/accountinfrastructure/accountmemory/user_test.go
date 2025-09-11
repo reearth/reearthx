@@ -3,6 +3,8 @@ package accountmemory
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -620,4 +622,512 @@ func TestUser_FindByIDsWithPagination(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUser_FindByIDsWithPagination_WithFilter(t *testing.T) {
+	ctx := context.Background()
+
+	// Create test users with specific names and aliases
+	u1 := user.New().NewID().Name("john_doe").Alias("johnd").Email("john@test.com").MustBuild()
+	u2 := user.New().NewID().Name("jane_smith").Alias("janes").Email("jane@test.com").MustBuild()
+	u3 := user.New().NewID().Name("alice_wonder").Alias("alice").Email("alice@test.com").MustBuild()
+	u4 := user.New().NewID().Name("bob_builder").Alias("bobby").Email("bob@test.com").MustBuild()
+	u5 := user.New().NewID().Name("charlie_brown").Alias("charlie").Email("charlie@test.com").MustBuild()
+
+	users := []*user.User{u1, u2, u3, u4, u5}
+
+	r := &User{
+		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+	}
+
+	// Store all users
+	for _, u := range users {
+		r.data.Store(u.ID(), u)
+	}
+
+	ids := accountdomain.UserIDList{u1.ID(), u2.ID(), u3.ID(), u4.ID(), u5.ID()}
+
+	tests := []struct {
+		name              string
+		ids               accountdomain.UserIDList
+		pagination        *usecasex.Pagination
+		nameOrAliasFilter string
+		expectedUserNames []string
+		expectedAliases   []string
+		expectedCount     int64
+		expectedUsers     int
+		expectedNext      bool
+		expectedPrev      bool
+		mockErr           bool
+		wantErr           error
+	}{
+		{
+			name:              "filter by name substring - case insensitive",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "JOH",
+			expectedUserNames: []string{"john_doe"},
+			expectedAliases:   []string{"johnd"},
+			expectedCount:     1,
+			expectedUsers:     1,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter by alias substring - case insensitive",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "alice",
+			expectedUserNames: []string{"alice_wonder"},
+			expectedAliases:   []string{"alice"},
+			expectedCount:     1,
+			expectedUsers:     1,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter matches multiple users by name pattern",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "_",
+			expectedCount:     5,
+			expectedUsers:     5,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter matches users by alias pattern",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "j",
+			expectedCount:     2, // john and jane
+			expectedUsers:     2,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter with no matches",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "xyz",
+			expectedCount:     0,
+			expectedUsers:     0,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter with pagination - first page",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 2}},
+			nameOrAliasFilter: "_",
+			expectedCount:     5,
+			expectedUsers:     2,
+			expectedNext:      true,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter with pagination - second page",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 2, Limit: 2}},
+			nameOrAliasFilter: "_",
+			expectedCount:     5,
+			expectedUsers:     2,
+			expectedNext:      true,
+			expectedPrev:      true,
+		},
+		{
+			name:              "filter with nil pagination",
+			ids:               ids,
+			pagination:        nil,
+			nameOrAliasFilter: "charlie",
+			expectedUserNames: []string{"charlie_brown"},
+			expectedAliases:   []string{"charlie"},
+			expectedCount:     0, // nil pagination doesn't return count
+			expectedUsers:     1,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "no filter provided - returns all",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "",
+			expectedCount:     5,
+			expectedUsers:     5,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "filter with partial ID list",
+			ids:               accountdomain.UserIDList{u1.ID(), u3.ID()},
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "alice",
+			expectedUserNames: []string{"alice_wonder"},
+			expectedCount:     1,
+			expectedUsers:     1,
+			expectedNext:      false,
+			expectedPrev:      false,
+		},
+		{
+			name:              "error handling",
+			ids:               ids,
+			pagination:        &usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			nameOrAliasFilter: "test",
+			mockErr:           true,
+			wantErr:           errors.New("test error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testRepo := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+
+			// Store test users
+			for _, u := range users {
+				testRepo.data.Store(u.ID(), u)
+			}
+
+			if tt.mockErr {
+				SetUserError(testRepo, tt.wantErr)
+			}
+
+			var result user.List
+			var pageInfo *usecasex.PageInfo
+			var err error
+
+			if tt.nameOrAliasFilter == "" {
+				result, pageInfo, err = testRepo.FindByIDsWithPagination(ctx, tt.ids, tt.pagination)
+			} else {
+				result, pageInfo, err = testRepo.FindByIDsWithPagination(ctx, tt.ids, tt.pagination, tt.nameOrAliasFilter)
+			}
+
+			if tt.wantErr != nil {
+				assert.Equal(t, tt.wantErr, err)
+				assert.Nil(t, result)
+				assert.Nil(t, pageInfo)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedUsers, len(result))
+
+			if tt.pagination == nil {
+				assert.Nil(t, pageInfo)
+			} else {
+				assert.NotNil(t, pageInfo)
+				assert.Equal(t, tt.expectedCount, pageInfo.TotalCount)
+				assert.Equal(t, tt.expectedNext, pageInfo.HasNextPage)
+				assert.Equal(t, tt.expectedPrev, pageInfo.HasPreviousPage)
+			}
+
+			// Verify that returned users are from the requested IDs
+			for _, resultUser := range result {
+				assert.True(t, tt.ids.Has(resultUser.ID()), "returned user should be in requested IDs")
+			}
+
+			// Verify specific expected users if provided
+			if len(tt.expectedUserNames) > 0 {
+				actualNames := make([]string, len(result))
+				for i, u := range result {
+					actualNames[i] = u.Name()
+				}
+				assert.ElementsMatch(t, tt.expectedUserNames, actualNames, "expected specific user names")
+			}
+
+			if len(tt.expectedAliases) > 0 {
+				actualAliases := make([]string, len(result))
+				for i, u := range result {
+					actualAliases[i] = u.Alias()
+				}
+				assert.ElementsMatch(t, tt.expectedAliases, actualAliases, "expected specific user aliases")
+			}
+
+			// If filter is provided, verify that returned users match the filter
+			if tt.nameOrAliasFilter != "" && tt.expectedUsers > 0 {
+				filterLower := strings.ToLower(tt.nameOrAliasFilter)
+				for _, resultUser := range result {
+					nameMatches := strings.Contains(strings.ToLower(resultUser.Name()), filterLower)
+					aliasMatches := strings.Contains(strings.ToLower(resultUser.Alias()), filterLower)
+					assert.True(t, nameMatches || aliasMatches,
+						"user %s (alias: %s) should match filter %s",
+						resultUser.Name(), resultUser.Alias(), tt.nameOrAliasFilter)
+				}
+			}
+		})
+	}
+}
+
+// TestUser_FindByIDsWithPagination_SecurityInjectionPrevention tests that the filtering
+// implementation properly prevents NoSQL injection attacks
+func TestUser_FindByIDsWithPagination_SecurityInjectionPrevention(t *testing.T) {
+	ctx := context.Background()
+
+	// Test users with various names that could be targeted by injection
+	normalUser := user.New().NewID().Name("normal_user").Alias("normal").Email("normal@test.com").MustBuild()
+	specialUser := user.New().NewID().Name("admin_user").Alias("admin").Email("admin@test.com").MustBuild()
+	systemUser := user.New().NewID().Name("system.service").Alias("sys").Email("system@test.com").MustBuild()
+
+	users := []*user.User{normalUser, specialUser, systemUser}
+	allIDs := accountdomain.UserIDList{normalUser.ID(), specialUser.ID(), systemUser.ID()}
+
+	injectionAttempts := []struct {
+		name           string
+		maliciousInput string
+		description    string
+		shouldMatch    []string // Names that should legitimately match if treated as literal string
+	}{
+		{
+			name:           "regex wildcard injection",
+			maliciousInput: ".*",
+			description:    "Attempt to match all users with regex wildcard",
+			shouldMatch:    []string{}, // Should match nothing since no user name contains literal ".*"
+		},
+		{
+			name:           "regex character class injection",
+			maliciousInput: "[a-z]*",
+			description:    "Attempt to match with character class",
+			shouldMatch:    []string{}, // Should match nothing
+		},
+		{
+			name:           "regex quantifier injection",
+			maliciousInput: "admin+",
+			description:    "Attempt to use quantifier to match admin variations",
+			shouldMatch:    []string{}, // Should match nothing since no name contains literal "admin+"
+		},
+		{
+			name:           "regex anchor injection",
+			maliciousInput: "^admin",
+			description:    "Attempt to use anchor to match from start",
+			shouldMatch:    []string{}, // Should match nothing
+		},
+		{
+			name:           "regex escape injection",
+			maliciousInput: "\\w+",
+			description:    "Attempt to use word character class",
+			shouldMatch:    []string{}, // Should match nothing
+		},
+		{
+			name:           "regex alternation injection",
+			maliciousInput: "admin|system",
+			description:    "Attempt to use alternation to match multiple patterns",
+			shouldMatch:    []string{}, // Should match nothing
+		},
+		{
+			name:           "dot literal should match",
+			maliciousInput: ".",
+			description:    "Literal dot should match system.service",
+			shouldMatch:    []string{"system.service"}, // Should match literal dot
+		},
+		{
+			name:           "normal substring search",
+			maliciousInput: "admin",
+			description:    "Normal search should work",
+			shouldMatch:    []string{"admin_user"}, // Should match normally
+		},
+	}
+
+	for _, attempt := range injectionAttempts {
+		t.Run(attempt.name, func(t *testing.T) {
+			repo := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+
+			// Store test users
+			for _, u := range users {
+				repo.data.Store(u.ID(), u)
+			}
+
+			result, pageInfo, err := repo.FindByIDsWithPagination(ctx, allIDs,
+				&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+				attempt.maliciousInput)
+
+			assert.NoError(t, err, "Query should not fail")
+			assert.NotNil(t, pageInfo, "PageInfo should not be nil")
+
+			// Verify expected matches
+			assert.Equal(t, len(attempt.shouldMatch), len(result),
+				"Expected %d matches for input '%s', got %d", len(attempt.shouldMatch), attempt.maliciousInput, len(result))
+
+			// Verify actual matches
+			if len(attempt.shouldMatch) > 0 {
+				actualNames := make([]string, len(result))
+				for i, u := range result {
+					actualNames[i] = u.Name()
+				}
+				assert.ElementsMatch(t, attempt.shouldMatch, actualNames,
+					"Expected matches don't align with actual results")
+			}
+
+			t.Logf("Input: '%s' - Description: %s - Matches: %d", attempt.maliciousInput, attempt.description, len(result))
+		})
+	}
+}
+
+// TestUser_FindByIDsWithPagination_InputValidation tests various input validation scenarios
+func TestUser_FindByIDsWithPagination_InputValidation(t *testing.T) {
+	ctx := context.Background()
+
+	testUser := user.New().NewID().Name("test_user").Alias("test").Email("test@test.com").MustBuild()
+
+	testCases := []struct {
+		name            string
+		filter          string
+		expectedMatches int
+		description     string
+	}{
+		{
+			name:            "empty string filter",
+			filter:          "",
+			expectedMatches: 1, // Should return all users (no filter applied)
+			description:     "Empty filter should return all matching IDs",
+		},
+		{
+			name:            "whitespace only filter",
+			filter:          "   ",
+			expectedMatches: 0, // Trimmed to empty but treated as filter
+			description:     "Whitespace-only filter should be treated as literal",
+		},
+		{
+			name:            "very long filter string",
+			filter:          strings.Repeat("a", 1000),
+			expectedMatches: 0,
+			description:     "Very long filter should not cause performance issues",
+		},
+		{
+			name:            "unicode characters",
+			filter:          "café",
+			expectedMatches: 0,
+			description:     "Unicode characters should be handled properly",
+		},
+		{
+			name:            "special characters combination",
+			filter:          "!@#$%^&*()",
+			expectedMatches: 0,
+			description:     "Special characters should be escaped properly",
+		},
+		{
+			name:            "null character attempt",
+			filter:          "test\x00user",
+			expectedMatches: 0,
+			description:     "Null characters should be handled safely",
+		},
+		{
+			name:            "newline characters",
+			filter:          "test\nuser",
+			expectedMatches: 0,
+			description:     "Newline characters should be treated literally",
+		},
+		{
+			name:            "case sensitivity test",
+			filter:          "TEST_USER",
+			expectedMatches: 1,
+			description:     "Case insensitive matching should work",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := &User{
+				data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+			}
+			repo.data.Store(testUser.ID(), testUser)
+
+			result, pageInfo, err := repo.FindByIDsWithPagination(ctx,
+				accountdomain.UserIDList{testUser.ID()},
+				&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+				tc.filter)
+
+			assert.NoError(t, err, "Query should not fail for input: %q", tc.filter)
+			assert.NotNil(t, pageInfo, "PageInfo should not be nil")
+			assert.Equal(t, tc.expectedMatches, len(result),
+				"Expected %d matches for filter %q, got %d. %s",
+				tc.expectedMatches, tc.filter, len(result), tc.description)
+
+			t.Logf("Filter: %q - Expected: %d - Actual: %d - %s",
+				tc.filter, tc.expectedMatches, len(result), tc.description)
+		})
+	}
+}
+
+// TestUser_FindByIDsWithPagination_BoundaryConditions tests edge cases and boundary conditions
+func TestUser_FindByIDsWithPagination_BoundaryConditions(t *testing.T) {
+	ctx := context.Background()
+
+	// Create test users
+	users := make([]*user.User, 10)
+	var allIDs accountdomain.UserIDList
+	for i := 0; i < 10; i++ {
+		users[i] = user.New().NewID().
+			Name(fmt.Sprintf("user_%d", i)).
+			Alias(fmt.Sprintf("alias_%d", i)).
+			Email(fmt.Sprintf("user%d@test.com", i)).
+			MustBuild()
+		allIDs = append(allIDs, users[i].ID())
+	}
+
+	repo := &User{
+		data: &util.SyncMap[accountdomain.UserID, *user.User]{},
+	}
+	for _, u := range users {
+		repo.data.Store(u.ID(), u)
+	}
+
+	t.Run("zero limit pagination", func(t *testing.T) {
+		result, pageInfo, err := repo.FindByIDsWithPagination(ctx, allIDs,
+			&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 0}},
+			"user")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, pageInfo)
+		assert.Equal(t, 0, len(result), "Zero limit should return no results")
+		assert.Equal(t, int64(10), pageInfo.TotalCount, "Total count should still be accurate")
+	})
+
+	t.Run("offset beyond total count", func(t *testing.T) {
+		result, pageInfo, err := repo.FindByIDsWithPagination(ctx, allIDs,
+			&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 100, Limit: 10}},
+			"user")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, pageInfo)
+		assert.Equal(t, 0, len(result), "Offset beyond count should return empty results")
+		assert.Equal(t, int64(10), pageInfo.TotalCount, "Total count should still be accurate")
+		assert.False(t, pageInfo.HasNextPage, "Should not have next page")
+	})
+
+	t.Run("very large limit", func(t *testing.T) {
+		result, pageInfo, err := repo.FindByIDsWithPagination(ctx, allIDs,
+			&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10000}},
+			"user")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, pageInfo)
+		assert.Equal(t, 10, len(result), "Should return all available results")
+		assert.Equal(t, int64(10), pageInfo.TotalCount)
+		assert.False(t, pageInfo.HasNextPage, "Should not have next page")
+	})
+
+	t.Run("empty ID list", func(t *testing.T) {
+		result, pageInfo, err := repo.FindByIDsWithPagination(ctx, accountdomain.UserIDList{},
+			&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			"user")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, pageInfo)
+		assert.Equal(t, 0, len(result), "Empty ID list should return no results")
+		assert.Equal(t, int64(0), pageInfo.TotalCount)
+	})
+
+	t.Run("single character filter", func(t *testing.T) {
+		result, pageInfo, err := repo.FindByIDsWithPagination(ctx, allIDs,
+			&usecasex.Pagination{Offset: &usecasex.OffsetPagination{Offset: 0, Limit: 10}},
+			"_")
+
+		assert.NoError(t, err)
+		assert.NotNil(t, pageInfo)
+		assert.Equal(t, 10, len(result), "Single underscore should match all users")
+		assert.Equal(t, int64(10), pageInfo.TotalCount)
+	})
 }

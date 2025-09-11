@@ -65,9 +65,24 @@ func (r *User) FindByIDs(ctx context.Context, ids user.IDList) (user.List, error
 	return filterUsers(ids, res), nil
 }
 
-func (r *User) FindByIDsWithPagination(ctx context.Context, ids user.IDList, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+func (r *User) FindByIDsWithPagination(ctx context.Context, ids user.IDList, pagination *usecasex.Pagination, nameOrAlias ...string) (user.List, *usecasex.PageInfo, error) {
 	filter := bson.M{
 		"id": bson.M{"$in": ids.Strings()},
+	}
+
+	if len(nameOrAlias) > 0 && nameOrAlias[0] != "" {
+		searchTerm := nameOrAlias[0]
+		regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(searchTerm), Options: "i"}}
+		filter["$and"] = []bson.M{
+			{"id": bson.M{"$in": ids.Strings()}},
+			{
+				"$or": []bson.M{
+					{"name": regex},
+					{"alias": regex},
+				},
+			},
+		}
+		delete(filter, "id")
 	}
 
 	return r.paginate(ctx, filter, pagination)
@@ -120,17 +135,17 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 	if len(keyword) < 3 {
 		return nil, nil
 	}
-	
+
 	if len(fields) == 0 {
 		fields = []string{"email", "name"}
 	}
-	
+
 	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
 	orConditions := make([]bson.M, len(fields))
 	for i, field := range fields {
 		orConditions[i] = bson.M{field: regex}
 	}
-	
+
 	return r.find(ctx,
 		bson.M{"$or": orConditions},
 		options.Find().SetLimit(10).SetSort(bson.M{"name": 1}),

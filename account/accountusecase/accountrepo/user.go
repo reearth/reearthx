@@ -25,7 +25,7 @@ type UserQuery interface {
 	FindAll(context.Context) (user.List, error)
 	FindByID(context.Context, user.ID) (*user.User, error)
 	FindByIDs(context.Context, user.IDList) (user.List, error)
-	FindByIDsWithPagination(context.Context, user.IDList, *usecasex.Pagination) (user.List, *usecasex.PageInfo, error)
+	FindByIDsWithPagination(context.Context, user.IDList, *usecasex.Pagination, ...string) (user.List, *usecasex.PageInfo, error)
 	FindBySub(context.Context, string) (*user.User, error)
 	FindByEmail(context.Context, string) (*user.User, error)
 	FindByName(context.Context, string) (*user.User, error)
