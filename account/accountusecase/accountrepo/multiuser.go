@@ -47,11 +47,11 @@ func (u MultiUser) FindByIDs(ctx context.Context, ids user.IDList) (user.List, e
 	return res, nil
 }
 
-func (u MultiUser) FindByIDsWithPagination(ctx context.Context, list user.IDList, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+func (u MultiUser) FindByIDsWithPagination(ctx context.Context, list user.IDList, pagination *usecasex.Pagination, nameOrAlias ...string) (user.List, *usecasex.PageInfo, error) {
 	res := user.List{}
 	var pageInfo *usecasex.PageInfo
 	for _, r := range u {
-		if r, pi, err := r.FindByIDsWithPagination(ctx, list, pagination); err != nil {
+		if r, pi, err := r.FindByIDsWithPagination(ctx, list, pagination, nameOrAlias...); err != nil {
 			return nil, nil, err
 		} else {
 			res = append(res, r...)

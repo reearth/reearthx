@@ -54,20 +54,42 @@ func (r *User) FindByIDs(_ context.Context, ids user.IDList) (user.List, error) 
 	return res, nil
 }
 
-func (r *User) FindByIDsWithPagination(_ context.Context, ids user.IDList, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
+func (r *User) FindByIDsWithPagination(_ context.Context, ids user.IDList, pagination *usecasex.Pagination, nameOrAlias ...string) (user.List, *usecasex.PageInfo, error) {
 	if r.err != nil {
 		return nil, nil, r.err
 	}
 
 	if pagination == nil {
 		users := r.data.FindAll(func(key user.ID, value *user.User) bool {
-			return ids.Has(key)
+			if !ids.Has(key) {
+				return false
+			}
+
+			if len(nameOrAlias) > 0 && nameOrAlias[0] != "" {
+				searchTerm := strings.ToLower(nameOrAlias[0])
+				userName := strings.ToLower(value.Name())
+				userAlias := strings.ToLower(value.Alias())
+				return strings.Contains(userName, searchTerm) || strings.Contains(userAlias, searchTerm)
+			}
+
+			return true
 		})
 		return users, nil, nil
 	}
 
 	allUsers := r.data.FindAll(func(key user.ID, value *user.User) bool {
-		return ids.Has(key)
+		if !ids.Has(key) {
+			return false
+		}
+
+		if len(nameOrAlias) > 0 && nameOrAlias[0] != "" {
+			searchTerm := strings.ToLower(nameOrAlias[0])
+			userName := strings.ToLower(value.Name())
+			userAlias := strings.ToLower(value.Alias())
+			return strings.Contains(userName, searchTerm) || strings.Contains(userAlias, searchTerm)
+		}
+
+		return true
 	})
 
 	totalCount := int64(len(allUsers))
