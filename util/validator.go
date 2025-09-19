@@ -1,11 +1,18 @@
 package util
 
 import (
+	"errors"
 	"regexp"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-]{3,30}[a-zA-Z0-9]$`)
+
+type TempName struct {
+	Name string `validate:"required,min=5,max=32,printascii"`
+}
 
 // IsSafePathName
 // Compatible with Auth0's restricted character set (subset only: lowercase letters, numbers, and hyphens)
@@ -28,8 +35,19 @@ var nameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-]{3,30}[a-zA-Z0-9]$`)
 func IsSafePathName(name string) bool {
 	name = strings.TrimSpace(name)
 	char := "-"
-
 	if strings.Contains(name, char+char) {
+		return false
+	}
+
+	var tempName TempName
+	tempName.Name = name
+
+	validate := validator.New()
+	if err := validate.Struct(&tempName); err != nil {
+		var invalidValidationError *validator.InvalidValidationError
+		if errors.As(err, &invalidValidationError) {
+			return false
+		}
 		return false
 	}
 

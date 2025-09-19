@@ -45,6 +45,26 @@ func TestIsSafePathName(t *testing.T) {
 		{"abcde", true},   // 5 characters - minimum valid
 		{"abcdef", true},  // 6 characters - valid
 		{"abcdefg", true}, // 7 characters - valid
+		// Non-ASCII character tests - should all fail as per printascii constraint
+		{"こんにちは", false},         // Japanese hiragana
+		{"コンニチハ", false},         // Japanese katakana
+		{"今日は", false},           // Japanese kanji
+		{"你好世界", false},          // Chinese simplified
+		{"您好世界", false},          // Chinese traditional
+		{"안녕하세요", false},         // Korean
+		{"مرحبا", false},         // Arabic
+		{"Здравствуй", false},    // Russian
+		{"café", false},          // French with accent
+		{"naïve", false},         // English with diaeresis
+		{"piñata", false},        // Spanish with tilde
+		{"résumé", false},        // French accents
+		{"😀😀😀😀😀", false},         // Emoji
+		{"test😀name", false},     // Mixed ASCII and emoji
+		{"testこんにちはname", false}, // Mixed ASCII and Japanese
+		{"test你好name", false},    // Mixed ASCII and Chinese
+		{"한글test", false},        // Mixed Korean and ASCII
+		{"مرحباtest", false},     // Mixed Arabic and ASCII
+		{"тестname", false},      // Mixed Cyrillic and ASCII
 	}
 
 	for _, test := range tests {
