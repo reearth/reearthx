@@ -148,6 +148,27 @@ func (r *Workspace) FindByAlias(_ context.Context, alias string) (*workspace.Wor
 	}), rerror.ErrNotFound)
 }
 
+func (r *Workspace) FindByIDOrAlias(_ context.Context, idOrAlias workspace.IDOrAlias) (*workspace.Workspace, error) {
+	if r.err != nil {
+		return nil, r.err
+	}
+	id := idOrAlias.ID()
+	alias := idOrAlias.Alias()
+	// both id and alias are nil/empty
+	if (id == nil || id.IsNil()) && (alias == nil || *alias == "") {
+		return nil, rerror.ErrNotFound
+	}
+	return rerror.ErrIfNil(r.data.Find(func(key workspace.ID, value *workspace.Workspace) bool {
+		if id != nil && !id.IsNil() {
+			return key == *id
+		}
+		if alias != nil {
+			return value.Alias() == *alias
+		}
+		return false
+	}), rerror.ErrNotFound)
+}
+
 func (r *Workspace) CheckWorkspaceAliasUnique(ctx context.Context, excludeSelfWorkspaceID workspace.ID, alias string) error {
 	return nil
 }

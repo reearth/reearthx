@@ -13,6 +13,7 @@ type Workspace interface {
 	FindByID(context.Context, workspace.ID) (*workspace.Workspace, error)
 	FindByName(context.Context, string) (*workspace.Workspace, error)
 	FindByAlias(ctx context.Context, alias string) (*workspace.Workspace, error)
+	FindByIDOrAlias(ctx context.Context, idOrAlias workspace.IDOrAlias) (*workspace.Workspace, error)
 	FindByIDs(context.Context, workspace.IDList) (workspace.List, error)
 	FindByUser(context.Context, user.ID) (workspace.List, error)
 	FindByUserWithPagination(ctx context.Context, id user.ID, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error)
