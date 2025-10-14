@@ -14,6 +14,7 @@ import (
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -150,6 +151,35 @@ func (r *Workspace) FindByAlias(ctx context.Context, alias string) (*workspace.W
 	return w, nil
 }
 
+func (r *Workspace) FindByIDOrAlias(ctx context.Context, id workspace.IDOrAlias) (*workspace.Workspace, error) {
+	pid := id.ID()
+	alias := id.Alias()
+	if pid.IsNil() && (alias == nil || *alias == "") {
+		return nil, rerror.ErrNotFound
+	}
+
+	f := bson.M{}
+	o := options.FindOne()
+	if pid != nil {
+		f["id"] = pid.String()
+	}
+	if alias != nil && *alias != "" {
+		f["alias"] = *alias
+		o.SetCollation(&options.Collation{
+			Locale:   "en",
+			Strength: 2,
+		})
+	}
+	w, err := r.findOne(ctx, f, o)
+	if err != nil {
+		return nil, err
+	}
+	if !r.f.CanRead(w.ID()) {
+		return nil, rerror.ErrNotFound
+	}
+	return w, nil
+}
+
 func (r *Workspace) CheckWorkspaceAliasUnique(ctx context.Context, excludeSelfWorkspaceID workspace.ID, alias string) error {
 
 	filter := bson.M{
@@ -234,10 +264,10 @@ func (r *Workspace) find(ctx context.Context, filter any) (workspace.List, error
 	return c.Result, nil
 }
 
-func (r *Workspace) findOne(ctx context.Context, filter any) (*workspace.Workspace, error) {
+func (r *Workspace) findOne(ctx context.Context, filter any, options ...*options.FindOneOptions) (*workspace.Workspace, error) {
 	c := mongodoc.NewWorkspaceConsumer()
 	filter = r.f.Filter(filter)
-	if err := r.client.FindOne(ctx, filter, c); err != nil {
+	if err := r.client.FindOne(ctx, filter, c, options...); err != nil {
 		return nil, err
 	}
 	return c.Result[0], nil

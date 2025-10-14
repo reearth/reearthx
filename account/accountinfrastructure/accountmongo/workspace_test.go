@@ -224,6 +224,71 @@ func TestWorkspace_FindByAlias(t *testing.T) {
 	}
 }
 
+func TestWorkspace_FindByIDOrAlias(t *testing.T) {
+	ws1 := workspace.New().NewID().Name("hoge").Alias("alias").MustBuild()
+	ws2 := workspace.New().NewID().Name("foo").Alias("alias2").MustBuild()
+	ws3 := workspace.New().NewID().Name("xxx").Alias("alias3").MustBuild()
+
+	tests := []struct {
+		Name          string
+		Input         string
+		RepoData      workspace.List
+		Expected      *workspace.Workspace
+		ExpectedError error
+	}{
+		{
+			Name:          "must find workspace by alias",
+			RepoData:      workspace.List{ws1, ws2, ws3},
+			Input:         ws1.Alias(),
+			Expected:      ws1,
+			ExpectedError: nil,
+		},
+		{
+			Name:          "must find workspace by ID",
+			RepoData:      workspace.List{ws1, ws2, ws3},
+			Input:         ws1.ID().String(),
+			Expected:      ws1,
+			ExpectedError: nil,
+		},
+		{
+			Name:          "do not find workspace",
+			RepoData:      workspace.List{ws1, ws2, ws3},
+			Input:         "notfound",
+			Expected:      nil,
+			ExpectedError: rerror.ErrNotFoundRaw,
+		},
+	}
+
+	init := mongotest.Connect(t)
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.Name, func(tt *testing.T) {
+			tt.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+
+			repo := NewWorkspace(client)
+			ctx := context.Background()
+			err := repo.SaveAll(ctx, tc.RepoData)
+			assert.NoError(tt, err)
+
+			got, err := repo.FindByIDOrAlias(ctx, workspace.IDOrAlias(tc.Input))
+			if tc.ExpectedError != nil {
+				assert.EqualError(tt, err, tc.ExpectedError.Error())
+				assert.Equal(tt, got, tc.Expected)
+				return
+			}
+
+			assert.NoError(tt, err)
+			assert.NotNil(tt, got)
+			assert.Equal(tt, tc.Expected.ID(), got.ID())
+			assert.Equal(tt, tc.Expected.Name(), got.Name())
+		})
+	}
+}
+
 func TestWorkspace_FindByUser(t *testing.T) {
 	u := user.New().Name("aaa").NewID().Email("aaa@bbb.com").MustBuild()
 	ws := workspace.New().NewID().Name("hoge").Members(map[user.ID]workspace.Member{u.ID(): {Role: workspace.RoleOwner, InvitedBy: u.ID()}}).MustBuild()

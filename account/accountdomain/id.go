@@ -2,6 +2,7 @@ package accountdomain
 
 import (
 	"github.com/reearth/reearthx/idx"
+	"github.com/samber/lo"
 )
 
 type User struct{}
@@ -15,6 +16,8 @@ func (Integration) Type() string { return "integration" }
 type UserID = idx.ID[User]
 type WorkspaceID = idx.ID[Workspace]
 type IntegrationID = idx.ID[Integration]
+
+type WorkspaceIDOrAlias = IDOrAlias[Workspace]
 
 type UserIDList = idx.List[User]
 type WorkspaceIDList = idx.List[Workspace]
@@ -36,6 +39,19 @@ var IntegrationIDFrom = idx.From[Integration]
 var IntegrationIDFromRef = idx.FromRef[Integration]
 
 var ErrInvalidID = idx.ErrInvalidID
+
+type IDOrAlias[T idx.Type] string
+
+func (i IDOrAlias[T]) ID() *idx.ID[T] {
+	return idx.FromRef[T](lo.ToPtr(string(i)))
+}
+
+func (i IDOrAlias[T]) Alias() *string {
+	if string(i) != "" && i.ID() == nil {
+		return lo.ToPtr(string(i))
+	}
+	return nil
+}
 
 // TODO: Delete the below once the permission check migration is complete.
 

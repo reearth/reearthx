@@ -1,6 +1,8 @@
 package workspace
 
-import "github.com/reearth/reearthx/account/accountdomain"
+import (
+	"github.com/reearth/reearthx/account/accountdomain"
+)
 
 type ID = accountdomain.WorkspaceID
 type IDList = accountdomain.WorkspaceIDList
@@ -8,6 +10,8 @@ type UserID = accountdomain.UserID
 type UserIDList = accountdomain.UserIDList
 type IntegrationID = accountdomain.IntegrationID
 type IntegrationIDList = accountdomain.IntegrationIDList
+
+type IDOrAlias = accountdomain.WorkspaceIDOrAlias
 
 var NewID = accountdomain.NewWorkspaceID
 var NewUserID = accountdomain.NewUserID
