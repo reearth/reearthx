@@ -9,7 +9,10 @@ import (
 	"github.com/reearth/reearthx/usecasex"
 )
 
-var ErrDuplicatedUser = rerror.NewE(i18n.T("duplicated user"))
+var (
+	ErrDuplicatedUser = rerror.NewE(i18n.T("duplicated user"))
+	ErrInvalidKeyword = rerror.NewE(i18n.T("invalid search keyword"))
+)
 
 type User interface {
 	UserQuery

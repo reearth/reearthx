@@ -3,6 +3,7 @@ package accountmongo
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"regexp"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
@@ -136,8 +137,13 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 		return nil, nil
 	}
 
+	// Reject email addresses as search keywords
+	if isEmailAddress(keyword) {
+		return nil, accountrepo.ErrInvalidKeyword
+	}
+
 	if len(fields) == 0 {
-		fields = []string{"email", "name"}
+		fields = []string{"name"}
 	}
 
 	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
@@ -150,6 +156,14 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 		bson.M{"$or": orConditions},
 		options.Find().SetLimit(10).SetSort(bson.M{"name": 1}),
 	)
+}
+
+func isEmailAddress(s string) bool {
+	if s == "" {
+		return false
+	}
+	_, err := mail.ParseAddress(s)
+	return err == nil
 }
 
 func (r *User) FindByVerification(ctx context.Context, code string) (*user.User, error) {
