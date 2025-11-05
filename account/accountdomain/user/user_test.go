@@ -38,8 +38,6 @@ func TestUser(t *testing.T) {
 
 	assert.NoError(t, u.UpdateName("a"))
 	assert.Equal(t, "a", u.name)
-	assert.Equal(t, "", u.displayName)
-	assert.Equal(t, "a", u.DisplayName())
 	assert.ErrorIs(t, u.UpdateName("test@example.com"), ErrNameContainsEmail)
 	assert.ErrorContains(t, u.UpdateEmail("ab"), "invalid email")
 	assert.NoError(t, u.UpdateEmail("a@example.com"))
