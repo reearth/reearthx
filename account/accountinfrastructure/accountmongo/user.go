@@ -146,9 +146,21 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 		fields = []string{"name"}
 	}
 
+	// Remove "email" from fields if present
+	filteredFields := make([]string, 0, len(fields))
+	for _, field := range fields {
+		if field != "email" {
+			filteredFields = append(filteredFields, field)
+		}
+	}
+
+	if len(filteredFields) == 0 {
+		return nil, nil
+	}
+
 	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
-	orConditions := make([]bson.M, len(fields))
-	for i, field := range fields {
+	orConditions := make([]bson.M, len(filteredFields))
+	for i, field := range filteredFields {
 		orConditions[i] = bson.M{field: regex}
 	}
 
