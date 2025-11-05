@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	ErrInvalidEmail = errors.New("invalid email")
+	ErrInvalidEmail        = errors.New("invalid email")
+	ErrNameContainsEmail   = errors.New("name cannot be an email address")
 )
 
 type User struct {
@@ -50,8 +51,20 @@ func (u *User) Password() []byte {
 	return u.password
 }
 
-func (u *User) UpdateName(name string) {
+func (u *User) UpdateName(name string) error {
+	if isEmailAddress(name) {
+		return ErrNameContainsEmail
+	}
 	u.name = name
+	return nil
+}
+
+func isEmailAddress(s string) bool {
+	if s == "" {
+		return false
+	}
+	_, err := mail.ParseAddress(s)
+	return err == nil
 }
 
 func (u *User) UpdateAlias(alias string) {
