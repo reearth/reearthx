@@ -1,16 +1,17 @@
 package user
 
 import (
-	"errors"
 	"net/mail"
 	"slices"
 
+	"github.com/reearth/reearthx/i18n"
+	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/util"
 )
 
 var (
-	ErrInvalidEmail        = errors.New("invalid email")
-	ErrNameContainsEmail   = errors.New("name cannot be an email address")
+	ErrInvalidEmail      = rerror.NewE(i18n.T("invalid email"))
+	ErrNameContainsEmail = rerror.NewE(i18n.T("name cannot be an email address"))
 )
 
 type User struct {
