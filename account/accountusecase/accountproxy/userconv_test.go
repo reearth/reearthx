@@ -17,8 +17,10 @@ func TestUserByIDsResponseTo(t *testing.T) {
 		Id:        uid.String(),
 		Name:      "name",
 		Email:     "email@example.com",
-		Lang:      "ja",
-		Theme:     "dark",
+		Metadata: UserByIDsNodesUserMetadata{
+			Lang:  "ja",
+			Theme: "dark",
+		},
 		Workspace: ws.String(),
 		Auths:     nil,
 	}
@@ -164,11 +166,13 @@ func TestMeToUser(t *testing.T) {
 			name: "ok",
 			args: args{
 				FragmentMe{
-					Id:            uid.String(),
-					Name:          "name",
-					Email:         "test@exmple.com",
-					Lang:          "ja",
-					Theme:         "dark",
+					Id:    uid.String(),
+					Name:  "name",
+					Email: "test@exmple.com",
+					Metadata: FragmentMeMetadataUserMetadata{
+						Lang:  "ja",
+						Theme: "dark",
+					},
 					MyWorkspaceId: wid.String(),
 					Auths:         []string{"foo|bar"},
 				},
@@ -201,12 +205,14 @@ func TestFragmentToUser(t *testing.T) {
 	metadata.SetTheme(user.ThemeDark)
 
 	u := FragmentUser{
-		Id:        uid.String(),
-		Name:      "name",
-		Email:     "email@example.com",
+		Id:    uid.String(),
+		Name:  "name",
+		Email: "email@example.com",
+		Metadata: FragmentUserMetadata{
+			Lang:  "ja",
+			Theme: "DARK",
+		},
 		Workspace: ws.String(),
-		Lang:      "ja",
-		Theme:     "DARK",
 		Auths:     []string{"sub"},
 	}
 	auth := user.AuthFrom("sub")
@@ -252,13 +258,15 @@ func TestUserByIDsNodesNodeTo(t *testing.T) {
 	uid := accountdomain.NewUserID()
 	ws := accountdomain.NewWorkspaceID()
 	u := &UserByIDsNodesUser{
-		Id:        uid.String(),
-		Name:      "name",
-		Email:     "email@example.com",
+		Id:    uid.String(),
+		Name:  "name",
+		Email: "email@example.com",
+		Metadata: UserByIDsNodesUserMetadata{
+			Lang:  "ja",
+			Theme: "dark",
+		},
 		Workspace: ws.String(),
 		Typename:  "User",
-		Lang:      "ja",
-		Theme:     "dark",
 	}
 	metadata := user.NewMetadata()
 	metadata.LangFrom("ja")
@@ -305,13 +313,15 @@ func TestUserByIDsNodesUserTo(t *testing.T) {
 	uid := accountdomain.NewUserID()
 	ws := accountdomain.NewWorkspaceID()
 	u := &UserByIDsNodesUser{
-		Id:        uid.String(),
-		Name:      "name",
-		Email:     "email@example.com",
+		Id:    uid.String(),
+		Name:  "name",
+		Email: "email@example.com",
+		Metadata: UserByIDsNodesUserMetadata{
+			Lang:  "ja",
+			Theme: "dark",
+		},
 		Workspace: ws.String(),
 		Typename:  "User",
-		Lang:      "ja",
-		Theme:     "dark",
 	}
 	metadata := user.NewMetadata()
 	metadata.LangFrom("ja")
