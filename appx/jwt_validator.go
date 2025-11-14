@@ -66,6 +66,11 @@ func NewJWTMultipleValidator(providers []JWTProvider) (JWTMultipleValidator, err
 // ValidateToken tries to validate the token with each validator concurrently
 // NOTE: the last validation error only is returned
 func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString string) (interface{}, error) {
+	// Check if context is already cancelled
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -96,17 +101,22 @@ func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString st
 	}()
 
 	var lastErr error
-	for i := 0; i < len(mv); i++ {
-		select {
-		case r := <-resultChan:
-			if r.err == nil {
-				cancel()
-				return r.res, nil
-			}
-			lastErr = errors.Join(lastErr, r.err)
-		case <-ctx.Done():
-			return nil, ctx.Err()
+	for r := range resultChan {
+		if r.err == nil {
+			cancel()
+			// Drain remaining results to avoid goroutine leaks
+			go func() {
+				for range resultChan {
+				}
+			}()
+			return r.res, nil
 		}
+		lastErr = errors.Join(lastErr, r.err)
+	}
+
+	// Check if context was cancelled before all validators completed
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
 	}
 
 	log.Debugfc(ctx, "auth: invalid JWT token: %s", tokenString)
