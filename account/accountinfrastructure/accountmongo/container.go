@@ -33,15 +33,9 @@ func New(ctx context.Context, mc *mongo.Client, databaseName string, useTransact
 		Permittable: NewPermittable(client),
 	}
 
-
 	return c, nil
 }
 
 func NewWithDB(ctx context.Context, db *mongo.Database, useTransaction, needCompat bool, users []accountrepo.User) (*accountrepo.Container, error) {
 	return New(ctx, db.Client(), db.Name(), useTransaction, needCompat, users)
 }
-
-func Init(r *accountrepo.Container) error {
-	return nil
-}
-

@@ -17,7 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
 type Workspace struct {
 	client *mongox.Collection
 	f      accountrepo.WorkspaceFilter
@@ -30,7 +29,6 @@ func NewWorkspace(client *mongox.Client) accountrepo.Workspace {
 func NewWorkspaceCompat(client *mongox.Client) accountrepo.Workspace {
 	return &Workspace{client: client.WithCollection("team")}
 }
-
 
 func (r *Workspace) Filtered(f accountrepo.WorkspaceFilter) accountrepo.Workspace {
 	return &Workspace{

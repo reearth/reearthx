@@ -13,7 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-
 type Role struct {
 	client *mongox.Collection
 }
@@ -23,7 +22,6 @@ func NewRole(client *mongox.Client) accountrepo.Role {
 		client: client.WithCollection("role"),
 	}
 }
-
 
 func (r *Role) FindAll(ctx context.Context) (role.List, error) {
 	filter := bson.M{}

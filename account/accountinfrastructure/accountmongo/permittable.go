@@ -15,7 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-
 type Permittable struct {
 	client *mongox.Collection
 }
@@ -25,7 +24,6 @@ func NewPermittable(client *mongox.Client) accountrepo.Permittable {
 		client: client.WithCollection("permittable"),
 	}
 }
-
 
 func (r *Permittable) FindByUserID(ctx context.Context, id user.ID) (*permittable.Permittable, error) {
 	return r.findOne(ctx, bson.M{

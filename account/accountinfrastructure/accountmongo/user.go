@@ -17,7 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-
 type User struct {
 	client *mongox.Collection
 	host   string
@@ -30,7 +29,6 @@ func NewUser(client *mongox.Client) accountrepo.User {
 func NewUserWithHost(client *mongox.Client, host string) accountrepo.User {
 	return &User{client: client.WithCollection("user"), host: host}
 }
-
 
 func (r *User) FindAll(ctx context.Context) (user.List, error) {
 	res, err := r.find(ctx, bson.M{})
