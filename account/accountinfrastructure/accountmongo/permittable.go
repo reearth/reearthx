@@ -26,9 +26,6 @@ func NewPermittable(client *mongox.Client) accountrepo.Permittable {
 	}
 }
 
-func (r *Permittable) Init() error {
-	return nil
-}
 
 func (r *Permittable) FindByUserID(ctx context.Context, id user.ID) (*permittable.Permittable, error) {
 	return r.findOne(ctx, bson.M{

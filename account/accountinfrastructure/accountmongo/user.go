@@ -31,9 +31,6 @@ func NewUserWithHost(client *mongox.Client, host string) accountrepo.User {
 	return &User{client: client.WithCollection("user"), host: host}
 }
 
-func (r *User) Init() error {
-	return nil
-}
 
 func (r *User) FindAll(ctx context.Context) (user.List, error) {
 	res, err := r.find(ctx, bson.M{})

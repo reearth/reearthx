@@ -24,9 +24,6 @@ func NewRole(client *mongox.Client) accountrepo.Role {
 	}
 }
 
-func (r *Role) Init() error {
-	return nil
-}
 
 func (r *Role) FindAll(ctx context.Context) (role.List, error) {
 	filter := bson.M{}

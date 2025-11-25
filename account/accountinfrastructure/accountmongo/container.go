@@ -5,7 +5,6 @@ import (
 
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/mongox"
-	"github.com/reearth/reearthx/util"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -34,10 +33,6 @@ func New(ctx context.Context, mc *mongo.Client, databaseName string, useTransact
 		Permittable: NewPermittable(client),
 	}
 
-	// init
-	if err := Init(c); err != nil {
-		return nil, err
-	}
 
 	return c, nil
 }
@@ -47,15 +42,6 @@ func NewWithDB(ctx context.Context, db *mongo.Database, useTransaction, needComp
 }
 
 func Init(r *accountrepo.Container) error {
-	if r == nil {
-		return nil
-	}
-
-	return util.Try(
-		r.Workspace.(*Workspace).Init,
-		r.User.(*User).Init,
-		r.Role.(*Role).Init,
-		r.Permittable.(*Permittable).Init,
-	)
+	return nil
 }
 
