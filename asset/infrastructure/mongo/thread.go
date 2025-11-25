@@ -27,6 +27,10 @@ func NewThread(client *mongox.Client) repo.Thread {
 	return &ThreadRepo{client: client.WithCollection("thread")}
 }
 
+func (r *ThreadRepo) Init() error {
+	return createIndexes(context.Background(), r.client, threadIndexes, threadUniqueIndexes)
+}
+
 func (r *ThreadRepo) Save(ctx context.Context, thread *thread.Thread) error {
 	if !r.f.CanWrite(thread.Workspace()) {
 		return repo.ErrOperationDenied

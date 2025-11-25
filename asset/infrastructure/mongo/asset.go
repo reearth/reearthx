@@ -59,6 +59,17 @@ func NewAssetWithHostAdapter(client *mongox.Client, hostAdapter HostAdapter) rep
 	}
 }
 
+func (r *Asset) Init() error {
+	return createIndexes2(
+		context.Background(),
+		r.client,
+		append(
+			mongox.IndexFromKeys(assetUniqueIndexes, true),
+			mongox.IndexFromKeys(assetIndexes, false)...,
+		)...,
+	)
+}
+
 func (r *Asset) Filtered(f repo.ProjectFilter) repo.Asset {
 	return &Asset{
 		client:          r.client,

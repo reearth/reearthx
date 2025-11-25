@@ -25,6 +25,10 @@ func NewWorkspaceSettings(client *mongox.Client) repo.WorkspaceSettings {
 	return &WorkspaceSettingsRepo{client: client.WithCollection("workspacesettings")}
 }
 
+func (r *WorkspaceSettingsRepo) Init() error {
+	return createIndexes(context.Background(), r.client, workspaceSettingsIndexes, nil)
+}
+
 func (r *WorkspaceSettingsRepo) Filtered(f repo.WorkspaceFilter) repo.WorkspaceSettings {
 	return &WorkspaceSettingsRepo{
 		client: r.client,

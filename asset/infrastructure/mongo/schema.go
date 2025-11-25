@@ -24,6 +24,10 @@ func NewSchema(client *mongox.Client) repo.Schema {
 	return &Schema{client: client.WithCollection("schema")}
 }
 
+func (r *Schema) Init() error {
+	return createIndexes(context.Background(), r.client, schemaIndexes, nil)
+}
+
 func (r *Schema) Filtered(f repo.WorkspaceFilter) repo.Schema {
 	return &Schema{
 		client: r.client,

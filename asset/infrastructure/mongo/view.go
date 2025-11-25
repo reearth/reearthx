@@ -27,6 +27,10 @@ func NewView(client *mongox.Client) repo.View {
 	return &View{client: client.WithCollection("view")}
 }
 
+func (r *View) Init() error {
+	return createIndexes(context.Background(), r.client, viewIndexes, viewUniqueIndexes)
+}
+
 func (r *View) Filtered(f repo.ProjectFilter) repo.View {
 	return &View{
 		client: r.client,
