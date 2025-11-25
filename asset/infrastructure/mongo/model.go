@@ -38,7 +38,9 @@ func (r *Model) Filtered(f repo.ProjectFilter) repo.Model {
 }
 
 func (r *Model) Init() error {
-	return createIndexes(context.Background(), r.client, modelIndexes, modelUniqueIndexes)
+	idx := mongox.IndexFromKeys(modelIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(modelUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *Model) FindByID(ctx context.Context, modelID id.ModelID) (*model.Model, error) {

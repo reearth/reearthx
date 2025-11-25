@@ -28,7 +28,9 @@ func NewGroup(client *mongox.Client) repo.Group {
 }
 
 func (r *Group) Init() error {
-	return createIndexes(context.Background(), r.client, groupIndexes, groupUniqueIndexes)
+	idx := mongox.IndexFromKeys(groupIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(groupUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *Group) Filtered(filter repo.ProjectFilter) repo.Group {

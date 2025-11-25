@@ -6,8 +6,8 @@ import (
 	"github.com/reearth/reearthx/util"
 )
 
-// Indexes creates and deletes indexes declaratively
-func (c *Collection) Indexes2(ctx context.Context, inputs ...Index) (IndexResult, error) {
+// Indexes creates indexes declaratively
+func (c *Collection) Indexes(ctx context.Context, inputs ...Index) (IndexResult, error) {
 	inputIndexes := IndexList(inputs).AddNamePrefix().Normalize()
 	indexes, err := c.findIndexes(ctx)
 	if err != nil {

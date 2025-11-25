@@ -60,7 +60,7 @@ func NewAssetWithHostAdapter(client *mongox.Client, hostAdapter HostAdapter) rep
 }
 
 func (r *Asset) Init() error {
-	return createIndexes2(
+	return createIndexes(
 		context.Background(),
 		r.client,
 		append(

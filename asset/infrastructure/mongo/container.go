@@ -95,16 +95,8 @@ func Init(r *repo.Container) error {
 	)
 }
 
-func createIndexes(ctx context.Context, c *mongox.Collection, keys, uniqueKeys []string) error {
-	created, deleted, err := c.Indexes(ctx, keys, uniqueKeys)
-	if len(created) > 0 || len(deleted) > 0 {
-		log.Infof("mongo: %s: index deleted: %v, created: %v", c.Client().Name(), deleted, created)
-	}
-	return err
-}
-
-func createIndexes2(ctx context.Context, c *mongox.Collection, inputs ...mongox.Index) error {
-	res, err := c.Indexes2(ctx, inputs...)
+func createIndexes(ctx context.Context, c *mongox.Collection, inputs ...mongox.Index) error {
+	res, err := c.Indexes(ctx, inputs...)
 	if err == nil {
 		logIndexResult(c.Client().Name(), res)
 	}

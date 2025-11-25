@@ -28,7 +28,7 @@ func NewAssetFile(client *mongox.Client) repo.AssetFile {
 }
 
 func (r *AssetFile) Init() error {
-	return createIndexes2(
+	return createIndexes(
 		context.Background(),
 		r.assetFilesClient,
 		mongox.IndexFromKey("assetid,page", true),

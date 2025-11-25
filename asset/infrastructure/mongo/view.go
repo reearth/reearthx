@@ -28,7 +28,9 @@ func NewView(client *mongox.Client) repo.View {
 }
 
 func (r *View) Init() error {
-	return createIndexes(context.Background(), r.client, viewIndexes, viewUniqueIndexes)
+	idx := mongox.IndexFromKeys(viewIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(viewUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *View) Filtered(f repo.ProjectFilter) repo.View {

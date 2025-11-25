@@ -25,7 +25,8 @@ func NewSchema(client *mongox.Client) repo.Schema {
 }
 
 func (r *Schema) Init() error {
-	return createIndexes(context.Background(), r.client, schemaIndexes, nil)
+	idx := mongox.IndexFromKeys(schemaIndexes, false)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *Schema) Filtered(f repo.WorkspaceFilter) repo.Schema {

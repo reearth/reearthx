@@ -28,7 +28,9 @@ func NewThread(client *mongox.Client) repo.Thread {
 }
 
 func (r *ThreadRepo) Init() error {
-	return createIndexes(context.Background(), r.client, threadIndexes, threadUniqueIndexes)
+	idx := mongox.IndexFromKeys(threadIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(threadUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *ThreadRepo) Save(ctx context.Context, thread *thread.Thread) error {

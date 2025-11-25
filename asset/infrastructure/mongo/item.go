@@ -54,7 +54,7 @@ func (r *Item) Filtered(f repo.ProjectFilter) repo.Item {
 }
 
 func (r *Item) Init() error {
-	return createIndexes2(
+	return createIndexes(
 		context.Background(),
 		r.client.Client(),
 		append(

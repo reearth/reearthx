@@ -26,7 +26,8 @@ func NewWorkspaceSettings(client *mongox.Client) repo.WorkspaceSettings {
 }
 
 func (r *WorkspaceSettingsRepo) Init() error {
-	return createIndexes(context.Background(), r.client, workspaceSettingsIndexes, nil)
+	idx := mongox.IndexFromKeys(workspaceSettingsIndexes, false)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *WorkspaceSettingsRepo) Filtered(f repo.WorkspaceFilter) repo.WorkspaceSettings {

@@ -45,7 +45,7 @@ func (r *ProjectRepo) Init() error {
 		Unique: true,
 		Filter: bson.M{"alias": bson.M{"$type": "string"}},
 	})
-	return createIndexes2(context.Background(), r.client, idx...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *ProjectRepo) Filtered(f repo.WorkspaceFilter) repo.Project {

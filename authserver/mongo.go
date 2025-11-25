@@ -22,12 +22,14 @@ func NewMongo(client *mongox.Collection) *Mongo {
 }
 
 func (r *Mongo) Init(ctx context.Context) error {
-	added, deleted, err := r.client.Indexes(ctx, []string{"code", "subject"}, []string{"id"})
+	idx := mongox.IndexFromKeys([]string{"code", "subject"}, false)
+	idx = append(idx, mongox.IndexFromKeys([]string{"id"}, true)...)
+	res, err := r.client.Indexes(ctx, idx...)
 	if err != nil {
 		return err
 	}
-	if len(added) > 0 || len(deleted) > 0 {
-		log.Infofc(ctx, "mongo: authRequest: index: deleted: %v, created: %v", deleted, added)
+	if len(res.AddedNames()) > 0 || len(res.DeletedNames()) > 0 || len(res.UpdatedNames()) > 0 {
+		log.Infofc(ctx, "mongo: authRequest: index: deleted: %v, updated: %v, created: %v", res.DeletedNames(), res.UpdatedNames(), res.AddedNames())
 	}
 	return nil
 }

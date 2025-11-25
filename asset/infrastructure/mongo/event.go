@@ -26,7 +26,9 @@ func NewEvent(client *mongox.Client) repo.Event {
 }
 
 func (r *Event) Init() error {
-	return createIndexes(context.Background(), r.client, eventIndexes, eventUniqueIndexes)
+	idx := mongox.IndexFromKeys(eventIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(eventUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *Event) FindByID(ctx context.Context, eventID id.EventID) (*event.Event[any], error) {

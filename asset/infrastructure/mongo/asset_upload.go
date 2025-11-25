@@ -19,7 +19,7 @@ func NewAssetUpload(client *mongox.Client) repo.AssetUpload {
 }
 
 func (r *AssetUpload) Init() error {
-	return createIndexes2(context.Background(), r.client,
+	return createIndexes(context.Background(), r.client,
 		mongox.IndexFromKey("uuid", true),
 		mongox.TTLIndexFromKey("expires_at", 0),
 	)

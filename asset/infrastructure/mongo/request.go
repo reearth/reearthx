@@ -32,7 +32,9 @@ func NewRequest(client *mongox.Client) repo.Request {
 }
 
 func (r *Request) Init() error {
-	return createIndexes(context.Background(), r.client, requestIndexes, requestUniqueIndexes)
+	idx := mongox.IndexFromKeys(requestIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(requestUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *Request) Filtered(f repo.ProjectFilter) repo.Request {

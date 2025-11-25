@@ -28,12 +28,9 @@ func NewIntegration(client *mongox.Client) repo.Integration {
 }
 
 func (r *Integration) Init() error {
-	return createIndexes(
-		context.Background(),
-		r.client,
-		integrationIndexes,
-		integrationUniqueIndexes,
-	)
+	idx := mongox.IndexFromKeys(integrationIndexes, false)
+	idx = append(idx, mongox.IndexFromKeys(integrationUniqueIndexes, true)...)
+	return createIndexes(context.Background(), r.client, idx...)
 }
 
 func (r *Integration) FindByID(
