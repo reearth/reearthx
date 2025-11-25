@@ -17,9 +17,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	workspaceUniqueIndexes = []string{"id"}
-)
 
 type Workspace struct {
 	client *mongox.Collection
@@ -35,7 +32,7 @@ func NewWorkspaceCompat(client *mongox.Client) accountrepo.Workspace {
 }
 
 func (r *Workspace) Init() error {
-	return createIndexes(context.Background(), r.client, nil, workspaceUniqueIndexes)
+	return nil
 }
 
 func (r *Workspace) Filtered(f accountrepo.WorkspaceFilter) accountrepo.Workspace {

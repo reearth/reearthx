@@ -15,10 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var (
-	newPermittableIndexes       = []string{}
-	newPermittableUniqueIndexes = []string{"id", "userid"}
-)
 
 type Permittable struct {
 	client *mongox.Collection
@@ -31,7 +27,7 @@ func NewPermittable(client *mongox.Client) accountrepo.Permittable {
 }
 
 func (r *Permittable) Init() error {
-	return createIndexes(context.Background(), r.client, newPermittableIndexes, newPermittableUniqueIndexes)
+	return nil
 }
 
 func (r *Permittable) FindByUserID(ctx context.Context, id user.ID) (*permittable.Permittable, error) {

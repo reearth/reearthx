@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
-	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/util"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -60,10 +59,3 @@ func Init(r *accountrepo.Container) error {
 	)
 }
 
-func createIndexes(ctx context.Context, c *mongox.Collection, keys, uniqueKeys []string) error {
-	created, deleted, err := c.Indexes(ctx, keys, uniqueKeys)
-	if len(created) > 0 || len(deleted) > 0 {
-		log.Infofc(ctx, "mongo: %s: index deleted: %v, created: %v", c.Client().Name(), deleted, created)
-	}
-	return err
-}
