@@ -37,10 +37,6 @@ func (r *Model) Filtered(f repo.ProjectFilter) repo.Model {
 	}
 }
 
-func (r *Model) Init() error {
-	return createIndexes(context.Background(), r.client, modelIndexes, modelUniqueIndexes)
-}
-
 func (r *Model) FindByID(ctx context.Context, modelID id.ModelID) (*model.Model, error) {
 	return r.findOne(ctx, bson.M{
 		"id": modelID.String(),

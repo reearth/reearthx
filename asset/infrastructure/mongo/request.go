@@ -31,10 +31,6 @@ func NewRequest(client *mongox.Client) repo.Request {
 	return &Request{client: client.WithCollection("request")}
 }
 
-func (r *Request) Init() error {
-	return createIndexes(context.Background(), r.client, requestIndexes, requestUniqueIndexes)
-}
-
 func (r *Request) Filtered(f repo.ProjectFilter) repo.Request {
 	return &Request{
 		client: r.client,

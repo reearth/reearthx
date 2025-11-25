@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/zitadel/oidc/pkg/oidc"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,17 +18,6 @@ var _ RequestRepo = (*Mongo)(nil)
 func NewMongo(client *mongox.Collection) *Mongo {
 	r := &Mongo{client: client}
 	return r
-}
-
-func (r *Mongo) Init(ctx context.Context) error {
-	added, deleted, err := r.client.Indexes(ctx, []string{"code", "subject"}, []string{"id"})
-	if err != nil {
-		return err
-	}
-	if len(added) > 0 || len(deleted) > 0 {
-		log.Infofc(ctx, "mongo: authRequest: index: deleted: %v, created: %v", deleted, added)
-	}
-	return nil
 }
 
 func (r *Mongo) FindByID(ctx context.Context, id2 RequestID) (*Request, error) {

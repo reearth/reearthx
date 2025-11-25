@@ -53,17 +53,6 @@ func (r *Item) Filtered(f repo.ProjectFilter) repo.Item {
 	}
 }
 
-func (r *Item) Init() error {
-	return createIndexes2(
-		context.Background(),
-		r.client.Client(),
-		append(
-			r.client.Indexes(),
-			mongox.IndexFromKeys(itemIndexes, false)...,
-		)...,
-	)
-}
-
 func (r *Item) FindByID(
 	ctx context.Context,
 	id id.ItemID,

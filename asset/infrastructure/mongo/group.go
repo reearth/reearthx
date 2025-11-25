@@ -27,10 +27,6 @@ func NewGroup(client *mongox.Client) repo.Group {
 	return &Group{client: client.WithCollection("group")}
 }
 
-func (r *Group) Init() error {
-	return createIndexes(context.Background(), r.client, groupIndexes, groupUniqueIndexes)
-}
-
 func (r *Group) Filtered(filter repo.ProjectFilter) repo.Group {
 	return &Group{
 		client: r.client,

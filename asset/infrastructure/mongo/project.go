@@ -30,24 +30,6 @@ func NewProject(client *mongox.Client) repo.Project {
 	return &ProjectRepo{client: client.WithCollection("project")}
 }
 
-func (r *ProjectRepo) Init() error {
-	idx := mongox.IndexFromKeys(projectIndexes, false)
-	idx = append(idx, mongox.IndexFromKeys(projectUniqueIndexes, true)...)
-	idx = append(idx, mongox.Index{
-		Name:   "re_publication_token",
-		Key:    bson.D{{Key: "publication.token", Value: 1}},
-		Unique: true,
-		Filter: bson.M{"publication.token": bson.M{"$type": "string"}},
-	})
-	idx = append(idx, mongox.Index{
-		Name:   "re_alias",
-		Key:    bson.D{{Key: "alias", Value: 1}},
-		Unique: true,
-		Filter: bson.M{"alias": bson.M{"$type": "string"}},
-	})
-	return createIndexes2(context.Background(), r.client, idx...)
-}
-
 func (r *ProjectRepo) Filtered(f repo.WorkspaceFilter) repo.Project {
 	return &ProjectRepo{
 		client: r.client,

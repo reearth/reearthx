@@ -27,14 +27,6 @@ func NewAssetFile(client *mongox.Client) repo.AssetFile {
 	}
 }
 
-func (r *AssetFile) Init() error {
-	return createIndexes2(
-		context.Background(),
-		r.assetFilesClient,
-		mongox.IndexFromKey("assetid,page", true),
-	)
-}
-
 func (r *AssetFile) Filtered(f repo.ProjectFilter) repo.Asset {
 	return &Asset{
 		client: r.client,

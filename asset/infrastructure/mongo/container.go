@@ -9,7 +9,6 @@ import (
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/mongox"
-	"github.com/reearth/reearthx/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -56,11 +55,6 @@ func New(
 		WorkspaceSettings: NewWorkspaceSettings(client),
 	}
 
-	// init
-	if err := Init(c); err != nil {
-		return nil, err
-	}
-
 	return c, nil
 }
 
@@ -71,44 +65,6 @@ func NewWithDB(
 	acRepo *accountrepo.Container,
 ) (*repo.Container, error) {
 	return New(ctx, db.Client(), db.Name(), useTransaction, acRepo)
-}
-
-func Init(r *repo.Container) error {
-	if r == nil {
-		return nil
-	}
-
-	return util.Try(
-		r.Asset.(*Asset).Init,
-		r.AssetFile.(*AssetFile).Init,
-		r.AssetUpload.(*AssetUpload).Init,
-		r.Model.(*Model).Init,
-		r.View.(*View).Init,
-		r.Request.(*Request).Init,
-		r.Project.(*ProjectRepo).Init,
-		r.Item.(*Item).Init,
-		r.Schema.(*Schema).Init,
-		r.Group.(*Group).Init,
-		r.Integration.(*Integration).Init,
-		r.Event.(*Event).Init,
-		r.WorkspaceSettings.(*WorkspaceSettingsRepo).Init,
-	)
-}
-
-func createIndexes(ctx context.Context, c *mongox.Collection, keys, uniqueKeys []string) error {
-	created, deleted, err := c.Indexes(ctx, keys, uniqueKeys)
-	if len(created) > 0 || len(deleted) > 0 {
-		log.Infof("mongo: %s: index deleted: %v, created: %v", c.Client().Name(), deleted, created)
-	}
-	return err
-}
-
-func createIndexes2(ctx context.Context, c *mongox.Collection, inputs ...mongox.Index) error {
-	res, err := c.Indexes2(ctx, inputs...)
-	if err == nil {
-		logIndexResult(c.Client().Name(), res)
-	}
-	return err
 }
 
 func logIndexResult(name string, r mongox.IndexResult) {

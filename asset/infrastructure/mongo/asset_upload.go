@@ -18,13 +18,6 @@ func NewAssetUpload(client *mongox.Client) repo.AssetUpload {
 	return &AssetUpload{client: client.WithCollection("asset_upload")}
 }
 
-func (r *AssetUpload) Init() error {
-	return createIndexes2(context.Background(), r.client,
-		mongox.IndexFromKey("uuid", true),
-		mongox.TTLIndexFromKey("expires_at", 0),
-	)
-}
-
 func (r *AssetUpload) FindByID(ctx context.Context, uuid string) (*asset.Upload, error) {
 	c := mongodoc.NewAssetUploadConsumer()
 	if err := r.client.FindOne(ctx, bson.M{"uuid": uuid}, c); err != nil {

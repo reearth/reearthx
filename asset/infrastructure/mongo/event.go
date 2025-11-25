@@ -25,10 +25,6 @@ func NewEvent(client *mongox.Client) repo.Event {
 	return &Event{client: client.WithCollection("event")}
 }
 
-func (r *Event) Init() error {
-	return createIndexes(context.Background(), r.client, eventIndexes, eventUniqueIndexes)
-}
-
 func (r *Event) FindByID(ctx context.Context, eventID id.EventID) (*event.Event[any], error) {
 	return r.findOne(ctx, bson.M{
 		"id": eventID.String(),

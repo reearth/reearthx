@@ -27,15 +27,6 @@ func NewIntegration(client *mongox.Client) repo.Integration {
 	return &Integration{client: client.WithCollection("integration")}
 }
 
-func (r *Integration) Init() error {
-	return createIndexes(
-		context.Background(),
-		r.client,
-		integrationIndexes,
-		integrationUniqueIndexes,
-	)
-}
-
 func (r *Integration) FindByID(
 	ctx context.Context,
 	integrationID id.IntegrationID,
