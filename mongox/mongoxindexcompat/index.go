@@ -30,10 +30,6 @@ func Indexes(ctx context.Context, c *mongo.Collection, keys, uniqueKeys []string
 	newIndexKeys := lo.Filter(keys, func(k string, _ int) bool { return !maintainedIndexes.HasKey(k) })
 	newUniqueIndexKeys := lo.Filter(uniqueKeys, func(k string, _ int) bool { return !maintainedUniqueIndexes.HasKey(k) })
 
-	if err := dropIndexes(ctx, c, append(oldIndexes.Names(), oldUniqueIndexes.Names()...)); err != nil {
-		return nil, nil, err
-	}
-
 	newIndexes := append(
 		// unique
 		lo.Map(newUniqueIndexKeys, func(k string, _ int) mongo.IndexModel {
@@ -54,18 +50,6 @@ func Indexes(ctx context.Context, c *mongo.Collection, keys, uniqueKeys []string
 	added := append(newUniqueIndexKeys, newIndexKeys...)
 	deleted := append(oldUniqueIndexes.Keys(), oldIndexes.Keys()...)
 	return added, deleted, nil
-}
-
-func dropIndexes(ctx context.Context, c *mongo.Collection, indexes []string) error {
-	for _, name := range indexes {
-		if name == "_id_" {
-			continue // cannot drop _id index
-		}
-		if _, err := c.Indexes().DropOne(ctx, name); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 type indexDocument struct {
