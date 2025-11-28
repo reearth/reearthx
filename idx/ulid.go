@@ -1,6 +1,7 @@
 package idx
 
 import (
+	"io"
 	"math/rand"
 	"sync"
 	"time"
@@ -9,27 +10,26 @@ import (
 	"github.com/samber/lo"
 )
 
-var (
-	entropyLock sync.Mutex
-	// not safe for concurrent
-	entropy = ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
-)
+var entropyPool = sync.Pool{
+	New: func() interface{} {
+		return ulid.Monotonic(rand.New(rand.NewSource(time.Now().UnixNano())), 0)
+	},
+}
 
 func generateID() ulid.ULID {
-	entropyLock.Lock()
-	newID := ulid.MustNew(ulid.Timestamp(time.Now().UTC()), entropy)
-	entropyLock.Unlock()
-	return newID
+	entropy := entropyPool.Get().(io.Reader)
+	defer entropyPool.Put(entropy)
+	return ulid.MustNew(ulid.Timestamp(time.Now().UTC()), entropy)
 }
 
 func generateAllID(n int) []ulid.ULID {
 	ids := make([]ulid.ULID, 0, n)
-	entropyLock.Lock()
+	entropy := entropyPool.Get().(io.Reader)
+	defer entropyPool.Put(entropy)
 	for i := 0; i < n; i++ {
 		newID := ulid.MustNew(ulid.Timestamp(time.Now().UTC()), entropy)
 		ids = append(ids, newID)
 	}
-	entropyLock.Unlock()
 	return ids
 }
 
