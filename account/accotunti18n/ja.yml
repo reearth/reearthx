@@ -16,6 +16,7 @@ invalid parameters: 無効なパラメータです。
 invalid password: 無効なパスワードです。
 invalid password confirmation: パスワードが一致しません。
 invalid password reset request: 無効なリセットリクエストです。
+invalid search keyword: 無効な検索キーワードです。
 invalid secret: 無効なシークレットです。
 invalid user id: 無効なユーザーIDです。
 invalid user name: 無効なユーザー名です。

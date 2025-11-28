@@ -2,6 +2,7 @@ package accountmemory
 
 import (
 	"context"
+	"net/mail"
 	"strings"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
@@ -241,18 +242,33 @@ func (r *User) SearchByKeyword(_ context.Context, keyword string, fields ...stri
 		return nil, nil
 	}
 
+	// Reject email addresses as search keywords
+	if isEmailAddress(keyword) {
+		return nil, accountrepo.ErrInvalidKeyword
+	}
+
 	if len(fields) == 0 {
-		fields = []string{"email", "name"}
+		fields = []string{"name"}
+	}
+
+	// Remove "email" from fields if present
+	filteredFields := make([]string, 0, len(fields))
+	for _, field := range fields {
+		if field != "email" {
+			filteredFields = append(filteredFields, field)
+		}
+	}
+
+	if len(filteredFields) == 0 {
+		return nil, nil
 	}
 
 	keyword = strings.TrimSpace(strings.ToLower(keyword))
 
 	return rerror.ErrIfNil(r.data.FindAll(func(key user.ID, value *user.User) bool {
-		for _, field := range fields {
+		for _, field := range filteredFields {
 			var fieldValue string
 			switch field {
-			case "email":
-				fieldValue = value.Email()
 			case "name":
 				fieldValue = value.Name()
 			case "alias":
@@ -266,6 +282,14 @@ func (r *User) SearchByKeyword(_ context.Context, keyword string, fields ...stri
 		}
 		return false
 	}), rerror.ErrNotFound)
+}
+
+func isEmailAddress(s string) bool {
+	if s == "" {
+		return false
+	}
+	_, err := mail.ParseAddress(s)
+	return err == nil
 }
 
 func (r *User) FindByVerification(_ context.Context, code string) (*user.User, error) {
