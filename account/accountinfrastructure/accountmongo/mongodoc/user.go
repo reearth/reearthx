@@ -68,7 +68,7 @@ func NewUser(user *user.User) (*UserDocument, string) {
 		}
 	}
 
-	var metadataDoc *UserMetadataDoc
+	metadataDoc := &UserMetadataDoc{}
 	if user.Metadata() != nil {
 		metadataDoc = &UserMetadataDoc{
 			Description: user.Metadata().Description(),
