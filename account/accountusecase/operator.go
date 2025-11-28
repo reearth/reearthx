@@ -47,7 +47,7 @@ func (o *Operator) AllMaintainingWorkspaces() accountdomain.WorkspaceIDList {
 }
 
 func (o *Operator) AllOwningWorkspaces() accountdomain.WorkspaceIDList {
-	return o.OwningWorkspaces
+	return o.OwningWorkspaces.Concat(o.MaintainableWorkspaces)
 }
 
 func (o *Operator) IsReadableWorkspace(ws ...accountdomain.WorkspaceID) bool {
@@ -58,8 +58,8 @@ func (o *Operator) IsWritableWorkspace(ws ...accountdomain.WorkspaceID) bool {
 	return o.AllWritableWorkspaces().Intersect(ws).Len() > 0
 }
 
-func (o *Operator) IsMaintainingWorkspace(workspace ...accountdomain.WorkspaceID) bool {
-	return o.AllMaintainingWorkspaces().Intersect(workspace).Len() > 0
+func (o *Operator) IsMaintainingWorkspace(ws ...accountdomain.WorkspaceID) bool {
+	return o.AllMaintainingWorkspaces().Intersect(ws).Len() > 0
 }
 
 func (o *Operator) IsOwningWorkspace(ws ...accountdomain.WorkspaceID) bool {
