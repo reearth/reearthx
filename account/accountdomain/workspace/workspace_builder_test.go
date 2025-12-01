@@ -60,6 +60,7 @@ func TestBuilder_Build(t *testing.T) {
 
 	assert.Equal(t, &Workspace{
 		id:       id,
+		alias:    id.String(),
 		name:     "a",
 		members:  NewMembersWith(m, i, false),
 		metadata: metadata,
@@ -69,8 +70,27 @@ func TestBuilder_Build(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, &Workspace{
-		id:   id,
-		name: "a",
+		id:    id,
+		alias: id.String(),
+		name:  "a",
+		members: &Members{
+			users:        map[idx.ID[accountdomain.User]]Member{},
+			integrations: map[idx.ID[accountdomain.Integration]]Member{},
+		},
+		metadata: metadata,
+	}, w)
+
+	w, err = New().Build()
+	assert.Equal(t, ErrInvalidID, err)
+	assert.Nil(t, w)
+
+	w, err = New().ID(id).Name("a").Alias("alias").Metadata(metadata).Build()
+	assert.NoError(t, err)
+
+	assert.Equal(t, &Workspace{
+		id:    id,
+		alias: "alias",
+		name:  "a",
 		members: &Members{
 			users:        map[idx.ID[accountdomain.User]]Member{},
 			integrations: map[idx.ID[accountdomain.Integration]]Member{},
@@ -99,6 +119,7 @@ func TestBuilder_MustBuild(t *testing.T) {
 
 	assert.Equal(t, &Workspace{
 		id:       id,
+		alias:    id.String(),
 		name:     "a",
 		members:  NewMembersWith(m, i, false),
 		metadata: metadata,
