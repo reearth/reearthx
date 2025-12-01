@@ -27,6 +27,9 @@ func (b *Builder) Build() (*Workspace, error) {
 	if b.w.id.IsEmpty() {
 		return nil, ErrInvalidID
 	}
+	if len(b.w.alias) == 0 {
+		b.w.alias = b.w.id.String()
+	}
 
 	if b.members == nil && b.integrations == nil {
 		b.w.members = NewMembers()

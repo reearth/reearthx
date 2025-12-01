@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	workspaceUniqueIndexes = []string{"id"}
+	workspaceUniqueIndexes = []string{"id", "alias"}
 )
 
 type Workspace struct {

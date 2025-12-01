@@ -11,6 +11,7 @@ import (
 	"github.com/reearth/reearthx/mongox/mongotest"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func TestWorkspace_FindByID(t *testing.T) {
@@ -386,6 +387,64 @@ func TestWorkspace_FindByUserWithPagination(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWorkspace_Save(t *testing.T) {
+	ws := workspace.New().NewID().Name("hoge").MustBuild()
+	tests := []struct {
+		Name    string
+		Input   *workspace.Workspace
+		seed    workspace.List
+		WantErr error
+	}{
+		{
+			Name:    "save new workspace in empty repo",
+			Input:   ws,
+			seed:    workspace.List{},
+			WantErr: nil,
+		},
+		{
+			Name:  "save existing alias workspace",
+			Input: workspace.New().NewID().Name("foo").Alias("alias").MustBuild(),
+			seed: workspace.List{
+				workspace.New().NewID().Name("hoge").Alias("alias").MustBuild(),
+			},
+			WantErr: mongo.WriteError{Code: 11000},
+		},
+	}
+
+	init := mongotest.Connect(t)
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.Name, func(tt *testing.T) {
+			tt.Parallel()
+
+			client := mongox.NewClientWithDatabase(init(t))
+
+			repo := NewWorkspace(client)
+			err := repo.(*Workspace).Init()
+			assert.NoError(tt, err)
+			ctx := context.Background()
+			err = repo.SaveAll(ctx, tc.seed)
+			assert.NoError(tt, err)
+
+			err = repo.Save(ctx, tc.Input)
+			if tc.WantErr != nil {
+				assert.ErrorContains(tt, err, tc.WantErr.Error())
+				return
+			}
+
+			assert.NoError(tt, err)
+
+			// verify workspace is saved
+			got, err := repo.FindByID(ctx, tc.Input.ID())
+			assert.NoError(tt, err)
+			assert.Equal(tt, tc.Input.ID(), got.ID())
+		})
+	}
+
 }
 
 func TestWorkspace_Remove(t *testing.T) {
