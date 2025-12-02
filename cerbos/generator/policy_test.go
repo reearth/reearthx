@@ -109,6 +109,149 @@ resourcePolicy:
 			outputDir:       "test",
 			wantErr:         "define resources function is required",
 		},
+		{
+			name:        "success generate policy with simple condition",
+			serviceName: "flow",
+			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
+				return builder.
+					AddResource("document", []ActionDefinition{
+						NewActionDefinitionWithCondition(
+							"approve",
+							[]string{"manager"},
+							SimpleExpr(`R.attr.status == "PENDING_APPROVAL"`),
+						),
+					}).
+					Build()
+			},
+			wantFiles: map[string]string{
+				"flow_document.yaml": `apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: flow:document
+  rules:
+  - actions:
+    - approve
+    effect: EFFECT_ALLOW
+    roles:
+    - manager
+    condition:
+      match:
+        expr: R.attr.status == "PENDING_APPROVAL"
+`,
+			},
+		},
+		{
+			name:        "success generate policy with AllOf condition",
+			serviceName: "flow",
+			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
+				return builder.
+					AddResource("document", []ActionDefinition{
+						NewActionDefinitionWithCondition(
+							"approve",
+							[]string{"manager"},
+							AllOf(
+								`R.attr.status == "PENDING_APPROVAL"`,
+								`"GB" in R.attr.geographies`,
+							),
+						),
+					}).
+					Build()
+			},
+			wantFiles: map[string]string{
+				"flow_document.yaml": `apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: flow:document
+  rules:
+  - actions:
+    - approve
+    effect: EFFECT_ALLOW
+    roles:
+    - manager
+    condition:
+      match:
+        all:
+          of:
+          - expr: R.attr.status == "PENDING_APPROVAL"
+          - expr: '"GB" in R.attr.geographies'
+`,
+			},
+		},
+		{
+			name:        "success generate policy with AnyOf condition",
+			serviceName: "flow",
+			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
+				return builder.
+					AddResource("resource", []ActionDefinition{
+						NewActionDefinitionWithCondition(
+							"delete",
+							[]string{"admin", "owner"},
+							AnyOf(
+								`P.attr.role == "admin"`,
+								`R.attr.owner == P.id`,
+							),
+						),
+					}).
+					Build()
+			},
+			wantFiles: map[string]string{
+				"flow_resource.yaml": `apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: flow:resource
+  rules:
+  - actions:
+    - delete
+    effect: EFFECT_ALLOW
+    roles:
+    - admin
+    - owner
+    condition:
+      match:
+        any:
+          of:
+          - expr: P.attr.role == "admin"
+          - expr: R.attr.owner == P.id
+`,
+			},
+		},
+		{
+			name:        "success generate policy with NoneOf condition",
+			serviceName: "flow",
+			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
+				return builder.
+					AddResource("project", []ActionDefinition{
+						NewActionDefinitionWithCondition(
+							"view",
+							[]string{"user"},
+							NoneOf(
+								`R.attr.archived == true`,
+								`R.attr.deleted == true`,
+							),
+						),
+					}).
+					Build()
+			},
+			wantFiles: map[string]string{
+				"flow_project.yaml": `apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: flow:project
+  rules:
+  - actions:
+    - view
+    effect: EFFECT_ALLOW
+    roles:
+    - user
+    condition:
+      match:
+        none:
+          of:
+          - expr: R.attr.archived == true
+          - expr: R.attr.deleted == true
+`,
+			},
+		},
 	}
 
 	for _, tt := range tests {

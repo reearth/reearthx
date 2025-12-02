@@ -21,9 +21,25 @@ type ResourcePolicy struct {
 }
 
 type Rule struct {
-	Actions []string `yaml:"actions"`
-	Effect  string   `yaml:"effect"`
-	Roles   []string `yaml:"roles"`
+	Actions   []string   `yaml:"actions"`
+	Effect    string     `yaml:"effect"`
+	Roles     []string   `yaml:"roles"`
+	Condition *Condition `yaml:"condition,omitempty"`
+}
+
+type Condition struct {
+	Match Match `yaml:"match"`
+}
+
+type Match struct {
+	All  *MatchExpressions `yaml:"all,omitempty"`
+	Any  *MatchExpressions `yaml:"any,omitempty"`
+	None *MatchExpressions `yaml:"none,omitempty"`
+	Expr *string           `yaml:"expr,omitempty"`
+}
+
+type MatchExpressions struct {
+	Of []Match `yaml:"of"`
 }
 
 type DefineResourcesFunc func(builder *ResourceBuilder) []ResourceDefinition
@@ -52,9 +68,10 @@ func GeneratePolicies(serviceName string, defineResources DefineResourcesFunc, o
 
 		for _, action := range resource.Actions {
 			rule := Rule{
-				Actions: []string{action.Action},
-				Effect:  "EFFECT_ALLOW",
-				Roles:   action.Roles,
+				Actions:   []string{action.Action},
+				Effect:    "EFFECT_ALLOW",
+				Roles:     action.Roles,
+				Condition: action.Condition,
 			}
 			policy.ResourcePolicy.Rules = append(policy.ResourcePolicy.Rules, rule)
 		}

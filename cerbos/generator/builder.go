@@ -8,8 +8,9 @@ type ResourceDefinition struct {
 }
 
 type ActionDefinition struct {
-	Action string
-	Roles  []string
+	Action    string
+	Roles     []string
+	Condition *Condition
 }
 
 type ResourceBuilder struct {
@@ -48,4 +49,65 @@ func (b *ResourceBuilder) Build() []ResourceDefinition {
 		return result[i].Resource < result[j].Resource
 	})
 	return result
+}
+
+// NewActionDefinitionWithCondition creates an ActionDefinition with a condition
+func NewActionDefinitionWithCondition(action string, roles []string, condition *Condition) ActionDefinition {
+	return ActionDefinition{
+		Action:    action,
+		Roles:     roles,
+		Condition: condition,
+	}
+}
+
+// AllOf creates a condition where all expressions must be true (logical AND)
+func AllOf(exprs ...string) *Condition {
+	matches := make([]Match, len(exprs))
+	for i, expr := range exprs {
+		e := expr
+		matches[i] = Match{Expr: &e}
+	}
+	return &Condition{
+		Match: Match{
+			All: &MatchExpressions{Of: matches},
+		},
+	}
+}
+
+// AnyOf creates a condition where at least one expression must be true (logical OR)
+func AnyOf(exprs ...string) *Condition {
+	matches := make([]Match, len(exprs))
+	for i, expr := range exprs {
+		e := expr
+		matches[i] = Match{Expr: &e}
+	}
+	return &Condition{
+		Match: Match{
+			Any: &MatchExpressions{Of: matches},
+		},
+	}
+}
+
+// NoneOf creates a condition where none of the expressions should be true (logical negation)
+func NoneOf(exprs ...string) *Condition {
+	matches := make([]Match, len(exprs))
+	for i, expr := range exprs {
+		e := expr
+		matches[i] = Match{Expr: &e}
+	}
+	return &Condition{
+		Match: Match{
+			None: &MatchExpressions{Of: matches},
+		},
+	}
+}
+
+// SimpleExpr creates a condition with a single expression
+func SimpleExpr(expr string) *Condition {
+	e := expr
+	return &Condition{
+		Match: Match{
+			Expr: &e,
+		},
+	}
 }
