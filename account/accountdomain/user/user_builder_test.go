@@ -33,6 +33,10 @@ func TestBuilder_ParseID(t *testing.T) {
 func TestBuilder_Name(t *testing.T) {
 	b := New().NewID().Name("xxx").Email("aaa@bbb.com").MustBuild()
 	assert.Equal(t, "xxx", b.Name())
+
+	// Test that email address is rejected as name
+	_, err := New().NewID().Name("test@example.com").Email("aaa@bbb.com").Build()
+	assert.ErrorIs(t, err, ErrNameContainsEmail)
 }
 
 func TestBuilder_Alias(t *testing.T) {

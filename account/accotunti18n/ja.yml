@@ -20,6 +20,7 @@ invalid secret: 無効なシークレットです。
 invalid user id: 無効なユーザーIDです。
 invalid user name: 無効なユーザー名です。
 invalid workspace name: 無効なワークスペース名です。
+name cannot be an email address: ユーザー名にメールアドレスは使用できません。
 not verified user: 未認証のユーザーです。
 operation denied: 操作が拒否されました。
 owner user cannot leave from the workspace: オーナーはワークスペースを抜けることができません。

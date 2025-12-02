@@ -132,7 +132,9 @@ func (i *User) UpdateMe(ctx context.Context, p accountinterfaces.UpdateMeParam, 
 
 		if p.Name != nil && *p.Name != u.Name() {
 			oldName := u.Name()
-			u.UpdateName(*p.Name)
+			if err := u.UpdateName(*p.Name); err != nil {
+				return nil, err
+			}
 
 			workspace, err = i.repos.Workspace.FindByID(ctx, u.Workspace())
 			if err != nil && !errors.Is(err, rerror.ErrNotFound) {
