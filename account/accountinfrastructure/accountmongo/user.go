@@ -3,6 +3,7 @@ package accountmongo
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"regexp"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
@@ -136,13 +137,30 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 		return nil, nil
 	}
 
+	// Reject email addresses as search keywords
+	if isEmailAddress(keyword) {
+		return nil, accountrepo.ErrInvalidKeyword
+	}
+
 	if len(fields) == 0 {
-		fields = []string{"email", "name"}
+		fields = []string{"name"}
+	}
+
+	// Remove "email" from fields if present
+	filteredFields := make([]string, 0, len(fields))
+	for _, field := range fields {
+		if field != "email" {
+			filteredFields = append(filteredFields, field)
+		}
+	}
+
+	if len(filteredFields) == 0 {
+		return nil, nil
 	}
 
 	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
-	orConditions := make([]bson.M, len(fields))
-	for i, field := range fields {
+	orConditions := make([]bson.M, len(filteredFields))
+	for i, field := range filteredFields {
 		orConditions[i] = bson.M{field: regex}
 	}
 
@@ -150,6 +168,14 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 		bson.M{"$or": orConditions},
 		options.Find().SetLimit(10).SetSort(bson.M{"name": 1}),
 	)
+}
+
+func isEmailAddress(s string) bool {
+	if s == "" {
+		return false
+	}
+	_, err := mail.ParseAddress(s)
+	return err == nil
 }
 
 func (r *User) FindByVerification(ctx context.Context, code string) (*user.User, error) {
