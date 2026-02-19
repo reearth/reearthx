@@ -1,6 +1,8 @@
 package generator
 
-import "sort"
+import (
+	"sort"
+)
 
 type ResourceDefinition struct {
 	Resource string

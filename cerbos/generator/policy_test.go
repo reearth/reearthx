@@ -12,22 +12,23 @@ func TestGeneratePolicies(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	tests := []struct {
-		name            string
-		serviceName     string
-		defineResources func(builder *ResourceBuilder) []ResourceDefinition
-		wantFiles       map[string]string
-		outputDir       string
-		wantErr         string
+		name          string
+		serviceName   string
+		resourceRules []ResourceRule
+		wantFiles     map[string]string
+		outputDir     string
+		wantErr       string
 	}{
 		{
 			name:        "success generate single policy",
 			serviceName: "flow",
-			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
-				return builder.
-					AddResource("project", []ActionDefinition{
-						NewActionDefinition("read", []string{"owner", "reader"}),
-					}).
-					Build()
+			resourceRules: []ResourceRule{
+				{
+					Resource: "project",
+					Actions: map[string]ActionRule{
+						"read": {Roles: []string{"owner", "reader"}},
+					},
+				},
 			},
 			wantFiles: map[string]string{
 				"flow_project.yaml": `apiVersion: api.cerbos.dev/v1
@@ -47,16 +48,20 @@ resourcePolicy:
 		{
 			name:        "success generate multiple policies",
 			serviceName: "flow",
-			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
-				return builder.
-					AddResource("project", []ActionDefinition{
-						NewActionDefinition("read", []string{"owner", "reader"}),
-						NewActionDefinition("write", []string{"owner"}),
-					}).
-					AddResource("workflow", []ActionDefinition{
-						NewActionDefinition("read", []string{"owner", "viewer"}),
-					}).
-					Build()
+			resourceRules: []ResourceRule{
+				{
+					Resource: "project",
+					Actions: map[string]ActionRule{
+						"read":  {Roles: []string{"owner", "reader"}},
+						"write": {Roles: []string{"owner"}},
+					},
+				},
+				{
+					Resource: "workflow",
+					Actions: map[string]ActionRule{
+						"read": {Roles: []string{"owner", "viewer"}},
+					},
+				},
 			},
 			wantFiles: map[string]string{
 				"flow_project.yaml": `apiVersion: api.cerbos.dev/v1
@@ -91,37 +96,25 @@ resourcePolicy:
 			},
 		},
 		{
-			name:        "invalid resource definition",
-			serviceName: "flow",
-			defineResources: func(b *ResourceBuilder) []ResourceDefinition {
-				return []ResourceDefinition{{
-					Resource: "",
-					Actions:  []ActionDefinition{},
-				}}
-			},
-			outputDir: "test",
-			wantErr:   "invalid resource name",
-		},
-		{
-			name:            "nil define resources func",
-			serviceName:     "flow",
-			defineResources: nil,
-			outputDir:       "test",
-			wantErr:         "define resources function is required",
+			name:          "nil resource rules",
+			serviceName:   "flow",
+			resourceRules: nil,
+			outputDir:     "test",
+			wantErr:       "resource rules is required",
 		},
 		{
 			name:        "success generate policy with simple condition",
 			serviceName: "flow",
-			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
-				return builder.
-					AddResource("document", []ActionDefinition{
-						NewActionDefinitionWithCondition(
-							"approve",
-							[]string{"manager"},
-							SimpleExpr(`R.attr.status == "PENDING_APPROVAL"`),
-						),
-					}).
-					Build()
+			resourceRules: []ResourceRule{
+				{
+					Resource: "document",
+					Actions: map[string]ActionRule{
+						"approve": {
+							Roles:     []string{"manager"},
+							Condition: SimpleExpr(`R.attr.status == "PENDING_APPROVAL"`),
+						},
+					},
+				},
 			},
 			wantFiles: map[string]string{
 				"flow_document.yaml": `apiVersion: api.cerbos.dev/v1
@@ -143,19 +136,19 @@ resourcePolicy:
 		{
 			name:        "success generate policy with AllOf condition",
 			serviceName: "flow",
-			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
-				return builder.
-					AddResource("document", []ActionDefinition{
-						NewActionDefinitionWithCondition(
-							"approve",
-							[]string{"manager"},
-							AllOf(
+			resourceRules: []ResourceRule{
+				{
+					Resource: "document",
+					Actions: map[string]ActionRule{
+						"approve": {
+							Roles: []string{"manager"},
+							Condition: AllOf(
 								`R.attr.status == "PENDING_APPROVAL"`,
 								`"GB" in R.attr.geographies`,
 							),
-						),
-					}).
-					Build()
+						},
+					},
+				},
 			},
 			wantFiles: map[string]string{
 				"flow_document.yaml": `apiVersion: api.cerbos.dev/v1
@@ -180,19 +173,19 @@ resourcePolicy:
 		{
 			name:        "success generate policy with AnyOf condition",
 			serviceName: "flow",
-			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
-				return builder.
-					AddResource("resource", []ActionDefinition{
-						NewActionDefinitionWithCondition(
-							"delete",
-							[]string{"admin", "owner"},
-							AnyOf(
+			resourceRules: []ResourceRule{
+				{
+					Resource: "resource",
+					Actions: map[string]ActionRule{
+						"delete": {
+							Roles: []string{"admin", "owner"},
+							Condition: AnyOf(
 								`P.attr.role == "admin"`,
 								`R.attr.owner == P.id`,
 							),
-						),
-					}).
-					Build()
+						},
+					},
+				},
 			},
 			wantFiles: map[string]string{
 				"flow_resource.yaml": `apiVersion: api.cerbos.dev/v1
@@ -218,19 +211,19 @@ resourcePolicy:
 		{
 			name:        "success generate policy with NoneOf condition",
 			serviceName: "flow",
-			defineResources: func(builder *ResourceBuilder) []ResourceDefinition {
-				return builder.
-					AddResource("project", []ActionDefinition{
-						NewActionDefinitionWithCondition(
-							"view",
-							[]string{"user"},
-							NoneOf(
+			resourceRules: []ResourceRule{
+				{
+					Resource: "project",
+					Actions: map[string]ActionRule{
+						"view": {
+							Roles: []string{"user"},
+							Condition: NoneOf(
 								`R.attr.archived == true`,
 								`R.attr.deleted == true`,
 							),
-						),
-					}).
-					Build()
+						},
+					},
+				},
 			},
 			wantFiles: map[string]string{
 				"flow_project.yaml": `apiVersion: api.cerbos.dev/v1
@@ -261,7 +254,7 @@ resourcePolicy:
 				testDir = filepath.Join(tmpDir, tt.name)
 			}
 
-			err := GeneratePolicies(tt.serviceName, tt.defineResources, testDir)
+			err := GeneratePolicies(tt.serviceName, tt.resourceRules, testDir)
 
 			if tt.wantErr != "" {
 				assert.Error(t, err)
