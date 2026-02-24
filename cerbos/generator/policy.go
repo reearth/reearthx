@@ -44,13 +44,13 @@ type MatchExpressions struct {
 
 type DefineResourcesFunc func(builder *ResourceBuilder) []ResourceDefinition
 
-func GeneratePolicies(serviceName string, defineResources DefineResourcesFunc, outputDir string) error {
-	if defineResources == nil {
-		return fmt.Errorf("define resources function is required")
+func GeneratePolicies(serviceName string, resourceRules []ResourceRule, outputDir string) error {
+	if resourceRules == nil {
+		return fmt.Errorf("resource rules is required")
 	}
 
 	builder := NewResourceBuilder(serviceName)
-	resources := defineResources(builder)
+	resources := DefineResources(builder, resourceRules)
 
 	for _, resource := range resources {
 		if resource.Resource == "" {
