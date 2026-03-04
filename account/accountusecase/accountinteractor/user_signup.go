@@ -14,6 +14,7 @@ import (
 	"strings"
 	textTmpl "text/template"
 
+	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
@@ -128,9 +129,6 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 		if name == "" {
 			name = ui.Name
 		}
-		if name == "" {
-			name = ui.Email
-		}
 	}
 
 	eu, err := i.repos.User.FindByEmail(ctx, param.Email)
@@ -147,6 +145,11 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 	}
 	if eu != nil {
 		return nil, accountrepo.ErrDuplicatedUser
+	}
+
+	// Generate random name if empty
+	if name == "" {
+		name = "user-" + strings.ToLower(accountdomain.NewUserID().String())
 	}
 
 	// Initialize user and ws
