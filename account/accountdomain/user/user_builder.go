@@ -69,6 +69,10 @@ func (b *Builder) NewID() *Builder {
 }
 
 func (b *Builder) Name(name string) *Builder {
+	if isEmailAddress(name) {
+		b.err = ErrNameContainsEmail
+		return b
+	}
 	b.u.name = name
 	return b
 }
