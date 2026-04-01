@@ -670,16 +670,16 @@ func TestUserRepo_SearchByKeyword(t *testing.T) {
 		expected []*user.User
 	}{
 		{
-			name:     "search without fields (default email and name)",
+			name:     "search without fields (default name only)",
 			keyword:  "john",
 			fields:   nil,
-			expected: []*user.User{user1, user3}, // john@example.com and Bob Johnson
+			expected: []*user.User{user3}, // Bob Johnson (email search removed)
 		},
 		{
-			name:     "search by email field only",
+			name:     "search by email field only (should be filtered out)",
 			keyword:  "test",
 			fields:   []string{"email"},
-			expected: []*user.User{user2}, // jane@test.com
+			expected: []*user.User{}, // email field is filtered out
 		},
 		{
 			name:     "search by name field only",
@@ -694,10 +694,10 @@ func TestUserRepo_SearchByKeyword(t *testing.T) {
 			expected: []*user.User{user1}, // alias: johnny
 		},
 		{
-			name:     "search by multiple fields",
+			name:     "search by multiple fields (email filtered out)",
 			keyword:  "bob",
 			fields:   []string{"email", "name", "alias"},
-			expected: []*user.User{user3, user3}, // bob@company.com, Bob Johnson, bobby (may return duplicates)
+			expected: []*user.User{user3, user3}, // Bob Johnson, bobby (email filtered out, may return duplicates)
 		},
 		{
 			name:     "search with non-existent field",
@@ -706,10 +706,10 @@ func TestUserRepo_SearchByKeyword(t *testing.T) {
 			expected: []*user.User{},
 		},
 		{
-			name:     "search with mixed existing and non-existent fields",
+			name:     "search with mixed existing and non-existent fields (email filtered)",
 			keyword:  "jane",
 			fields:   []string{"email", "nonexistent", "name"},
-			expected: []*user.User{user2}, // jane@test.com and Jane Smith
+			expected: []*user.User{user2}, // Jane Smith (email filtered out)
 		},
 		{
 			name:     "search with short keyword (less than 3 chars)",
@@ -718,10 +718,16 @@ func TestUserRepo_SearchByKeyword(t *testing.T) {
 			expected: []*user.User{},
 		},
 		{
-			name:     "case insensitive search",
+			name:     "case insensitive search (email filtered out)",
 			keyword:  "JOHN",
 			fields:   []string{"email", "name"},
-			expected: []*user.User{user1, user3}, // john@example.com and Bob Johnson
+			expected: []*user.User{user3}, // Bob Johnson (email filtered out)
+		},
+		{
+			name:     "search with email address keyword should return error",
+			keyword:  "test@example.com",
+			fields:   nil,
+			expected: nil, // Should return error, not results
 		},
 	}
 
@@ -748,6 +754,12 @@ func TestUserRepo_SearchByKeyword(t *testing.T) {
 				got, err = repo.SearchByKeyword(ctx, tc.keyword)
 			} else {
 				got, err = repo.SearchByKeyword(ctx, tc.keyword, tc.fields...)
+			}
+
+			// Check for error cases (when expected is nil, we expect an error)
+			if tc.expected == nil {
+				assert.Error(tt, err)
+				return
 			}
 
 			assert.NoError(tt, err)
