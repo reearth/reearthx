@@ -57,9 +57,6 @@ var gceEncoderConfig = zapcore.EncoderConfig{
 }
 
 func isGCP() bool {
-	if GCP {
-		return true
-	}
 
 	for _, key := range GCPEnv {
 		if v, ok := os.LookupEnv(key); ok && v != "" {
