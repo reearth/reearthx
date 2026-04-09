@@ -80,7 +80,7 @@ func (c *Config) execute() error {
 
 		l := len(msgs)
 		if l > 0 {
-			os.Stderr.WriteString(fmt.Sprintf("%s ... %d messages\n", path, l))
+			_, _ = fmt.Fprintf(os.Stderr, "%s ... %d messages\n", path, l)
 		}
 
 		return nil
@@ -89,9 +89,9 @@ func (c *Config) execute() error {
 	}
 
 	if len(messages) > 0 {
-		os.Stderr.WriteString("\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 	}
-	os.Stderr.WriteString(fmt.Sprintf("%d messages found\n", len(messages)))
+	_, _ = fmt.Fprintf(os.Stderr, "%d messages found\n", len(messages))
 
 	messageTemplates := map[string]*i18n.MessageTemplate{}
 	for _, m := range messages {

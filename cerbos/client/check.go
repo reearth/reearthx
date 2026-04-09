@@ -109,7 +109,7 @@ func (c *Client) executeRequest(req *http.Request) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return false, fmt.Errorf("server returned non-OK status: %d", resp.StatusCode)

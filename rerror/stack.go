@@ -30,7 +30,7 @@ func PretifyStack(r io.Reader, w io.Writer) {
 	srcLen := 0
 	pkgLen := 0
 	for _, bucket := range buckets {
-		for _, line := range bucket.Signature.Stack.Calls {
+		for _, line := range bucket.Stack.Calls {
 			if l := len(fmt.Sprintf("%s:%d", line.SrcName, line.Line)); l > srcLen {
 				srcLen = l
 			}
@@ -53,11 +53,11 @@ func PretifyStack(r io.Reader, w io.Writer) {
 		if len(bucket.CreatedBy.Calls) != 0 {
 			extra += fmt.Sprintf(" [Created by %s.%s @ %s:%d]", bucket.CreatedBy.Calls[0].Func.DirName, bucket.CreatedBy.Calls[0].Func.Name, bucket.CreatedBy.Calls[0].SrcName, bucket.CreatedBy.Calls[0].Line)
 		}
-		fmt.Fprintf(w, "%d: %s%s\n", len(bucket.IDs), bucket.State, extra)
+		_, _ = fmt.Fprintf(w, "%d: %s%s\n", len(bucket.IDs), bucket.State, extra)
 
 		// Print the stack lines.
 		for _, line := range bucket.Stack.Calls {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"    %-*s %-*s %s(%s)\n",
 				pkgLen, line.Func.DirName, srcLen,
