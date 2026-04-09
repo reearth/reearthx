@@ -60,7 +60,7 @@ func TestClientError(t *testing.T) {
 	}
 	cl := NewClient(c, r, m, 0)
 
-	assert.EqualError(t, cl.Migrate(ctx), "Failed to exec migration 30: ERR!")
+	assert.EqualError(t, cl.Migrate(ctx), "failed to exec migration 30: ERR!")
 	assert.Equal(t, 1, r.beginCalls)
 	assert.Equal(t, 1, r.endCalls)
 	assert.Equal(t, 1, r.currentCalls)
