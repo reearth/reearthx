@@ -26,9 +26,10 @@ type TracerConfig struct {
 }
 
 func InitTracer(ctx context.Context, conf *TracerConfig) io.Closer {
-	if conf.Tracer == TRACER_GCP {
+	switch conf.Tracer {
+	case TRACER_GCP:
 		initGCPTracer(ctx, conf)
-	} else if conf.Tracer == TRACER_JAEGER {
+	case TRACER_JAEGER:
 		return initJaegerTracer(conf)
 	}
 	return nil

@@ -53,10 +53,11 @@ func TestInitTracer(t *testing.T) {
 
 	// Create a test wrapper for InitTracer that uses the function variables
 	testInitTracer := func(ctx context.Context, conf *TracerConfig) io.Closer {
-		if conf.Tracer == TRACER_GCP {
+		switch conf.Tracer {
+		case TRACER_GCP:
 			testInitGCPTracer(ctx, conf)
 			return nil
-		} else if conf.Tracer == TRACER_JAEGER {
+		case TRACER_JAEGER:
 			return testInitJaegerTracer(conf)
 		}
 		return nil

@@ -12,8 +12,8 @@ import (
 const IDErrTransaction = "transaction error"
 
 var (
-	ErrTransaction    = rerror.WrapE(&i18n.Message{ID: IDErrTransaction}, rawErrTransaction)
-	rawErrTransaction = errors.New("transaction conflicted")
+	ErrTransaction    = rerror.WrapE(&i18n.Message{ID: IDErrTransaction}, errTransactionConflicted)
+	errTransactionConflicted = errors.New("transaction conflicted")
 )
 
 type Transaction interface {
@@ -89,10 +89,7 @@ func DoTransaction(ctx context.Context, t Transaction, retry int, fn func(ctx co
 	}()
 
 	r := 0
-	for {
-		if r > 0 && (retry <= 0 || r > retry) {
-			break
-		}
+	for r == 0 || (retry > 0 && r <= retry) {
 		if err = fn(ctx2); err != nil {
 			if !errors.Is(err, ErrTransaction) {
 				break

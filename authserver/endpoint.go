@@ -45,9 +45,9 @@ func (c *EndpointConfig) normalize() {
 	}
 
 	if c.Dev {
-		os.Setenv(op.OidcDevMode, "true")
+		_ = os.Setenv(op.OidcDevMode, "true")
 	} else {
-		os.Unsetenv(op.OidcDevMode)
+		_ = os.Unsetenv(op.OidcDevMode)
 	}
 }
 
