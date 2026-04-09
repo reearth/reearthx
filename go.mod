@@ -1,6 +1,6 @@
 module github.com/reearth/reearthx
 
-go 1.24.2
+go 1.26.2
 
 require (
 	github.com/99designs/gqlgen v0.17.73
