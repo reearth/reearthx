@@ -47,7 +47,7 @@ func (r *Workspace) Filtered(f accountrepo.WorkspaceFilter) accountrepo.Workspac
 
 func (r *Workspace) FindByUser(ctx context.Context, id user.ID) (workspace.List, error) {
 	return r.find(ctx, bson.M{
-		"members." + strings.Replace(id.String(), ".", "", -1): bson.M{
+		"members." + strings.ReplaceAll(id.String(), ".", ""): bson.M{
 			"$exists": true,
 		},
 	})
@@ -55,7 +55,7 @@ func (r *Workspace) FindByUser(ctx context.Context, id user.ID) (workspace.List,
 
 func (r *Workspace) FindByUserWithPagination(ctx context.Context, id user.ID, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error) {
 	filter := bson.M{
-		"members." + strings.Replace(id.String(), ".", "", -1): bson.M{
+		"members." + strings.ReplaceAll(id.String(), ".", ""): bson.M{
 			"$exists": true,
 		},
 	}
@@ -65,7 +65,7 @@ func (r *Workspace) FindByUserWithPagination(ctx context.Context, id user.ID, pa
 
 func (r *Workspace) FindByIntegration(ctx context.Context, id workspace.IntegrationID) (workspace.List, error) {
 	return r.find(ctx, bson.M{
-		"integrations." + strings.Replace(id.String(), ".", "", -1): bson.M{
+		"integrations." + strings.ReplaceAll(id.String(), ".", ""): bson.M{
 			"$exists": true,
 		},
 	})
@@ -80,7 +80,7 @@ func (r *Workspace) FindByIntegrations(ctx context.Context, integrationIDs works
 	orConditions := make([]bson.M, 0)
 	for _, id := range integrationIDs {
 		orConditions = append(orConditions, bson.M{
-			"integrations." + strings.Replace(id.String(), ".", "", -1): bson.M{
+			"integrations." + strings.ReplaceAll(id.String(), ".", ""): bson.M{
 				"$exists": true,
 			},
 		})

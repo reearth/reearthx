@@ -20,7 +20,7 @@ func initKeys(keyBytes, certBytes []byte) (*rsa.PrivateKey, *jose.SigningKey, *j
 	}
 	key, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to parse the private key bytes: %w\n", err)
+		return nil, nil, nil, fmt.Errorf("failed to parse the private key bytes: %w", err)
 	}
 
 	var certActualBytes []byte
@@ -34,7 +34,7 @@ func initKeys(keyBytes, certBytes []byte) (*rsa.PrivateKey, *jose.SigningKey, *j
 	var cert *x509.Certificate
 	cert, err = x509.ParseCertificate(certActualBytes)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to parse the cert bytes: %w\n", err)
+		return nil, nil, nil, fmt.Errorf("failed to parse the cert bytes: %w", err)
 	}
 
 	keyID := "RE01"
@@ -53,7 +53,7 @@ func initKeys(keyBytes, certBytes []byte) (*rsa.PrivateKey, *jose.SigningKey, *j
 func generateCert(name pkix.Name) (keyPem, certPem []byte, err error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		err = fmt.Errorf("failed to generate key: %w\n", err)
+		err = fmt.Errorf("failed to generate key: %w", err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func generateCert(name pkix.Name) (keyPem, certPem []byte, err error) {
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, key.Public(), key)
 	if err != nil {
-		err = fmt.Errorf("failed to create the cert: %w\n", err)
+		err = fmt.Errorf("failed to create the cert: %w", err)
 	}
 
 	certPem = pem.EncodeToMemory(&pem.Block{

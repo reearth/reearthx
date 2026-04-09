@@ -194,10 +194,7 @@ func Is(err error, label error) bool {
 	}
 	e := err
 	var target *Error
-	for {
-		if !errors.As(e, &target) {
-			break
-		}
+	for errors.As(e, &target) {
 		if target.Label == label {
 			return true
 		}
