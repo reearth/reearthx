@@ -107,14 +107,14 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 		}
 
 		if err := cfg.ConfigRepo.Save(ctx, c); err != nil {
-			return nil, fmt.Errorf("could not save raw cert: %w\n", err)
+			return nil, fmt.Errorf("could not save raw cert: %w", err)
 		}
 		log.Infoc(ctx, "auth: init a new private key and certificate")
 	}
 
 	key, sigKey, keySet, err := initKeys(keyBytes, certBytes)
 	if err != nil {
-		return nil, fmt.Errorf("could not init keys: %w\n", err)
+		return nil, fmt.Errorf("could not init keys: %w", err)
 	}
 
 	return &Storage{

@@ -114,7 +114,7 @@ func (c *Config) execute() error {
 		}
 	}
 
-	_, _ = fmt.Fprint(os.Stderr,"done\n")
+	_, _ = fmt.Fprint(os.Stderr, "done\n")
 
 	if update && c.FailOnUpdate {
 		return ErrUpdate
@@ -123,11 +123,11 @@ func (c *Config) execute() error {
 }
 
 func (c *Config) mergeFile(path, format string, data any) (bool, error) {
-	_, _ = fmt.Fprint(os.Stderr,fmt.Sprintf("writing messages to %s", path))
+	_, _ = fmt.Fprintf(os.Stderr, "writing messages to %s", path)
 
 	f, err := c.Output.Open(path)
 	if err != nil && !errors.Is(err, afero.ErrFileNotFound) {
-		_, _ = fmt.Fprint(os.Stderr,"\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 		return false, err
 	}
 
@@ -137,29 +137,29 @@ func (c *Config) mergeFile(path, format string, data any) (bool, error) {
 			_ = f.Close()
 		}()
 		if err := unmarshal(f, &a, format); err != nil {
-			_, _ = fmt.Fprint(os.Stderr,"\n")
+			_, _ = fmt.Fprint(os.Stderr, "\n")
 			return false, err
 		}
 	}
 
 	merged := merge(a, data)
 	if merged == nil {
-		_, _ = fmt.Fprint(os.Stderr," ... no updates\n")
+		_, _ = fmt.Fprint(os.Stderr, " ... no updates\n")
 		return false, nil
 	}
 
 	o, err := marshal(merged, format)
 	if err != nil {
-		_, _ = fmt.Fprint(os.Stderr,"\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 		return false, err
 	}
 
 	if err := afero.WriteFile(c.Output, path, o, 0644); err != nil {
-		_, _ = fmt.Fprint(os.Stderr,"\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 		return false, err
 	}
 
-	_, _ = fmt.Fprint(os.Stderr," ... done\n")
+	_, _ = fmt.Fprint(os.Stderr, " ... done\n")
 	return true, nil
 }
 
