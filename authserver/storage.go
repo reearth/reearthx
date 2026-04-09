@@ -84,7 +84,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 	}
 	c, err := cfg.ConfigRepo.Load(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not load auth config: %w\n", err)
+		return nil, fmt.Errorf("could not load auth config: %w", err)
 	}
 	defer func() {
 		if err := cfg.ConfigRepo.Unlock(ctx); err != nil {
@@ -99,7 +99,7 @@ func NewStorage(ctx context.Context, cfg StorageConfig) (op.Storage, error) {
 	} else {
 		keyBytes, certBytes, err = generateCert(name)
 		if err != nil {
-			return nil, fmt.Errorf("could not generate raw cert: %w\n", err)
+			return nil, fmt.Errorf("could not generate raw cert: %w", err)
 		}
 		c = &Config{
 			Key:  string(keyBytes),

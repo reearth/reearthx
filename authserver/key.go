@@ -73,7 +73,7 @@ func generateCert(name pkix.Name) (keyPem, certPem []byte, err error) {
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, key.Public(), key)
 	if err != nil {
-		err = fmt.Errorf("failed to create the cert: %w\n", err)
+		err = fmt.Errorf("failed to create the cert: %w", err)
 	}
 
 	certPem = pem.EncodeToMemory(&pem.Block{
