@@ -80,7 +80,7 @@ func (c *Config) execute() error {
 
 		l := len(msgs)
 		if l > 0 {
-			os.Stderr.WriteString(fmt.Sprintf("%s ... %d messages\n", path, l))
+			_, _ = fmt.Fprintf(os.Stderr, "%s ... %d messages\n", path, l)
 		}
 
 		return nil
@@ -89,9 +89,9 @@ func (c *Config) execute() error {
 	}
 
 	if len(messages) > 0 {
-		os.Stderr.WriteString("\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 	}
-	os.Stderr.WriteString(fmt.Sprintf("%d messages found\n", len(messages)))
+	_, _ = fmt.Fprintf(os.Stderr, "%d messages found\n", len(messages))
 
 	messageTemplates := map[string]*i18n.MessageTemplate{}
 	for _, m := range messages {
@@ -114,7 +114,7 @@ func (c *Config) execute() error {
 		}
 	}
 
-	os.Stderr.WriteString("done\n")
+	_, _ = fmt.Fprint(os.Stderr, "done\n")
 
 	if update && c.FailOnUpdate {
 		return ErrUpdate
@@ -123,11 +123,11 @@ func (c *Config) execute() error {
 }
 
 func (c *Config) mergeFile(path, format string, data any) (bool, error) {
-	os.Stderr.WriteString(fmt.Sprintf("writing messages to %s", path))
+	_, _ = fmt.Fprintf(os.Stderr, "writing messages to %s", path)
 
 	f, err := c.Output.Open(path)
 	if err != nil && !errors.Is(err, afero.ErrFileNotFound) {
-		os.Stderr.WriteString("\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 		return false, err
 	}
 
@@ -137,29 +137,29 @@ func (c *Config) mergeFile(path, format string, data any) (bool, error) {
 			_ = f.Close()
 		}()
 		if err := unmarshal(f, &a, format); err != nil {
-			os.Stderr.WriteString("\n")
+			_, _ = fmt.Fprint(os.Stderr, "\n")
 			return false, err
 		}
 	}
 
 	merged := merge(a, data)
 	if merged == nil {
-		os.Stderr.WriteString(" ... no updates\n")
+		_, _ = fmt.Fprint(os.Stderr, " ... no updates\n")
 		return false, nil
 	}
 
 	o, err := marshal(merged, format)
 	if err != nil {
-		os.Stderr.WriteString("\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 		return false, err
 	}
 
 	if err := afero.WriteFile(c.Output, path, o, 0644); err != nil {
-		os.Stderr.WriteString("\n")
+		_, _ = fmt.Fprint(os.Stderr, "\n")
 		return false, err
 	}
 
-	os.Stderr.WriteString(" ... done\n")
+	_, _ = fmt.Fprint(os.Stderr, " ... done\n")
 	return true, nil
 }
 

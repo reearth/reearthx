@@ -50,13 +50,14 @@ type SESConfig struct {
 
 func New(ctx context.Context, conf *Config) (m Mailer) {
 	mt := conf.Mailer
-	if mt == "sendgrid" {
+	switch mt {
+	case "sendgrid":
 		m = NewSendGrid(conf.SendGrid.Name, conf.SendGrid.Email, conf.SendGrid.API)
-	} else if mt == "smtp" {
+	case "smtp":
 		m = NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
-	} else if mt == "ses" {
+	case "ses":
 		m = NewSES(ctx, conf.SES.Name, conf.SES.Email)
-	} else {
+	default:
 		mt = "logger"
 		m = NewLogger()
 	}
@@ -123,9 +124,9 @@ func (m *message) encodeContent() (string, error) {
 
 func (m *message) encodeMessage() ([]byte, error) {
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString(fmt.Sprintf("Subject: %s\n", m.subject))
-	buf.WriteString(fmt.Sprintf("From: %s\n", m.from))
-	buf.WriteString(fmt.Sprintf("To: %s\n", strings.Join(m.to, ",")))
+	fmt.Fprintf(buf, "Subject: %s\n", m.subject)
+	fmt.Fprintf(buf, "From: %s\n", m.from)
+	fmt.Fprintf(buf, "To: %s\n", strings.Join(m.to, ","))
 	content, err := m.encodeContent()
 	if err != nil {
 		return nil, err

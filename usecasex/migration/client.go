@@ -56,7 +56,7 @@ func (c Client[C]) Migrate(ctx context.Context) (err error) {
 
 	current, err := c.config.Current(ctx)
 	if err != nil {
-		return fmt.Errorf("Failed to load config: %w", rerror.UnwrapErrInternal(err))
+		return fmt.Errorf("failed to load config: %w", rerror.UnwrapErrInternal(err))
 	}
 
 	nextMigrations := nextMigration(lo.Keys(c.migrations), current)
@@ -74,7 +74,7 @@ func (c Client[C]) Migrate(ctx context.Context) (err error) {
 
 			return c.config.Save(ctx, m)
 		}); err != nil {
-			return fmt.Errorf("Failed to exec migration %d: %w", m, rerror.UnwrapErrInternalOr(err))
+			return fmt.Errorf("failed to exec migration %d: %w", m, rerror.UnwrapErrInternalOr(err))
 		}
 	}
 

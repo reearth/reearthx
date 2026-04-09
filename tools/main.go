@@ -28,7 +28,7 @@ func main() {
 	}
 
 	if err != nil {
-		os.Stderr.WriteString(fmt.Sprintf("%s\n", err))
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
