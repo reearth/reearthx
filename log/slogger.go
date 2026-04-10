@@ -2,11 +2,8 @@ package log
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
-	"time"
 
-	echov5 "github.com/labstack/echo/v5"
 	"go.uber.org/zap/zapcore"
 )
 
@@ -95,70 +92,4 @@ func appendAttr(kvs []any, group string, a slog.Attr) []any {
 		key = group + "." + key
 	}
 	return append(kvs, key, a.Value.Any())
-}
-
-// AccessLoggerV5 returns an echo v5 middleware that logs request/response pairs.
-func AccessLoggerV5(l *Logger) echov5.MiddlewareFunc {
-	return func(next echov5.HandlerFunc) echov5.HandlerFunc {
-		return func(c *echov5.Context) error {
-			req := c.Request()
-			start := time.Now()
-
-			reqid := GetReqestID(nil, req)
-			args := []any{
-				"time_unix", start.Unix(),
-				"remote_ip", c.RealIP(),
-				"host", req.Host,
-				"uri", req.RequestURI,
-				"method", req.Method,
-				"path", req.URL.Path,
-				"protocol", req.Proto,
-				"referer", req.Referer(),
-				"user_agent", req.UserAgent(),
-				"bytes_in", req.ContentLength,
-				"request_id", reqid,
-				"route", c.Path(),
-			}
-
-			logger := GetLoggerFromContext(req.Context())
-			if logger == nil {
-				logger = l
-			}
-			logger = logger.WithCaller(false)
-
-			logger.Infow(
-				fmt.Sprintf("<-- %s %s", req.Method, req.URL.Path),
-				args...,
-			)
-
-			if err := next(c); err != nil {
-				c.Echo().HTTPErrorHandler(c, err)
-			}
-
-			stop := time.Now()
-			latency := stop.Sub(start)
-			latencyHuman := latency.String()
-
-			res, _ := echov5.UnwrapResponse(c.Response())
-			if res != nil {
-				args = append(args,
-					"status", res.Status,
-					"bytes_out", res.Size,
-					"latency", latency.Microseconds(),
-					"latency_human", latencyHuman,
-				)
-			} else {
-				args = append(args,
-					"latency", latency.Microseconds(),
-					"latency_human", latencyHuman,
-				)
-			}
-
-			logger.Infow(
-				fmt.Sprintf("--> %s %s", req.Method, req.URL.Path),
-				args...,
-			)
-			return nil
-		}
-	}
 }
