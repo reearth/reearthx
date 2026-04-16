@@ -299,43 +299,45 @@ func TestIssToURL(t *testing.T) {
 
 func TestUser_CreateVerification(t *testing.T) {
 	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
-	uid := accountdomain.NewUserID()
-	tid := accountdomain.NewWorkspaceID()
-	r := accountmemory.New()
 
-	m := mailer.NewMock()
-	g := &accountgateway.Container{Mailer: m}
-	uc := NewUser(r, g, "", "")
+	// Subtests run with t.Parallel(); each must own its repo and IDs so the
+	// same-ID user writes from different cases don't clobber each other.
+	type factory func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User
+
 	mocktime := time.Time{}
 	mockcode := "CODECODE"
 
 	tests := []struct {
 		name             string
-		createUserBefore *user.User
+		createUserBefore factory
 		email            string
 		wantError        error
 	}{
 		{
 			name: "ok",
-			createUserBefore: user.New().
-				ID(uid).
-				Workspace(tid).
-				Email("aaa@bbb.com").
-				Name("NAME").
-				Verification(user.VerificationFrom(mockcode, mocktime, false)).
-				MustBuild(),
+			createUserBefore: func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User {
+				return user.New().
+					ID(uid).
+					Workspace(tid).
+					Email("aaa@bbb.com").
+					Name("NAME").
+					Verification(user.VerificationFrom(mockcode, mocktime, false)).
+					MustBuild()
+			},
 			email:     "aaa@bbb.com",
 			wantError: nil,
 		},
 		{
 			name: "verified user",
-			createUserBefore: user.New().
-				ID(uid).
-				Workspace(tid).
-				Email("aaa@bbb.com").
-				Name("NAME").
-				Verification(user.VerificationFrom(mockcode, mocktime, true)).
-				MustBuild(),
+			createUserBefore: func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User {
+				return user.New().
+					ID(uid).
+					Workspace(tid).
+					Email("aaa@bbb.com").
+					Name("NAME").
+					Verification(user.VerificationFrom(mockcode, mocktime, true)).
+					MustBuild()
+			},
 			email:     "aaa@bbb.com",
 			wantError: nil,
 		},
@@ -347,12 +349,17 @@ func TestUser_CreateVerification(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			uid := accountdomain.NewUserID()
+			tid := accountdomain.NewWorkspaceID()
+			r := accountmemory.New()
+			g := &accountgateway.Container{Mailer: mailer.NewMock()}
+			uc := NewUser(r, g, "", "")
 			ctx := context.Background()
+
 			if tt.createUserBefore != nil {
-				assert.NoError(t, r.User.Save(ctx, tt.createUserBefore))
+				assert.NoError(t, r.User.Save(ctx, tt.createUserBefore(uid, tid)))
 			}
 			err := uc.CreateVerification(ctx, tt.email)
 

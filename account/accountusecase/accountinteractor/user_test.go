@@ -19,22 +19,33 @@ import (
 
 func TestUser_VerifyUser(t *testing.T) {
 	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
-	uid := accountdomain.NewUserID()
-	tid := accountdomain.NewWorkspaceID()
-	r := accountmemory.New()
-	uc := NewUser(r, nil, "", "")
+
+	// Subtests run with t.Parallel(); each must own its repo and IDs so the
+	// same-ID user writes from different cases don't clobber each other.
+	type factory func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User
+
 	expired := time.Now().Add(24 * time.Hour)
 	tests := []struct {
 		name             string
 		code             string
-		createUserBefore *user.User
-		wantUser         func(u *user.User) *user.User
+		createUserBefore factory
+		wantUser         factory
 		wantError        error
 	}{
 		{
 			name: "ok",
 			code: "code",
-			wantUser: func(u *user.User) *user.User {
+			createUserBefore: func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User {
+				return user.New().
+					ID(uid).
+					Workspace(tid).
+					Name("NAME").
+					Email("aaa@bbb.com").
+					PasswordPlainText("PAss00!!").
+					Verification(user.VerificationFrom("code", expired, false)).
+					MustBuild()
+			},
+			wantUser: func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User {
 				return user.New().
 					ID(uid).
 					Workspace(tid).
@@ -44,58 +55,56 @@ func TestUser_VerifyUser(t *testing.T) {
 					Verification(user.VerificationFrom("code", expired, true)).
 					MustBuild()
 			},
-			createUserBefore: user.New().
-				ID(uid).
-				Workspace(tid).
-				Name("NAME").
-				Email("aaa@bbb.com").
-				PasswordPlainText("PAss00!!").
-				Verification(user.VerificationFrom("code", expired, false)).
-				MustBuild(),
 			wantError: nil,
 		},
 		{
-			name:     "expired",
-			code:     "code",
-			wantUser: nil,
-			createUserBefore: user.New().
-				ID(uid).
-				Workspace(tid).
-				Name("NAME").
-				Email("aaa@bbb.com").
-				PasswordPlainText("PAss00!!").
-				Verification(user.VerificationFrom("code", time.Now().Add(-24*time.Hour), false)).
-				MustBuild(),
+			name: "expired",
+			code: "code",
+			createUserBefore: func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User {
+				return user.New().
+					ID(uid).
+					Workspace(tid).
+					Name("NAME").
+					Email("aaa@bbb.com").
+					PasswordPlainText("PAss00!!").
+					Verification(user.VerificationFrom("code", time.Now().Add(-24*time.Hour), false)).
+					MustBuild()
+			},
 			wantError: errors.New("verification expired"),
 		},
 		{
-			name:     "not found",
-			code:     "codesss",
-			wantUser: nil,
-			createUserBefore: user.New().
-				ID(uid).
-				Workspace(tid).
-				Name("NAME").
-				Email("aaa@bbb.com").
-				PasswordPlainText("PAss00!!").
-				Verification(user.VerificationFrom("code", expired, false)).
-				MustBuild(),
+			name: "not found",
+			code: "codesss",
+			createUserBefore: func(uid accountdomain.UserID, tid accountdomain.WorkspaceID) *user.User {
+				return user.New().
+					ID(uid).
+					Workspace(tid).
+					Name("NAME").
+					Email("aaa@bbb.com").
+					PasswordPlainText("PAss00!!").
+					Verification(user.VerificationFrom("code", expired, false)).
+					MustBuild()
+			},
 			wantError: rerror.ErrNotFound,
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			uid := accountdomain.NewUserID()
+			tid := accountdomain.NewWorkspaceID()
+			r := accountmemory.New()
+			uc := NewUser(r, nil, "", "")
 			ctx := context.Background()
+
 			if tt.createUserBefore != nil {
-				assert.NoError(t, r.User.Save(ctx, tt.createUserBefore))
+				assert.NoError(t, r.User.Save(ctx, tt.createUserBefore(uid, tid)))
 			}
 			u, err := uc.VerifyUser(ctx, tt.code)
 
 			if tt.wantUser != nil {
-				assert.Equal(t, tt.wantUser(u), u)
+				assert.Equal(t, tt.wantUser(uid, tid), u)
 			} else {
 				assert.Nil(t, u)
 			}

@@ -985,40 +985,53 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	userID2 := accountdomain.NewUserID()
 	userID3 := accountdomain.NewUserID()
 	userID4 := accountdomain.NewUserID()
-	u := user.New().ID(userID).Name("aaa").Email("a@b.c").MustBuild()
-	u2 := user.New().ID(userID2).Name("bbb").Email("b@b.c").MustBuild()
-	u3 := user.New().ID(userID3).Name("ccc").Email("c@b.c").MustBuild()
-	u4 := user.New().ID(userID4).Name("ddd").Email("d@b.c").MustBuild()
 
 	id1 := accountdomain.NewWorkspaceID()
-	w1 := workspace.New().ID(id1).Name("W1").
-		Members(map[user.ID]workspace.Member{
-			userID:  {Role: workspace.RoleOwner},
-			userID2: {Role: workspace.RoleReader},
-			userID3: {Role: workspace.RoleReader},
-			userID4: {Role: workspace.RoleReader},
-		}).Personal(false).MustBuild()
-
 	id2 := accountdomain.NewWorkspaceID()
-	w2 := workspace.New().ID(id2).Name("W2").
-		Members(map[user.ID]workspace.Member{
-			userID:  {Role: workspace.RoleOwner},
-			userID2: {Role: workspace.RoleReader},
-		}).Personal(true).MustBuild()
-
 	id3 := accountdomain.NewWorkspaceID()
-	w3 := workspace.New().ID(id3).Name("W3").
-		Members(map[user.ID]workspace.Member{
-			userID:  {Role: workspace.RoleOwner},
-			userID2: {Role: workspace.RoleReader},
-		}).Personal(false).MustBuild()
-
 	id4 := accountdomain.NewWorkspaceID()
-	w4 := workspace.New().ID(id4).Name("W4").
-		Members(map[user.ID]workspace.Member{
-			userID:  {Role: workspace.RoleOwner},
-			userID2: {Role: workspace.RoleReader},
-		}).Personal(false).MustBuild()
+
+	// Seeds are rebuilt per subtest because Members holds a Go map that
+	// RemoveMultipleUserMembers mutates in place; sharing a single *Workspace
+	// across parallel subtests would race on that map.
+	newUsers := func() []*user.User {
+		return []*user.User{
+			user.New().ID(userID).Name("aaa").Email("a@b.c").MustBuild(),
+			user.New().ID(userID2).Name("bbb").Email("b@b.c").MustBuild(),
+			user.New().ID(userID3).Name("ccc").Email("c@b.c").MustBuild(),
+			user.New().ID(userID4).Name("ddd").Email("d@b.c").MustBuild(),
+		}
+	}
+	newW1 := func() *workspace.Workspace {
+		return workspace.New().ID(id1).Name("W1").
+			Members(map[user.ID]workspace.Member{
+				userID:  {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+				userID3: {Role: workspace.RoleReader},
+				userID4: {Role: workspace.RoleReader},
+			}).Personal(false).MustBuild()
+	}
+	newW2 := func() *workspace.Workspace {
+		return workspace.New().ID(id2).Name("W2").
+			Members(map[user.ID]workspace.Member{
+				userID:  {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}).Personal(true).MustBuild()
+	}
+	newW3 := func() *workspace.Workspace {
+		return workspace.New().ID(id3).Name("W3").
+			Members(map[user.ID]workspace.Member{
+				userID:  {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}).Personal(false).MustBuild()
+	}
+	newW4 := func() *workspace.Workspace {
+		return workspace.New().ID(id4).Name("W4").
+			Members(map[user.ID]workspace.Member{
+				userID:  {Role: workspace.RoleOwner},
+				userID2: {Role: workspace.RoleReader},
+			}).Personal(false).MustBuild()
+	}
 
 	op := &accountusecase.Operator{
 		User:               &userID,
@@ -1028,8 +1041,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		seeds      workspace.List
-		usersSeeds []*user.User
+		seeds      func() workspace.List
+		usersSeeds func() []*user.User
 		args       struct {
 			wId      workspace.ID
 			uIds     workspace.UserIDList
@@ -1041,8 +1054,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	}{
 		{
 			name:       "Remove non existing",
-			seeds:      workspace.List{w1},
-			usersSeeds: []*user.User{u},
+			seeds:      func() workspace.List { return workspace.List{newW1()} },
+			usersSeeds: func() []*user.User { return newUsers()[:1] },
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1057,8 +1070,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		},
 		{
 			name:       "Remove multiple existing members",
-			seeds:      workspace.List{w1},
-			usersSeeds: []*user.User{u, u2, u3, u4},
+			seeds:      func() workspace.List { return workspace.List{newW1()} },
+			usersSeeds: newUsers,
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1076,8 +1089,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		},
 		{
 			name:       "Invalid Operator",
-			seeds:      workspace.List{w1},
-			usersSeeds: []*user.User{u, u2, u3, u4},
+			seeds:      func() workspace.List { return workspace.List{newW1()} },
+			usersSeeds: newUsers,
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1095,8 +1108,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		},
 		{
 			name:       "Operation Denied",
-			seeds:      workspace.List{w1},
-			usersSeeds: []*user.User{u, u2, u3, u4},
+			seeds:      func() workspace.List { return workspace.List{newW1()} },
+			usersSeeds: newUsers,
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1118,8 +1131,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		},
 		{
 			name:       "Remove multiple members, cannot remove from personal workspace",
-			seeds:      workspace.List{w2},
-			usersSeeds: []*user.User{u, u2},
+			seeds:      func() workspace.List { return workspace.List{newW2()} },
+			usersSeeds: func() []*user.User { return newUsers()[:2] },
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1137,8 +1150,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		},
 		{
 			name:       "Remove multiple members, cannot remove owner",
-			seeds:      workspace.List{w3},
-			usersSeeds: []*user.User{u, u2},
+			seeds:      func() workspace.List { return workspace.List{newW3()} },
+			usersSeeds: func() []*user.User { return newUsers()[:2] },
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1156,8 +1169,8 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 		},
 		{
 			name:       "Remove multiple members, empty user id list",
-			seeds:      workspace.List{w4},
-			usersSeeds: []*user.User{u, u2},
+			seeds:      func() workspace.List { return workspace.List{newW4()} },
+			usersSeeds: func() []*user.User { return newUsers()[:2] },
 			args: struct {
 				wId      workspace.ID
 				uIds     workspace.UserIDList
@@ -1189,7 +1202,6 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1198,13 +1210,17 @@ func TestWorkspace_RemoveMultipleMembers(t *testing.T) {
 			if tc.mockWorkspaceErr {
 				accountmemory.SetWorkspaceError(db.Workspace, tc.wantErr)
 			}
-			for _, p := range tc.seeds {
-				err := db.Workspace.Save(ctx, p)
-				assert.NoError(t, err)
+			if tc.seeds != nil {
+				for _, p := range tc.seeds() {
+					err := db.Workspace.Save(ctx, p)
+					assert.NoError(t, err)
+				}
 			}
-			for _, p := range tc.usersSeeds {
-				err := db.User.Save(ctx, p)
-				assert.NoError(t, err)
+			if tc.usersSeeds != nil {
+				for _, p := range tc.usersSeeds() {
+					err := db.User.Save(ctx, p)
+					assert.NoError(t, err)
+				}
 			}
 			workspaceUC := NewWorkspace(db, nil)
 
