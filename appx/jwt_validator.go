@@ -63,10 +63,14 @@ func NewJWTMultipleValidator(providers []JWTProvider) (JWTMultipleValidator, err
 	})
 }
 
-// ValidateToken tries to validate the token with each validator concurrently
-// NOTE: the last validation error only is returned
-func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString string) (interface{}, error) {
-	ctx, cancel := context.WithCancel(ctx)
+// ValidateToken tries to validate the token with each validator concurrently.
+// It returns as soon as one validator succeeds, cancels the remaining
+// validators, and then waits for all spawned goroutines to finish before
+// returning. Waiting matters because validators hold live HTTP clients and
+// shared state (JWKS caches, test mocks); returning early would leak
+// goroutines that keep touching that state.
+func (mv JWTMultipleValidator) ValidateToken(parentCtx context.Context, tokenString string) (interface{}, error) {
+	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
 	type result struct {
@@ -82,11 +86,7 @@ func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString st
 		go func(validator JWTValidator) {
 			defer wg.Done()
 			res, err := validator.ValidateToken(ctx, tokenString)
-			select {
-			case resultChan <- result{res, err}:
-			case <-ctx.Done():
-				return
-			}
+			resultChan <- result{res, err}
 		}(v)
 	}
 
@@ -95,18 +95,31 @@ func (mv JWTMultipleValidator) ValidateToken(ctx context.Context, tokenString st
 		close(resultChan)
 	}()
 
-	var lastErr error
-	for i := 0; i < len(mv); i++ {
-		select {
-		case r := <-resultChan:
-			if r.err == nil {
+	var (
+		successRes interface{}
+		haveResult bool
+		lastErr    error
+	)
+	for r := range resultChan {
+		if r.err == nil {
+			if !haveResult {
+				successRes = r.res
+				haveResult = true
 				cancel()
-				return r.res, nil
 			}
-			lastErr = errors.Join(lastErr, r.err)
-		case <-ctx.Done():
-			return nil, ctx.Err()
+			continue
 		}
+		lastErr = errors.Join(lastErr, r.err)
+	}
+
+	// Honor caller cancellation over any validator outcome: cached JWKS can
+	// let a validator succeed even after the parent ctx was canceled, but
+	// the caller has already walked away.
+	if err := parentCtx.Err(); err != nil {
+		return nil, err
+	}
+	if haveResult {
+		return successRes, nil
 	}
 
 	log.Debugfc(ctx, "auth: invalid JWT token: %s", tokenString)
