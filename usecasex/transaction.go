@@ -3,6 +3,7 @@ package usecasex
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
@@ -71,35 +72,42 @@ func (t *NopTx) Context() context.Context {
 	return t.ctx
 }
 
-func DoTransaction(ctx context.Context, t Transaction, retry int, fn func(ctx context.Context) error) (err error) {
+// DoTransaction runs fn inside a transaction, retrying up to retry additional
+// times on TransientTransactionError (e.g. MongoDB WriteConflict). Each retry
+// starts a fresh Begin so the underlying driver can renegotiate locks cleanly,
+// which is required for MongoDB multi-document transactions. A linear backoff
+// of 50ms × attempt is applied between retries.
+func DoTransaction(ctx context.Context, t Transaction, retry int, fn func(ctx context.Context) error) error {
 	if t == nil {
 		return fn(ctx)
 	}
 
-	tx, err := t.Begin(ctx)
-	if err != nil {
-		return err
-	}
-
-	ctx2 := tx.Context()
-	defer func() {
-		if err2 := tx.End(ctx2); err2 != nil && err == nil {
-			err = err2
+	var lastErr error
+	for attempt := 0; attempt == 0 || (retry > 0 && attempt <= retry); attempt++ {
+		if attempt > 0 {
+			time.Sleep(time.Duration(attempt) * 50 * time.Millisecond)
 		}
-	}()
 
-	r := 0
-	for r == 0 || (retry > 0 && r <= retry) {
-		if err = fn(ctx2); err != nil {
-			if !errors.Is(err, ErrTransaction) {
-				break
-			}
-		} else {
+		tx, err := t.Begin(ctx)
+		if err != nil {
+			return err
+		}
+
+		txCtx := tx.Context()
+		lastErr = fn(txCtx)
+		if lastErr == nil {
 			tx.Commit()
-			break
 		}
-		r++
+		if endErr := tx.End(txCtx); endErr != nil && lastErr == nil {
+			lastErr = endErr
+		}
+		if lastErr == nil {
+			return nil
+		}
+		if !errors.Is(lastErr, ErrTransaction) {
+			return lastErr
+		}
 	}
 
-	return err
+	return lastErr
 }
