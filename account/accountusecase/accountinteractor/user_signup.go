@@ -13,6 +13,7 @@ import (
 	"path"
 	"strings"
 	textTmpl "text/template"
+	"time"
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
@@ -53,6 +54,8 @@ var (
 
 	authTextTMPL *textTmpl.Template
 	authHTMLTMPL *htmlTmpl.Template
+
+	httpClient = &http.Client{Timeout: 30 * time.Second}
 )
 
 func init() {
@@ -289,11 +292,12 @@ func getOpenIDConfiguration(ctx context.Context, iss string) (c OpenIDConfigurat
 		return
 	}
 
-	res, err2 := http.DefaultClient.Do(req)
+	res, err2 := httpClient.Do(req)
 	if err2 != nil {
 		err = err2
 		return
 	}
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK {
 		err = rerror.NewE(i18n.T("could not get user info"))
@@ -320,11 +324,12 @@ func getUserInfo(ctx context.Context, url, accessToken string) (ui UserInfo, err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+accessToken)
-	res, err2 := http.DefaultClient.Do(req)
+	res, err2 := httpClient.Do(req)
 	if err2 != nil {
 		err = err2
 		return
 	}
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK {
 		err = rerror.NewE(i18n.T("could not get user info"))
