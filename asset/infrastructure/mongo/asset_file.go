@@ -91,6 +91,39 @@ func (r *AssetFile) FindByIDs(
 		return nil, err
 	}
 
+	// Collect every asset id whose files live in the asset_files collection so we
+	// can fetch them all in a single batched $in query instead of one query per
+	// flat-file asset.
+	flatIDs := make([]string, 0, len(c.Result))
+	for _, result := range c.Result {
+		if result.FlatFiles {
+			flatIDs = append(flatIDs, result.ID)
+		}
+	}
+
+	// flatFilesByAsset maps an asset id to its files, grouped from the single
+	// batched query below. Sorting by (assetid, page) preserves the same
+	// per-asset page ordering the previous per-asset query guaranteed.
+	flatFilesByAsset := make(map[string][]*asset.File, len(flatIDs))
+	if len(flatIDs) > 0 {
+		var afc mongodoc.AssetFilesConsumer
+		if err := r.assetFilesClient.Find(ctx, bson.M{
+			"assetid": bson.M{"$in": flatIDs},
+		}, &afc, options.Find().SetSort(bson.D{
+			{Key: "assetid", Value: 1},
+			{Key: "page", Value: 1},
+		})); err != nil {
+			return nil, err
+		}
+		grouped := make(map[string]mongodoc.AssetFilesDocument, len(flatIDs))
+		for _, page := range afc.Result() {
+			grouped[page.AssetID] = append(grouped[page.AssetID], page)
+		}
+		for assetID, pages := range grouped {
+			flatFilesByAsset[assetID] = pages.Model()
+		}
+	}
+
 	for _, result := range c.Result {
 		assetID := result.ID
 		f := result.File.Model()
@@ -99,16 +132,7 @@ func (r *AssetFile) FindByIDs(
 		}
 
 		if result.FlatFiles {
-			var afc mongodoc.AssetFilesConsumer
-			if err := r.assetFilesClient.Find(ctx, bson.M{
-				"assetid": assetID,
-			}, &afc, options.Find().SetSort(bson.D{
-				{Key: "page", Value: 1},
-			})); err != nil {
-				return nil, err
-			}
-			files := afc.Result().Model()
-			f.SetFiles(files)
+			f.SetFiles(flatFilesByAsset[assetID])
 		} else if len(f.Children()) > 0 {
 			f.SetFiles(f.FlattenChildren())
 		}

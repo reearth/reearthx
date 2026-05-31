@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/url"
@@ -317,40 +318,71 @@ func (r *Asset) TotalSizeByWorkspace(
 	return res.Size, nil
 }
 
+// removeByProjectBatchSize bounds how many asset docs are loaded into memory at
+// once while removing a whole project's assets, so memory stays constant even
+// for projects with hundreds of thousands of assets.
+const removeByProjectBatchSize = 1000
+
 func (r *Asset) RemoveByProjectWithFile(
 	ctx context.Context,
 	pid id.ProjectID,
 	f gateway.File,
 ) error {
-	projectAssets, err := r.find(ctx, bson.M{
-		"coresupport": true,
-		"project":     pid.String(),
-	})
-	if err != nil {
-		return err
-	}
-
-	for _, a := range projectAssets {
-
-		if !r.workspaceFilter.CanWrite(a.Workspace()) {
-			return repo.ErrOperationDenied
+	// Keyset pagination over the asset id: each page fetches the next batch with
+	// id greater than the last one seen, ordered ascending. Because every
+	// processed asset is deleted (and all deleted ids are <= lastID), they never
+	// reappear in a later page, so the cursor stays correct even as rows are
+	// removed. Memory stays bounded to one batch regardless of project size.
+	lastID := ""
+	for {
+		filter := bson.M{
+			"coresupport": true,
+			"project":     pid.String(),
+		}
+		if lastID != "" {
+			filter["id"] = bson.M{"$gt": lastID}
 		}
 
-		aPath, err := url.Parse(a.URL())
-		if err != nil {
-			continue
+		c := mongodoc.NewAssetConsumer()
+		err := r.client.Find(ctx, r.readFilter(filter), c,
+			options.Find().
+				SetProjection(bson.M{"file": 0}).
+				SetSort(bson.D{{Key: "id", Value: 1}}).
+				SetLimit(removeByProjectBatchSize),
+		)
+		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
+			return rerror.ErrInternalBy(err)
 		}
 
-		err = f.RemoveAsset(ctx, aPath)
-		if err != nil {
-			log.Print(err.Error())
+		batch := c.Result
+		if len(batch) == 0 {
+			break
 		}
 
-		err = r.Delete(ctx, a.ID())
-		if err != nil {
-			log.Print(err.Error())
+		for _, a := range batch {
+			if !r.workspaceFilter.CanWrite(a.Workspace()) {
+				return repo.ErrOperationDenied
+			}
+
+			aPath, err := url.Parse(a.URL())
+			if err != nil {
+				continue
+			}
+
+			if err := f.RemoveAsset(ctx, aPath); err != nil {
+				log.Print(err.Error())
+			}
+
+			if err := r.Delete(ctx, a.ID()); err != nil {
+				log.Print(err.Error())
+			}
 		}
 
+		lastID = batch[len(batch)-1].ID().String()
+
+		if len(batch) < removeByProjectBatchSize {
+			break
+		}
 	}
 
 	return nil
