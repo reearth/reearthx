@@ -7,14 +7,32 @@ import (
 	"io"
 	"mime"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
+	"time"
 
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 )
+
+// fromURLClient is used by FromURL to fetch remote files. It deliberately has
+// no Client.Timeout because the success path streams res.Body to the caller,
+// and a Client.Timeout would also abort that streaming read. Instead, the
+// overall deadline is honored via the request context, while the transport
+// bounds connection setup so a slow/hostile remote cannot pin a socket during
+// dial, TLS handshake, or while waiting for response headers.
+var fromURLClient = &http.Client{
+	Transport: &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout:   30 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
+	},
+}
 
 type File struct {
 	Content         io.ReadCloser
@@ -71,18 +89,20 @@ func FromURL(ctx context.Context, rawURL string) (*File, error) {
 	// TODO: support gzip
 	// req.Header.Set("Accept-Encoding", "gzip")
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := fromURLClient.Do(req)
 	if err != nil {
 		return nil, rerror.ErrInternalBy(err)
 	}
 
 	if res.StatusCode > 300 {
+		_ = res.Body.Close()
 		return nil, rerror.ErrInternalBy(fmt.Errorf("status code is %d", res.StatusCode))
 	}
 
 	ct := res.Header.Get("Content-Type")
 	ce := res.Header.Get("Content-Encoding")
 	if ce != "" && ce != "gzip" {
+		_ = res.Body.Close()
 		return nil, fmt.Errorf("unsupported content encoding: %s", ce)
 	}
 	fs, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
