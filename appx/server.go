@@ -109,7 +109,13 @@ func StartServer(ctx context.Context, cfg ServerConfig) error {
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		IdleTimeout:       cfg.IdleTimeout,
 		MaxHeaderBytes:    cfg.MaxHeaderBytes,
-		BaseContext:       func(net.Listener) context.Context { return ctx },
+		// BaseContext must NOT derive from ctx: ctx is the shutdown signal
+		// context, and deriving request contexts from it would cancel every
+		// in-flight request the instant SIGTERM fires, defeating graceful
+		// drain. srv.Shutdown alone stops new connections and drains in-flight
+		// requests. Per-request cancellation comes from the connection
+		// closing (e.g. Cloud Run's request timeout), not from this context.
+		BaseContext: func(net.Listener) context.Context { return context.Background() },
 	}
 
 	errCh := make(chan error, 1)
