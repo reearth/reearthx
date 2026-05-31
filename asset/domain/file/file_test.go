@@ -17,8 +17,8 @@ import (
 func TestFromURL(t *testing.T) {
 	ctx := context.Background()
 
-	httpmock.Activate()
-	defer httpmock.Deactivate()
+	httpmock.ActivateNonDefault(fromURLClient)
+	defer httpmock.DeactivateAndReset()
 
 	t.Run("with gzip encoding", func(t *testing.T) {
 		URL := "https://cms.com/xyz/test.txt.gz"
