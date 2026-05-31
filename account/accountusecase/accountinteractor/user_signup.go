@@ -297,7 +297,7 @@ func getOpenIDConfiguration(ctx context.Context, iss string) (c OpenIDConfigurat
 		err = err2
 		return
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK {
 		err = rerror.NewE(i18n.T("could not get user info"))
@@ -329,7 +329,7 @@ func getUserInfo(ctx context.Context, url, accessToken string) (ui UserInfo, err
 		err = err2
 		return
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK {
 		err = rerror.NewE(i18n.T("could not get user info"))
