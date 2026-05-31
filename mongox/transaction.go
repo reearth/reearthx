@@ -29,6 +29,7 @@ func (t *Transaction) Begin(ctx context.Context) (usecasex.Tx, error) {
 	}
 
 	if err := s.StartTransaction(options.Transaction()); err != nil {
+		s.EndSession(ctx)
 		return nil, err
 	}
 
