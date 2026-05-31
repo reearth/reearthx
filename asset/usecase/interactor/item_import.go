@@ -262,6 +262,15 @@ func (i Item) saveChunk(
 		oldFields item.Fields
 	}
 	f := func(ctx context.Context) (item.List, map[item.ID]itemChanges, error) {
+		// Pre-fetch group field metadata for the whole chunk in at most two
+		// batched queries (groups + their schemas) instead of issuing one
+		// Group.FindByID + Schema.FindByID per group field per item. The cache
+		// also memoizes identical uniqueness lookups across the chunk.
+		gc, err := i.newGroupSchemaCache(ctx, s)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		itemsToSave := item.List{}
 		itemsEvent := map[item.ID]itemChanges{}
 
@@ -362,14 +371,14 @@ func (i Item) saveChunk(
 				return nil, nil, err
 			}
 
-			if err := i.checkUnique(ctx, fields, s, m.ID(), nil); err != nil {
+			if err := i.checkUniqueWithCache(ctx, fields, s, m.ID(), nil, gc.unique); err != nil {
 				return nil, nil, err
 			}
 
 			oldFields := it.Fields()
 			it.UpdateFields(fields)
 
-			groupFields, _, err := i.handleGroupFields(ctx, otherFields, s, m.ID(), it.Fields())
+			groupFields, _, err := i.handleGroupFieldsWithCache(ctx, otherFields, s, m.ID(), it.Fields(), gc)
 			if err != nil {
 				return nil, nil, err
 			}

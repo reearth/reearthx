@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/reearth/reearthx/asset/domain/event"
+	"github.com/reearth/reearthx/asset/domain/group"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/request"
@@ -612,11 +615,15 @@ func (i Item) Unpublish(
 				}
 			}
 
+			// batch-fetch all referenced items across the whole request once,
+			// then resolve each item's referenced items from this in-memory map
+			refItemsByItem, err := i.referencedItemsForItems(ctx, items)
+			if err != nil {
+				return nil, err
+			}
+
 			for _, itm := range items {
-				refItems, err := i.getReferencedItems(ctx, itm.Value().Fields())
-				if err != nil {
-					return nil, err
-				}
+				refItems := refItemsByItem[itm.Value().ID()]
 				if err := i.event(ctx, Event{
 					Project:   prj,
 					Workspace: prj.Workspace(),
@@ -689,11 +696,15 @@ func (i Item) Publish(
 				}
 			}
 
+			// batch-fetch all referenced items across the whole request once,
+			// then resolve each item's referenced items from this in-memory map
+			refItemsByItem, err := i.referencedItemsForItems(ctx, items)
+			if err != nil {
+				return nil, err
+			}
+
 			for _, itm := range items {
-				refItems, err := i.getReferencedItems(ctx, itm.Value().Fields())
-				if err != nil {
-					return nil, err
-				}
+				refItems := refItemsByItem[itm.Value().ID()]
 
 				if err := i.event(ctx, Event{
 					Project:   prj,
@@ -724,6 +735,27 @@ func (i Item) checkUnique(
 	mid id.ModelID,
 	itm *item.Item,
 ) error {
+	return i.checkUniqueWithCache(ctx, itemFields, s, mid, itm, nil)
+}
+
+// uniqueCheckCache memoizes FindByModelAndValue results within a single bulk
+// operation so identical (model, field/value-set) uniqueness lookups are not
+// re-issued per row. The cached value is the raw existing-items list, which is
+// fully determined by the query inputs; the (itm-dependent) self-exclusion is
+// still evaluated per call, so semantics are unchanged.
+type uniqueCheckCache map[string]item.VersionedList
+
+// checkUniqueWithCache behaves exactly like checkUnique but, when a non-nil
+// cache is supplied, de-duplicates repeated identical FindByModelAndValue
+// lookups across the operation.
+func (i Item) checkUniqueWithCache(
+	ctx context.Context,
+	itemFields []*item.Field,
+	s *schema.Schema,
+	mid id.ModelID,
+	itm *item.Item,
+	cache uniqueCheckCache,
+) error {
 	var fieldsArg []repo.FieldAndValue
 	for _, f := range itemFields {
 		if itm != nil {
@@ -749,7 +781,7 @@ func (i Item) checkUnique(
 		})
 	}
 
-	exists, err := i.repos.Item.FindByModelAndValue(ctx, mid, fieldsArg, nil)
+	exists, err := i.findByModelAndValueCached(ctx, mid, fieldsArg, cache)
 	if err != nil {
 		return err
 	}
@@ -759,6 +791,39 @@ func (i Item) checkUnique(
 	}
 
 	return nil
+}
+
+func (i Item) findByModelAndValueCached(
+	ctx context.Context,
+	mid id.ModelID,
+	fieldsArg []repo.FieldAndValue,
+	cache uniqueCheckCache,
+) (item.VersionedList, error) {
+	if cache == nil {
+		return i.repos.Item.FindByModelAndValue(ctx, mid, fieldsArg, nil)
+	}
+
+	key := uniqueCheckKey(mid, fieldsArg)
+	if v, ok := cache[key]; ok {
+		return v, nil
+	}
+	exists, err := i.repos.Item.FindByModelAndValue(ctx, mid, fieldsArg, nil)
+	if err != nil {
+		return nil, err
+	}
+	cache[key] = exists
+	return exists, nil
+}
+
+// uniqueCheckKey builds a deterministic key for a (model, field/value-set)
+// uniqueness lookup. Field/value pairs are sorted so order does not matter.
+func uniqueCheckKey(mid id.ModelID, fieldsArg []repo.FieldAndValue) string {
+	parts := make([]string, 0, len(fieldsArg))
+	for _, f := range fieldsArg {
+		parts = append(parts, fmt.Sprintf("%s=%v", f.Field, f.Value.Interface()))
+	}
+	sort.Strings(parts)
+	return mid.String() + "|" + strings.Join(parts, "&")
 }
 
 func (i Item) handleReferenceFields(
@@ -869,6 +934,22 @@ func (i Item) handleGroupFields(
 	mId id.ModelID,
 	itemFields item.Fields,
 ) (item.Fields, schema.List, error) {
+	return i.handleGroupFieldsWithCache(ctx, params, s, mId, itemFields, nil)
+}
+
+// handleGroupFieldsWithCache is identical to handleGroupFields but, when a
+// non-nil groupSchemaCache is supplied, resolves group and group-schema lookups
+// from pre-fetched in-memory maps instead of issuing one FindByID per group
+// field per item. Missing entries fall back to the original per-id FindByID so
+// error semantics (e.g. group not found) are preserved exactly.
+func (i Item) handleGroupFieldsWithCache(
+	ctx context.Context,
+	params []interfaces.ItemFieldParam,
+	s *schema.Schema,
+	mId id.ModelID,
+	itemFields item.Fields,
+	gc *groupSchemaCache,
+) (item.Fields, schema.List, error) {
 	// TODO: use schema package to enhance performance
 	var res item.Fields
 	var groupSchemas schema.List
@@ -884,12 +965,12 @@ func (i Item) handleGroupFields(
 			},
 		})
 
-		group, err := i.repos.Group.FindByID(ctx, fieldGroup.Group())
+		group, err := i.lookupGroup(ctx, gc, fieldGroup.Group())
 		if err != nil {
 			return nil, nil, err
 		}
 
-		groupSchema, err := i.repos.Schema.FindByID(ctx, group.Schema())
+		groupSchema, err := i.lookupSchema(ctx, gc, group.Schema())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -918,13 +999,99 @@ func (i Item) handleGroupFields(
 		if err != nil {
 			return nil, nil, err
 		}
-		if err = i.checkUnique(ctx, fields, groupSchema, mId, nil); err != nil {
+		var uc uniqueCheckCache
+		if gc != nil {
+			uc = gc.unique
+		}
+		if err = i.checkUniqueWithCache(ctx, fields, groupSchema, mId, nil, uc); err != nil {
 			return nil, nil, err
 		}
 
 		res = append(res, fields...)
 	}
 	return res, groupSchemas, nil
+}
+
+// groupSchemaCache holds pre-fetched groups and group schemas so that bulk
+// operations (e.g. item import) can resolve group field metadata without
+// issuing per-item DB round-trips.
+type groupSchemaCache struct {
+	groups  map[id.GroupID]*group.Group
+	schemas map[id.SchemaID]*schema.Schema
+	unique  uniqueCheckCache
+}
+
+// newGroupSchemaCache pre-fetches, in at most two batched queries, all groups
+// referenced by the group-type fields of schema s and all schemas backing those
+// groups. It is safe to call within a transaction; the lookups are read-only.
+func (i Item) newGroupSchemaCache(ctx context.Context, s *schema.Schema) (*groupSchemaCache, error) {
+	var groupIDs id.GroupIDList
+	for _, sf := range s.FieldsByType(value.TypeGroup) {
+		var fieldGroup *schema.FieldGroup
+		sf.TypeProperty().Match(schema.TypePropertyMatch{
+			Group: func(f *schema.FieldGroup) {
+				fieldGroup = f
+			},
+		})
+		if fieldGroup != nil {
+			groupIDs = groupIDs.AddUniq(fieldGroup.Group())
+		}
+	}
+
+	gc := &groupSchemaCache{
+		groups:  map[id.GroupID]*group.Group{},
+		schemas: map[id.SchemaID]*schema.Schema{},
+		unique:  uniqueCheckCache{},
+	}
+
+	if len(groupIDs) == 0 {
+		return gc, nil
+	}
+
+	groups, err := i.repos.Group.FindByIDs(ctx, groupIDs)
+	if err != nil {
+		return nil, err
+	}
+	var schemaIDs id.SchemaIDList
+	for _, g := range groups {
+		if g == nil {
+			continue
+		}
+		gc.groups[g.ID()] = g
+		schemaIDs = schemaIDs.AddUniq(g.Schema())
+	}
+
+	if len(schemaIDs) > 0 {
+		schemas, err := i.repos.Schema.FindByIDs(ctx, schemaIDs)
+		if err != nil {
+			return nil, err
+		}
+		for _, sc := range schemas {
+			if sc != nil {
+				gc.schemas[sc.ID()] = sc
+			}
+		}
+	}
+
+	return gc, nil
+}
+
+func (i Item) lookupGroup(ctx context.Context, gc *groupSchemaCache, gid id.GroupID) (*group.Group, error) {
+	if gc != nil {
+		if g, ok := gc.groups[gid]; ok {
+			return g, nil
+		}
+	}
+	return i.repos.Group.FindByID(ctx, gid)
+}
+
+func (i Item) lookupSchema(ctx context.Context, gc *groupSchemaCache, sid id.SchemaID) (*schema.Schema, error) {
+	if gc != nil {
+		if s, ok := gc.schemas[sid]; ok {
+			return s, nil
+		}
+	}
+	return i.repos.Schema.FindByID(ctx, sid)
 }
 
 func filterFieldParamsBySchema(
@@ -984,10 +1151,9 @@ func (i Item) events(ctx context.Context, e []Event) error {
 	return err
 }
 
-func (i Item) getReferencedItems(
-	ctx context.Context,
-	fields []*item.Field,
-) ([]item.Versioned, error) {
+// referencedItemIDs collects the distinct item IDs referenced by the given
+// reference fields, preserving insertion order (same set FindByIDs would receive).
+func referencedItemIDs(fields []*item.Field) id.ItemIDList {
 	var ids id.ItemIDList
 	for _, f := range fields {
 		if f.Type() != value.TypeReference {
@@ -1001,7 +1167,51 @@ func (i Item) getReferencedItems(
 			ids = ids.Add(iid)
 		}
 	}
-	return i.repos.Item.FindByIDs(ctx, ids, nil)
+	return ids
+}
+
+func (i Item) getReferencedItems(
+	ctx context.Context,
+	fields []*item.Field,
+) ([]item.Versioned, error) {
+	return i.repos.Item.FindByIDs(ctx, referencedItemIDs(fields), nil)
+}
+
+// referencedItemsForItems resolves, for each item, the list of items referenced
+// by its reference fields. Instead of issuing one FindByIDs per item (N round
+// trips), it collects the distinct referenced IDs across all items, fetches them
+// in a single FindByIDs call, and reconstructs each item's referenced list from
+// the resulting in-memory map. The per-item result preserves the same ordering
+// and not-found filtering as the previous per-item getReferencedItems call.
+func (i Item) referencedItemsForItems(
+	ctx context.Context,
+	items item.VersionedList,
+) (map[id.ItemID][]item.Versioned, error) {
+	idsByItem := make(map[id.ItemID]id.ItemIDList, len(items))
+	var allIDs id.ItemIDList
+	for _, itm := range items {
+		refIDs := referencedItemIDs(itm.Value().Fields())
+		idsByItem[itm.Value().ID()] = refIDs
+		allIDs = allIDs.AddUniq(refIDs...)
+	}
+
+	fetched, err := i.repos.Item.FindByIDs(ctx, allIDs, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[id.ItemID][]item.Versioned, len(items))
+	for _, itm := range items {
+		refIDs := idsByItem[itm.Value().ID()]
+		refItems := make([]item.Versioned, 0, len(refIDs))
+		for _, rid := range refIDs {
+			if v := fetched.Item(rid); v != nil {
+				refItems = append(refItems, v)
+			}
+		}
+		res[itm.Value().ID()] = refItems
+	}
+	return res, nil
 }
 
 // ItemsAsCSV exports items data in content to csv file by schema package.
