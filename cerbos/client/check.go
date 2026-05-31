@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"time"
 
 	"github.com/reearth/reearthx/appx"
 )
+
+const defaultRequestTimeout = 30 * time.Second
 
 const (
 	checkPermissionQuery = `
@@ -29,7 +31,7 @@ type Client struct {
 
 func NewClient(dashboardURL string) *Client {
 	return &Client{
-		httpClient:   &http.Client{},
+		httpClient:   &http.Client{Timeout: defaultRequestTimeout},
 		dashboardURL: dashboardURL,
 	}
 }
@@ -114,15 +116,6 @@ func (c *Client) executeRequest(req *http.Request) (bool, error) {
 	if resp.StatusCode != http.StatusOK {
 		return false, fmt.Errorf("server returned non-OK status: %d", resp.StatusCode)
 	}
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	fmt.Printf("Response body: %s\n", string(bodyBytes))
-
-	resp.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	var response CheckPermissionResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
