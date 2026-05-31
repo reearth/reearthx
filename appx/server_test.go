@@ -60,7 +60,7 @@ func TestStartServer_ServesAndShutsDown(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
 			return fmt.Errorf("status %d", resp.StatusCode)
 		}
@@ -115,7 +115,7 @@ func TestStartServer_H2C(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		body, _ := io.ReadAll(resp.Body)
 		if string(body) != "HTTP/2.0" {
 			return fmt.Errorf("proto=%q, want HTTP/2.0", body)
