@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: reearthx
+  namespace: reearth
+  description: Common Go library used by every Re:Earth Go service (auth, GraphQL,
+    MongoDB, tracing)
+  annotations:
+    github.com/project-slug: reearth/reearthx
+  links:
+  - url: https://github.com/reearth/reearthx
+    title: GitHub
+    icon: github
+  tags:
+  - go
+  - library
+  - shared
+spec:
+  type: library
+  lifecycle: production
+  owner: reearth/cto-office
