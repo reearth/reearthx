@@ -34,6 +34,7 @@ type Tx struct {
 	tx        pgx.Tx
 	ctx       context.Context
 	committed atomic.Bool
+	ended     atomic.Bool
 }
 
 var _ usecasex.Tx = (*Tx)(nil)
@@ -46,7 +47,17 @@ func (t *Tx) IsCommitted() bool { return t.committed.Load() }
 
 // End commits if Commit() was called, otherwise rolls back. A rollback after a
 // successful commit is a no-op in pgx, so the post-commit path is safe.
-func (t *Tx) End(ctx context.Context) error {
+//
+// End is idempotent: a second call is a no-op (returns nil) rather than erroring
+// on an already-closed transaction. The supplied context is intentionally
+// ignored — End uses a detached context.Background() so that a cancelled or
+// timed-out request context cannot silently skip the commit/rollback and leak
+// the transaction.
+func (t *Tx) End(_ context.Context) error {
+	if !t.ended.CompareAndSwap(false, true) {
+		return nil
+	}
+	ctx := context.Background()
 	if t.committed.Load() {
 		return t.tx.Commit(ctx)
 	}

@@ -5,6 +5,7 @@ package pgxtest
 
 import (
 	"context"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -33,6 +34,11 @@ func Connect(t *testing.T) func(*testing.T) *pgxpool.Pool {
 	if err != nil {
 		t.Fatalf("pgxtest: connect admin: %v", err)
 	}
+	t.Cleanup(admin.Close)
+
+	if err := admin.Ping(ctx); err != nil {
+		t.Fatalf("pgxtest: ping admin db: %v", err)
+	}
 
 	return func(t *testing.T) *pgxpool.Pool {
 		t.Helper()
@@ -54,15 +60,14 @@ func Connect(t *testing.T) func(*testing.T) *pgxpool.Pool {
 	}
 }
 
-// replaceDBName swaps the path component (database name) of a Postgres URI.
+// replaceDBName swaps the path component (database name) of a Postgres URI,
+// preserving userinfo, host, and query string. It uses net/url so it handles
+// edge cases (escaped credentials, missing path) robustly.
 func replaceDBName(uri, dbName string) string {
-	q := ""
-	if i := strings.IndexByte(uri, '?'); i >= 0 {
-		q = uri[i:]
-		uri = uri[:i]
+	u, err := url.Parse(uri)
+	if err != nil {
+		panic("pgxtest: invalid Postgres URI: " + err.Error())
 	}
-	if i := strings.LastIndexByte(uri, '/'); i >= 0 {
-		uri = uri[:i]
-	}
-	return uri + "/" + dbName + q
+	u.Path = "/" + dbName
+	return u.String()
 }

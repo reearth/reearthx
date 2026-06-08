@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/reearth/reearthx/pgxx"
 	"github.com/reearth/reearthx/pgxx/pgxtest"
 	"github.com/reearth/reearthx/usecasex"
@@ -56,9 +57,23 @@ func TestTransaction_RollsBackWithoutCommit(t *testing.T) {
 
 func TestTransaction_DoTransactionCommits(t *testing.T) {
 	ctx, tr, q := setupScratch(t)
+	// retry budget unused; fn succeeds on first call.
 	err := usecasex.DoTransaction(ctx, tr, 1, func(ctx context.Context) error {
 		return q.insert(ctx, "x")
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, q.count(ctx))
+}
+
+func TestDoTransaction_RetriesOnSerializationError(t *testing.T) {
+	calls := 0
+	err := usecasex.DoTransaction(context.Background(), &usecasex.NopTransaction{}, 1, func(ctx context.Context) error {
+		calls++
+		if calls == 1 {
+			return pgxx.WrapError(&pgconn.PgError{Code: "40001"})
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 2, calls, "fn should run twice: fail once (retryable) then succeed")
 }

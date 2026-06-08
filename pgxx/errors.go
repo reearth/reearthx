@@ -20,6 +20,11 @@ func IsSerializationError(err error) bool {
 // WrapError maps a Postgres serialization failure to usecasex.ErrTransaction so
 // the existing usecasex.DoTransaction retry loop picks it up. Other errors
 // (and nil) pass through unchanged.
+//
+// WrapError must be called by the REPOSITORY layer on errors returned from
+// queries (not by Tx.End), because the serialization failure surfaces on the
+// failing statement, not at commit time. Wrapping there is what makes those
+// failures retryable via usecasex.DoTransaction.
 func WrapError(err error) error {
 	if err == nil {
 		return nil
