@@ -1,5 +1,5 @@
 // Package pgxx provides reusable PostgreSQL building blocks for reearth services:
-// a pgx-backed usecasex.Transaction, an executor-from-context helper that lets
+// a pgx-backed usecasex.Transactor, an executor-from-context helper that lets
 // repositories transparently participate in a transaction, and error helpers.
 package pgxx
 
@@ -34,7 +34,7 @@ func txFromContext(ctx context.Context) (pgx.Tx, bool) {
 
 // Executor returns the active transaction stored in ctx if present, otherwise
 // the supplied db (typically a *pgxpool.Pool). Repositories build their sqlc
-// Queries with Executor(ctx, pool) so writes inside a usecasex.Transaction run
+// Queries with Executor(ctx, pool) so writes inside a usecasex.Transactor run
 // on the transaction's connection automatically.
 func Executor(ctx context.Context, db DBTX) DBTX {
 	if tx, ok := txFromContext(ctx); ok {
