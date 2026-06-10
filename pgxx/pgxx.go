@@ -1,6 +1,7 @@
-// Package pgxx provides reusable PostgreSQL building blocks for reearth services:
-// a pgx-backed usecasex.Transactor, an executor-from-context helper that lets
-// repositories transparently participate in a transaction, and error helpers.
+// Package pgxx provides reusable PostgreSQL building blocks for reearth services,
+// the Postgres analogue of mongox: a Client (executor-from-context + a composing
+// WithinTransaction that implements usecasex.Transactor), the DBTX query surface
+// shared with sqlc's pgx/v5 output, error helpers, and an env-gated test connector.
 package pgxx
 
 import (
