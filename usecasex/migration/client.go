@@ -13,9 +13,11 @@ import (
 )
 
 type Key = int64
-type MigrationFunc[C DBClient] func(context.Context, C) error
-type Migrations[C DBClient] map[Key]MigrationFunc[C]
+type MigrationFunc[C any] func(context.Context, C) error
+type Migrations[C any] map[Key]MigrationFunc[C]
 
+// DBClient is the dependency of the legacy Client (Begin/Commit/End transactions,
+// e.g. Mongo). New backends should prefer Runner, which takes a usecasex.Transactor.
 type DBClient interface {
 	Transaction() usecasex.Transaction
 }
@@ -73,6 +75,62 @@ func (c Client[C]) Migrate(ctx context.Context) (err error) {
 			}
 
 			return c.config.Save(ctx, m)
+		}); err != nil {
+			return fmt.Errorf("failed to exec migration %d: %w", m, rerror.UnwrapErrInternalOr(err))
+		}
+	}
+
+	return nil
+}
+
+// Runner is a usecasex.Transactor-based migration runner. It is the successor to
+// Client for backends that use the WithinTransaction callback (e.g. Postgres via
+// pgxx.Client). Mongo continues to use Client until it is migrated over.
+type Runner[C any] struct {
+	transactor usecasex.Transactor
+	client     C
+	config     ConfigRepo
+	migrations Migrations[C]
+}
+
+func NewRunner[C any](transactor usecasex.Transactor, client C, config ConfigRepo, migrations Migrations[C]) *Runner[C] {
+	return &Runner[C]{
+		transactor: transactor,
+		client:     client,
+		config:     config,
+		migrations: migrations,
+	}
+}
+
+func (r Runner[C]) Migrate(ctx context.Context) (err error) {
+	if err := r.config.Begin(ctx); err != nil {
+		return err
+	}
+
+	defer func() {
+		if err2 := r.config.End(ctx); err == nil && err2 != nil {
+			err = err2
+		}
+	}()
+
+	current, err := r.config.Current(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", rerror.UnwrapErrInternal(err))
+	}
+
+	nextMigrations := nextMigration(lo.Keys(r.migrations), current)
+	if len(nextMigrations) == 0 {
+		return nil
+	}
+
+	for _, m := range nextMigrations {
+		log.Infofc(ctx, "DB migration: %d\n", m)
+		if err := r.transactor.WithinTransaction(ctx, func(ctx context.Context) error {
+			if err := r.migrations[m](ctx, r.client); err != nil {
+				return err
+			}
+
+			return r.config.Save(ctx, m)
 		}); err != nil {
 			return fmt.Errorf("failed to exec migration %d: %w", m, rerror.UnwrapErrInternalOr(err))
 		}

@@ -15,6 +15,18 @@ jobs:
         image: mongo:5-focal
         ports:
           - 27017:27017
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: reearth
+          POSTGRES_PASSWORD: reearth
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reearth"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: set up
         uses: actions/setup-go@v3
@@ -38,6 +50,7 @@ jobs:
         run: go test ./... -v -race -coverprofile=coverage.txt -covermode=atomic -timeout 10m
         env:
           REEARTH_DB: mongodb://localhost
+          REEARTH_DB_PG: postgres://reearth:reearth@localhost:5432/postgres?sslmode=disable
       - name: Send coverage report
         uses: codecov/codecov-action@v2
         with:
