@@ -125,10 +125,9 @@ func TestOrderByIDs_Edges(t *testing.T) {
 	items := []*item{{"a", "A"}, {"a", "A2"}} // duplicate key: last wins
 
 	got := pgxx.OrderByIDs([]string{"a", "a", "x"}, items, key)
-	require.Len(t, got, 3)
+	require.Len(t, got, 2) // missing id "x" is omitted (never a nil element)
 	assert.Equal(t, "A2", got[0].v)
 	assert.Equal(t, "A2", got[1].v) // duplicate id resolves to the same item
-	assert.Nil(t, got[2])           // missing id -> nil
 
 	assert.Empty(t, pgxx.OrderByIDs[string, *item](nil, nil, key))
 }

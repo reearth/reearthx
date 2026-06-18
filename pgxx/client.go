@@ -73,8 +73,12 @@ func (c *Client) runOnce(ctx context.Context, fn func(ctx context.Context) error
 	if err != nil {
 		return rerror.ErrInternalByWithContext(ctx, err)
 	}
+	// Roll back on any early return or panic; a no-op after a successful Commit
+	// (the tx is already closed). Without it, a panic in fn would skip the
+	// rollback and leak the pooled connection, eventually exhausting the pool.
+	defer func() { _ = tx.Rollback(ctx) }()
+
 	if err := fn(ContextWithTx(ctx, tx)); err != nil {
-		_ = tx.Rollback(ctx)
 		return err
 	}
 	if err := tx.Commit(ctx); err != nil {
