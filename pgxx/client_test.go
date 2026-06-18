@@ -67,3 +67,25 @@ func TestClient_WithinTransaction_NestedComposes(t *testing.T) {
 	require.ErrorIs(t, err, sentinel)
 	assert.Equal(t, 0, count(ctx), "nested insert must roll back with the outer tx")
 }
+
+// A panic inside the callback must roll back and release the pooled connection
+// (not leak it), so the panic propagates but the pool stays usable.
+func TestClient_WithinTransaction_ReleasesConnOnPanic(t *testing.T) {
+	ctx, c, count, insert := setupItems(t)
+
+	assert.Panics(t, func() {
+		_ = c.WithinTransaction(ctx, func(ctx context.Context) error {
+			if e := insert(ctx, "a"); e != nil {
+				return e
+			}
+			panic("boom")
+		})
+	})
+
+	assert.Equal(t, int32(0), c.Pool().Stat().AcquiredConns(), "connection leaked after panic")
+	assert.Equal(t, 0, count(ctx), "panic must roll back the insert")
+	require.NoError(t, c.WithinTransaction(ctx, func(ctx context.Context) error {
+		return insert(ctx, "b")
+	}), "pool must remain usable after a panic")
+	assert.Equal(t, 1, count(ctx))
+}

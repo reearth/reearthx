@@ -17,10 +17,10 @@ func TestOrderByIDs(t *testing.T) {
 	key := func(i *item) string { return i.id }
 
 	got := pgxx.OrderByIDs([]string{"a", "missing", "b"}, items, key)
-	assert.Len(t, got, 3)
+	// Missing ids are omitted (never a nil element), matching Mongo's FindByIDs.
+	assert.Len(t, got, 2)
 	assert.Equal(t, "A", got[0].name)
-	assert.Nil(t, got[1]) // missing id -> zero value (nil)
-	assert.Equal(t, "B", got[2].name)
+	assert.Equal(t, "B", got[1].name)
 }
 
 func TestIsUniqueViolation(t *testing.T) {
