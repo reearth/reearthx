@@ -1,7 +1,7 @@
 package memorygit
 
 import (
-	"github.com/reearth/reearthx/asset/domain/version"
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/util"
 )
 
