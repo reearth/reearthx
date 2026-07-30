@@ -5,19 +5,16 @@ import (
 	"log/slog"
 )
 
-// zapSlogHandler implements slog.Handler backed by *Logger.
 type zapSlogHandler struct {
 	logger *Logger
 	attrs  []slog.Attr
 	group  string
 }
 
-// NewSlogHandler returns a slog.Handler backed by the given *Logger.
 func NewSlogHandler(l *Logger) slog.Handler {
 	return &zapSlogHandler{logger: l.AddCallerSkip(2)}
 }
 
-// NewSlogLogger returns a *slog.Logger backed by the given *Logger.
 func NewSlogLogger(l *Logger) *slog.Logger {
 	return slog.New(NewSlogHandler(l))
 }
