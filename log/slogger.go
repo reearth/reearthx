@@ -3,8 +3,6 @@ package log
 import (
 	"context"
 	"log/slog"
-
-	"go.uber.org/zap/zapcore"
 )
 
 // zapSlogHandler implements slog.Handler backed by *Logger.
@@ -25,18 +23,18 @@ func NewSlogLogger(l *Logger) *slog.Logger {
 }
 
 func (h *zapSlogHandler) Enabled(_ context.Context, level slog.Level) bool {
-	var zapLevel zapcore.Level
+	var lv Level
 	switch {
 	case level >= slog.LevelError:
-		zapLevel = zapcore.ErrorLevel
+		lv = LevelError
 	case level >= slog.LevelWarn:
-		zapLevel = zapcore.WarnLevel
+		lv = LevelWarn
 	case level >= slog.LevelInfo:
-		zapLevel = zapcore.InfoLevel
+		lv = LevelInfo
 	default:
-		zapLevel = zapcore.DebugLevel
+		lv = LevelDebug
 	}
-	return h.logger.Level() <= zapLevel
+	return h.logger.Level() <= lv
 }
 
 func (h *zapSlogHandler) Handle(_ context.Context, r slog.Record) error {

@@ -23,7 +23,7 @@ var (
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 		EncodeName:     zapcore.FullNameEncoder,
 	}
-	DefaultLevel  = zap.DebugLevel
+	DefaultLevel  = LevelDebug
 	DefaultOutput = os.Stdout
 )
 
@@ -40,7 +40,7 @@ func New() *Logger {
 }
 
 func NewWithOutput(w io.Writer) *Logger {
-	atom := zap.NewAtomicLevelAt(DefaultLevel)
+	atom := zap.NewAtomicLevelAt(DefaultLevel.zap())
 	return &Logger{
 		logger: newLogger(w, atom, ""),
 		atom:   atom,
@@ -144,12 +144,12 @@ func (l *Logger) SetOutput(w io.Writer) *Logger {
 	}
 }
 
-func (l *Logger) Level() zapcore.Level {
-	return l.atom.Level()
+func (l *Logger) Level() Level {
+	return levelFromZap(l.atom.Level())
 }
 
-func (l *Logger) SetLevel(lv zapcore.Level) {
-	l.atom.SetLevel(lv)
+func (l *Logger) SetLevel(lv Level) {
+	l.atom.SetLevel(lv.zap())
 }
 
 func (l *Logger) Prefix() string {

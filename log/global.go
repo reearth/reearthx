@@ -2,15 +2,13 @@ package log
 
 import (
 	"io"
-
-	"go.uber.org/zap/zapcore"
 )
 
 var (
 	globalLogger = New().AddCallerSkip(1)
 )
 
-func SetLevel(l zapcore.Level) {
+func SetLevel(l Level) {
 	globalLogger.SetLevel(l)
 }
 

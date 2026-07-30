@@ -8,7 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"github.com/reearth/reearthx/util"
-	"go.uber.org/zap/zapcore"
 )
 
 type Echo struct {
@@ -46,13 +45,13 @@ func (l *Echo) SetDynamicSuffix(suffix func() Format) {
 // Level returns logger level
 func (l *Echo) Level() log.Lvl {
 	switch l.logger.Level() {
-	case zapcore.DebugLevel:
+	case LevelDebug:
 		return log.DEBUG
-	case zapcore.InfoLevel:
+	case LevelInfo:
 		return log.INFO
-	case zapcore.WarnLevel:
+	case LevelWarn:
 		return log.WARN
-	case zapcore.ErrorLevel:
+	case LevelError:
 		return log.ERROR
 	default:
 		l.Panic("Invalid level")
@@ -78,13 +77,13 @@ func (l *Echo) Prefix() string {
 func (l *Echo) SetLevel(lvl log.Lvl) {
 	switch lvl {
 	case log.DEBUG:
-		l.logger.SetLevel(zapcore.DebugLevel)
+		l.logger.SetLevel(LevelDebug)
 	case log.INFO:
-		l.logger.SetLevel(zapcore.InfoLevel)
+		l.logger.SetLevel(LevelInfo)
 	case log.WARN:
-		l.logger.SetLevel(zapcore.WarnLevel)
+		l.logger.SetLevel(LevelWarn)
 	case log.ERROR:
-		l.logger.SetLevel(zapcore.ErrorLevel)
+		l.logger.SetLevel(LevelError)
 	}
 }
 
