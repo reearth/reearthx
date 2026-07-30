@@ -51,6 +51,38 @@ func TestLevel_zap(t *testing.T) {
 	}
 }
 
+func TestLevel_Set(t *testing.T) {
+	tests := []struct {
+		name    string
+		initial Level
+		in      string
+		want    Level
+		wantErr bool
+	}{
+		{name: "debug", initial: LevelError, in: "debug", want: LevelDebug},
+		{name: "info", initial: LevelError, in: "info", want: LevelInfo},
+		{name: "warn", initial: LevelError, in: "warn", want: LevelWarn},
+		{name: "error", initial: LevelDebug, in: "error", want: LevelError},
+		{name: "dpanic", initial: LevelDebug, in: "dpanic", want: LevelDPanic},
+		{name: "panic", initial: LevelDebug, in: "panic", want: LevelPanic},
+		{name: "fatal", initial: LevelDebug, in: "fatal", want: LevelFatal},
+		{name: "invalid", initial: LevelDebug, in: "invalid", wantErr: true, want: LevelDebug},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			l := tt.initial
+			err := l.Set(tt.in)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.want, l)
+		})
+	}
+}
+
 func TestLevelFromZap(t *testing.T) {
 	tests := []struct {
 		name string

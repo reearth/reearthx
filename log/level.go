@@ -1,10 +1,16 @@
 package log
 
-import "go.uber.org/zap/zapcore"
+import (
+	"flag"
+
+	"go.uber.org/zap/zapcore"
+)
 
 // Level represents a logging severity, without exposing the underlying
 // zap/zapcore types to consumers of this package.
 type Level int8
+
+var _ flag.Value = (*Level)(nil)
 
 const (
 	LevelDebug  Level = Level(zapcore.DebugLevel)
@@ -20,6 +26,16 @@ func (l Level) String() string {
 	return l.zap().String()
 }
 
+// Set implements flag.Value so Level can be used directly as a flag target.
+func (l *Level) Set(s string) error {
+	zl := l.zap()
+	if err := zl.Set(s); err != nil {
+		return err
+	}
+	*l = Level(zl)
+	return nil
+}
+
 func (l Level) zap() zapcore.Level {
 	return zapcore.Level(l)
 }
@@ -27,3 +43,4 @@ func (l Level) zap() zapcore.Level {
 func levelFromZap(l zapcore.Level) Level {
 	return Level(l)
 }
+
