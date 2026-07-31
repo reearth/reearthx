@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"github.com/reearth/reearthx/asset/domain/version"
 
 	"github.com/iancoleman/orderedmap"
 	"github.com/reearth/reearthx/account/accountdomain"

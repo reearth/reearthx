@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"github.com/reearth/reearthx/asset/domain/version"
 
 	"github.com/stretchr/testify/assert"
 )

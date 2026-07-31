@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/request"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
