@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/x/mongo/driver"
 )
 
 // Tx implements usecasex.Tx, but note that it's not goroutine-safe.
@@ -38,8 +39,16 @@ func (t *Tx) End(ctx context.Context) error {
 	}
 
 	if t.commit {
-		if err := t.session.CommitTransaction(ctx); err != nil {
-			return err
+		// Retry commit on UnknownTransactionCommitResult — the transaction may
+		// have committed but the driver didn't receive confirmation.
+		for {
+			err := t.session.CommitTransaction(ctx)
+			if err == nil {
+				break
+			}
+			if !errorHasLabel(err, driver.UnknownTransactionCommitResult) {
+				return err
+			}
 		}
 	} else if err := t.session.AbortTransaction(ctx); err != nil {
 		return err
