@@ -407,10 +407,6 @@ func (r Request) Approve(
 	return res, nil
 }
 
-func (r Request) event(ctx context.Context, e Event) (Dispatch, error) {
-	return r.events(ctx, []Event{e})
-}
-
 func (r Request) events(ctx context.Context, e []Event) (Dispatch, error) {
 	if r.ignoreEvent || len(e) == 0 {
 		return nil, nil
