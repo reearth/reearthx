@@ -72,17 +72,34 @@ func (e *Event) EventProject() *event.Project {
 	}
 }
 
+// Dispatch enqueues the webhook tasks of a set of events. createEvents returns
+// one instead of running it so the caller can dispatch after its DB
+// transaction has committed: the task queue is a remote service, and waiting
+// on it while holding write locks turns a slow queue into failing writes.
+type Dispatch func(context.Context) error
+
+// Run runs the dispatch and logs, rather than returns, its error: a
+// notification that could not be queued must not fail a committed write.
+func (d Dispatch) Run(ctx context.Context) {
+	if d == nil {
+		return
+	}
+	if err := d(ctx); err != nil {
+		log.Errorfc(ctx, "asset: failed to enqueue webhook: %v", err)
+	}
+}
+
 func createEvent(
 	ctx context.Context,
 	r *repo.Container,
 	g *gateway.Container,
 	e Event,
-) (*event.Event[any], error) {
-	evs, err := createEvents(ctx, r, g, []Event{e})
+) (*event.Event[any], Dispatch, error) {
+	evs, d, err := createEvents(ctx, r, g, []Event{e})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return evs[0], nil
+	return evs[0], d, nil
 }
 
 func createEvents(
@@ -90,7 +107,7 @@ func createEvents(
 	r *repo.Container,
 	g *gateway.Container,
 	el []Event,
-) (event.List, error) {
+) (event.List, Dispatch, error) {
 	evl := make(event.List, 0, len(el))
 	for _, e := range el {
 		ev, err := event.New[any]().NewID().
@@ -101,20 +118,21 @@ func createEvents(
 			Operator(e.Operator).
 			Build()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		evl = append(evl, ev)
 	}
 
 	if err := r.Event.SaveAll(ctx, evl); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if err := webhooks(ctx, r, g, el, evl); err != nil {
-		return nil, err
+	d, err := webhooks(ctx, r, g, el, evl)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return evl, nil
+	return evl, d, nil
 }
 
 func webhook(
@@ -123,27 +141,29 @@ func webhook(
 	g *gateway.Container,
 	e Event,
 	ev *event.Event[any],
-) error {
+) (Dispatch, error) {
 	return webhooks(ctx, r, g, []Event{e}, event.List{ev})
 }
 
+// webhooks resolves the workspace's active webhooks for the given events and
+// returns the enqueue work as a Dispatch, without running it.
 func webhooks(
 	ctx context.Context,
 	r *repo.Container,
 	g *gateway.Container,
 	el []Event,
 	evl event.List,
-) error {
+) (Dispatch, error) {
 	if g == nil || g.TaskRunner == nil {
 		log.Infof("asset: webhook was not sent because task runner is not configured")
-		return nil
+		return nil, nil
 	}
 
 	// all events are assumed to have the same workspace
 	wId := el[0].Workspace
 	ws, err := r.Workspace.FindByID(ctx, wId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	iIds, err := util.TryMap(
@@ -153,26 +173,36 @@ func webhooks(
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	integrations, err := r.Integration.FindByIDs(ctx, iIds)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	payloads := make([]task.Payload, 0, len(evl))
 	for i, ev := range evl {
 		e := el[i]
 		for _, w := range integrations.ActiveWebhooks(ev.Type()) {
-			if err := g.TaskRunner.Run(ctx, task.WebhookPayload{
+			payloads = append(payloads, task.WebhookPayload{
 				Webhook:  w,
 				Event:    ev,
 				Override: e.WebhookObject,
-			}.Payload()); err != nil {
-				return err
-			}
+			}.Payload())
 		}
 	}
 
-	return nil
+	if len(payloads) == 0 {
+		return nil, nil
+	}
+
+	return func(ctx context.Context) error {
+		for _, p := range payloads {
+			if err := g.TaskRunner.Run(ctx, p); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, nil
 }

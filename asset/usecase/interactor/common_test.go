@@ -62,13 +62,14 @@ func TestCommon_createEvent(t *testing.T) {
 	lo.Must0(db.Integration.Save(ctx, integrationInstance))
 	mRunner.EXPECT().Run(ctx, gomock.Any()).Times(1).Return(nil)
 
-	ev, err := createEvent(ctx, db, gw, Event{
+	ev, d, err := createEvent(ctx, db, gw, Event{
 		Workspace: ws.ID(),
 		Type:      event.AssetCreate,
 		Object:    a,
 		Operator:  operator.OperatorFromUser(uID),
 	})
 	assert.NoError(t, err)
+	assert.NoError(t, d(ctx))
 	expectedEv := event.New[any]().ID(ev.ID()).
 		Timestamp(now).
 		Type(event.AssetCreate).
@@ -77,7 +78,7 @@ func TestCommon_createEvent(t *testing.T) {
 		MustBuild()
 	assert.Equal(t, expectedEv, ev)
 
-	ev, err = createEvent(ctx, db, gw, Event{
+	ev, _, err = createEvent(ctx, db, gw, Event{
 		Workspace: ws.ID(),
 		Type:      event.AssetCreate,
 		Object:    a,
@@ -115,7 +116,7 @@ func TestCommon_webhook(t *testing.T) {
 
 	ctx := context.Background()
 	// no workspace
-	err = webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
+	_, err = webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
 	assert.Error(t, err)
 
 	lo.Must0(db.Workspace.Save(ctx, ws))
@@ -124,16 +125,18 @@ func TestCommon_webhook(t *testing.T) {
 		Webhook: wh,
 		Event:   ev,
 	}.Payload()).Times(0).Return(nil)
-	err = webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
+	d, err := webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
 	assert.NoError(t, err)
+	assert.Nil(t, d)
 
 	lo.Must0(db.Integration.Save(ctx, integrationInstance))
 	mRunner.EXPECT().Run(ctx, task.WebhookPayload{
 		Webhook: wh,
 		Event:   ev,
 	}.Payload()).Times(1).Return(nil)
-	err = webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
+	d, err = webhook(ctx, db, gw, Event{Workspace: ws.ID()}, ev)
 	assert.NoError(t, err)
+	assert.NoError(t, d(ctx))
 }
 
 func TestNew(t *testing.T) {

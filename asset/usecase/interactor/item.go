@@ -243,7 +243,8 @@ func (i Item) Create(
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -357,7 +358,7 @@ func (i Item) Create(
 				return nil, err
 			}
 
-			if err := i.event(ctx, Event{
+			d, err := i.event(ctx, Event{
 				Project:   prj,
 				Workspace: s.Workspace(),
 				Type:      event.ItemCreate,
@@ -370,13 +371,22 @@ func (i Item) Create(
 					ReferencedItems: refItems,
 				},
 				Operator: operator.Operator(),
-			}); err != nil {
+			})
+			if err != nil {
 				return nil, err
 			}
+			dispatch = d
 
 			return vi, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// the task queue is remote, so it is only reached once the transaction is done
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) LastModifiedByModel(
@@ -399,7 +409,8 @@ func (i Item) Update(
 		return nil, interfaces.ErrItemFieldRequired
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -501,7 +512,7 @@ func (i Item) Update(
 				return nil, err
 			}
 
-			if err := i.event(ctx, Event{
+			d, err := i.event(ctx, Event{
 				Project:   prj,
 				Workspace: s.Workspace(),
 				Type:      event.ItemUpdate,
@@ -515,13 +526,21 @@ func (i Item) Update(
 					Changes:         item.CompareFields(itv.Fields(), oldFields),
 				},
 				Operator: operator.Operator(),
-			}); err != nil {
+			})
+			if err != nil {
 				return nil, err
 			}
+			dispatch = d
 
 			return itm, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) Delete(ctx context.Context, itemID id.ItemID, operator *usecase.Operator) error {
@@ -565,7 +584,8 @@ func (i Item) Unpublish(
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -622,9 +642,11 @@ func (i Item) Unpublish(
 				return nil, err
 			}
 
+			// one batched call: each i.event costs a workspace read, an
+			// integration read and an event write of its own
+			evs := make([]Event, 0, len(items))
 			for _, itm := range items {
-				refItems := refItemsByItem[itm.Value().ID()]
-				if err := i.event(ctx, Event{
+				evs = append(evs, Event{
 					Project:   prj,
 					Workspace: prj.Workspace(),
 					Type:      event.ItemUnpublish,
@@ -633,17 +655,27 @@ func (i Item) Unpublish(
 						Item:            itm.Value(),
 						Model:           m,
 						Schema:          sch,
-						ReferencedItems: refItems,
+						ReferencedItems: refItemsByItem[itm.Value().ID()],
 					},
 					Operator: operator.Operator(),
-				}); err != nil {
-					return nil, err
-				}
+				})
 			}
+
+			d, err := i.events(ctx, evs)
+			if err != nil {
+				return nil, err
+			}
+			dispatch = d
 
 			return items, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) Publish(
@@ -654,7 +686,8 @@ func (i Item) Publish(
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -703,10 +736,9 @@ func (i Item) Publish(
 				return nil, err
 			}
 
+			evs := make([]Event, 0, len(items))
 			for _, itm := range items {
-				refItems := refItemsByItem[itm.Value().ID()]
-
-				if err := i.event(ctx, Event{
+				evs = append(evs, Event{
 					Project:   prj,
 					Workspace: prj.Workspace(),
 					Type:      event.ItemPublish,
@@ -715,17 +747,27 @@ func (i Item) Publish(
 						Item:            itm.Value(),
 						Model:           m,
 						Schema:          sch,
-						ReferencedItems: refItems,
+						ReferencedItems: refItemsByItem[itm.Value().ID()],
 					},
 					Operator: operator.Operator(),
-				}); err != nil {
-					return nil, err
-				}
+				})
 			}
+
+			d, err := i.events(ctx, evs)
+			if err != nil {
+				return nil, err
+			}
+			dispatch = d
 
 			return items, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) checkUnique(
@@ -1138,17 +1180,17 @@ func itemFieldsFromParams(
 	})
 }
 
-func (i Item) event(ctx context.Context, e Event) error {
+func (i Item) event(ctx context.Context, e Event) (Dispatch, error) {
 	return i.events(ctx, []Event{e})
 }
 
-func (i Item) events(ctx context.Context, e []Event) error {
-	if i.ignoreEvent {
-		return nil
+func (i Item) events(ctx context.Context, e []Event) (Dispatch, error) {
+	if i.ignoreEvent || len(e) == 0 {
+		return nil, nil
 	}
 
-	_, err := createEvents(ctx, i.repos, i.gateways, e)
-	return err
+	_, d, err := createEvents(ctx, i.repos, i.gateways, e)
+	return d, err
 }
 
 // referencedItemIDs collects the distinct item IDs referenced by the given

@@ -88,3 +88,27 @@ func TestDoTransaction(t *testing.T) {
 	assert.Same(t, ErrTransaction, err)
 	assert.Equal(t, 1, r)
 }
+
+func TestDoTransaction_RetryBeginsANewTransaction(t *testing.T) {
+	tr := &countingTransaction{}
+	calls := 0
+
+	err := DoTransaction(context.Background(), tr, 2, func(context.Context) error {
+		calls++
+		return ErrTransaction
+	})
+
+	assert.Same(t, ErrTransaction, err)
+	assert.Equal(t, 3, calls)
+	assert.Equal(t, 3, tr.begins)
+}
+
+type countingTransaction struct {
+	NopTransaction
+	begins int
+}
+
+func (t *countingTransaction) Begin(ctx context.Context) (Tx, error) {
+	t.begins++
+	return t.NopTransaction.Begin(ctx)
+}

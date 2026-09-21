@@ -328,15 +328,17 @@ func (i *Asset) Create(
 	}
 
 	// In AWS, extraction is done in very short time when a zip file is small, so it often results in an error because an asset is not saved yet in MongoDB. So an event should be created after commtting the transaction.
-	if err := i.event(ctx, Event{
+	d, err := i.event(ctx, Event{
 		Project:   prj,
 		Workspace: prj.Workspace(),
 		Type:      event.AssetCreate,
 		Object:    a,
 		Operator:  op.Operator(),
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, nil, err
 	}
+	d.Run(ctx)
 
 	return a, f, nil
 }
@@ -735,7 +737,8 @@ func (i *Asset) UpdateFiles(
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	a, err := Run1(
 		ctx, op, i.repos,
 		Usecase().Transaction(),
 		func(ctx context.Context) (*asset.Asset, error) {
@@ -805,19 +808,28 @@ func (i *Asset) UpdateFiles(
 				return nil, fmt.Errorf("failed to save asset files: %v", err)
 			}
 
-			if err := i.event(ctx, Event{
+			d, err := i.event(ctx, Event{
 				Project:   prj,
 				Workspace: prj.Workspace(),
 				Type:      event.AssetDecompress,
 				Object:    a,
 				Operator:  op.Operator(),
-			}); err != nil {
+			})
+			if err != nil {
 				return nil, fmt.Errorf("failed to create an event: %v", err)
 			}
+			dispatch = d
 
 			return a, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// the task queue is remote, so it is only reached once the transaction is done
+	dispatch.Run(ctx)
+	return a, nil
 }
 
 func detectPreviewType(files []gateway.FileEntry) *asset.PreviewType {
@@ -848,7 +860,8 @@ func (i *Asset) Delete(
 		return aId, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx, operator, i.repos,
 		Usecase().Transaction(),
 		func(ctx context.Context) (id.AssetID, error) {
@@ -879,19 +892,27 @@ func (i *Asset) Delete(
 				return aId, err
 			}
 
-			if err := i.event(ctx, Event{
+			d, err := i.event(ctx, Event{
 				Project:   p,
 				Workspace: p.Workspace(),
 				Type:      event.AssetDelete,
 				Object:    a,
 				Operator:  operator.Operator(),
-			}); err != nil {
+			})
+			if err != nil {
 				return aId, err
 			}
+			dispatch = d
 
 			return aId, nil
 		},
 	)
+	if err != nil {
+		return res, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 // BatchDelete deletes assets in batch based on multiple asset IDs
@@ -948,13 +969,13 @@ func (i *Asset) BatchDelete(
 	)
 }
 
-func (i *Asset) event(ctx context.Context, e Event) error {
+func (i *Asset) event(ctx context.Context, e Event) (Dispatch, error) {
 	if i.ignoreEvent {
-		return nil
+		return nil, nil
 	}
 
-	_, err := createEvent(ctx, i.repos, i.gateways, e)
-	return err
+	_, d, err := createEvent(ctx, i.repos, i.gateways, e)
+	return d, err
 }
 
 func (i *Asset) RetryDecompression(ctx context.Context, id string) error {

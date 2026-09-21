@@ -468,7 +468,13 @@ func guessSchemaFields(
 		if !ok {
 			return nil, rerror.ErrInvalidParams
 		}
-		orderedMap = lo.ToPtr(properties.(orderedmap.OrderedMap))
+		// RFC 7946 allows a null "properties", and ok above only reports that
+		// the key is present
+		props, ok := properties.(orderedmap.OrderedMap)
+		if !ok {
+			return nil, rerror.ErrInvalidParams
+		}
+		orderedMap = lo.ToPtr(props)
 	}
 	for _, k := range orderedMap.Keys() {
 		v, _ := orderedMap.Get(k)

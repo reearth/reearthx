@@ -37,16 +37,15 @@ func (t *Tx) End(ctx context.Context) error {
 		return nil
 	}
 
-	if t.commit {
-		if err := t.session.CommitTransaction(ctx); err != nil {
-			return err
-		}
-	} else if err := t.session.AbortTransaction(ctx); err != nil {
-		return err
-	}
+	// the session must be returned to the pool even when the commit or the
+	// abort fails, otherwise the server holds its locks until the transaction
+	// lifetime limit expires
+	defer t.session.EndSession(ctx)
 
-	t.session.EndSession(ctx)
-	return nil
+	if t.commit {
+		return t.session.CommitTransaction(ctx)
+	}
+	return t.session.AbortTransaction(ctx)
 }
 
 func (t *Tx) IsCommitted() bool {

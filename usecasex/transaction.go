@@ -76,6 +76,18 @@ func DoTransaction(ctx context.Context, t Transaction, retry int, fn func(ctx co
 		return fn(ctx)
 	}
 
+	for r := 0; ; r++ {
+		err = doTransactionOnce(ctx, t, fn)
+		if !errors.Is(err, ErrTransaction) || retry <= 0 || r >= retry {
+			return err
+		}
+	}
+}
+
+// doTransactionOnce runs fn in a transaction of its own. A retry cannot reuse
+// the previous one: a transient error has already aborted it server-side, so
+// every further command on it fails.
+func doTransactionOnce(ctx context.Context, t Transaction, fn func(ctx context.Context) error) (err error) {
 	tx, err := t.Begin(ctx)
 	if err != nil {
 		return err
@@ -88,18 +100,10 @@ func DoTransaction(ctx context.Context, t Transaction, retry int, fn func(ctx co
 		}
 	}()
 
-	r := 0
-	for r == 0 || (retry > 0 && r <= retry) {
-		if err = fn(ctx2); err != nil {
-			if !errors.Is(err, ErrTransaction) {
-				break
-			}
-		} else {
-			tx.Commit()
-			break
-		}
-		r++
+	if err = fn(ctx2); err != nil {
+		return err
 	}
 
-	return err
+	tx.Commit()
+	return nil
 }
