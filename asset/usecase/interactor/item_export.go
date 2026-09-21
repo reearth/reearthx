@@ -1,6 +1,7 @@
 package interactor
 
 import (
+	"context"
 	"encoding/csv"
 	"io"
 
@@ -26,15 +27,41 @@ func featureCollectionFromItems(
 }
 
 // CSV
-func csvFromItems(pw *io.PipeWriter, l item.VersionedList, s *schema.Schema) error {
+//
+// ctx must be the request context, not the transaction one: it is what stops
+// the generator goroutine when the client walks away mid-download.
+func csvFromItems(
+	ctx context.Context,
+	pw *io.PipeWriter,
+	l item.VersionedList,
+	s *schema.Schema,
+) error {
 	if !s.IsPointFieldSupported() {
 		return pointFieldIsNotSupportedError
 	}
-	go handleCSVGeneration(pw, l, s)
+	go handleCSVGeneration(ctx, pw, l, s)
 	return nil
 }
 
-func handleCSVGeneration(pw *io.PipeWriter, l item.VersionedList, s *schema.Schema) {
+func handleCSVGeneration(
+	ctx context.Context,
+	pw *io.PipeWriter,
+	l item.VersionedList,
+	s *schema.Schema,
+) {
+	done := make(chan struct{})
+	defer close(done)
+
+	// a pipe write blocks until someone reads it, so the generator would park
+	// forever if the reader is abandoned; closing the pipe unblocks it
+	go func() {
+		select {
+		case <-ctx.Done():
+			_ = pw.CloseWithError(ctx.Err())
+		case <-done:
+		}
+	}()
+
 	err := generateCSV(pw, l, s)
 	if err != nil {
 		log.Errorf("failed to generate CSV: %v", err)

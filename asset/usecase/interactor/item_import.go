@@ -271,6 +271,11 @@ func (i Item) saveChunk(
 			return nil, nil, err
 		}
 
+		// two-way reference fields used to issue up to three reads and two
+		// writes per item; rc memoizes the reads and collects the writes so
+		// they go out with the chunk's own SaveAll
+		rc := newRefFieldCache()
+
 		itemsToSave := item.List{}
 		itemsEvent := map[item.ID]itemChanges{}
 
@@ -385,7 +390,7 @@ func (i Item) saveChunk(
 
 			it.UpdateFields(groupFields)
 
-			if err = i.handleReferenceFields(ctx, *s, it, oldFields); err != nil {
+			if err = i.handleReferenceFieldsWithCache(ctx, *s, it, oldFields, rc); err != nil {
 				return nil, nil, err
 			}
 
@@ -405,7 +410,9 @@ func (i Item) saveChunk(
 				res.ItemUpdated()
 			}
 		}
-		if err := i.repos.Item.SaveAll(ctx, itemsToSave); err != nil {
+		// the chunk's own items win over the reference-field writes, matching
+		// the previous order of Save-then-SaveAll
+		if err := i.repos.Item.SaveAll(ctx, append(rc.items(itemsToSave), itemsToSave...)); err != nil {
 			return nil, nil, err
 		}
 		return itemsToSave, itemsEvent, nil

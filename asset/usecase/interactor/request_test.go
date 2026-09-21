@@ -16,9 +16,11 @@ import (
 	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
+	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/account/accountusecase"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/util"
@@ -488,4 +490,78 @@ func TestRequest_Approve(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRequest_Update_Authorization(t *testing.T) {
+	ctx := context.Background()
+
+	wid := accountdomain.NewWorkspaceID()
+	prj := project.New().NewID().Workspace(wid).MustBuild()
+	creator := accountdomain.NewUserID()
+	outsider := accountdomain.NewUserID()
+
+	s := schema.New().NewID().Workspace(wid).Project(prj.ID()).MustBuild()
+	m := model.New().NewID().Schema(s.ID()).RandomKey().MustBuild()
+	itm := item.New().NewID().Schema(s.ID()).Model(m.ID()).Project(prj.ID()).
+		Thread(id.NewThreadID().Ref()).MustBuild()
+
+	newDB := func() (*repo.Container, *request.Request) {
+		db := memory.New()
+		ws := workspace.New().ID(wid).MustBuild()
+		assert.NoError(t, db.Workspace.Save(ctx, ws))
+		assert.NoError(t, db.Project.Save(ctx, prj))
+		assert.NoError(t, db.Schema.Save(ctx, s))
+		assert.NoError(t, db.Model.Save(ctx, m))
+		assert.NoError(t, db.Item.Save(ctx, itm))
+
+		vi, err := db.Item.FindByID(ctx, itm.ID(), nil)
+		assert.NoError(t, err)
+		ri, _ := request.NewItem(itm.ID(), lo.ToPtr(vi.Version().String()))
+
+		req := request.New().
+			NewID().
+			Workspace(wid).
+			Project(prj.ID()).
+			Reviewers(accountdomain.UserIDList{creator}).
+			CreatedBy(creator).
+			Thread(id.NewThreadID().Ref()).
+			Items(request.ItemList{ri}).
+			Title("foo").
+			MustBuild()
+		assert.NoError(t, db.Request.Save(ctx, req))
+		return db, req
+	}
+
+	op := func(u accountdomain.UserID, writable bool) *usecase.Operator {
+		o := &usecase.Operator{AcOperator: &accountusecase.Operator{User: lo.ToPtr(u)}}
+		if writable {
+			o.AcOperator.WritableWorkspaces = accountdomain.WorkspaceIDList{wid}
+		}
+		return o
+	}
+
+	// a writer who is neither the creator nor an owner/maintainer is denied
+	db, req := newDB()
+	_, err := NewRequest(db, nil).Update(ctx, interfaces.UpdateRequestParam{
+		RequestID: req.ID(),
+		Title:     lo.ToPtr("bar"),
+	}, op(outsider, true))
+	assert.ErrorIs(t, err, interfaces.ErrOperationDenied)
+
+	// a user with no access to the workspace at all is denied
+	db, req = newDB()
+	_, err = NewRequest(db, nil).Update(ctx, interfaces.UpdateRequestParam{
+		RequestID: req.ID(),
+		Title:     lo.ToPtr("bar"),
+	}, op(outsider, false))
+	assert.ErrorIs(t, err, interfaces.ErrOperationDenied)
+
+	// the creator with write access is allowed
+	db, req = newDB()
+	got, err := NewRequest(db, nil).Update(ctx, interfaces.UpdateRequestParam{
+		RequestID: req.ID(),
+		Title:     lo.ToPtr("bar"),
+	}, op(creator, true))
+	assert.NoError(t, err)
+	assert.Equal(t, "bar", got.Title())
 }

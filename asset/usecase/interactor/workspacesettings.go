@@ -31,6 +31,10 @@ func (ws *WorkspaceSettings) Fetch(
 	wid accountdomain.WorkspaceIDList,
 	op *usecase.Operator,
 ) (result workspacesettings.List, err error) {
+	if len(wid) == 0 {
+		return nil, nil
+	}
+
 	return Run1(ctx, op, ws.repos, Usecase().WithReadableWorkspaces(wid...),
 		func(ctx context.Context) (workspacesettings.List, error) {
 			return ws.repos.WorkspaceSettings.FindByIDs(ctx, wid)

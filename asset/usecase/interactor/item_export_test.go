@@ -1,6 +1,7 @@
 package interactor
 
 import (
+	"context"
 	"io"
 	"testing"
 
@@ -81,7 +82,7 @@ func TestCSVFromItems(t *testing.T) {
 	// with geometry fields
 	ver1 := item.VersionedList{vi1}
 	_, pw := io.Pipe()
-	err := csvFromItems(pw, ver1, s1)
+	err := csvFromItems(context.Background(), pw, ver1, s1)
 	assert.Nil(t, err)
 	// no geometry fields
 	iid2 := id.NewItemID()
@@ -111,7 +112,7 @@ func TestCSVFromItems(t *testing.T) {
 	ver2 := item.VersionedList{vi2}
 	expectErr2 := pointFieldIsNotSupportedError
 	_, pw1 := io.Pipe()
-	err = csvFromItems(pw1, ver2, s2)
+	err = csvFromItems(context.Background(), pw1, ver2, s2)
 	assert.Equal(t, expectErr2, err)
 	// point field is not supported
 	iid3 := id.NewItemID()
@@ -146,6 +147,6 @@ func TestCSVFromItems(t *testing.T) {
 	ver3 := item.VersionedList{vi3}
 	expectErr3 := pointFieldIsNotSupportedError
 	_, pw2 := io.Pipe()
-	err = csvFromItems(pw2, ver3, s3)
+	err = csvFromItems(context.Background(), pw2, ver3, s3)
 	assert.Equal(t, expectErr3, err)
 }
