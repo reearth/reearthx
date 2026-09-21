@@ -7,6 +7,7 @@ import (
 
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/util"
+	"github.com/samber/lo"
 
 	_ "github.com/Khan/genqlient/generate"
 	"github.com/Khan/genqlient/graphql"
@@ -37,15 +38,23 @@ func (u *User) FetchByID(ctx context.Context, ids user.IDList) (user.List, error
 }
 
 func (u *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) (*user.User, error) {
+	// every pointer field of the param is optional, so none of them may be
+	// dereferenced unconditionally
 	input := SignUpInput{
-		Id:          param.UserID.String(),
-		WorkspaceID: param.WorkspaceID.String(),
-		Name:        param.Name,
-		Email:       param.Email,
-		Password:    param.Password,
-		Secret:      *param.Secret,
-		Lang:        param.Lang.String(),
-		Theme:       string(*param.Theme),
+		Name:     param.Name,
+		Email:    param.Email,
+		Password: param.Password,
+		Secret:   lo.FromPtr(param.Secret),
+		Theme:    string(lo.FromPtr(param.Theme)),
+	}
+	if param.UserID != nil {
+		input.Id = param.UserID.String()
+	}
+	if param.WorkspaceID != nil {
+		input.WorkspaceID = param.WorkspaceID.String()
+	}
+	if param.Lang != nil {
+		input.Lang = param.Lang.String()
 	}
 	res, err := SignUp(ctx, u.gql, input)
 	if err != nil {
@@ -58,7 +67,7 @@ func (u *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 	input := SignupOIDCInput{
 		Name:   param.Name,
 		Email:  param.Email,
-		Secret: *param.Secret,
+		Secret: lo.FromPtr(param.Secret),
 		Sub:    param.Sub,
 	}
 	res, err := SignupOIDC(ctx, u.gql, input)
@@ -82,13 +91,17 @@ func (u *User) FindOrCreate(ctx context.Context, param accountinterfaces.UserFin
 }
 
 func (u *User) UpdateMe(ctx context.Context, param accountinterfaces.UpdateMeParam, op *accountusecase.Operator) (*user.User, error) {
+	// a partial update leaves most of these unset, so read them through
+	// lo.FromPtr rather than dereferencing
 	input := UpdateMeInput{
-		Name:                 *param.Name,
-		Email:                *param.Email,
-		Lang:                 param.Lang.String(),
-		Theme:                string(*param.Theme),
-		Password:             *param.Password,
-		PasswordConfirmation: *param.PasswordConfirmation,
+		Name:                 lo.FromPtr(param.Name),
+		Email:                lo.FromPtr(param.Email),
+		Theme:                string(lo.FromPtr(param.Theme)),
+		Password:             lo.FromPtr(param.Password),
+		PasswordConfirmation: lo.FromPtr(param.PasswordConfirmation),
+	}
+	if param.Lang != nil {
+		input.Lang = param.Lang.String()
 	}
 	res, err := UpdateMe(ctx, u.gql, input)
 	if err != nil {

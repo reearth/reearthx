@@ -9,8 +9,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-const charSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
 type Integration struct {
 	updatedAt   time.Time
 	logoUrl     *url.URL
@@ -68,7 +66,7 @@ func (i *Integration) SetToken(token string) {
 }
 
 func (i *Integration) RandomToken() {
-	i.token = "secret_" + lo.RandomString(43, []rune(charSet))
+	i.token = "secret_" + util.SecureRandomString(43)
 }
 
 func (i *Integration) Developer() UserID {

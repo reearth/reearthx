@@ -139,11 +139,14 @@ func (i *User) UpdateMe(ctx context.Context, p accountinterfaces.UpdateMeParam, 
 				return nil, err
 			}
 
-			tn := workspace.Name()
-			if tn == "" || tn == oldName {
-				workspace.Rename(*p.Name)
-			} else {
-				workspace = nil
+			// not-found is tolerated, so the workspace may be nil here
+			if workspace != nil {
+				tn := workspace.Name()
+				if tn == "" || tn == oldName {
+					workspace.Rename(*p.Name)
+				} else {
+					workspace = nil
+				}
 			}
 		}
 		if p.Email != nil {

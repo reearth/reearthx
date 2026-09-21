@@ -91,13 +91,17 @@ func (i *User) Signup(ctx context.Context, param accountinterfaces.SignupParam) 
 	vr := user.NewVerification()
 	u.SetVerification(vr)
 
-	if err := i.repos.User.Create(ctx, u); err != nil {
-		if errors.Is(err, accountrepo.ErrDuplicatedUser) {
-			return nil, accountinterfaces.ErrUserAlreadyExists
+	// the user and its personal workspace must be created atomically: a user
+	// without a workspace can neither be used nor re-created
+	if _, err := Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (any, error) {
+		if err := i.repos.User.Create(ctx, u); err != nil {
+			if errors.Is(err, accountrepo.ErrDuplicatedUser) {
+				return nil, accountinterfaces.ErrUserAlreadyExists
+			}
+			return nil, err
 		}
-		return nil, err
-	}
-	if err := i.repos.Workspace.Save(ctx, workspace); err != nil {
+		return nil, i.repos.Workspace.Save(ctx, workspace)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -166,11 +170,12 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 		return nil, err
 	}
 
-	if err := i.repos.User.Create(ctx, u); err != nil {
-		return nil, err
-	}
-
-	if err := i.repos.Workspace.Save(ctx, ws); err != nil {
+	if _, err := Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (any, error) {
+		if err := i.repos.User.Create(ctx, u); err != nil {
+			return nil, err
+		}
+		return nil, i.repos.Workspace.Save(ctx, ws)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -178,24 +183,27 @@ func (i *User) SignupOIDC(ctx context.Context, param accountinterfaces.SignupOID
 }
 
 func (i *User) FindOrCreate(ctx context.Context, param accountinterfaces.UserFindOrCreateParam) (u *user.User, err error) {
+	if param.Sub == "" {
+		return nil, rerror.ErrNotFound
+	}
+
+	// Check if user already exists
+	existedUser, err := i.repos.User.FindBySub(ctx, param.Sub)
+	if err != nil && !errors.Is(err, rerror.ErrNotFound) {
+		return nil, err
+	} else if existedUser != nil {
+		return existedUser, nil
+	}
+
+	// the IdP round trips take up to 60s, so they must not run with a
+	// transaction open: that pins a pooled connection and outlives Mongo's
+	// transaction lifetime limit
+	ui, err := getUserInfoFromISS(ctx, param.ISS, param.Token)
+	if err != nil {
+		return nil, err
+	}
+
 	return Run1(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) (*user.User, error) {
-		if param.Sub == "" {
-			return nil, rerror.ErrNotFound
-		}
-
-		// Check if user already exists
-		existedUser, err := i.repos.User.FindBySub(ctx, param.Sub)
-		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
-			return nil, err
-		} else if existedUser != nil {
-			return existedUser, nil
-		}
-
-		ui, err := getUserInfoFromISS(ctx, param.ISS, param.Token)
-		if err != nil {
-			return nil, err
-		}
-
 		u, workspace, err := workspace.Init(workspace.InitParams{
 			Email: ui.Email,
 			Name:  ui.Name,

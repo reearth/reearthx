@@ -138,6 +138,7 @@ type Asset interface {
 		*string,
 		*asset.SortType,
 		*PaginationParam,
+		*usecase.Operator,
 	) ([]*asset.Asset, *PageBasedInfo, error)
 	Fetch(context.Context, []id.AssetID) ([]*asset.Asset, error)
 }

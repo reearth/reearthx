@@ -122,7 +122,8 @@ func (mv JWTMultipleValidator) ValidateToken(parentCtx context.Context, tokenStr
 		return successRes, nil
 	}
 
-	log.Debugfc(ctx, "auth: invalid JWT token: %s", tokenString)
+	// never log tokenString itself: it is a live bearer credential, and this
+	// branch is also reached for transient failures such as a JWKS fetch error
 	log.Errorfc(ctx, "auth: invalid JWT token: %v", lastErr)
 	return nil, lastErr
 }

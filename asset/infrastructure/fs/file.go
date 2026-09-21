@@ -297,7 +297,18 @@ func getFSObjectPath(fileUUID, objectName string) string {
 		return ""
 	}
 
-	return filepath.Join(assetDir, fileUUID[:2], fileUUID[2:], objectName)
+	base := filepath.Join(assetDir, fileUUID[:2], fileUUID[2:])
+	if objectName == "" {
+		return base
+	}
+
+	// filepath.Join cleans "..", it does not reject it, so the result must be
+	// checked against the asset folder before it is used for reads or writes.
+	p := filepath.Join(base, objectName)
+	if p != base && !strings.HasPrefix(p, base+string(filepath.Separator)) {
+		return ""
+	}
+	return p
 }
 
 func getFSObjectFolderPath(fileUUID string) string {

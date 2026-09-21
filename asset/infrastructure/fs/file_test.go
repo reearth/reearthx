@@ -211,3 +211,12 @@ func mockFs() afero.Fs {
 	}
 	return fs
 }
+
+func TestGetFSObjectPath_Traversal(t *testing.T) {
+	u := "5130c89f-8f67-4766-b127-49ee6796d464"
+
+	assert.Equal(t, "assets/51/30c89f-8f67-4766-b127-49ee6796d464/xxx.yml", getFSObjectPath(u, "xxx.yml"))
+	assert.Equal(t, "assets/51/30c89f-8f67-4766-b127-49ee6796d464/a/b.yml", getFSObjectPath(u, "a/b.yml"))
+	assert.Equal(t, "", getFSObjectPath(u, "../../../../etc/cron.d/payload"))
+	assert.Equal(t, "assets/51/30c89f-8f67-4766-b127-49ee6796d464/etc/passwd", getFSObjectPath(u, "/etc/passwd"))
+}

@@ -4,12 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/reearth/reearthx/rerror"
 	"github.com/reearth/reearthx/usecasex"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+const (
+	facetItemsKey = "items"
+	facetCountKey = "count"
 )
 
 func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.FindOptions) (*usecasex.PageInfo, error) {
@@ -40,7 +46,16 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 
-	pPipeline := append(pipeline, pFilter...)
+	// $facet derives the page and the total from a single run of the caller's
+	// pipeline; counting separately re-executed every $lookup stage over the
+	// whole matched set.
+	// ponytail: the page's documents come back inside one result document, so
+	// they are subject to the 16MB BSON limit. If a page can exceed that, fetch
+	// the page ids in the facet and read the documents by id instead.
+	pPipeline := append(slices.Clone(pipeline), bson.M{"$facet": bson.M{
+		facetItemsKey: pFilter,
+		facetCountKey: []any{bson.M{"$count": "count"}},
+	}})
 
 	cursor, err := c.collection.Aggregate(ctx, pPipeline, append([]*options.AggregateOptions{pOpts}, opts...)...)
 	if err != nil {
@@ -50,12 +65,27 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		_ = cursor.Close(ctx)
 	}()
 
-	count, err := c.CountAggregation(ctx, pipeline)
-	if err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
+	var facet struct {
+		Items []bson.Raw `bson:"items"`
+		Count []struct {
+			Count int64 `bson:"count"`
+		} `bson:"count"`
+	}
+	if cursor.Next(ctx) {
+		if err := cursor.Decode(&facet); err != nil {
+			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode: %w", err))
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
 
-	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
+	var count int64
+	if len(facet.Count) > 0 {
+		count = facet.Count[0].Count
+	}
+
+	items, startCursor, endCursor, hasMore, err := consumeRaw(ctx, facet.Items, limit(*p))
 	if err != nil {
 		return nil, err
 	}
@@ -86,37 +116,47 @@ func pageInfo(p *usecasex.Pagination, hasMore bool) (bool, bool) {
 }
 
 func consume(ctx context.Context, cursor *mongo.Cursor, limit int64) ([]bson.Raw, *usecasex.Cursor, *usecasex.Cursor, bool, error) {
-	i := int64(0)
-	var startCursor, endCursor *usecasex.Cursor
-	var items []bson.Raw
-
+	var raws []bson.Raw
 	for cursor.Next(ctx) {
-		if i < limit-1 {
-			var item bson.Raw
-			if err := cursor.Decode(&item); err != nil {
-				return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode item: %w", err))
-			}
-
-			cur, err := getCursor(item)
-			if err != nil {
-				return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to get cursor: %w", err))
-			}
-
-			if startCursor == nil {
-				startCursor = cur
-			}
-			endCursor = cur
-
-			items = append(items, item)
+		var item bson.Raw
+		if err := cursor.Decode(&item); err != nil {
+			return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode item: %w", err))
 		}
-
-		i++
+		raws = append(raws, item)
 	}
 
 	if err := cursor.Err(); err != nil {
 		return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
-	return items, startCursor, endCursor, i == limit, nil
+
+	return consumeRaw(ctx, raws, limit)
+}
+
+// consumeRaw keeps the first limit-1 documents — the extra one is only read to
+// learn whether a further page exists.
+func consumeRaw(ctx context.Context, raws []bson.Raw, limit int64) ([]bson.Raw, *usecasex.Cursor, *usecasex.Cursor, bool, error) {
+	var startCursor, endCursor *usecasex.Cursor
+	var items []bson.Raw
+
+	for i, item := range raws {
+		if int64(i) >= limit-1 {
+			break
+		}
+
+		cur, err := getCursor(item)
+		if err != nil {
+			return nil, nil, nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to get cursor: %w", err))
+		}
+
+		if startCursor == nil {
+			startCursor = cur
+		}
+		endCursor = cur
+
+		items = append(items, item)
+	}
+
+	return items, startCursor, endCursor, int64(len(raws)) == limit, nil
 }
 
 func reverse(items []bson.Raw) {

@@ -184,7 +184,7 @@ func (r Request) Update(
 			// only owners, maintainers, and the request creator can update requests
 			canUpdate := *operator.AcOperator.User == req.CreatedBy() ||
 				ws.Members().IsOwnerOrMaintainer(*operator.AcOperator.User)
-			if !operator.IsWritableWorkspace(req.Workspace()) && canUpdate {
+			if !operator.IsWritableWorkspace(req.Workspace()) || !canUpdate {
 				return nil, interfaces.ErrOperationDenied
 			}
 
@@ -277,13 +277,27 @@ func (r Request) CloseAll(
 		return interfaces.ErrInvalidOperator
 	}
 
-	reqs, err := r.FindByIDs(ctx, ids, operator)
-	if err != nil {
-		return err
-	}
+	return Run0(
+		ctx,
+		operator,
+		r.repos,
+		Usecase().Transaction(),
+		func(ctx context.Context) error {
+			reqs, err := r.FindByIDs(ctx, ids, operator)
+			if err != nil {
+				return err
+			}
 
-	reqs.UpdateStatus(request.StateClosed)
-	return r.repos.Request.SaveAll(ctx, pid, reqs)
+			for _, req := range reqs {
+				if req.Project() != pid || !operator.IsWritableWorkspace(req.Workspace()) {
+					return interfaces.ErrOperationDenied
+				}
+			}
+
+			reqs.UpdateStatus(request.StateClosed)
+			return r.repos.Request.SaveAll(ctx, pid, reqs)
+		},
+	)
 }
 
 func (r Request) Approve(
@@ -295,7 +309,8 @@ func (r Request) Approve(
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		r.repos,
@@ -356,8 +371,11 @@ func (r Request) Approve(
 				return nil, err
 			}
 
+			// one batched call: each r.event costs a workspace read, an
+			// integration read and an event write of its own
+			evs := make([]Event, 0, len(items))
 			for _, itm := range items {
-				if err := r.event(ctx, Event{
+				evs = append(evs, Event{
 					Project:   prj,
 					Workspace: req.Workspace(),
 					Type:      event.ItemPublish,
@@ -368,21 +386,32 @@ func (r Request) Approve(
 						Schema: sch,
 					},
 					Operator: operator.Operator(),
-				}); err != nil {
-					return nil, err
-				}
+				})
 			}
+
+			d, err := r.events(ctx, evs)
+			if err != nil {
+				return nil, err
+			}
+			dispatch = d
 
 			return req, nil
 		},
 	)
-}
-
-func (r Request) event(ctx context.Context, e Event) error {
-	if r.ignoreEvent {
-		return nil
+	if err != nil {
+		return nil, err
 	}
 
-	_, err := createEvent(ctx, r.repos, r.gateways, e)
-	return err
+	// the task queue is remote, so it is only reached once the transaction is done
+	dispatch.Run(ctx)
+	return res, nil
+}
+
+func (r Request) events(ctx context.Context, e []Event) (Dispatch, error) {
+	if r.ignoreEvent || len(e) == 0 {
+		return nil, nil
+	}
+
+	_, d, err := createEvents(ctx, r.repos, r.gateways, e)
+	return d, err
 }

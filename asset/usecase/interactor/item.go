@@ -80,19 +80,31 @@ func (i Item) ItemStatus(
 	if err != nil {
 		return nil, err
 	}
-	items, err := i.repos.Item.FindAllVersionsByIDs(ctx, itemsIds)
+	// only the versions carrying the latest/public refs are needed; loading
+	// every historical version made this cost the whole edit history per item
+	latestItems, err := i.repos.Item.FindByIDs(ctx, itemsIds, version.Latest.Ref())
 	if err != nil {
 		return nil, err
 	}
+	publicItems, err := i.repos.Item.FindByIDs(ctx, itemsIds, version.Public.Ref())
+	if err != nil {
+		return nil, err
+	}
+
+	latestByID := make(map[id.ItemID]item.Versioned, len(latestItems))
+	for _, v := range latestItems {
+		latestByID[v.Value().ID()] = v
+	}
+	publicIDs := make(map[id.ItemID]struct{}, len(publicItems))
+	for _, v := range publicItems {
+		publicIDs[v.Value().ID()] = struct{}{}
+	}
+
 	res := map[id.ItemID]item.Status{}
 	for _, itemId := range itemsIds {
 		s := item.StatusDraft
-		latest, _ := lo.Find(items, func(v item.Versioned) bool {
-			return v.Value().ID() == itemId && v.Refs().Has(version.Latest)
-		})
-		hasPublicVersion := lo.ContainsBy(items, func(v item.Versioned) bool {
-			return v.Value().ID() == itemId && v.Refs().Has(version.Public)
-		})
+		latest := latestByID[itemId]
+		_, hasPublicVersion := publicIDs[itemId]
 		if hasPublicVersion {
 			s = s.Wrap(item.StatusPublic)
 		}
@@ -112,7 +124,7 @@ func (i Item) ItemStatus(
 			}
 		}
 
-		if hasPublicVersion && !latest.Refs().Has(version.Public) {
+		if hasPublicVersion && (latest == nil || !latest.Refs().Has(version.Public)) {
 			s = s.Wrap(item.StatusChanged)
 		}
 		if hasWaitingRequest {
@@ -243,7 +255,8 @@ func (i Item) Create(
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -357,7 +370,7 @@ func (i Item) Create(
 				return nil, err
 			}
 
-			if err := i.event(ctx, Event{
+			d, err := i.event(ctx, Event{
 				Project:   prj,
 				Workspace: s.Workspace(),
 				Type:      event.ItemCreate,
@@ -370,13 +383,22 @@ func (i Item) Create(
 					ReferencedItems: refItems,
 				},
 				Operator: operator.Operator(),
-			}); err != nil {
+			})
+			if err != nil {
 				return nil, err
 			}
+			dispatch = d
 
 			return vi, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// the task queue is remote, so it is only reached once the transaction is done
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) LastModifiedByModel(
@@ -399,7 +421,8 @@ func (i Item) Update(
 		return nil, interfaces.ErrItemFieldRequired
 	}
 
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -501,7 +524,7 @@ func (i Item) Update(
 				return nil, err
 			}
 
-			if err := i.event(ctx, Event{
+			d, err := i.event(ctx, Event{
 				Project:   prj,
 				Workspace: s.Workspace(),
 				Type:      event.ItemUpdate,
@@ -515,13 +538,21 @@ func (i Item) Update(
 					Changes:         item.CompareFields(itv.Fields(), oldFields),
 				},
 				Operator: operator.Operator(),
-			}); err != nil {
+			})
+			if err != nil {
 				return nil, err
 			}
+			dispatch = d
 
 			return itm, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) Delete(ctx context.Context, itemID id.ItemID, operator *usecase.Operator) error {
@@ -565,7 +596,8 @@ func (i Item) Unpublish(
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -622,9 +654,11 @@ func (i Item) Unpublish(
 				return nil, err
 			}
 
+			// one batched call: each i.event costs a workspace read, an
+			// integration read and an event write of its own
+			evs := make([]Event, 0, len(items))
 			for _, itm := range items {
-				refItems := refItemsByItem[itm.Value().ID()]
-				if err := i.event(ctx, Event{
+				evs = append(evs, Event{
 					Project:   prj,
 					Workspace: prj.Workspace(),
 					Type:      event.ItemUnpublish,
@@ -633,17 +667,27 @@ func (i Item) Unpublish(
 						Item:            itm.Value(),
 						Model:           m,
 						Schema:          sch,
-						ReferencedItems: refItems,
+						ReferencedItems: refItemsByItem[itm.Value().ID()],
 					},
 					Operator: operator.Operator(),
-				}); err != nil {
-					return nil, err
-				}
+				})
 			}
+
+			d, err := i.events(ctx, evs)
+			if err != nil {
+				return nil, err
+			}
+			dispatch = d
 
 			return items, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) Publish(
@@ -654,7 +698,8 @@ func (i Item) Publish(
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return nil, interfaces.ErrInvalidOperator
 	}
-	return Run1(
+	var dispatch Dispatch
+	res, err := Run1(
 		ctx,
 		operator,
 		i.repos,
@@ -703,10 +748,9 @@ func (i Item) Publish(
 				return nil, err
 			}
 
+			evs := make([]Event, 0, len(items))
 			for _, itm := range items {
-				refItems := refItemsByItem[itm.Value().ID()]
-
-				if err := i.event(ctx, Event{
+				evs = append(evs, Event{
 					Project:   prj,
 					Workspace: prj.Workspace(),
 					Type:      event.ItemPublish,
@@ -715,17 +759,27 @@ func (i Item) Publish(
 						Item:            itm.Value(),
 						Model:           m,
 						Schema:          sch,
-						ReferencedItems: refItems,
+						ReferencedItems: refItemsByItem[itm.Value().ID()],
 					},
 					Operator: operator.Operator(),
-				}); err != nil {
-					return nil, err
-				}
+				})
 			}
+
+			d, err := i.events(ctx, evs)
+			if err != nil {
+				return nil, err
+			}
+			dispatch = d
 
 			return items, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	dispatch.Run(ctx)
+	return res, nil
 }
 
 func (i Item) checkUnique(
@@ -826,17 +880,97 @@ func uniqueCheckKey(mid id.ModelID, fieldsArg []repo.FieldAndValue) string {
 	return mid.String() + "|" + strings.Join(parts, "&")
 }
 
+// refFieldCache batches the side effects of two-way reference fields over a
+// bulk operation: reads are memoized and writes are collected, so a caller that
+// already saves in batch (an import chunk) can flush them with its own SaveAll
+// instead of issuing one FindByID/Save per item. A nil cache keeps the
+// original per-item behaviour.
+type refFieldCache struct {
+	found map[id.ItemID]item.Versioned
+	dirty map[id.ItemID]*item.Item
+	order []id.ItemID
+}
+
+func newRefFieldCache() *refFieldCache {
+	return &refFieldCache{
+		found: map[id.ItemID]item.Versioned{},
+		dirty: map[id.ItemID]*item.Item{},
+	}
+}
+
+func (c *refFieldCache) markDirty(itm *item.Item) {
+	if _, ok := c.dirty[itm.ID()]; !ok {
+		c.order = append(c.order, itm.ID())
+	}
+	c.dirty[itm.ID()] = itm
+}
+
+// items returns the collected writes in insertion order, skipping the ids the
+// caller already saves itself.
+func (c *refFieldCache) items(skip item.List) item.List {
+	skipped := make(map[id.ItemID]struct{}, len(skip))
+	for _, itm := range skip {
+		skipped[itm.ID()] = struct{}{}
+	}
+
+	res := make(item.List, 0, len(c.order))
+	for _, iid := range c.order {
+		if _, ok := skipped[iid]; ok {
+			continue
+		}
+		res = append(res, c.dirty[iid])
+	}
+	return res
+}
+
+func (i Item) findItemCached(
+	ctx context.Context,
+	iid id.ItemID,
+	cache *refFieldCache,
+) (item.Versioned, error) {
+	if cache == nil {
+		return i.repos.Item.FindByID(ctx, iid, nil)
+	}
+	if v, ok := cache.found[iid]; ok {
+		return v, nil
+	}
+	v, err := i.repos.Item.FindByID(ctx, iid, nil)
+	if err != nil {
+		return nil, err
+	}
+	cache.found[iid] = v
+	return v, nil
+}
+
+func (i Item) saveItemCached(ctx context.Context, itm *item.Item, cache *refFieldCache) error {
+	if cache == nil {
+		return i.repos.Item.Save(ctx, itm)
+	}
+	cache.markDirty(itm)
+	return nil
+}
+
 func (i Item) handleReferenceFields(
 	ctx context.Context,
 	s schema.Schema,
 	itm *item.Item,
 	oldFields item.Fields,
 ) error {
+	return i.handleReferenceFieldsWithCache(ctx, s, itm, oldFields, nil)
+}
+
+func (i Item) handleReferenceFieldsWithCache(
+	ctx context.Context,
+	s schema.Schema,
+	itm *item.Item,
+	oldFields item.Fields,
+	cache *refFieldCache,
+) error {
 	for _, sf := range s.FieldsByType(value.TypeReference) {
 		newF := itm.Field(sf.ID())
 		oldF := oldFields.Field(sf.ID())
 
-		if err := i.handleReferenceField(ctx, *sf, itm.ID(), newF, oldF); err != nil {
+		if err := i.handleReferenceField(ctx, *sf, itm.ID(), newF, oldF, cache); err != nil {
 			return err
 		}
 	}
@@ -848,13 +982,14 @@ func (i Item) handleReferenceField(
 	sf schema.Field,
 	iID item.ID,
 	newF, oldF *item.Field,
+	cache *refFieldCache,
 ) error {
 	fr, ok := schema.FieldReferenceFromTypeProperty(sf.TypeProperty())
 	if !ok || !fr.IsTowWay() || newF.Value().Equal(oldF.Value()) {
 		return nil
 	}
 
-	items, err := i.getItemCorrespondingItems(ctx, *fr, newF, oldF)
+	items, err := i.getItemCorrespondingItems(ctx, *fr, newF, oldF, cache)
 	if err != nil {
 		return err
 	}
@@ -864,7 +999,7 @@ func (i Item) handleReferenceField(
 		if fr.CorrespondingFieldID() != nil {
 			cItm.ClearField(*fr.CorrespondingFieldID())
 		}
-		if err := i.repos.Item.Save(ctx, cItm); err != nil {
+		if err := i.saveItemCached(ctx, cItm, cache); err != nil {
 			return err
 		}
 	}
@@ -876,7 +1011,7 @@ func (i Item) handleReferenceField(
 	refItm, _ := items.Item(refItmId)
 	idValue := value.NewMultiple(value.TypeReference, []any{iID})
 	refItm.UpdateFields([]*item.Field{item.NewField(*fr.CorrespondingFieldID(), idValue, nil)})
-	if err := i.repos.Item.Save(ctx, refItm); err != nil {
+	if err := i.saveItemCached(ctx, refItm, cache); err != nil {
 		return err
 	}
 	return nil
@@ -886,12 +1021,13 @@ func (i Item) getItemCorrespondingItems(
 	ctx context.Context,
 	fr schema.FieldReference,
 	newF, oldF *item.Field,
+	cache *refFieldCache,
 ) (item.List, error) {
 	ci := make([]*item.Item, 0)
 
 	oldRefId, _ := oldF.Value().First().ValueReference()
 	if !oldRefId.IsEmpty() {
-		oldRefItm, err := i.repos.Item.FindByID(ctx, oldRefId, nil)
+		oldRefItm, err := i.findItemCached(ctx, oldRefId, cache)
 		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
 			return nil, err
 		}
@@ -906,7 +1042,7 @@ func (i Item) getItemCorrespondingItems(
 		return ci, nil
 	}
 
-	newRefItm, err := i.repos.Item.FindByID(ctx, newRefId, nil)
+	newRefItm, err := i.findItemCached(ctx, newRefId, cache)
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +1052,7 @@ func (i Item) getItemCorrespondingItems(
 	newRefRefF := newRefItm.Value().Field(*fr.CorrespondingFieldID())
 	newRefRefId, _ := newRefRefF.Value().First().ValueReference()
 	if !newRefRefId.IsEmpty() {
-		newRefRefItm, err := i.repos.Item.FindByID(ctx, newRefRefId, nil)
+		newRefRefItm, err := i.findItemCached(ctx, newRefRefId, cache)
 		if err != nil && !errors.Is(err, rerror.ErrNotFound) {
 			return nil, err
 		}
@@ -1138,17 +1274,17 @@ func itemFieldsFromParams(
 	})
 }
 
-func (i Item) event(ctx context.Context, e Event) error {
+func (i Item) event(ctx context.Context, e Event) (Dispatch, error) {
 	return i.events(ctx, []Event{e})
 }
 
-func (i Item) events(ctx context.Context, e []Event) error {
-	if i.ignoreEvent {
-		return nil
+func (i Item) events(ctx context.Context, e []Event) (Dispatch, error) {
+	if i.ignoreEvent || len(e) == 0 {
+		return nil, nil
 	}
 
-	_, err := createEvents(ctx, i.repos, i.gateways, e)
-	return err
+	_, d, err := createEvents(ctx, i.repos, i.gateways, e)
+	return d, err
 }
 
 // referencedItemIDs collects the distinct item IDs referenced by the given
@@ -1225,6 +1361,7 @@ func (i Item) ItemsAsCSV(
 	if operator.AcOperator.User == nil && operator.Integration == nil {
 		return interfaces.ExportItemsToCSVResponse{}, interfaces.ErrInvalidOperator
 	}
+	reqCtx := ctx
 	return Run1(
 		ctx,
 		operator,
@@ -1246,7 +1383,7 @@ func (i Item) ItemsAsCSV(
 			}
 
 			pr, pw := io.Pipe()
-			err = csvFromItems(pw, items, schemaPackage.Schema())
+			err = csvFromItems(reqCtx, pw, items, schemaPackage.Schema())
 			if err != nil {
 				return interfaces.ExportItemsToCSVResponse{}, err
 			}
