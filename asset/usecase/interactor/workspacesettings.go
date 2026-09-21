@@ -31,7 +31,10 @@ func (ws *WorkspaceSettings) Fetch(
 	wid accountdomain.WorkspaceIDList,
 	op *usecase.Operator,
 ) (result workspacesettings.List, err error) {
-	return ws.repos.WorkspaceSettings.FindByIDs(ctx, wid)
+	return Run1(ctx, op, ws.repos, Usecase().WithReadableWorkspaces(wid...),
+		func(ctx context.Context) (workspacesettings.List, error) {
+			return ws.repos.WorkspaceSettings.FindByIDs(ctx, wid)
+		})
 }
 
 func (ws *WorkspaceSettings) UpdateOrCreate(

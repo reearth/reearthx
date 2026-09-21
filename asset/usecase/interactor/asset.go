@@ -1095,6 +1095,7 @@ func (i *Asset) FindByWorkspace(
 	keyword *string,
 	sort *asset.SortType,
 	p *interfaces.PaginationParam,
+	operator *usecase.Operator,
 ) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
 	var pagination *usecasex.Pagination
 	if p != nil && p.Page != nil {
@@ -1105,7 +1106,7 @@ func (i *Asset) FindByWorkspace(
 	}
 
 	return Run2(
-		ctx, nil, i.repos,
+		ctx, operator, i.repos,
 		Usecase().WithReadableWorkspaces(tid),
 		func(ctx context.Context) ([]*asset.Asset, *interfaces.PageBasedInfo, error) {
 			return i.repos.Asset.FindByWorkspace(ctx, tid, repo.AssetFilter{

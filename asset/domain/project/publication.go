@@ -1,16 +1,12 @@
 package project
 
-import (
-	"github.com/samber/lo"
-)
+import "github.com/reearth/reearthx/util"
 
 const (
 	PublicationScopePrivate PublicationScope = "private"
 	PublicationScopeLimited PublicationScope = "limited"
 	PublicationScopePublic  PublicationScope = "public"
 )
-
-const charSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 type PublicationScope string
 
@@ -52,7 +48,7 @@ func (p *Publication) Token() string {
 }
 
 func (p *Publication) GenerateToken() {
-	p.token = "secret_" + lo.RandomString(43, []rune(charSet))
+	p.token = "secret_" + util.SecureRandomString(43)
 }
 
 func (p *Publication) SetScope(scope PublicationScope) {

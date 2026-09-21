@@ -184,7 +184,7 @@ func (r Request) Update(
 			// only owners, maintainers, and the request creator can update requests
 			canUpdate := *operator.AcOperator.User == req.CreatedBy() ||
 				ws.Members().IsOwnerOrMaintainer(*operator.AcOperator.User)
-			if !operator.IsWritableWorkspace(req.Workspace()) && canUpdate {
+			if !operator.IsWritableWorkspace(req.Workspace()) || !canUpdate {
 				return nil, interfaces.ErrOperationDenied
 			}
 
@@ -277,13 +277,27 @@ func (r Request) CloseAll(
 		return interfaces.ErrInvalidOperator
 	}
 
-	reqs, err := r.FindByIDs(ctx, ids, operator)
-	if err != nil {
-		return err
-	}
+	return Run0(
+		ctx,
+		operator,
+		r.repos,
+		Usecase().Transaction(),
+		func(ctx context.Context) error {
+			reqs, err := r.FindByIDs(ctx, ids, operator)
+			if err != nil {
+				return err
+			}
 
-	reqs.UpdateStatus(request.StateClosed)
-	return r.repos.Request.SaveAll(ctx, pid, reqs)
+			for _, req := range reqs {
+				if req.Project() != pid || !operator.IsWritableWorkspace(req.Workspace()) {
+					return interfaces.ErrOperationDenied
+				}
+			}
+
+			reqs.UpdateStatus(request.StateClosed)
+			return r.repos.Request.SaveAll(ctx, pid, reqs)
+		},
+	)
 }
 
 func (r Request) Approve(

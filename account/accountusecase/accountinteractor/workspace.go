@@ -178,6 +178,11 @@ func (i *Workspace) AddUserMember(ctx context.Context, workspaceID workspace.ID,
 				continue
 			}
 
+			// only an owner may grant the owner role
+			if users[m.ID()] == workspace.RoleOwner && !operator.IsOwningWorkspace(workspaceID) {
+				return nil, accountinterfaces.ErrOperationDenied
+			}
+
 			// TODO: Delete this once the permission check migration is complete.
 			if err := i.ensureUserHasMaintainerRole(ctx, m.ID(), maintainerRole.ID()); err != nil {
 				return nil, err
@@ -345,6 +350,11 @@ func (i *Workspace) UpdateUserMember(ctx context.Context, id workspace.ID, u wor
 
 		if u == *operator.User {
 			return nil, accountinterfaces.ErrCannotChangeOwnerRole
+		}
+
+		// only an owner may grant the owner role or change an existing owner's role
+		if (role == workspace.RoleOwner || ws.Members().UserRole(u) == workspace.RoleOwner) && !operator.IsOwningWorkspace(id) {
+			return nil, accountinterfaces.ErrOperationDenied
 		}
 
 		err = ws.Members().UpdateUserRole(u, role)

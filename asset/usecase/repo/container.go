@@ -47,7 +47,7 @@ func (c *Container) Filtered(workspace WorkspaceFilter, project ProjectFilter) *
 		Transaction:       c.Transaction,
 		Workspace:         c.Workspace,
 		User:              c.User,
-		Request:           c.Request,
+		Request:           c.Request.Filtered(project),
 		Group:             c.Group.Filtered(project),
 		Item:              c.Item.Filtered(project),
 		View:              c.View.Filtered(project),
@@ -56,7 +56,7 @@ func (c *Container) Filtered(workspace WorkspaceFilter, project ProjectFilter) *
 		Schema:            c.Schema.Filtered(workspace),
 		Thread:            c.Thread.Filtered(workspace),
 		Integration:       c.Integration,
-		WorkspaceSettings: c.WorkspaceSettings,
+		WorkspaceSettings: c.WorkspaceSettings.Filtered(workspace),
 		Event:             c.Event,
 	}
 }
