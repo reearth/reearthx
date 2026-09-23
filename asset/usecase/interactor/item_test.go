@@ -9,6 +9,7 @@ import (
 
 	"github.com/reearth/reearthx/asset/infrastructure/memory"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/integrationapi"
 	"github.com/reearth/reearthx/asset/domain/item"
@@ -17,7 +18,6 @@ import (
 	"github.com/reearth/reearthx/asset/domain/request"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
 	"github.com/reearth/reearthx/asset/usecase/repo"

@@ -12,7 +12,6 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/service/ses v1.30.2
-	github.com/chrispappas/golang-generics-set v1.0.1
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/goccy/go-yaml v1.17.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -37,6 +36,7 @@ require (
 	github.com/paulmach/go.geojson v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/ravilushqa/otelgqlgen v0.17.0
+	github.com/reearth/mongogit v0.1.1
 	github.com/samber/lo v1.50.0
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/spf13/afero v1.14.0
@@ -84,6 +84,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19 // indirect
 	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
+	github.com/chrispappas/golang-generics-set v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect

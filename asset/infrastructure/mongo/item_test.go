@@ -8,12 +8,12 @@ import (
 
 	"github.com/reearth/reearthx/account/accountdomain"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/task"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/mongox/mongotest"

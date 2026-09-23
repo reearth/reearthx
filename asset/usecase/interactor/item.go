@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/event"
 	"github.com/reearth/reearthx/asset/domain/group"
 	"github.com/reearth/reearthx/asset/domain/id"
@@ -16,7 +17,6 @@ import (
 	"github.com/reearth/reearthx/asset/domain/request"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/value"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/gateway"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"

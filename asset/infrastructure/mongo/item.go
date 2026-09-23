@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/reearth/mongogit"
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/task"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongodoc"
-	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongogit"
 	"github.com/reearth/reearthx/asset/usecase/repo"
 	"github.com/reearth/reearthx/mongox"
 	"github.com/reearth/reearthx/rerror"
@@ -43,7 +43,7 @@ type Item struct {
 }
 
 func NewItem(client *mongox.Client) repo.Item {
-	return &Item{client: mongogit.NewCollection(client.WithCollection("item"))}
+	return &Item{client: mongogit.NewCollection(client.WithCollection("item").Client())}
 }
 
 func (r *Item) Filtered(f repo.ProjectFilter) repo.Item {
@@ -56,9 +56,9 @@ func (r *Item) Filtered(f repo.ProjectFilter) repo.Item {
 func (r *Item) Init() error {
 	return createIndexes2(
 		context.Background(),
-		r.client.Client(),
+		mongox.NewCollection(r.client.Client()),
 		append(
-			r.client.Indexes(),
+			toMongoxIndexes(r.client.Indexes()),
 			mongox.IndexFromKeys(itemIndexes, false)...,
 		)...,
 	)
@@ -192,7 +192,7 @@ func (r *Item) FindVersionByID(
 	if err := r.client.Find(ctx, r.readFilter(bson.M{
 		"id": itemID.String(),
 	}), version.Eq(ver), c); err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 
 	return c.Result[0], nil
@@ -206,7 +206,7 @@ func (r *Item) FindAllVersionsByID(
 	if err := r.client.Find(ctx, r.readFilter(bson.M{
 		"id": itemID.String(),
 	}), version.All(), c); err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 
 	return c.Result, nil
@@ -222,20 +222,22 @@ func (r *Item) FindAllVersionsByIDs(
 			"$in": ids.Strings(),
 		},
 	}), version.All(), c); err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 
 	return item.VersionedList(c.Result), nil
 }
 
 func (r *Item) LastModifiedByModel(ctx context.Context, modelID id.ModelID) (time.Time, error) {
-	return r.client.Timestamp(ctx, bson.M{
+	t, err := r.client.Timestamp(ctx, bson.M{
 		"modelid": modelID.String(),
 	}, version.Eq(version.Latest.OrVersion()))
+	return t, mapErr(err)
 }
 
 func (r *Item) IsArchived(ctx context.Context, id id.ItemID) (bool, error) {
-	return r.client.IsArchived(ctx, r.readFilter(bson.M{"id": id.String()}))
+	b, err := r.client.IsArchived(ctx, r.readFilter(bson.M{"id": id.String()}))
+	return b, mapErr(err)
 }
 
 func (r *Item) Save(ctx context.Context, item *item.Item) error {
@@ -243,7 +245,7 @@ func (r *Item) Save(ctx context.Context, item *item.Item) error {
 		return repo.ErrOperationDenied
 	}
 	doc, id := mongodoc.NewItem(item)
-	return r.client.SaveOne(ctx, id, doc, nil)
+	return mapErr(r.client.SaveOne(ctx, id, doc, nil))
 }
 
 func (r *Item) SaveAll(ctx context.Context, items item.List) error {
@@ -257,7 +259,7 @@ func (r *Item) SaveAll(ctx context.Context, items item.List) error {
 		}
 	}
 	docs, ids := mongodoc.NewItems(items)
-	return r.client.SaveMany(ctx, ids, lo.ToAnySlice(docs))
+	return mapErr(r.client.SaveMany(ctx, ids, lo.ToAnySlice(docs)))
 }
 
 func (r *Item) UpdateRef(
@@ -266,21 +268,21 @@ func (r *Item) UpdateRef(
 	ref version.Ref,
 	vr *version.VersionOrRef,
 ) error {
-	return r.client.UpdateRef(ctx, item.String(), ref, vr)
+	return mapErr(r.client.UpdateRef(ctx, item.String(), ref, vr))
 }
 
 func (r *Item) Remove(ctx context.Context, id id.ItemID) error {
-	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{"id": id.String()}))
+	return mapErr(r.client.RemoveOne(ctx, r.writeFilter(bson.M{"id": id.String()})))
 }
 
 func (r *Item) Archive(ctx context.Context, id id.ItemID, pid id.ProjectID, b bool) error {
 	if !r.f.CanWrite(pid) {
 		return repo.ErrOperationDenied
 	}
-	return r.client.ArchiveOne(ctx, bson.M{
+	return mapErr(r.client.ArchiveOne(ctx, bson.M{
 		"id":      id.String(),
 		"project": pid.String(),
-	}, b)
+	}, b))
 }
 
 func (r *Item) paginate(
@@ -295,14 +297,14 @@ func (r *Item) paginate(
 		ctx,
 		r.readFilter(filter),
 		version.Eq(ref.OrLatest().OrVersion()),
-		sort,
-		pagination,
+		toGitSort(sort),
+		toGitPagination(pagination),
 		c,
 	)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
-	return c.Result, pageInfo, nil
+	return c.Result, fromGitPageInfo(pageInfo), nil
 }
 
 func (r *Item) paginateAggregation(
@@ -317,20 +319,20 @@ func (r *Item) paginateAggregation(
 		ctx,
 		applyProjectFilterToPipeline(pipeline, r.f.Readable),
 		version.Eq(ref.OrLatest().OrVersion()),
-		sort,
-		pagination,
+		toGitSort(sort),
+		toGitPagination(pagination),
 		c,
 	)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
-	return c.Result, pageInfo, nil
+	return c.Result, fromGitPageInfo(pageInfo), nil
 }
 
 func (r *Item) find(ctx context.Context, filter any, ref *version.Ref) (item.VersionedList, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.Find(ctx, r.readFilter(filter), version.Eq(ref.OrLatest().OrVersion()), c); err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 	return c.Result, nil
 }
@@ -342,7 +344,7 @@ func (r *Item) aggregate(
 ) (item.VersionedList, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.Aggregate(ctx, applyProjectFilterToPipeline(pipeline, r.f.Readable), version.Eq(ref.OrLatest().OrVersion()), c); err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 	return c.Result, nil
 }
@@ -350,7 +352,7 @@ func (r *Item) aggregate(
 func (r *Item) findOne(ctx context.Context, filter any, ref *version.Ref) (item.Versioned, error) {
 	c := mongodoc.NewVersionedItemConsumer()
 	if err := r.client.FindOne(ctx, r.readFilter(filter), version.Eq(ref.OrLatest().OrVersion()), c); err != nil {
-		return nil, err
+		return nil, mapErr(err)
 	}
 	return c.Result[0], nil
 }

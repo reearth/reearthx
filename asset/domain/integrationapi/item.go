@@ -2,9 +2,9 @@ package integrationapi
 
 import (
 	"github.com/oapi-codegen/runtime/types"
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/schema"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/util"
 	"github.com/samber/lo"
 )

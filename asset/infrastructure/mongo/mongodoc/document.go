@@ -1,6 +1,8 @@
 package mongodoc
 
 import (
+	"github.com/reearth/mongogit"
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/asset"
 	"github.com/reearth/reearthx/asset/domain/integration"
 	"github.com/reearth/reearthx/asset/domain/item"
@@ -8,8 +10,6 @@ import (
 	"github.com/reearth/reearthx/asset/domain/project"
 	"github.com/reearth/reearthx/asset/domain/schema"
 	"github.com/reearth/reearthx/asset/domain/thread"
-	"github.com/reearth/reearthx/asset/domain/version"
-	"github.com/reearth/reearthx/asset/infrastructure/mongo/mongogit"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
 	"go.mongodb.org/mongo-driver/bson"
