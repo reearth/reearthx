@@ -23,8 +23,8 @@ var (
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 		EncodeName:     zapcore.FullNameEncoder,
 	}
-	DefaultLevel  = LevelDebug
-	DefaultOutput = os.Stdout
+	DefaultLevel            = LevelDebug
+	DefaultOutput io.Writer = os.Stdout
 )
 
 type Logger struct {
