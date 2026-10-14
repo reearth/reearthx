@@ -37,7 +37,7 @@ jobs:
         with:
           go-version: 1.26
       - name: checkout
-        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: cache
         uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
         with:
