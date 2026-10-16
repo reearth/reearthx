@@ -245,6 +245,84 @@ func TestClientCollection_PaginateAggregation(t *testing.T) {
 	assert.Equal(t, []usecasex.Cursor{"c", "b", "a"}, con.Cursors)
 }
 
+// A last page holding more than one item tells whether start and end cursors
+// are swapped back after the items are reversed; a single-item page can't.
+func TestClientCollection_PaginateLastCursors(t *testing.T) {
+	ctx := context.Background()
+	initDB := mongotest.Connect(t)
+	c := NewCollection(initDB(t).Collection("test"))
+
+	seeds := []string{"a", "b", "c"}
+	_, _ = c.Client().InsertMany(ctx, lo.Map(seeds, func(s string, i int) any {
+		return bson.M{"id": s, "i": len(seeds) - i}
+	}))
+
+	paginators := []struct {
+		name     string
+		paginate func(*usecasex.Pagination, Consumer) (*usecasex.PageInfo, error)
+	}{
+		{
+			name: "Paginate",
+			paginate: func(p *usecasex.Pagination, con Consumer) (*usecasex.PageInfo, error) {
+				return c.Paginate(ctx, bson.M{}, nil, p, con)
+			},
+		},
+		{
+			name: "PaginateAggregation",
+			paginate: func(p *usecasex.Pagination, con Consumer) (*usecasex.PageInfo, error) {
+				return c.PaginateAggregation(ctx, []any{}, nil, p, con)
+			},
+		},
+	}
+
+	tests := []struct {
+		name        string
+		pagination  usecasex.CursorPagination
+		wantInfo    *usecasex.PageInfo
+		wantCursors []usecasex.Cursor
+	}{
+		{
+			name:       "last 2",
+			pagination: usecasex.CursorPagination{Last: new(int64(2))},
+			wantInfo: &usecasex.PageInfo{
+				TotalCount:      3,
+				StartCursor:     usecasex.Cursor("b").Ref(),
+				EndCursor:       usecasex.Cursor("c").Ref(),
+				HasNextPage:     false,
+				HasPreviousPage: true,
+			},
+			wantCursors: []usecasex.Cursor{"b", "c"},
+		},
+		{
+			name: "last 2 before c",
+			pagination: usecasex.CursorPagination{
+				Last:   new(int64(2)),
+				Before: usecasex.Cursor("c").Ref(),
+			},
+			wantInfo: &usecasex.PageInfo{
+				TotalCount:      3,
+				StartCursor:     usecasex.Cursor("a").Ref(),
+				EndCursor:       usecasex.Cursor("b").Ref(),
+				HasNextPage:     false,
+				HasPreviousPage: false,
+			},
+			wantCursors: []usecasex.Cursor{"a", "b"},
+		},
+	}
+
+	for _, pg := range paginators {
+		for _, tt := range tests {
+			t.Run(pg.name+"/"+tt.name, func(t *testing.T) {
+				con := &consumer{}
+				got, err := pg.paginate(tt.pagination.Wrap(), con)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantInfo, got)
+				assert.Equal(t, tt.wantCursors, con.Cursors)
+			})
+		}
+	}
+}
+
 func TestClientCollection_PaginateWithUpdatedAtSort(t *testing.T) {
 	ctx := context.Background()
 	initDB := mongotest.Connect(t)
