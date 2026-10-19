@@ -92,6 +92,7 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 
 	if p.Cursor != nil && p.Cursor.Last != nil {
 		reverse(items)
+		startCursor, endCursor = endCursor, startCursor
 	}
 
 	for _, item := range items {
