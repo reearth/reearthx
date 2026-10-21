@@ -252,6 +252,7 @@ func (s *Storage) CreateAccessAndRefreshTokens(ctx context.Context, request op.T
 		audience = append(audience, client.GetID())
 	}
 	claims := &refreshTokenClaims{
+		TokenUse:  "refresh_token",
 		JWTID:     uuid.NewString(),
 		AuthID:    authID,
 		AMR:       amr,
@@ -400,6 +401,9 @@ func (s *Storage) verifyRefreshToken(ctx context.Context, token string, v op.Acc
 	}
 	if err = oidc.CheckExpiration(claims, v.Offset()); err != nil {
 		return nil, err
+	}
+	if claims.TokenUse != "refresh_token" {
+		return nil, errors.New("invalid token use")
 	}
 	return claims, nil
 }

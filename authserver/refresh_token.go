@@ -8,6 +8,7 @@ import (
 )
 
 type refreshTokenClaims struct {
+	TokenUse  string                   `json:"token_use"`
 	JWTID     string                   `json:"jti"`
 	AuthID    string                   `json:"auth_id"`
 	AMR       []string                 `json:"amr"`

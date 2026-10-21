@@ -269,6 +269,10 @@ func (r *Item) UpdateRef(
 	return r.client.UpdateRef(ctx, item.String(), ref, vr)
 }
 
+func (r *Item) UpdateRefs(ctx context.Context, items id.ItemIDList, ref version.Ref, vr *version.VersionOrRef) error {
+	return r.client.UpdateRefs(ctx, items.Strings(), ref, vr)
+}
+
 func (r *Item) Remove(ctx context.Context, id id.ItemID) error {
 	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{"id": id.String()}))
 }

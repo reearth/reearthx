@@ -343,7 +343,9 @@ func (r Request) Approve(
 				return nil, err
 			}
 
-			// apply changes to items (publish items)
+			// Apply each destination in bulk: request items can point at different
+			// versions, but the common case is one destination for the whole request.
+			updates := map[version.VersionOrRef]id.ItemIDList{}
 			for _, itm := range req.Items() {
 				// publish the approved version
 				dist := itm.Pointer().Ref()
@@ -351,7 +353,10 @@ func (r Request) Approve(
 				if dist == nil {
 					dist = version.Latest.OrVersion().Ref()
 				}
-				if err := r.repos.Item.UpdateRef(ctx, itm.Item(), version.Public, dist); err != nil {
+				updates[*dist] = append(updates[*dist], itm.Item())
+			}
+			for dist, itemIDs := range updates {
+				if err := r.repos.Item.UpdateRefs(ctx, itemIDs, version.Public, dist.Ref()); err != nil {
 					return nil, err
 				}
 			}

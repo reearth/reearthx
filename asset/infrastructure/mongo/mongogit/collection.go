@@ -272,6 +272,19 @@ func (c *Collection) UpdateRef(
 	return nil
 }
 
+func (c *Collection) UpdateRefs(ctx context.Context, ids []string, ref version.Ref, dest *version.VersionOrRef) error {
+	if err := c.DeleteRef(ctx, ids, ref); err != nil {
+		return err
+	}
+	if dest == nil {
+		return nil
+	}
+	_, err := c.client.Client().UpdateMany(ctx, apply(version.Eq(*dest), bson.M{
+		"id": bson.M{"$in": ids},
+	}), bson.M{"$push": bson.M{refsKey: ref}})
+	return rerror.ErrInternalBy(err)
+}
+
 func (c *Collection) IsArchived(ctx context.Context, filter any) (bool, error) {
 	cons := mongox.SliceConsumer[MetadataDocument]{}
 	q := mongox.And(filter, "", bson.M{

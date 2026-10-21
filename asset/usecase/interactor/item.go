@@ -640,11 +640,9 @@ func (i Item) Unpublish(
 				return nil, interfaces.ErrInvalidOperator
 			}
 
-			// remove public ref from the items
-			for _, itm := range items {
-				if err := i.repos.Item.UpdateRef(ctx, itm.Value().ID(), version.Public, nil); err != nil {
-					return nil, err
-				}
+			// remove public ref from all items in two bulk writes.
+			if err := i.repos.Item.UpdateRefs(ctx, itemIDs, version.Public, nil); err != nil {
+				return nil, err
 			}
 
 			// batch-fetch all referenced items across the whole request once,
@@ -734,11 +732,9 @@ func (i Item) Publish(
 				return nil, interfaces.ErrInvalidOperator
 			}
 
-			// add public ref to the items
-			for _, itm := range items {
-				if err := i.repos.Item.UpdateRef(ctx, itm.Value().ID(), version.Public, version.Latest.OrVersion().Ref()); err != nil {
-					return nil, err
-				}
+			// add public ref to all items in two bulk writes.
+			if err := i.repos.Item.UpdateRefs(ctx, itemIDs, version.Public, version.Latest.OrVersion().Ref()); err != nil {
+				return nil, err
 			}
 
 			// batch-fetch all referenced items across the whole request once,
