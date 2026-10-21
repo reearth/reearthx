@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/reearth/reearthx/asset/domain/version"
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/util"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/exp/slices"

@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/reearth/mongogit/version"
 	"github.com/reearth/reearthx/asset/domain/id"
 	"github.com/reearth/reearthx/asset/domain/integrationapi"
 	"github.com/reearth/reearthx/asset/domain/item"
 	"github.com/reearth/reearthx/asset/domain/model"
 	"github.com/reearth/reearthx/asset/domain/schema"
-	"github.com/reearth/reearthx/asset/domain/version"
 	"github.com/reearth/reearthx/asset/usecase"
 
 	"github.com/reearth/reearthx/i18n"

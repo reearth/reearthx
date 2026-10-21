@@ -279,6 +279,10 @@ github.com/posener/complete v1.2.3/go.mod h1:WZIdtGGp+qx0sLrYKtIRAruyNpv6hFCicSg
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/ravilushqa/otelgqlgen v0.17.0 h1:bLwQfKqtj9P24QpjM2sc1ipBm5Fqv2u7DKN5LIpj3g8=
 github.com/ravilushqa/otelgqlgen v0.17.0/go.mod h1:orOIikuYsay1y3CmLgd5gsHcT9EsnXwNKmkAplzzYXQ=
+github.com/reearth/mongogit v0.1.0 h1:cKgJm2HfTkjTbizD0Nf6xv2BO9KC/QDeq+SxEbrhF70=
+github.com/reearth/mongogit v0.1.0/go.mod h1:e86X5P2Co5LRDbFsoHTP2fjgi9LlG/7jX3h7H6wBcyo=
+github.com/reearth/mongogit v0.1.1 h1:d8rnuWGxhB97AJ5WOCJKawLvhfRqHEFG0DijmxpXDIA=
+github.com/reearth/mongogit v0.1.1/go.mod h1:e86X5P2Co5LRDbFsoHTP2fjgi9LlG/7jX3h7H6wBcyo=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
 github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
 github.com/rs/cors v1.10.1 h1:L0uuZVXIKlI1SShY2nhFfo44TYvDPQ1w4oFkUJNfhyo=
