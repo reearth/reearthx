@@ -15,6 +15,7 @@ import (
 	"github.com/reearth/reearthx/asset/domain/value"
 	"github.com/reearth/reearthx/asset/usecase"
 	"github.com/reearth/reearthx/asset/usecase/interfaces"
+	"github.com/reearth/reearthx/asset/usecase/repo"
 
 	"github.com/iancoleman/orderedmap"
 	"github.com/reearth/reearthx/i18n"
@@ -239,35 +240,40 @@ func (i Item) saveChunk(
 		}
 		return item.ID{}, false
 	})
-	oldItems, err := i.repos.Item.FindByIDs(ctx, itemsIds, nil)
-	if err != nil {
-		return err
-	}
-
 	metaItemsIds := lo.FilterMap(items, func(i interfaces.ImportItemParam, _ int) (item.ID, bool) {
 		if i.MetadataID != nil {
 			return *i.MetadataID, true
 		}
 		return item.ID{}, false
 	})
-	oldMetaItems, err := i.repos.Item.FindByIDs(ctx, metaItemsIds, nil)
-	if err != nil {
-		return err
-	}
-
 	isMetadata := m.Metadata() != nil && s.ID() == *m.Metadata()
 
 	type itemChanges struct {
 		action    interfaces.ImportStrategyType
 		oldFields item.Fields
 	}
+	var skipped int
 	f := func(ctx context.Context) (item.List, map[item.ID]itemChanges, error) {
+		// Every transaction attempt needs clean domain objects. Retrying with
+		// objects mutated by an aborted attempt loses reference updates.
+		skipped = 0
+		oldItems, err := i.repos.Item.FindByIDs(ctx, itemsIds, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+		oldMetaItems, err := i.repos.Item.FindByIDs(ctx, metaItemsIds, nil)
+		if err != nil {
+			return nil, nil, err
+		}
 		// Pre-fetch group field metadata for the whole chunk in at most two
 		// batched queries (groups + their schemas) instead of issuing one
 		// Group.FindByID + Schema.FindByID per group field per item. The cache
 		// also memoizes identical uniqueness lookups across the chunk.
 		gc, err := i.newGroupSchemaCache(ctx, s)
 		if err != nil {
+			return nil, nil, err
+		}
+		if err := i.prefetchUnique(ctx, m.ID(), s, items, param.Strategy, oldItems, gc.unique); err != nil {
 			return nil, nil, err
 		}
 
@@ -290,13 +296,13 @@ func (i Item) saveChunk(
 
 			// strategy: insert. 	item: exists  				=> ignore
 			if param.Strategy == interfaces.ImportStrategyTypeInsert && oldItem != nil {
-				res.ItemSkipped()
+				skipped++
 				continue
 			}
 
 			// strategy: update. 	item: not exists 			=> ignore
 			if param.Strategy == interfaces.ImportStrategyTypeUpdate && oldItem == nil {
-				res.ItemSkipped()
+				skipped++
 				continue
 			}
 
@@ -404,11 +410,6 @@ func (i Item) saveChunk(
 				action:    action,
 			}
 
-			if action == interfaces.ImportStrategyTypeInsert {
-				res.ItemInserted()
-			} else {
-				res.ItemUpdated()
-			}
 		}
 		// the chunk's own items win over the reference-field writes, matching
 		// the previous order of Save-then-SaveAll
@@ -418,14 +419,76 @@ func (i Item) saveChunk(
 		return itemsToSave, itemsEvent, nil
 	}
 
-	_, _, err = Run2(ctx, operator, i.repos, Usecase().Transaction(), f)
+	_, itemEvents, err := Run2(ctx, operator, i.repos, Usecase().Transaction(), f)
 	if err != nil {
 		return err
+	}
+	for _, change := range itemEvents {
+		if change.action == interfaces.ImportStrategyTypeInsert {
+			res.ItemInserted()
+		} else {
+			res.ItemUpdated()
+		}
+	}
+	for range skipped {
+		res.ItemSkipped()
 	}
 
 	//  TODO: create ItemsImported event
 
 	return err
+}
+
+// prefetchUnique performs the import chunk's unique-value lookup once, then
+// seeds the existing exact-query cache used by the per-row validator.
+func (i Item) prefetchUnique(ctx context.Context, mid id.ModelID, s *schema.Schema, params []interfaces.ImportItemParam, strategy interfaces.ImportStrategyType, oldItems item.VersionedList, cache uniqueCheckCache) error {
+	queries := map[string][]repo.FieldAndValue{}
+	var all []repo.FieldAndValue
+	for _, param := range params {
+		oldItem := param.ItemId != nil && oldItems.Item(*param.ItemId) != nil
+		if (strategy == interfaces.ImportStrategyTypeInsert && oldItem) || (strategy == interfaces.ImportStrategyTypeUpdate && !oldItem) {
+			continue
+		}
+		modelFields, _ := filterFieldParamsBySchema(param.Fields, s)
+		fields, err := itemFieldsFromParams(modelFields, s)
+		if err != nil {
+			return err
+		}
+		var query []repo.FieldAndValue
+		for _, field := range fields {
+			schemaField := s.Field(field.FieldID())
+			if schemaField != nil && schemaField.Unique() && !field.Value().IsEmpty() {
+				query = append(query, repo.FieldAndValue{Field: field.FieldID(), Value: field.Value()})
+			}
+		}
+		if len(query) == 0 {
+			continue
+		}
+		key := uniqueCheckKey(mid, query)
+		if _, ok := queries[key]; !ok {
+			queries[key] = query
+			all = append(all, query...)
+		}
+	}
+	if len(all) == 0 {
+		return nil
+	}
+	existing, err := i.repos.Item.FindByModelAndValue(ctx, mid, all, nil)
+	if err != nil {
+		return err
+	}
+	for key, query := range queries {
+		cache[key] = lo.Filter(existing, func(it item.Versioned, _ int) bool {
+			for _, field := range query {
+				current := it.Value().Field(field.Field)
+				if current != nil && current.Value().Equal(field.Value) {
+					return true
+				}
+			}
+			return false
+		})
+	}
+	return nil
 }
 
 func (i Item) updateSchema(

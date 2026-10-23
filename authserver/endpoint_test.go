@@ -150,6 +150,14 @@ func TestEndpoint(t *testing.T) {
 	accessToken2 := r4["access_token"].(string)
 	refreshToken2 := r4["refresh_token"].(string)
 
+	// An access token must never be accepted at the refresh-token grant.
+	res = send(http.MethodPost, ts.URL+"/oauth/token", true, map[string]string{
+		"grant_type":    "refresh_token",
+		"client_id":     "default-client",
+		"refresh_token": accessToken,
+	}, nil)
+	assert.NotEqual(t, http.StatusOK, res.StatusCode)
+
 	// confirm access_token and refresh_token are rotated
 	assert.NotEqual(t, accessToken, accessToken2)
 	assert.NotEqual(t, refreshToken, refreshToken2)
@@ -205,6 +213,7 @@ func TestEndpoint(t *testing.T) {
 	claims3 := map[string]any{}
 	lo.Must0(token3.Claims(key3.Key, &claims3))
 	assert.Equal(t, map[string]any{
+		"token_use": "refresh_token",
 		"iss":       "https://example.com/",
 		"sub":       "subsub",
 		"aud":       []any{"https://example.com"},
@@ -245,6 +254,7 @@ func TestEndpoint(t *testing.T) {
 	claims5 := map[string]any{}
 	lo.Must0(token5.Claims(key5.Key, &claims5))
 	assert.Equal(t, map[string]any{
+		"token_use": "refresh_token",
 		"iss":       "https://example.com/",
 		"sub":       "subsub",
 		"aud":       []any{"https://example.com"},

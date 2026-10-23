@@ -50,9 +50,13 @@ func unlocker(conn *pgxpool.Conn, key int64) Unlock {
 	return func(ctx context.Context) error {
 		var err error
 		once.Do(func() {
-			defer conn.Release()
-			_, e := conn.Exec(ctx, `SELECT pg_advisory_unlock($1)`, key)
+			_, e := conn.Exec(context.WithoutCancel(ctx), `SELECT pg_advisory_unlock($1)`, key)
 			err = WrapError(e)
+			if err != nil {
+				_ = conn.Hijack().Close(context.Background())
+				return
+			}
+			conn.Release()
 		})
 		return err // second and later calls are no-ops returning nil
 	}

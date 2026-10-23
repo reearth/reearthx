@@ -236,6 +236,15 @@ func (r *Item) UpdateRef(
 	return nil
 }
 
+func (r *Item) UpdateRefs(ctx context.Context, items id.ItemIDList, ref version.Ref, vr *version.VersionOrRef) error {
+	for _, item := range items {
+		if err := r.UpdateRef(ctx, item, ref, vr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *Item) Remove(_ context.Context, itemID id.ItemID) error {
 	if r.err != nil {
 		return r.err

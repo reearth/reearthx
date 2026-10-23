@@ -13,11 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const (
-	facetItemsKey = "items"
-	facetCountKey = "count"
-)
-
 func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.FindOptions) (*usecasex.PageInfo, error) {
 	if p == nil || (p.Cursor == nil && p.Offset == nil) {
 		return nil, nil
@@ -46,17 +41,7 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 
-	// $facet derives the page and the total from a single run of the caller's
-	// pipeline; counting separately re-executed every $lookup stage over the
-	// whole matched set.
-	// ponytail: the page's documents come back inside one result document, so
-	// they are subject to the 16MB BSON limit. If a page can exceed that, fetch
-	// the page ids in the facet and read the documents by id instead.
-	pPipeline := append(slices.Clone(pipeline), bson.M{"$facet": bson.M{
-		facetItemsKey: pFilter,
-		facetCountKey: []any{bson.M{"$count": "count"}},
-	}})
-
+	pPipeline := append(slices.Clone(pipeline), pFilter...)
 	cursor, err := c.collection.Aggregate(ctx, pPipeline, append([]*options.AggregateOptions{pOpts}, opts...)...)
 	if err != nil {
 		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
@@ -65,27 +50,12 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		_ = cursor.Close(ctx)
 	}()
 
-	var facet struct {
-		Items []bson.Raw `bson:"items"`
-		Count []struct {
-			Count int64 `bson:"count"`
-		} `bson:"count"`
-	}
-	if cursor.Next(ctx) {
-		if err := cursor.Decode(&facet); err != nil {
-			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode: %w", err))
-		}
-	}
-	if err := cursor.Err(); err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
+	count, err := c.CountAggregation(ctx, pipeline)
+	if err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
 	}
 
-	var count int64
-	if len(facet.Count) > 0 {
-		count = facet.Count[0].Count
-	}
-
-	items, startCursor, endCursor, hasMore, err := consumeRaw(ctx, facet.Items, limit(*p))
+	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
 	if err != nil {
 		return nil, err
 	}

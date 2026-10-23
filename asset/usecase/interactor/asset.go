@@ -316,15 +316,15 @@ func (i *Asset) Create(
 				return nil, nil, err
 			}
 
-			if needDecompress && !inp.SkipDecompression {
-				if err := i.triggerDecompressEvent(ctx, a, f); err != nil {
-					return nil, nil, err
-				}
-			}
 			return a, f, nil
 		})
 	if err != nil {
 		return nil, nil, err
+	}
+	if a.ArchiveExtractionStatus() != nil && *a.ArchiveExtractionStatus() == asset.ArchiveExtractionStatusPending {
+		if err := i.triggerDecompressEvent(ctx, a, f); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// In AWS, extraction is done in very short time when a zip file is small, so it often results in an error because an asset is not saved yet in MongoDB. So an event should be created after commtting the transaction.
@@ -418,7 +418,8 @@ func (i *Asset) Decompress(
 		return nil, interfaces.ErrInvalidOperator
 	}
 
-	return Run1(
+	var f *asset.File
+	a, err := Run1(
 		ctx, operator, i.repos,
 		Usecase().Transaction(),
 		func(ctx context.Context) (*asset.Asset, error) {
@@ -433,12 +434,8 @@ func (i *Asset) Decompress(
 				return nil, interfaces.ErrOperationDenied
 			}
 
-			f, err := i.repos.AssetFile.FindByID(ctx, aId)
+			f, err = i.repos.AssetFile.FindByID(ctx, aId)
 			if err != nil {
-				return nil, err
-			}
-
-			if err := i.triggerDecompressEvent(ctx, a, f); err != nil {
 				return nil, err
 			}
 
@@ -451,6 +448,13 @@ func (i *Asset) Decompress(
 			return a, nil
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	if err := i.triggerDecompressEvent(ctx, a, f); err != nil {
+		return nil, err
+	}
+	return a, nil
 }
 
 func (i *Asset) Publish(

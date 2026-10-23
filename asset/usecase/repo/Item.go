@@ -66,6 +66,7 @@ type Item interface {
 	Save(context.Context, *item.Item) error
 	SaveAll(context.Context, item.List) error
 	UpdateRef(context.Context, id.ItemID, version.Ref, *version.VersionOrRef) error
+	UpdateRefs(context.Context, id.ItemIDList, version.Ref, *version.VersionOrRef) error
 	Remove(context.Context, id.ItemID) error
 	Archive(context.Context, id.ItemID, id.ProjectID, bool) error
 	Copy(context.Context, CopyParams) (*string, *string, error)
