@@ -26,6 +26,9 @@ import (
 	"github.com/samber/lo"
 )
 
+// mailSendTimeout bounds a single mail delivery attempt.
+const mailSendTimeout = 30 * time.Second
+
 type mailContent struct {
 	UserName    string
 	Message     string
@@ -243,6 +246,8 @@ func (i *User) sendVerificationMail(ctx context.Context, u *user.User, vr *user.
 		return err
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, mailSendTimeout)
+	defer cancel()
 	if err := i.gateways.Mailer.SendMail(
 		ctx,
 		[]mailer.Contact{
@@ -394,25 +399,30 @@ func (i *User) verifySignupSecret(secret *string) error {
 }
 
 func (i *User) CreateVerification(ctx context.Context, email string) error {
-	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
-		u, err := i.repos.User.FindByEmail(ctx, email)
+	var u *user.User
+	var vr *user.Verification
+	if err := Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
+		var err error
+		u, err = i.repos.User.FindByEmail(ctx, email)
 		if err != nil {
 			return err
 		}
 		if u.Verification().IsVerified() {
+			u = nil
 			return nil
 		}
-		vr := user.NewVerification()
+		vr = user.NewVerification()
 		u.SetVerification(vr)
 
-		if err := i.repos.User.Save(ctx, u); err != nil {
-			return err
-		}
-
-		if err := i.sendVerificationMail(ctx, u, vr); err != nil {
-			return err
-		}
-
+		return i.repos.User.Save(ctx, u)
+	}); err != nil {
+		return err
+	}
+	if u == nil {
 		return nil
-	})
+	}
+
+	// Sent after the commit, as in Signup: a slow mail server must not hold the
+	// transaction open, and the mailed code must already be saved.
+	return i.sendVerificationMail(ctx, u, vr)
 }

@@ -13,6 +13,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	facetItemsKey = "items"
+	facetCountKey = "count"
+)
+
 func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.FindOptions) (*usecasex.PageInfo, error) {
 	if p == nil || (p.Cursor == nil && p.Offset == nil) {
 		return nil, nil
@@ -41,21 +46,52 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 
-	pPipeline := append(slices.Clone(pipeline), pFilter...)
-	cursor, err := c.collection.Aggregate(ctx, pPipeline, append([]*options.AggregateOptions{pOpts}, opts...)...)
+	aOpts := append([]*options.AggregateOptions{pOpts}, opts...)
+
+	// Phase 1: a single run of the caller's pipeline yields both the total and
+	// the page. The page branch keeps only _id and id, so the facet result stays
+	// far below the 16MB BSON document limit regardless of document size.
+	facetPipeline := append(slices.Clone(pipeline), bson.M{"$facet": bson.M{
+		facetItemsKey: append(slices.Clone(pFilter), bson.M{"$project": bson.M{"_id": 1, idKey: 1}}),
+		facetCountKey: []any{bson.M{"$count": "count"}},
+	}})
+	facetCursor, err := c.collection.Aggregate(ctx, facetPipeline, aOpts...)
 	if err != nil {
 		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
 	}
 	defer func() {
-		_ = cursor.Close(ctx)
+		_ = facetCursor.Close(ctx)
 	}()
 
-	count, err := c.CountAggregation(ctx, pipeline)
-	if err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
+	var facet struct {
+		Items []bson.Raw `bson:"items"`
+		Count []struct {
+			Count int64 `bson:"count"`
+		} `bson:"count"`
+	}
+	if facetCursor.Next(ctx) {
+		if err := facetCursor.Decode(&facet); err != nil {
+			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode: %w", err))
+		}
+	}
+	if err := facetCursor.Err(); err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
 
-	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
+	var count int64
+	if len(facet.Count) > 0 {
+		count = facet.Count[0].Count
+	}
+
+	keys, startCursor, endCursor, hasMore, err := consumeRaw(ctx, facet.Items, limit(*p))
+	if err != nil {
+		return nil, err
+	}
+
+	// Phase 2: load the full documents of the page only. The caller's pipeline
+	// runs again, but restricted to the page's _ids, so its stages (e.g. $lookup)
+	// touch at most one page of documents.
+	items, err := c.aggregateByIDs(ctx, pipeline, keys, aOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +110,61 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
 
 	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
+}
+
+// aggregateByIDs runs pipeline over the documents whose _id appears in keys and
+// returns them in the order of keys. The pipeline must preserve _id.
+func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, keys []bson.Raw, opts []*options.AggregateOptions) ([]bson.Raw, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]bson.RawValue, 0, len(keys))
+	for _, k := range keys {
+		v, err := k.LookupErr("_id")
+		if err != nil {
+			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to lookup _id: %w", err))
+		}
+		ids = append(ids, v)
+	}
+
+	pPipeline := append([]any{bson.M{"$match": bson.M{"_id": bson.M{"$in": ids}}}}, pipeline...)
+	cursor, err := c.collection.Aggregate(ctx, pPipeline, opts...)
+	if err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
+	}
+	defer func() {
+		_ = cursor.Close(ctx)
+	}()
+
+	byID := make(map[string]bson.Raw, len(ids))
+	for cursor.Next(ctx) {
+		var item bson.Raw
+		if err := cursor.Decode(&item); err != nil {
+			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode item: %w", err))
+		}
+		v, err := item.LookupErr("_id")
+		if err != nil {
+			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to lookup _id: %w", err))
+		}
+		byID[rawValueKey(v)] = item
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
+	}
+
+	items := make([]bson.Raw, 0, len(ids))
+	for _, v := range ids {
+		// A document deleted between the two phases is simply skipped.
+		if item, ok := byID[rawValueKey(v)]; ok {
+			items = append(items, item)
+		}
+	}
+	return items, nil
+}
+
+func rawValueKey(v bson.RawValue) string {
+	return string(append([]byte{byte(v.Type)}, v.Value...))
 }
 
 func pageInfo(p *usecasex.Pagination, hasMore bool) (bool, bool) {

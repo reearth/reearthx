@@ -322,8 +322,11 @@ func (i *Asset) Create(
 		return nil, nil, err
 	}
 	if a.ArchiveExtractionStatus() != nil && *a.ArchiveExtractionStatus() == asset.ArchiveExtractionStatusPending {
+		// The asset is already committed. Returning an error here would make clients
+		// upload again and create duplicates, so the failure is recorded on the asset
+		// (status "failed") and the user can retry with Decompress.
 		if err := i.triggerDecompressEvent(ctx, a, f); err != nil {
-			return nil, nil, err
+			log.Errorfc(ctx, "asset: failed to trigger decompression of asset %s: %v", a.ID(), err)
 		}
 	}
 
@@ -676,20 +679,45 @@ func (i *Asset) triggerDecompressEvent(ctx context.Context, a *asset.Asset, f *a
 		return nil
 	}
 
-	taskPayload := task.DecompressAssetPayload{
-		AssetID: a.ID().String(),
-		Path:    f.RootPath(a.UUID()),
-	}
-	if err := i.gateways.TaskRunner.Run(ctx, taskPayload.Payload()); err != nil {
-		return err
-	}
-
+	// Mark the asset in progress before enqueuing. Saving after enqueuing would
+	// race with a fast worker and overwrite its "done" result with stale data.
 	a.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusInProgress))
 	if err := i.repos.Asset.Save(ctx, a); err != nil {
 		return err
 	}
 
+	taskPayload := task.DecompressAssetPayload{
+		AssetID: a.ID().String(),
+		Path:    f.RootPath(a.UUID()),
+	}
+	if err := i.gateways.TaskRunner.Run(ctx, taskPayload.Payload()); err != nil {
+		i.markDecompressFailed(ctx, a)
+		return err
+	}
+
 	return nil
+}
+
+// markDecompressFailed records that the decompress task could not be enqueued,
+// so the asset does not stay in "in_progress" with no task behind it. It re-reads
+// the asset and only updates it if no worker has changed the status meanwhile.
+func (i *Asset) markDecompressFailed(ctx context.Context, a *asset.Asset) {
+	ctx = context.WithoutCancel(ctx)
+	cur, err := i.repos.Asset.FindByID(ctx, a.ID())
+	if err != nil {
+		log.Errorfc(ctx, "asset: failed to load asset %s to mark decompression failed: %v", a.ID(), err)
+		return
+	}
+	if cur.ArchiveExtractionStatus() == nil || *cur.ArchiveExtractionStatus() != asset.ArchiveExtractionStatusInProgress {
+		a.UpdateArchiveExtractionStatus(cur.ArchiveExtractionStatus())
+		return
+	}
+	cur.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusFailed))
+	if err := i.repos.Asset.Save(ctx, cur); err != nil {
+		log.Errorfc(ctx, "asset: failed to mark decompression of asset %s failed: %v", a.ID(), err)
+		return
+	}
+	a.UpdateArchiveExtractionStatus(cur.ArchiveExtractionStatus())
 }
 
 func (i *Asset) Update(
@@ -950,6 +978,13 @@ func (i *Asset) BatchDelete(
 				return assetIDs, nil
 			}
 
+			// Every asset must be writable by the operator before any file or record is removed.
+			for _, a := range assets {
+				if a == nil || !operator.CanUpdate(a) {
+					return assetIDs, interfaces.ErrOperationDenied
+				}
+			}
+
 			UUIDList := lo.FilterMap(assets, func(a *asset.Asset, _ int) (string, bool) {
 				if a == nil || a.UUID() == "" || a.FileName() == "" {
 					return "", false
@@ -957,13 +992,14 @@ func (i *Asset) BatchDelete(
 				return a.UUID(), true
 			})
 
-			// deletes assets' files in
-			err = i.gateways.File.DeleteAssets(ctx, UUIDList)
+			// Delete the records first: if that fails, no file has been removed yet.
+			// File deletion is not transactional, so it runs last.
+			err = i.repos.Asset.BatchDelete(ctx, assetIDs)
 			if err != nil {
 				return assetIDs, err
 			}
 
-			err = i.repos.Asset.BatchDelete(ctx, assetIDs)
+			err = i.gateways.File.DeleteAssets(ctx, UUIDList)
 			if err != nil {
 				return assetIDs, err
 			}

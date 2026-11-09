@@ -3,6 +3,9 @@ package accountinteractor
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -111,6 +114,47 @@ func TestUser_VerifyUser(t *testing.T) {
 			assert.Equal(t, tt.wantError, err)
 		})
 	}
+}
+
+// Concurrent resets must each mail the requesting user's own token.
+func TestUser_StartPasswordReset_Concurrent(t *testing.T) {
+	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
+	r := accountmemory.New()
+	m := mailer.NewMock()
+	uc := NewUser(r, &accountgateway.Container{Mailer: m}, "", "")
+	ctx := context.Background()
+
+	const n = 20
+	for k := range n {
+		uid := accountdomain.NewUserID()
+		assert.NoError(t, r.User.Save(ctx, user.New().
+			ID(uid).
+			Workspace(accountdomain.NewWorkspaceID()).
+			Email(fmt.Sprintf("u%d@example.com", k)).
+			Name(fmt.Sprintf("user%d", k)).
+			Auths([]user.Auth{{Provider: user.ProviderReearth, Sub: "reearth|" + uid.String()}}).
+			MustBuild()))
+	}
+
+	var wg sync.WaitGroup
+	for k := range n {
+		wg.Go(func() {
+			assert.NoError(t, uc.StartPasswordReset(ctx, fmt.Sprintf("u%d@example.com", k)))
+		})
+	}
+	wg.Wait()
+
+	mails := m.Mails()
+	assert.Len(t, mails, n)
+	for _, mail := range mails {
+		u, err := r.User.FindByEmail(ctx, mail.To[0].Email)
+		assert.NoError(t, err)
+		token := "pwd-reset-token=" + u.PasswordReset().Token
+		assert.True(t, strings.Contains(mail.PlainContent, token), "mail to %s carries another user's token", u.Email())
+		assert.True(t, strings.Contains(mail.PlainContent, u.Name()))
+	}
+	assert.Empty(t, passwordResetMailContent.ActionURL)
+	assert.Empty(t, passwordResetMailContent.UserName)
 }
 
 func TestUser_StartPasswordReset(t *testing.T) {
