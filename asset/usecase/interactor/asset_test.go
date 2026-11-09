@@ -3,6 +3,7 @@ package interactor
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"path"
 	"runtime"
@@ -1493,6 +1494,221 @@ func TestAsset_Delete(t *testing.T) {
 			assert.Equal(t, rerror.ErrNotFound, err)
 		})
 	}
+}
+
+func TestAsset_BatchDelete(t *testing.T) {
+	uid := accountdomain.NewUserID()
+	ws := workspace.New().NewID().MustBuild()
+	proj1 := project.New().NewID().Workspace(ws.ID()).MustBuild()
+	proj2 := project.New().NewID().MustBuild()
+	a1 := asset.New().NewID().Project(proj1.ID()).NewUUID().FileName("a.txt").
+		CreatedByUser(uid).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+	// owned by another user in a project the operator cannot write to
+	a2 := asset.New().NewID().Project(proj2.ID()).NewUUID().FileName("b.txt").
+		CreatedByUser(accountdomain.NewUserID()).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+
+	op := &usecase.Operator{
+		AcOperator:     &accountusecase.Operator{User: &uid, OwningWorkspaces: []accountdomain.WorkspaceID{ws.ID()}},
+		OwningProjects: []id.ProjectID{proj1.ID()},
+	}
+	reader := &usecase.Operator{
+		AcOperator:       &accountusecase.Operator{User: &uid, ReadableWorkspaces: []accountdomain.WorkspaceID{ws.ID()}},
+		ReadableProjects: []id.ProjectID{proj1.ID()},
+	}
+
+	tests := []struct {
+		name     string
+		ids      id.AssetIDList
+		operator *usecase.Operator
+		wantErr  error
+		remain   id.AssetIDList
+	}{
+		{name: "ok", ids: id.AssetIDList{a1.ID()}, operator: op, remain: id.AssetIDList{a2.ID()}},
+		{name: "another tenant's asset is denied", ids: id.AssetIDList{a1.ID(), a2.ID()}, operator: op, wantErr: interfaces.ErrOperationDenied, remain: id.AssetIDList{a1.ID(), a2.ID()}},
+		{name: "reader is denied", ids: id.AssetIDList{a1.ID()}, operator: reader, wantErr: interfaces.ErrOperationDenied, remain: id.AssetIDList{a1.ID(), a2.ID()}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			db := memory.New()
+			mfs := afero.NewMemMapFs()
+			filePath := func(a *asset.Asset) string {
+				return path.Join("assets", a.UUID()[:2], a.UUID()[2:], a.FileName())
+			}
+			for _, a := range []*asset.Asset{a1, a2} {
+				assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+				assert.NoError(t, afero.WriteFile(mfs, filePath(a), []byte("x"), 0o644))
+			}
+			uc := Asset{
+				repos:       db,
+				gateways:    &gateway.Container{File: lo.Must(fs.NewFile(mfs, ""))},
+				ignoreEvent: true,
+			}
+
+			_, err := uc.BatchDelete(ctx, tc.ids, tc.operator)
+			if tc.wantErr != nil {
+				assert.Equal(t, tc.wantErr, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			for _, a := range []*asset.Asset{a1, a2} {
+				_, err := db.Asset.FindByID(ctx, a.ID())
+				exists, ferr := afero.Exists(mfs, filePath(a))
+				assert.NoError(t, ferr)
+				if tc.remain.Has(a.ID()) {
+					assert.NoError(t, err)
+					assert.True(t, exists, "file of %s should remain", a.ID())
+				} else {
+					assert.Equal(t, rerror.ErrNotFound, err)
+					assert.False(t, exists, "file of %s should be deleted", a.ID())
+				}
+			}
+		})
+	}
+}
+
+// Files must survive a batch delete whose transaction fails to commit.
+func TestAsset_BatchDelete_CommitFailureKeepsFiles(t *testing.T) {
+	ctx := context.Background()
+	uid := accountdomain.NewUserID()
+	proj := project.New().NewID().MustBuild()
+	a := asset.New().NewID().Project(proj.ID()).NewUUID().FileName("a.txt").
+		CreatedByUser(uid).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+	op := &usecase.Operator{
+		AcOperator:     &accountusecase.Operator{User: &uid},
+		OwningProjects: []id.ProjectID{proj.ID()},
+	}
+
+	db := memory.New()
+	db.Transaction = &usecasex.NopTransaction{CommitError: errors.New("commit failed")}
+	assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+	mfs := afero.NewMemMapFs()
+	filePath := path.Join("assets", a.UUID()[:2], a.UUID()[2:], a.FileName())
+	assert.NoError(t, afero.WriteFile(mfs, filePath, []byte("x"), 0o644))
+
+	uc := Asset{
+		repos:       db,
+		gateways:    &gateway.Container{File: lo.Must(fs.NewFile(mfs, ""))},
+		ignoreEvent: true,
+	}
+	_, err := uc.BatchDelete(ctx, id.AssetIDList{a.ID()}, op)
+	assert.Error(t, err)
+
+	exists, err := afero.Exists(mfs, filePath)
+	assert.NoError(t, err)
+	assert.True(t, exists)
+}
+
+// flakyFile fails DeleteAssets a set number of times before delegating.
+type flakyFile struct {
+	gateway.File
+	failures int
+	calls    int
+}
+
+func (f *flakyFile) DeleteAssets(ctx context.Context, uuids []string) error {
+	f.calls++
+	if f.calls <= f.failures {
+		return errors.New("transient storage error")
+	}
+	return f.File.DeleteAssets(ctx, uuids)
+}
+
+func TestAsset_BatchDelete_RetriesFileDeletion(t *testing.T) {
+	ctx := context.Background()
+	uid := accountdomain.NewUserID()
+	proj := project.New().NewID().MustBuild()
+	a := asset.New().NewID().Project(proj.ID()).NewUUID().FileName("a.txt").
+		CreatedByUser(uid).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+	op := &usecase.Operator{
+		AcOperator:     &accountusecase.Operator{User: &uid},
+		OwningProjects: []id.ProjectID{proj.ID()},
+	}
+	prev := fileDeleteBackoff
+	fileDeleteBackoff = time.Millisecond
+	defer func() { fileDeleteBackoff = prev }()
+
+	db := memory.New()
+	assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+	mfs := afero.NewMemMapFs()
+	filePath := path.Join("assets", a.UUID()[:2], a.UUID()[2:], a.FileName())
+	assert.NoError(t, afero.WriteFile(mfs, filePath, []byte("x"), 0o644))
+	ff := &flakyFile{File: lo.Must(fs.NewFile(mfs, "")), failures: fileDeleteAttempts - 1}
+
+	uc := Asset{repos: db, gateways: &gateway.Container{File: ff}, ignoreEvent: true}
+	_, err := uc.BatchDelete(ctx, id.AssetIDList{a.ID()}, op)
+	assert.NoError(t, err)
+	assert.Equal(t, fileDeleteAttempts, ff.calls)
+
+	exists, err := afero.Exists(mfs, filePath)
+	assert.NoError(t, err)
+	assert.False(t, exists)
+}
+
+type funcRunner func(context.Context, task.Payload) error
+
+func (r funcRunner) Run(ctx context.Context, p task.Payload) error { return r(ctx, p) }
+func (r funcRunner) Retry(context.Context, string) error           { return nil }
+
+func TestAsset_triggerDecompressEvent(t *testing.T) {
+	ctx := context.Background()
+	newUC := func(r gateway.TaskRunner) (Asset, *asset.Asset, *asset.File) {
+		db := memory.New()
+		a := asset.New().NewID().Project(id.NewProjectID()).NewUUID().FileName("a.zip").
+			CreatedByUser(accountdomain.NewUserID()).Size(1).
+			ArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusPending)).MustBuild()
+		assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+		f := asset.NewFile().Name("a.zip").Path("/a.zip").Build()
+		return Asset{repos: db, gateways: &gateway.Container{TaskRunner: r}, ignoreEvent: true}, a, f
+	}
+
+	t.Run("worker finishing first is not overwritten", func(t *testing.T) {
+		var uc Asset
+		var a *asset.Asset
+		var f *asset.File
+		uc, a, f = newUC(funcRunner(func(ctx context.Context, _ task.Payload) error {
+			// status must already be in progress when the task is enqueued
+			cur, err := uc.repos.Asset.FindByID(ctx, a.ID())
+			assert.NoError(t, err)
+			assert.Equal(t, asset.ArchiveExtractionStatusInProgress, *cur.ArchiveExtractionStatus())
+			// simulate a fast worker
+			cur.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusDone))
+			return uc.repos.Asset.Save(ctx, cur)
+		}))
+		assert.NoError(t, uc.triggerDecompressEvent(ctx, a, f))
+		got, err := uc.repos.Asset.FindByID(ctx, a.ID())
+		assert.NoError(t, err)
+		assert.Equal(t, asset.ArchiveExtractionStatusDone, *got.ArchiveExtractionStatus())
+	})
+
+	t.Run("enqueue error after the worker finished keeps done", func(t *testing.T) {
+		var uc Asset
+		var a *asset.Asset
+		var f *asset.File
+		uc, a, f = newUC(funcRunner(func(ctx context.Context, _ task.Payload) error {
+			cur, err := uc.repos.Asset.FindByID(ctx, a.ID())
+			assert.NoError(t, err)
+			cur.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusDone))
+			assert.NoError(t, uc.repos.Asset.Save(ctx, cur))
+			return errors.New("timeout after enqueue")
+		}))
+		assert.NoError(t, uc.triggerDecompressEvent(ctx, a, f))
+		got, err := uc.repos.Asset.FindByID(ctx, a.ID())
+		assert.NoError(t, err)
+		assert.Equal(t, asset.ArchiveExtractionStatusDone, *got.ArchiveExtractionStatus())
+		assert.Equal(t, asset.ArchiveExtractionStatusDone, *a.ArchiveExtractionStatus())
+	})
+
+	t.Run("enqueue failure marks the asset failed", func(t *testing.T) {
+		uc, a, f := newUC(funcRunner(func(context.Context, task.Payload) error { return errors.New("queue down") }))
+		assert.ErrorIs(t, uc.triggerDecompressEvent(ctx, a, f), errDecompressNotEnqueued)
+		got, err := uc.repos.Asset.FindByID(ctx, a.ID())
+		assert.NoError(t, err)
+		assert.Equal(t, asset.ArchiveExtractionStatusFailed, *got.ArchiveExtractionStatus())
+		assert.Equal(t, asset.ArchiveExtractionStatusFailed, *a.ArchiveExtractionStatus())
+	})
 }
 
 func mockFs() afero.Fs {

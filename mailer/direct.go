@@ -2,9 +2,7 @@ package mailer
 
 import (
 	"context"
-	"fmt"
 	"net"
-	"net/smtp"
 	"strings"
 
 	"github.com/reearth/reearthx/i18n"
@@ -34,7 +32,7 @@ func (m *direct) SendMail(ctx context.Context, to []Contact, subject, plainConte
 		return err
 	}
 
-	mxHosts, err := m.lookupHosts(emailHosts)
+	mxHosts, err := m.lookupHosts(ctx, emailHosts)
 	if err != nil {
 		return err
 	}
@@ -82,10 +80,11 @@ func (*direct) hosts(addresses []string) ([]string, error) {
 	return res, nil
 }
 
-func (*direct) lookupHosts(hosts []string) ([]string, error) {
+// lookupHosts resolves the preferred MX host of each domain.
+func (*direct) lookupHosts(ctx context.Context, hosts []string) ([]string, error) {
 	res := make([]string, 0, len(hosts))
 	for _, h := range hosts {
-		mxs, err := net.LookupMX(h)
+		mxs, err := net.DefaultResolver.LookupMX(ctx, h)
 		if err != nil {
 			return nil, rerror.NewE(i18n.T("invalid email address"))
 		}
@@ -98,10 +97,11 @@ func (*direct) lookupHosts(hosts []string) ([]string, error) {
 }
 
 func (m *direct) send(ctx context.Context, to string, host string, msg []byte) error {
-	c, err := smtp.Dial(fmt.Sprintf("%s:25", host))
+	c, closeFn, err := dialSMTP(ctx, host, "25")
 	if err != nil {
 		return rerror.ErrInternalByWithContext(ctx, err)
 	}
+	defer closeFn()
 	if err := c.Mail(m.from); err != nil {
 		return rerror.ErrInternalByWithContext(ctx, err)
 	}

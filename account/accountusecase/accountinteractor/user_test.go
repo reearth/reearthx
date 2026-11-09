@@ -3,6 +3,9 @@ package accountinteractor
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -111,6 +114,127 @@ func TestUser_VerifyUser(t *testing.T) {
 			assert.Equal(t, tt.wantError, err)
 		})
 	}
+}
+
+// Concurrent resets must each mail the requesting user's own token.
+func TestUser_StartPasswordReset_Concurrent(t *testing.T) {
+	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
+	r := accountmemory.New()
+	m := mailer.NewMock()
+	uc := NewUser(r, &accountgateway.Container{Mailer: m}, "", "")
+	ctx := context.Background()
+
+	const n = 20
+	for k := range n {
+		uid := accountdomain.NewUserID()
+		assert.NoError(t, r.User.Save(ctx, user.New().
+			ID(uid).
+			Workspace(accountdomain.NewWorkspaceID()).
+			Email(fmt.Sprintf("u%d@example.com", k)).
+			Name(fmt.Sprintf("user%d", k)).
+			Auths([]user.Auth{{Provider: user.ProviderReearth, Sub: "reearth|" + uid.String()}}).
+			MustBuild()))
+	}
+
+	var wg sync.WaitGroup
+	for k := range n {
+		wg.Go(func() {
+			assert.NoError(t, uc.StartPasswordReset(ctx, fmt.Sprintf("u%d@example.com", k)))
+		})
+	}
+	wg.Wait()
+
+	mails := m.Mails()
+	assert.Len(t, mails, n)
+	for _, mail := range mails {
+		u, err := r.User.FindByEmail(ctx, mail.To[0].Email)
+		assert.NoError(t, err)
+		token := "pwd-reset-token=" + u.PasswordReset().Token
+		assert.True(t, strings.Contains(mail.PlainContent, token), "mail to %s carries another user's token", u.Email())
+		assert.True(t, strings.Contains(mail.PlainContent, u.Name()))
+	}
+	assert.Empty(t, passwordResetMailContent.ActionURL)
+	assert.Empty(t, passwordResetMailContent.UserName)
+}
+
+type failingMailer struct{}
+
+func (failingMailer) SendMail(context.Context, []mailer.Contact, string, string, string) error {
+	return errors.New("mail down")
+}
+
+// A failed delivery must leave the previously issued reset link valid.
+func TestUser_StartPasswordReset_DeliveryFailureKeepsPreviousToken(t *testing.T) {
+	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
+	r := accountmemory.New()
+	uc := NewUser(r, &accountgateway.Container{Mailer: failingMailer{}}, "", "")
+	ctx := context.Background()
+
+	uid := accountdomain.NewUserID()
+	prev := user.NewPasswordReset()
+	u := user.New().ID(uid).Workspace(accountdomain.NewWorkspaceID()).
+		Email("aaa@bbb.com").Name("NAME").
+		Auths([]user.Auth{{Provider: user.ProviderReearth, Sub: "reearth|" + uid.String()}}).
+		PasswordReset(prev).
+		MustBuild()
+	assert.NoError(t, r.User.Save(ctx, u))
+
+	assert.Error(t, uc.StartPasswordReset(ctx, "aaa@bbb.com"))
+
+	got, err := r.User.FindByID(ctx, uid)
+	assert.NoError(t, err)
+	assert.Equal(t, prev.Token, got.PasswordReset().Token)
+}
+
+// A failed delivery must leave the previously issued verification link valid.
+func TestUser_CreateVerification_DeliveryFailureKeepsPreviousCode(t *testing.T) {
+	r := accountmemory.New()
+	uc := NewUser(r, &accountgateway.Container{Mailer: failingMailer{}}, "", "")
+	ctx := context.Background()
+
+	uid := accountdomain.NewUserID()
+	prev := user.NewVerification()
+	u := user.New().ID(uid).Workspace(accountdomain.NewWorkspaceID()).
+		Email("aaa@bbb.com").Name("NAME").Verification(prev).MustBuild()
+	assert.NoError(t, r.User.Save(ctx, u))
+
+	assert.Error(t, uc.CreateVerification(ctx, "aaa@bbb.com"))
+
+	got, err := r.User.FindByID(ctx, uid)
+	assert.NoError(t, err)
+	assert.Equal(t, prev.Code(), got.Verification().Code())
+}
+
+type funcMailer func(context.Context, []mailer.Contact) error
+
+func (f funcMailer) SendMail(ctx context.Context, to []mailer.Contact, _, _, _ string) error {
+	return f(ctx, to)
+}
+
+// A verification completed while the new mail is being sent must be kept.
+func TestUser_CreateVerification_VerifiedDuringDelivery(t *testing.T) {
+	r := accountmemory.New()
+	ctx := context.Background()
+
+	uid := accountdomain.NewUserID()
+	prev := user.NewVerification()
+	u := user.New().ID(uid).Workspace(accountdomain.NewWorkspaceID()).
+		Email("aaa@bbb.com").Name("NAME").Verification(prev).MustBuild()
+	assert.NoError(t, r.User.Save(ctx, u))
+
+	m := funcMailer(func(ctx context.Context, _ []mailer.Contact) error {
+		cur, err := r.User.FindByID(ctx, uid)
+		assert.NoError(t, err)
+		v := user.VerificationFrom(prev.Code(), prev.Expiration(), true)
+		cur.SetVerification(v)
+		return r.User.Save(ctx, cur)
+	})
+	uc := NewUser(r, &accountgateway.Container{Mailer: m}, "", "")
+	assert.NoError(t, uc.CreateVerification(ctx, "aaa@bbb.com"))
+
+	got, err := r.User.FindByID(ctx, uid)
+	assert.NoError(t, err)
+	assert.True(t, got.Verification().IsVerified())
 }
 
 func TestUser_StartPasswordReset(t *testing.T) {

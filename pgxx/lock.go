@@ -3,6 +3,7 @@ package pgxx
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -45,15 +46,25 @@ func TryAdvisoryLock(ctx context.Context, pool *pgxpool.Pool, key int64) (Unlock
 	return unlocker(conn, key), true, nil
 }
 
+// unlockTimeout bounds the unlock round trip. The unlock must not be skipped
+// when the caller's context is already cancelled, but it must not block for the
+// OS TCP timeout (often ~15 minutes) when the network to Postgres is down.
+// Closing the connection also releases the session-level lock server-side.
+var unlockTimeout = 10 * time.Second
+
 func unlocker(conn *pgxpool.Conn, key int64) Unlock {
 	var once sync.Once
 	return func(ctx context.Context) error {
 		var err error
 		once.Do(func() {
-			_, e := conn.Exec(context.WithoutCancel(ctx), `SELECT pg_advisory_unlock($1)`, key)
+			uctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), unlockTimeout)
+			defer cancel()
+			_, e := conn.Exec(uctx, `SELECT pg_advisory_unlock($1)`, key)
 			err = WrapError(e)
 			if err != nil {
-				_ = conn.Hijack().Close(context.Background())
+				cctx, ccancel := context.WithTimeout(context.Background(), unlockTimeout)
+				defer ccancel()
+				_ = conn.Hijack().Close(cctx)
 				return
 			}
 			conn.Release()

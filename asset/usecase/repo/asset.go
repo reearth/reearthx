@@ -30,6 +30,9 @@ type Asset interface {
 	Save(context.Context, *asset.Asset) error
 	Delete(context.Context, id.AssetID) error // save as remove at viz
 	BatchDelete(context.Context, id.AssetIDList) error
+	// UpdateArchiveExtractionStatusIf atomically sets the archive extraction
+	// status to "to" only if it is currently "from", and reports whether it did.
+	UpdateArchiveExtractionStatusIf(ctx context.Context, id id.AssetID, from, to asset.ArchiveExtractionStatus) (bool, error)
 
 	TotalSizeByWorkspace(context.Context, accountdomain.WorkspaceID) (int64, error)
 	RemoveByProjectWithFile(context.Context, id.ProjectID, gateway.File) error // viz

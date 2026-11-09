@@ -26,6 +26,9 @@ import (
 	"github.com/samber/lo"
 )
 
+// mailSendTimeout bounds a single mail delivery attempt.
+const mailSendTimeout = 30 * time.Second
+
 type mailContent struct {
 	UserName    string
 	Message     string
@@ -243,6 +246,8 @@ func (i *User) sendVerificationMail(ctx context.Context, u *user.User, vr *user.
 		return err
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, mailSendTimeout)
+	defer cancel()
 	if err := i.gateways.Mailer.SendMail(
 		ctx,
 		[]mailer.Contact{
@@ -394,25 +399,31 @@ func (i *User) verifySignupSecret(secret *string) error {
 }
 
 func (i *User) CreateVerification(ctx context.Context, email string) error {
+	u, err := i.repos.User.FindByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+	if u.Verification().IsVerified() {
+		return nil
+	}
+
+	// As in StartPasswordReset, the code is saved only after the mail is
+	// delivered, so a failed delivery leaves an earlier link working.
+	vr := user.NewVerification()
+	if err := i.sendVerificationMail(ctx, u, vr); err != nil {
+		return err
+	}
+
 	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
-		u, err := i.repos.User.FindByEmail(ctx, email)
+		cur, err := i.repos.User.FindByID(ctx, u.ID())
 		if err != nil {
 			return err
 		}
-		if u.Verification().IsVerified() {
+		// The user may have verified with an earlier link meanwhile.
+		if cur.Verification().IsVerified() {
 			return nil
 		}
-		vr := user.NewVerification()
-		u.SetVerification(vr)
-
-		if err := i.repos.User.Save(ctx, u); err != nil {
-			return err
-		}
-
-		if err := i.sendVerificationMail(ctx, u, vr); err != nil {
-			return err
-		}
-
-		return nil
+		cur.SetVerification(vr)
+		return i.repos.User.Save(ctx, cur)
 	})
 }

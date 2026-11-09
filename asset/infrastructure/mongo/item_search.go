@@ -52,9 +52,14 @@ func buildPipeline(query *item.Query, sp schema.Package) []any {
 
 	pipeline = append(pipeline, fieldAliasStage())
 
+	// Lookups run on every matched item before $sort/$limit, so only join the
+	// fields the keyword, filter or sort actually reads. The joined values are
+	// aliases for matching and sorting; the returned documents do not use them.
+	needed := lookupNeeded(query)
+
 	// lockup referenced item and set alias fields
 	for _, f := range sp.Schema().FieldsByType(value.TypeReference) {
-		if f == nil {
+		if f == nil || !needed(f.ID()) {
 			continue
 		}
 		rs := sp.ReferencedSchema(f.ID())
@@ -66,7 +71,7 @@ func buildPipeline(query *item.Query, sp schema.Package) []any {
 
 	// lockup assets and set alias fields
 	for _, f := range sp.Schema().FieldsByType(value.TypeAsset) {
-		if f == nil {
+		if f == nil || !needed(f.ID()) {
 			continue
 		}
 		pipeline = append(pipeline, lookupAssetField(*f)...)
@@ -86,6 +91,24 @@ func buildPipeline(query *item.Query, sp schema.Package) []any {
 		pipeline = append(pipeline, bson.M{"$match": filterStage})
 	}
 	return pipeline
+}
+
+// lookupNeeded reports whether a field's joined value is read by the query.
+// A keyword search matches against every field, so it needs all of them.
+func lookupNeeded(query *item.Query) func(id.FieldID) bool {
+	if query.Keyword() != "" {
+		return func(id.FieldID) bool { return true }
+	}
+	used := map[id.FieldID]struct{}{}
+	for _, fs := range query.Fields() {
+		if fs.ID != nil {
+			used[*fs.ID] = struct{}{}
+		}
+	}
+	return func(fid id.FieldID) bool {
+		_, ok := used[fid]
+		return ok
+	}
 }
 
 func sort(query *item.Query) *usecasex.Sort {
