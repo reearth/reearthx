@@ -171,6 +171,19 @@ func (r *Asset) Save(ctx context.Context, asset *asset.Asset) error {
 	return nil
 }
 
+func (r *Asset) UpdateArchiveExtractionStatusIf(ctx context.Context, id id.AssetID, from, to asset.ArchiveExtractionStatus) (bool, error) {
+	res, err := r.client.Client().UpdateOne(ctx, r.writeFilter(bson.M{
+		"id":                      id.String(),
+		"archiveextractionstatus": from.String(),
+	}), bson.M{
+		"$set": bson.M{"archiveextractionstatus": to.String()},
+	})
+	if err != nil {
+		return false, rerror.ErrInternalBy(err)
+	}
+	return res.ModifiedCount > 0, nil
+}
+
 func (r *Asset) Delete(ctx context.Context, id id.AssetID) error {
 	return r.client.RemoveOne(ctx, r.writeFilter(bson.M{
 		"id": id.String(),

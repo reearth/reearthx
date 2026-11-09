@@ -1533,12 +1533,17 @@ func TestAsset_BatchDelete(t *testing.T) {
 			t.Parallel()
 			ctx := context.Background()
 			db := memory.New()
+			mfs := afero.NewMemMapFs()
+			filePath := func(a *asset.Asset) string {
+				return path.Join("assets", a.UUID()[:2], a.UUID()[2:], a.FileName())
+			}
 			for _, a := range []*asset.Asset{a1, a2} {
 				assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+				assert.NoError(t, afero.WriteFile(mfs, filePath(a), []byte("x"), 0o644))
 			}
 			uc := Asset{
 				repos:       db,
-				gateways:    &gateway.Container{File: lo.Must(fs.NewFile(afero.NewMemMapFs(), ""))},
+				gateways:    &gateway.Container{File: lo.Must(fs.NewFile(mfs, ""))},
 				ignoreEvent: true,
 			}
 
@@ -1548,9 +1553,17 @@ func TestAsset_BatchDelete(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			for _, aid := range tc.remain {
-				_, err := db.Asset.FindByID(ctx, aid)
-				assert.NoError(t, err)
+			for _, a := range []*asset.Asset{a1, a2} {
+				_, err := db.Asset.FindByID(ctx, a.ID())
+				exists, ferr := afero.Exists(mfs, filePath(a))
+				assert.NoError(t, ferr)
+				if tc.remain.Has(a.ID()) {
+					assert.NoError(t, err)
+					assert.True(t, exists, "file of %s should remain", a.ID())
+				} else {
+					assert.Equal(t, rerror.ErrNotFound, err)
+					assert.False(t, exists, "file of %s should be deleted", a.ID())
+				}
 			}
 		})
 	}
@@ -1594,7 +1607,7 @@ func TestAsset_triggerDecompressEvent(t *testing.T) {
 
 	t.Run("enqueue failure marks the asset failed", func(t *testing.T) {
 		uc, a, f := newUC(funcRunner(func(context.Context, task.Payload) error { return errors.New("queue down") }))
-		assert.Error(t, uc.triggerDecompressEvent(ctx, a, f))
+		assert.ErrorIs(t, uc.triggerDecompressEvent(ctx, a, f), errDecompressNotEnqueued)
 		got, err := uc.repos.Asset.FindByID(ctx, a.ID())
 		assert.NoError(t, err)
 		assert.Equal(t, asset.ArchiveExtractionStatusFailed, *got.ArchiveExtractionStatus())

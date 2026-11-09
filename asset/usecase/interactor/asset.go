@@ -322,11 +322,15 @@ func (i *Asset) Create(
 		return nil, nil, err
 	}
 	if a.ArchiveExtractionStatus() != nil && *a.ArchiveExtractionStatus() == asset.ArchiveExtractionStatusPending {
-		// The asset is already committed. Returning an error here would make clients
-		// upload again and create duplicates, so the failure is recorded on the asset
-		// (status "failed") and the user can retry with Decompress.
+		// The asset is already committed. If the task could not be enqueued but
+		// the asset was durably marked "failed", returning an error would make
+		// clients upload again and create duplicates; the user can retry with
+		// Decompress instead. Any other failure is returned.
 		if err := i.triggerDecompressEvent(ctx, a, f); err != nil {
-			log.Errorfc(ctx, "asset: failed to trigger decompression of asset %s: %v", a.ID(), err)
+			if !errors.Is(err, errDecompressNotEnqueued) {
+				return nil, nil, err
+			}
+			log.Errorfc(ctx, "asset: %v", err)
 		}
 	}
 
@@ -691,33 +695,40 @@ func (i *Asset) triggerDecompressEvent(ctx context.Context, a *asset.Asset, f *a
 		Path:    f.RootPath(a.UUID()),
 	}
 	if err := i.gateways.TaskRunner.Run(ctx, taskPayload.Payload()); err != nil {
-		i.markDecompressFailed(ctx, a)
+		if i.markDecompressFailed(ctx, a) {
+			return fmt.Errorf("%w: asset %s: %w", errDecompressNotEnqueued, a.ID(), err)
+		}
 		return err
 	}
 
 	return nil
 }
 
-// markDecompressFailed records that the decompress task could not be enqueued,
-// so the asset does not stay in "in_progress" with no task behind it. It re-reads
-// the asset and only updates it if no worker has changed the status meanwhile.
-func (i *Asset) markDecompressFailed(ctx context.Context, a *asset.Asset) {
-	ctx = context.WithoutCancel(ctx)
-	cur, err := i.repos.Asset.FindByID(ctx, a.ID())
+// errDecompressNotEnqueued means the decompress task could not be enqueued and
+// the asset was marked "failed", so the user can retry.
+var errDecompressNotEnqueued = errors.New("decompress task not enqueued")
+
+// cleanupTimeout bounds compensating writes that run detached from the request.
+const cleanupTimeout = 10 * time.Second
+
+// markDecompressFailed moves the asset from "in_progress" to "failed" after the
+// decompress task could not be enqueued. The update is conditional, so a status
+// a worker has written meanwhile is kept. It reports whether the asset is now
+// marked failed.
+func (i *Asset) markDecompressFailed(ctx context.Context, a *asset.Asset) bool {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cleanupTimeout)
+	defer cancel()
+	ok, err := i.repos.Asset.UpdateArchiveExtractionStatusIf(
+		ctx, a.ID(), asset.ArchiveExtractionStatusInProgress, asset.ArchiveExtractionStatusFailed,
+	)
 	if err != nil {
-		log.Errorfc(ctx, "asset: failed to load asset %s to mark decompression failed: %v", a.ID(), err)
-		return
-	}
-	if cur.ArchiveExtractionStatus() == nil || *cur.ArchiveExtractionStatus() != asset.ArchiveExtractionStatusInProgress {
-		a.UpdateArchiveExtractionStatus(cur.ArchiveExtractionStatus())
-		return
-	}
-	cur.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusFailed))
-	if err := i.repos.Asset.Save(ctx, cur); err != nil {
 		log.Errorfc(ctx, "asset: failed to mark decompression of asset %s failed: %v", a.ID(), err)
-		return
+		return false
 	}
-	a.UpdateArchiveExtractionStatus(cur.ArchiveExtractionStatus())
+	if ok {
+		a.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusFailed))
+	}
+	return ok
 }
 
 func (i *Asset) Update(
@@ -961,7 +972,8 @@ func (i *Asset) BatchDelete(
 		return nil, interfaces.ErrEmptyIDsList
 	}
 
-	return Run1(
+	var uuids []string
+	res, err := Run1(
 		ctx, operator, i.repos,
 		Usecase().Transaction(),
 		func(ctx context.Context) (id.AssetIDList, error) {
@@ -992,21 +1004,28 @@ func (i *Asset) BatchDelete(
 				return a.UUID(), true
 			})
 
-			// Delete the records first: if that fails, no file has been removed yet.
-			// File deletion is not transactional, so it runs last.
-			err = i.repos.Asset.BatchDelete(ctx, assetIDs)
-			if err != nil {
+			uuids = UUIDList
+			if err := i.repos.Asset.BatchDelete(ctx, assetIDs); err != nil {
 				return assetIDs, err
 			}
-
-			err = i.gateways.File.DeleteAssets(ctx, UUIDList)
-			if err != nil {
-				return assetIDs, err
-			}
-
 			return assetIDs, nil
 		},
 	)
+	if err != nil {
+		return res, err
+	}
+
+	// File deletion cannot be rolled back, so it runs only after the records
+	// are committed. If it fails, the files are orphaned but no asset points to
+	// a missing file; the UUIDs are logged so the files can be cleaned up.
+	if len(uuids) == 0 {
+		return res, nil
+	}
+	if err := i.gateways.File.DeleteAssets(ctx, uuids); err != nil {
+		log.Errorfc(ctx, "asset: assets deleted but their files were not; orphaned asset UUIDs: %v: %v", uuids, err)
+		return res, err
+	}
+	return res, nil
 }
 
 func (i *Asset) event(ctx context.Context, e Event) (Dispatch, error) {

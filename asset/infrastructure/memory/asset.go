@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/reearth/reearthx/account/accountdomain"
 
@@ -19,6 +20,7 @@ import (
 )
 
 type Asset struct {
+	lock            *sync.Mutex
 	data            *util.SyncMap[asset.ID, *asset.Asset]
 	err             error
 	projectFilter   repo.ProjectFilter
@@ -27,12 +29,14 @@ type Asset struct {
 
 func NewAsset() repo.Asset {
 	return &Asset{
+		lock: &sync.Mutex{},
 		data: &util.SyncMap[id.AssetID, *asset.Asset]{},
 	}
 }
 
 func (r *Asset) Filtered(f repo.ProjectFilter) repo.Asset {
 	return &Asset{
+		lock:            r.lock,
 		data:            r.data,
 		projectFilter:   r.projectFilter.Merge(f),
 		workspaceFilter: r.workspaceFilter,
@@ -126,6 +130,25 @@ func (r *Asset) Save(_ context.Context, a *asset.Asset) error {
 
 	r.data.Store(a.ID(), a)
 	return nil
+}
+
+func (r *Asset) UpdateArchiveExtractionStatusIf(_ context.Context, id id.AssetID, from, to asset.ArchiveExtractionStatus) (bool, error) {
+	if r.err != nil {
+		return false, r.err
+	}
+
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
+	a, ok := r.data.Load(id)
+	if !ok || !r.projectFilter.CanWrite(a.Project()) {
+		return false, nil
+	}
+	if s := a.ArchiveExtractionStatus(); s == nil || *s != from {
+		return false, nil
+	}
+	a.UpdateArchiveExtractionStatus(&to)
+	return true, nil
 }
 
 func (r *Asset) Delete(_ context.Context, id id.AssetID) error {

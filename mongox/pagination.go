@@ -36,6 +36,14 @@ func (c *Collection) Paginate(ctx context.Context, rawFilter any, s *usecasex.So
 	return c.paginate(ctx, rawFilter, s, p, filter, consumer, opts)
 }
 
+// PaginateAggregation returns one page of the results of pipeline.
+//
+// When the pipeline does more than filter (e.g. $lookup/$set before a $match),
+// the total and the page's _ids come from a single run of the pipeline and the
+// full documents are then loaded by re-running the pipeline on the page's _ids
+// only, so expensive stages are not executed twice over the whole result set.
+// Pipelines that only filter, or that reorder, group or reshape rows, are paged
+// with a direct query plus a count instead.
 func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s *usecasex.Sort, p *usecasex.Pagination, consumer Consumer, opts ...*options.AggregateOptions) (*usecasex.PageInfo, error) {
 	if p == nil || p.Cursor == nil && p.Offset == nil {
 		return nil, nil
@@ -48,19 +56,86 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 
 	aOpts := append([]*options.AggregateOptions{pOpts}, opts...)
 
-	// Phase 1: a single run of the caller's pipeline yields both the total and
-	// the page. The page branch keeps only _id and id, so the facet result stays
-	// far below the 16MB BSON document limit regardless of document size.
+	if reloadablePipeline(pipeline) {
+		res, ok, err := c.paginateAggregationByReload(ctx, pipeline, pFilter, p, aOpts)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			return res.finish(p, consumer)
+		}
+	}
+
+	res, err := c.paginateAggregationDirect(ctx, pipeline, pFilter, p, aOpts)
+	if err != nil {
+		return nil, err
+	}
+	return res.finish(p, consumer)
+}
+
+type aggregationPage struct {
+	items                  []bson.Raw
+	startCursor, endCursor *usecasex.Cursor
+	hasMore                bool
+	count                  int64
+}
+
+func (r aggregationPage) finish(p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
+	if p.Cursor != nil && p.Cursor.Last != nil {
+		reverse(r.items)
+		r.startCursor, r.endCursor = r.endCursor, r.startCursor
+	}
+
+	for _, item := range r.items {
+		if err := consumer.Consume(item); err != nil {
+			return nil, err
+		}
+	}
+
+	hasNextPage, hasPreviousPage := pageInfo(p, r.hasMore)
+	return usecasex.NewPageInfo(r.count, r.startCursor, r.endCursor, hasNextPage, hasPreviousPage), nil
+}
+
+// paginateAggregationDirect appends the page stages to pipeline and counts the
+// pipeline separately. A pipeline of $match stages only lets the page's $sort
+// use an index.
+func (c *Collection) paginateAggregationDirect(ctx context.Context, pipeline, pFilter []any, p *usecasex.Pagination, opts []*options.AggregateOptions) (aggregationPage, error) {
+	cursor, err := c.collection.Aggregate(ctx, append(slices.Clone(pipeline), pFilter...), opts...)
+	if err != nil {
+		return aggregationPage{}, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
+	}
+	defer func() {
+		_ = cursor.Close(ctx)
+	}()
+
+	count, err := c.CountAggregation(ctx, pipeline)
+	if err != nil {
+		return aggregationPage{}, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to count: %w", err))
+	}
+
+	items, startCursor, endCursor, hasMore, err := consume(ctx, cursor, limit(*p))
+	if err != nil {
+		return aggregationPage{}, err
+	}
+	return aggregationPage{items: items, startCursor: startCursor, endCursor: endCursor, hasMore: hasMore, count: count}, nil
+}
+
+// paginateAggregationByReload gets the total and the page's _ids from one $facet
+// run, then loads the page's documents by _id. The facet holds at most limit
+// small {_id, id} entries, far below the 16MB document limit. It reports false
+// if the result rows cannot be identified by _id (missing or repeated _id),
+// in which case the caller falls back to the direct query.
+func (c *Collection) paginateAggregationByReload(ctx context.Context, pipeline, pFilter []any, p *usecasex.Pagination, opts []*options.AggregateOptions) (aggregationPage, bool, error) {
 	facetPipeline := append(slices.Clone(pipeline), bson.M{"$facet": bson.M{
 		facetItemsKey: append(slices.Clone(pFilter), bson.M{"$project": bson.M{"_id": 1, idKey: 1}}),
 		facetCountKey: []any{bson.M{"$count": "count"}},
 	}})
-	facetCursor, err := c.collection.Aggregate(ctx, facetPipeline, aOpts...)
+	cursor, err := c.collection.Aggregate(ctx, facetPipeline, opts...)
 	if err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
+		return aggregationPage{}, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
 	}
 	defer func() {
-		_ = facetCursor.Close(ctx)
+		_ = cursor.Close(ctx)
 	}()
 
 	var facet struct {
@@ -69,13 +144,13 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 			Count int64 `bson:"count"`
 		} `bson:"count"`
 	}
-	if facetCursor.Next(ctx) {
-		if err := facetCursor.Decode(&facet); err != nil {
-			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode: %w", err))
+	if cursor.Next(ctx) {
+		if err := cursor.Decode(&facet); err != nil {
+			return aggregationPage{}, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode: %w", err))
 		}
 	}
-	if err := facetCursor.Err(); err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
+	if err := cursor.Err(); err != nil {
+		return aggregationPage{}, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
 
 	var count int64
@@ -85,47 +160,103 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 
 	keys, startCursor, endCursor, hasMore, err := consumeRaw(ctx, facet.Items, limit(*p))
 	if err != nil {
-		return nil, err
+		return aggregationPage{}, false, err
 	}
 
-	// Phase 2: load the full documents of the page only. The caller's pipeline
-	// runs again, but restricted to the page's _ids, so its stages (e.g. $lookup)
-	// touch at most one page of documents.
-	items, err := c.aggregateByIDs(ctx, pipeline, keys, aOpts)
+	ids, ok := uniqueIDs(keys)
+	if !ok {
+		return aggregationPage{}, false, nil
+	}
+
+	items, err := c.aggregateByIDs(ctx, pipeline, ids, opts)
 	if err != nil {
-		return nil, err
+		return aggregationPage{}, false, err
 	}
-
-	if p.Cursor != nil && p.Cursor.Last != nil {
-		reverse(items)
-		startCursor, endCursor = endCursor, startCursor
-	}
-
-	for _, item := range items {
-		if err := consumer.Consume(item); err != nil {
-			return nil, err
-		}
-	}
-
-	hasNextPage, hasPreviousPage := pageInfo(p, hasMore)
-
-	return usecasex.NewPageInfo(count, startCursor, endCursor, hasNextPage, hasPreviousPage), nil
+	return aggregationPage{items: items, startCursor: startCursor, endCursor: endCursor, hasMore: hasMore, count: count}, true, nil
 }
 
-// aggregateByIDs runs pipeline over the documents whose _id appears in keys and
-// returns them in the order of keys. The pipeline must preserve _id.
-func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, keys []bson.Raw, opts []*options.AggregateOptions) ([]bson.Raw, error) {
-	if len(keys) == 0 {
-		return nil, nil
-	}
-
-	ids := make([]bson.RawValue, 0, len(keys))
-	for _, k := range keys {
-		v, err := k.LookupErr("_id")
+// uniqueIDs returns the _id of every row, or false if a row has no _id or two
+// rows share one (e.g. after $unwind), since such rows cannot be reloaded by _id.
+func uniqueIDs(rows []bson.Raw) ([]bson.RawValue, bool) {
+	ids := make([]bson.RawValue, 0, len(rows))
+	seen := make(map[string]struct{}, len(rows))
+	for _, r := range rows {
+		v, err := r.LookupErr("_id")
 		if err != nil {
-			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to lookup _id: %w", err))
+			return nil, false
 		}
+		k := rawValueKey(v)
+		if _, dup := seen[k]; dup {
+			return nil, false
+		}
+		seen[k] = struct{}{}
 		ids = append(ids, v)
+	}
+	return ids, true
+}
+
+// rowShapingStages change the order or the number of rows, or replace _id, so
+// running them on a subset selected by _id would not reproduce the same rows.
+var rowShapingStages = map[string]struct{}{
+	"$group": {}, "$sort": {}, "$skip": {}, "$limit": {}, "$sample": {},
+	"$bucket": {}, "$bucketAuto": {}, "$sortByCount": {}, "$facet": {},
+	"$setWindowFields": {}, "$densify": {}, "$fill": {}, "$unionWith": {},
+	"$replaceRoot": {}, "$replaceWith": {}, "$geoNear": {}, "$search": {},
+	"$searchMeta": {}, "$vectorSearch": {}, "$documents": {},
+}
+
+// reloadablePipeline reports whether the page can be reloaded by _id. A
+// pipeline of $match stages only is not worth it: the direct query is cheap
+// and its $sort can use an index.
+func reloadablePipeline(pipeline []any) bool {
+	onlyMatch := true
+	for _, stage := range pipeline {
+		name, ok := stageName(stage)
+		if !ok {
+			return false
+		}
+		if _, shaping := rowShapingStages[name]; shaping {
+			return false
+		}
+		if name != "$match" {
+			onlyMatch = false
+		}
+	}
+	return !onlyMatch
+}
+
+// stageName returns the operator of a single-key pipeline stage.
+func stageName(stage any) (string, bool) {
+	var keys []string
+	switch st := stage.(type) {
+	case bson.M:
+		for k := range st {
+			keys = append(keys, k)
+		}
+	case map[string]any:
+		for k := range st {
+			keys = append(keys, k)
+		}
+	case bson.D:
+		for _, e := range st {
+			keys = append(keys, e.Key)
+		}
+	default:
+		return "", false
+	}
+	if len(keys) != 1 {
+		return "", false
+	}
+	return keys[0], true
+}
+
+// aggregateByIDs runs pipeline over the documents whose _id is in ids and
+// returns the rows in the order of ids. The selection runs before the
+// pipeline; reloadablePipeline ensures the pipeline does not depend on its
+// input's order or size.
+func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, ids []bson.RawValue, opts []*options.AggregateOptions) ([]bson.Raw, error) {
+	if len(ids) == 0 {
+		return nil, nil
 	}
 
 	pPipeline := append([]any{bson.M{"$match": bson.M{"_id": bson.M{"$in": ids}}}}, pipeline...)
@@ -155,7 +286,7 @@ func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, keys []
 
 	items := make([]bson.Raw, 0, len(ids))
 	for _, v := range ids {
-		// A document deleted between the two phases is simply skipped.
+		// A document changed or deleted between the two runs is skipped.
 		if item, ok := byID[rawValueKey(v)]; ok {
 			items = append(items, item)
 		}
@@ -163,6 +294,7 @@ func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, keys []
 	return items, nil
 }
 
+// rawValueKey returns a map key that identifies a BSON value by type and bytes.
 func rawValueKey(v bson.RawValue) string {
 	return string(append([]byte{byte(v.Type)}, v.Value...))
 }

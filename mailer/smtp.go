@@ -50,7 +50,12 @@ func (m *smtpMailer) SendMail(ctx context.Context, to []Contact, subject, plainC
 		return err
 	}
 
-	auth := smtp.PlainAuth("", m.username, m.password, m.host)
+	// Without credentials (e.g. an internal relay) no AUTH is attempted, so
+	// relays that only accept HELO keep working.
+	var auth smtp.Auth
+	if m.username != "" || m.password != "" {
+		auth = smtp.PlainAuth("", m.username, m.password, m.host)
+	}
 	if len(m.host) == 0 {
 		return rerror.NewE(i18n.T("invalid smtp url"))
 	}
@@ -68,6 +73,38 @@ func (m *smtpMailer) SendMail(ctx context.Context, to []Contact, subject, plainC
 // block the caller indefinitely.
 var smtpTimeout = 30 * time.Second
 
+// dialSMTP connects to an SMTP server. Every operation on the returned client
+// fails once ctx is done or smtpTimeout has elapsed. Call closeFn when done.
+func dialSMTP(ctx context.Context, host, port string) (c *smtp.Client, closeFn func(), err error) {
+	deadline := time.Now().Add(smtpTimeout)
+	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
+		deadline = d
+	}
+
+	dialer := net.Dialer{Deadline: deadline}
+	conn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(host, port))
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := conn.SetDeadline(deadline); err != nil {
+		_ = conn.Close()
+		return nil, nil, err
+	}
+	// Unblock any pending read or write as soon as ctx is cancelled.
+	stop := context.AfterFunc(ctx, func() { _ = conn.SetDeadline(time.Now()) })
+
+	c, err = smtp.NewClient(conn, host)
+	if err != nil {
+		stop()
+		_ = conn.Close()
+		return nil, nil, err
+	}
+	return c, func() {
+		stop()
+		_ = c.Close()
+	}, nil
+}
+
 // sendMail is net/smtp.SendMail with a dial timeout, a connection deadline and
 // cancellation through ctx.
 func sendMail(ctx context.Context, host, port string, a smtp.Auth, from string, to []string, msg []byte) (err error) {
@@ -77,30 +114,11 @@ func sendMail(ctx context.Context, host, port string, a smtp.Auth, from string, 
 		}
 	}
 
-	deadline := time.Now().Add(smtpTimeout)
-	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
-		deadline = d
-	}
-
-	dialer := net.Dialer{Deadline: deadline}
-	conn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(host, port))
+	c, closeFn, err := dialSMTP(ctx, host, port)
 	if err != nil {
 		return err
 	}
-	if err := conn.SetDeadline(deadline); err != nil {
-		_ = conn.Close()
-		return err
-	}
-	// Unblock any pending read or write as soon as ctx is cancelled.
-	stop := context.AfterFunc(ctx, func() { _ = conn.SetDeadline(time.Now()) })
-	defer stop()
-
-	c, err := smtp.NewClient(conn, host)
-	if err != nil {
-		_ = conn.Close()
-		return err
-	}
-	defer func() { _ = c.Close() }()
+	defer closeFn()
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		if err := c.StartTLS(&tls.Config{ServerName: host}); err != nil {

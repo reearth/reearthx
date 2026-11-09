@@ -667,6 +667,35 @@ func TestAssetRepo_BatchDelete(t *testing.T) {
 	}
 }
 
+func TestAssetRepo_UpdateArchiveExtractionStatusIf(t *testing.T) {
+	initDB := mongotest.Connect(t)
+	client := mongox.NewClientWithDatabase(initDB(t))
+	r := NewAsset(client)
+	ctx := context.Background()
+
+	a := asset.New().NewID().Project(id.NewProjectID()).NewUUID().FileName("a.zip").
+		ArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusInProgress)).
+		CreatedByUser(accountdomain.NewUserID()).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+	assert.NoError(t, r.Save(ctx, a))
+
+	// matching status: updated, other fields untouched
+	ok, err := r.UpdateArchiveExtractionStatusIf(ctx, a.ID(), asset.ArchiveExtractionStatusInProgress, asset.ArchiveExtractionStatusFailed)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+	got, err := r.FindByID(ctx, a.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, asset.ArchiveExtractionStatusFailed, *got.ArchiveExtractionStatus())
+	assert.Equal(t, "a.zip", got.FileName())
+
+	// status changed meanwhile: not updated
+	ok, err = r.UpdateArchiveExtractionStatusIf(ctx, a.ID(), asset.ArchiveExtractionStatusInProgress, asset.ArchiveExtractionStatusDone)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+	got, err = r.FindByID(ctx, a.ID())
+	assert.NoError(t, err)
+	assert.Equal(t, asset.ArchiveExtractionStatusFailed, *got.ArchiveExtractionStatus())
+}
+
 func TestAssetRepo_Save(t *testing.T) {
 	pid1 := id.NewProjectID()
 	uid1 := accountdomain.NewUserID()

@@ -569,3 +569,130 @@ func TestPaginate_SortLogic(t *testing.T) {
 		})
 	}
 }
+
+func TestClientCollection_PaginateAggregation_Pipelines(t *testing.T) {
+	ctx := context.Background()
+	initDB := mongotest.Connect(t)
+	c := NewCollection(initDB(t).Collection("test"))
+
+	_, err := c.Client().InsertMany(ctx, []any{
+		bson.M{"id": "a", "tags": bson.A{"x", "y"}},
+		bson.M{"id": "b", "tags": bson.A{"x"}},
+		bson.M{"id": "c", "tags": bson.A{"y"}},
+		bson.M{"id": "d", "tags": bson.A{}},
+	})
+	assert.NoError(t, err)
+
+	first2 := usecasex.CursorPagination{First: lo.ToPtr(int64(2))}.Wrap()
+	after := usecasex.CursorPagination{First: lo.ToPtr(int64(2)), After: usecasex.Cursor("a").Ref()}.Wrap()
+	last1 := usecasex.CursorPagination{Last: lo.ToPtr(int64(1))}.Wrap()
+
+	tests := []struct {
+		name      string
+		pipeline  []any
+		p         *usecasex.Pagination
+		wantCount int64
+		want      []usecasex.Cursor
+		check     func(t *testing.T, raws []bson.Raw)
+	}{
+		{
+			// reload path: computed fields survive the reload
+			name: "set then match",
+			pipeline: []any{
+				bson.M{"$set": bson.M{"n": bson.M{"$size": "$tags"}}},
+				bson.M{"$match": bson.M{"n": bson.M{"$gt": 0}}},
+			},
+			p:         first2,
+			wantCount: 3,
+			want:      []usecasex.Cursor{"a", "b"},
+			check: func(t *testing.T, raws []bson.Raw) {
+				for _, r := range raws {
+					_, err := r.LookupErr("n")
+					assert.NoError(t, err)
+				}
+			},
+		},
+		{
+			name: "set then match, after cursor",
+			pipeline: []any{
+				bson.M{"$set": bson.M{"n": bson.M{"$size": "$tags"}}},
+				bson.M{"$match": bson.M{"n": bson.M{"$gt": 0}}},
+			},
+			p:         after,
+			wantCount: 3,
+			want:      []usecasex.Cursor{"b", "c"},
+		},
+		{
+			name: "set then match, last",
+			pipeline: []any{
+				bson.M{"$set": bson.M{"n": bson.M{"$size": "$tags"}}},
+				bson.M{"$match": bson.M{"n": bson.M{"$gt": 0}}},
+			},
+			p:         last1,
+			wantCount: 3,
+			want:      []usecasex.Cursor{"c"},
+		},
+		{
+			// rows share an _id: falls back to the direct query
+			name:      "unwind",
+			pipeline:  []any{bson.M{"$unwind": "$tags"}},
+			p:         first2,
+			wantCount: 4,
+			want:      []usecasex.Cursor{"a", "a"},
+			check: func(t *testing.T, raws []bson.Raw) {
+				tags := lo.Map(raws, func(r bson.Raw, _ int) string { return r.Lookup("tags").StringValue() })
+				assert.ElementsMatch(t, []string{"x", "y"}, tags)
+			},
+		},
+		{
+			// rows have no _id: falls back to the direct query
+			name:      "project without _id",
+			pipeline:  []any{bson.M{"$project": bson.M{"_id": 0, "id": 1}}},
+			p:         first2,
+			wantCount: 4,
+			want:      []usecasex.Cursor{"a", "b"},
+		},
+		{
+			// the caller's own $limit must apply to the whole input
+			name:      "limit",
+			pipeline:  []any{bson.M{"$sort": bson.M{"id": -1}}, bson.M{"$limit": 2}},
+			p:         first2,
+			wantCount: 2,
+			want:      []usecasex.Cursor{"c", "d"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			con := &rawConsumer{}
+			got, err := c.PaginateAggregation(ctx, tc.pipeline, nil, tc.p, con)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wantCount, got.TotalCount)
+			assert.Equal(t, tc.want, lo.Map(con.raws, func(r bson.Raw, _ int) usecasex.Cursor {
+				return lo.FromPtr(lo.Must(getCursor(r)))
+			}))
+			if tc.check != nil {
+				tc.check(t, con.raws)
+			}
+		})
+	}
+}
+
+type rawConsumer struct {
+	raws []bson.Raw
+}
+
+func (c *rawConsumer) Consume(b bson.Raw) error {
+	c.raws = append(c.raws, b)
+	return nil
+}
+
+func TestReloadablePipeline(t *testing.T) {
+	assert.False(t, reloadablePipeline(nil))
+	assert.False(t, reloadablePipeline([]any{bson.M{"$match": bson.M{}}}))
+	assert.True(t, reloadablePipeline([]any{bson.M{"$match": bson.M{}}, bson.M{"$lookup": bson.M{}}}))
+	assert.True(t, reloadablePipeline([]any{bson.D{{Key: "$set", Value: bson.M{}}}}))
+	assert.False(t, reloadablePipeline([]any{bson.M{"$set": bson.M{}}, bson.M{"$sort": bson.M{}}}))
+	assert.False(t, reloadablePipeline([]any{bson.M{"$set": bson.M{}}, bson.M{"$group": bson.M{}}}))
+	assert.False(t, reloadablePipeline([]any{"not a stage"}))
+}

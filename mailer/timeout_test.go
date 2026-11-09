@@ -1,10 +1,12 @@
 package mailer
 
 import (
+	"bufio"
 	"context"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -52,4 +54,62 @@ func TestSendGrid_SendMail_ErrorStatus(t *testing.T) {
 
 	err := m.SendMail(context.Background(), []Contact{{Email: "to@example.com"}}, "s", "p", "h")
 	assert.ErrorContains(t, err, "401")
+}
+
+// A relay that rejects EHLO and accepts HELO must still get mail when no
+// credentials are configured.
+func TestSMTP_SendMail_HELOOnlyRelayWithoutCredentials(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer func() { _ = ln.Close() }()
+
+	got := make(chan string, 1)
+	go func() {
+		c, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer func() { _ = c.Close() }()
+		r := bufio.NewReader(c)
+		w := func(s string) { _, _ = c.Write([]byte(s + "\r\n")) }
+		w("220 relay")
+		var body strings.Builder
+		for {
+			line, err := r.ReadString('\n')
+			if err != nil {
+				return
+			}
+			cmd := strings.ToUpper(strings.TrimSpace(line))
+			switch {
+			case strings.HasPrefix(cmd, "EHLO"):
+				w("502 not implemented")
+			case strings.HasPrefix(cmd, "HELO"), strings.HasPrefix(cmd, "MAIL"), strings.HasPrefix(cmd, "RCPT"):
+				w("250 ok")
+			case cmd == "DATA":
+				w("354 go ahead")
+				for {
+					l, err := r.ReadString('\n')
+					if err != nil || l == ".\r\n" {
+						break
+					}
+					body.WriteString(l)
+				}
+				w("250 queued")
+				got <- body.String()
+			case cmd == "QUIT":
+				w("221 bye")
+				return
+			default:
+				w("500 unknown")
+			}
+		}
+	}()
+
+	host, port, err := net.SplitHostPort(ln.Addr().String())
+	require.NoError(t, err)
+	m := NewSMTP(host, port, "", "from@example.com", "")
+
+	err = m.SendMail(context.Background(), []Contact{{Email: "to@example.com"}}, "subject", "plain", "html")
+	require.NoError(t, err)
+	assert.Contains(t, <-got, "subject")
 }

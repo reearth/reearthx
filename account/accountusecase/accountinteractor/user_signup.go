@@ -400,7 +400,7 @@ func (i *User) verifySignupSecret(secret *string) error {
 
 func (i *User) CreateVerification(ctx context.Context, email string) error {
 	var u *user.User
-	var vr *user.Verification
+	var vr, prev *user.Verification
 	if err := Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
 		var err error
 		u, err = i.repos.User.FindByEmail(ctx, email)
@@ -411,6 +411,7 @@ func (i *User) CreateVerification(ctx context.Context, email string) error {
 			u = nil
 			return nil
 		}
+		prev = u.Verification()
 		vr = user.NewVerification()
 		u.SetVerification(vr)
 
@@ -424,5 +425,17 @@ func (i *User) CreateVerification(ctx context.Context, email string) error {
 
 	// Sent after the commit, as in Signup: a slow mail server must not hold the
 	// transaction open, and the mailed code must already be saved.
-	return i.sendVerificationMail(ctx, u, vr)
+	if err := i.sendVerificationMail(ctx, u, vr); err != nil {
+		// Delivery failed: put the previous verification back so an earlier
+		// link the user already received keeps working.
+		i.restoreUser(ctx, u.ID(), func(cur *user.User) bool {
+			if cur.Verification() == nil || cur.Verification().Code() != vr.Code() {
+				return false
+			}
+			cur.SetVerification(prev)
+			return true
+		})
+		return err
+	}
+	return nil
 }

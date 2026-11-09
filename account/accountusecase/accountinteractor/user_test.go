@@ -157,6 +157,54 @@ func TestUser_StartPasswordReset_Concurrent(t *testing.T) {
 	assert.Empty(t, passwordResetMailContent.UserName)
 }
 
+type failingMailer struct{}
+
+func (failingMailer) SendMail(context.Context, []mailer.Contact, string, string, string) error {
+	return errors.New("mail down")
+}
+
+// A failed delivery must leave the previously issued reset link valid.
+func TestUser_StartPasswordReset_DeliveryFailureKeepsPreviousToken(t *testing.T) {
+	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
+	r := accountmemory.New()
+	uc := NewUser(r, &accountgateway.Container{Mailer: failingMailer{}}, "", "")
+	ctx := context.Background()
+
+	uid := accountdomain.NewUserID()
+	prev := user.NewPasswordReset()
+	u := user.New().ID(uid).Workspace(accountdomain.NewWorkspaceID()).
+		Email("aaa@bbb.com").Name("NAME").
+		Auths([]user.Auth{{Provider: user.ProviderReearth, Sub: "reearth|" + uid.String()}}).
+		PasswordReset(prev).
+		MustBuild()
+	assert.NoError(t, r.User.Save(ctx, u))
+
+	assert.Error(t, uc.StartPasswordReset(ctx, "aaa@bbb.com"))
+
+	got, err := r.User.FindByID(ctx, uid)
+	assert.NoError(t, err)
+	assert.Equal(t, prev.Token, got.PasswordReset().Token)
+}
+
+// A failed delivery must leave the previously issued verification link valid.
+func TestUser_CreateVerification_DeliveryFailureKeepsPreviousCode(t *testing.T) {
+	r := accountmemory.New()
+	uc := NewUser(r, &accountgateway.Container{Mailer: failingMailer{}}, "", "")
+	ctx := context.Background()
+
+	uid := accountdomain.NewUserID()
+	prev := user.NewVerification()
+	u := user.New().ID(uid).Workspace(accountdomain.NewWorkspaceID()).
+		Email("aaa@bbb.com").Name("NAME").Verification(prev).MustBuild()
+	assert.NoError(t, r.User.Save(ctx, u))
+
+	assert.Error(t, uc.CreateVerification(ctx, "aaa@bbb.com"))
+
+	got, err := r.User.FindByID(ctx, uid)
+	assert.NoError(t, err)
+	assert.Equal(t, prev.Code(), got.Verification().Code())
+}
+
 func TestUser_StartPasswordReset(t *testing.T) {
 	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
 	uid := accountdomain.NewUserID()
