@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -87,32 +88,67 @@ func TestAdvisoryLock_UnlockIsBounded(t *testing.T) {
 
 	blackhole.Store(true)
 	start := time.Now()
-	assert.Error(t, unlock(context.Background()))
+	assert.ErrorIs(t, unlock(context.Background()), context.DeadlineExceeded)
 	assert.Less(t, time.Since(start), 3*time.Second)
 }
 
 // startBlackholeProxy forwards TCP to target until blackhole is set, after
-// which client bytes are silently dropped.
+// which client bytes are silently dropped. Cleanup stops the accept loop,
+// closes every connection and waits for all proxy goroutines to exit.
 func startBlackholeProxy(t *testing.T, target string, blackhole *atomic.Bool) string {
 	t.Helper()
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = ln.Close() })
 
-	go func() {
+	var (
+		mu     sync.Mutex
+		conns  []net.Conn
+		closed bool
+		wg     sync.WaitGroup
+	)
+	// track registers c for cleanup; it reports false once cleanup has begun.
+	track := func(c net.Conn) bool {
+		mu.Lock()
+		defer mu.Unlock()
+		if closed {
+			_ = c.Close()
+			return false
+		}
+		conns = append(conns, c)
+		return true
+	}
+
+	t.Cleanup(func() {
+		_ = ln.Close()
+		mu.Lock()
+		closed = true
+		for _, c := range conns {
+			_ = c.Close()
+		}
+		mu.Unlock()
+		wg.Wait()
+	})
+
+	wg.Go(func() {
 		for {
 			client, err := ln.Accept()
 			if err != nil {
 				return
 			}
-			server, err := net.Dial("tcp", target)
-			if err != nil {
-				_ = client.Close()
-				continue
+			if !track(client) {
+				return
 			}
-			t.Cleanup(func() { _ = client.Close(); _ = server.Close() })
-			go func() { _, _ = io.Copy(client, server) }()
-			go func() {
+			wg.Go(func() {
+				server, err := net.DialTimeout("tcp", target, 5*time.Second)
+				if err != nil {
+					_ = client.Close()
+					return
+				}
+				if !track(server) {
+					_ = client.Close()
+					return
+				}
+				wg.Go(func() { _, _ = io.Copy(client, server) })
 				buf := make([]byte, 32*1024)
 				for {
 					n, err := client.Read(buf)
@@ -126,8 +162,8 @@ func startBlackholeProxy(t *testing.T, target string, blackhole *atomic.Bool) st
 						return
 					}
 				}
-			}()
+			})
 		}
-	}()
+	})
 	return ln.Addr().String()
 }

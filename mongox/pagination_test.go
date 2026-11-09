@@ -590,6 +590,7 @@ func TestClientCollection_PaginateAggregation_Pipelines(t *testing.T) {
 	tests := []struct {
 		name      string
 		pipeline  []any
+		sort      *usecasex.Sort
 		p         *usecasex.Pagination
 		wantCount int64
 		want      []usecasex.Cursor
@@ -645,6 +646,30 @@ func TestClientCollection_PaginateAggregation_Pipelines(t *testing.T) {
 			},
 		},
 		{
+			// one unwound row per page: the reload would return its siblings
+			// too, so it falls back to the direct query
+			name:      "unwind, single row page",
+			pipeline:  []any{bson.M{"$unwind": "$tags"}},
+			sort:      &usecasex.Sort{Key: "tags"},
+			p:         usecasex.CursorPagination{First: lo.ToPtr(int64(1))}.Wrap(),
+			wantCount: 4,
+			want:      []usecasex.Cursor{"a"},
+			check: func(t *testing.T, raws []bson.Raw) {
+				assert.Equal(t, "x", raws[0].Lookup("tags").StringValue())
+			},
+		},
+		{
+			// _id is replaced: rows cannot be matched to source documents
+			name: "set _id",
+			pipeline: []any{
+				bson.M{"$set": bson.M{"_id": "$id"}},
+				bson.M{"$match": bson.M{"id": bson.M{"$ne": "d"}}},
+			},
+			p:         first2,
+			wantCount: 3,
+			want:      []usecasex.Cursor{"a", "b"},
+		},
+		{
 			// rows have no _id: falls back to the direct query
 			name:      "project without _id",
 			pipeline:  []any{bson.M{"$project": bson.M{"_id": 0, "id": 1}}},
@@ -665,7 +690,7 @@ func TestClientCollection_PaginateAggregation_Pipelines(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			con := &rawConsumer{}
-			got, err := c.PaginateAggregation(ctx, tc.pipeline, nil, tc.p, con)
+			got, err := c.PaginateAggregation(ctx, tc.pipeline, tc.sort, tc.p, con)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantCount, got.TotalCount)
 			assert.Equal(t, tc.want, lo.Map(con.raws, func(r bson.Raw, _ int) usecasex.Cursor {
@@ -695,4 +720,8 @@ func TestReloadablePipeline(t *testing.T) {
 	assert.False(t, reloadablePipeline([]any{bson.M{"$set": bson.M{}}, bson.M{"$sort": bson.M{}}}))
 	assert.False(t, reloadablePipeline([]any{bson.M{"$set": bson.M{}}, bson.M{"$group": bson.M{}}}))
 	assert.False(t, reloadablePipeline([]any{"not a stage"}))
+	assert.False(t, reloadablePipeline([]any{bson.M{"$set": bson.M{"_id": "$id"}}}))
+	assert.False(t, reloadablePipeline([]any{bson.M{"$addFields": bson.D{{Key: "_id", Value: 1}}}}))
+	assert.False(t, reloadablePipeline([]any{bson.M{"$set": bson.M{}}, bson.M{"$unset": "_id"}}))
+	assert.True(t, reloadablePipeline([]any{bson.M{"$set": bson.M{"n": 1}}, bson.M{"$unset": bson.A{"n"}}}))
 }

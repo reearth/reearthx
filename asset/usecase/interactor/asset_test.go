@@ -1569,6 +1569,84 @@ func TestAsset_BatchDelete(t *testing.T) {
 	}
 }
 
+// Files must survive a batch delete whose transaction fails to commit.
+func TestAsset_BatchDelete_CommitFailureKeepsFiles(t *testing.T) {
+	ctx := context.Background()
+	uid := accountdomain.NewUserID()
+	proj := project.New().NewID().MustBuild()
+	a := asset.New().NewID().Project(proj.ID()).NewUUID().FileName("a.txt").
+		CreatedByUser(uid).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+	op := &usecase.Operator{
+		AcOperator:     &accountusecase.Operator{User: &uid},
+		OwningProjects: []id.ProjectID{proj.ID()},
+	}
+
+	db := memory.New()
+	db.Transaction = &usecasex.NopTransaction{CommitError: errors.New("commit failed")}
+	assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+	mfs := afero.NewMemMapFs()
+	filePath := path.Join("assets", a.UUID()[:2], a.UUID()[2:], a.FileName())
+	assert.NoError(t, afero.WriteFile(mfs, filePath, []byte("x"), 0o644))
+
+	uc := Asset{
+		repos:       db,
+		gateways:    &gateway.Container{File: lo.Must(fs.NewFile(mfs, ""))},
+		ignoreEvent: true,
+	}
+	_, err := uc.BatchDelete(ctx, id.AssetIDList{a.ID()}, op)
+	assert.Error(t, err)
+
+	exists, err := afero.Exists(mfs, filePath)
+	assert.NoError(t, err)
+	assert.True(t, exists)
+}
+
+// flakyFile fails DeleteAssets a set number of times before delegating.
+type flakyFile struct {
+	gateway.File
+	failures int
+	calls    int
+}
+
+func (f *flakyFile) DeleteAssets(ctx context.Context, uuids []string) error {
+	f.calls++
+	if f.calls <= f.failures {
+		return errors.New("transient storage error")
+	}
+	return f.File.DeleteAssets(ctx, uuids)
+}
+
+func TestAsset_BatchDelete_RetriesFileDeletion(t *testing.T) {
+	ctx := context.Background()
+	uid := accountdomain.NewUserID()
+	proj := project.New().NewID().MustBuild()
+	a := asset.New().NewID().Project(proj.ID()).NewUUID().FileName("a.txt").
+		CreatedByUser(uid).Size(1).Thread(id.NewThreadID().Ref()).MustBuild()
+	op := &usecase.Operator{
+		AcOperator:     &accountusecase.Operator{User: &uid},
+		OwningProjects: []id.ProjectID{proj.ID()},
+	}
+	prev := fileDeleteBackoff
+	fileDeleteBackoff = time.Millisecond
+	defer func() { fileDeleteBackoff = prev }()
+
+	db := memory.New()
+	assert.NoError(t, db.Asset.Save(ctx, a.Clone()))
+	mfs := afero.NewMemMapFs()
+	filePath := path.Join("assets", a.UUID()[:2], a.UUID()[2:], a.FileName())
+	assert.NoError(t, afero.WriteFile(mfs, filePath, []byte("x"), 0o644))
+	ff := &flakyFile{File: lo.Must(fs.NewFile(mfs, "")), failures: fileDeleteAttempts - 1}
+
+	uc := Asset{repos: db, gateways: &gateway.Container{File: ff}, ignoreEvent: true}
+	_, err := uc.BatchDelete(ctx, id.AssetIDList{a.ID()}, op)
+	assert.NoError(t, err)
+	assert.Equal(t, fileDeleteAttempts, ff.calls)
+
+	exists, err := afero.Exists(mfs, filePath)
+	assert.NoError(t, err)
+	assert.False(t, exists)
+}
+
 type funcRunner func(context.Context, task.Payload) error
 
 func (r funcRunner) Run(ctx context.Context, p task.Payload) error { return r(ctx, p) }
@@ -1603,6 +1681,24 @@ func TestAsset_triggerDecompressEvent(t *testing.T) {
 		got, err := uc.repos.Asset.FindByID(ctx, a.ID())
 		assert.NoError(t, err)
 		assert.Equal(t, asset.ArchiveExtractionStatusDone, *got.ArchiveExtractionStatus())
+	})
+
+	t.Run("enqueue error after the worker finished keeps done", func(t *testing.T) {
+		var uc Asset
+		var a *asset.Asset
+		var f *asset.File
+		uc, a, f = newUC(funcRunner(func(ctx context.Context, _ task.Payload) error {
+			cur, err := uc.repos.Asset.FindByID(ctx, a.ID())
+			assert.NoError(t, err)
+			cur.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusDone))
+			assert.NoError(t, uc.repos.Asset.Save(ctx, cur))
+			return errors.New("timeout after enqueue")
+		}))
+		assert.NoError(t, uc.triggerDecompressEvent(ctx, a, f))
+		got, err := uc.repos.Asset.FindByID(ctx, a.ID())
+		assert.NoError(t, err)
+		assert.Equal(t, asset.ArchiveExtractionStatusDone, *got.ArchiveExtractionStatus())
+		assert.Equal(t, asset.ArchiveExtractionStatusDone, *a.ArchiveExtractionStatus())
 	})
 
 	t.Run("enqueue failure marks the asset failed", func(t *testing.T) {

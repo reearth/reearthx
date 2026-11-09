@@ -73,6 +73,7 @@ func (c *Collection) PaginateAggregation(ctx context.Context, pipeline []any, s 
 	return res.finish(p, consumer)
 }
 
+// aggregationPage is one page of aggregation results before consumption.
 type aggregationPage struct {
 	items                  []bson.Raw
 	startCursor, endCursor *usecasex.Cursor
@@ -80,6 +81,8 @@ type aggregationPage struct {
 	count                  int64
 }
 
+// finish hands the page to consumer in the requested order and builds the
+// page info.
 func (r aggregationPage) finish(p *usecasex.Pagination, consumer Consumer) (*usecasex.PageInfo, error) {
 	if p.Cursor != nil && p.Cursor.Last != nil {
 		reverse(r.items)
@@ -168,8 +171,8 @@ func (c *Collection) paginateAggregationByReload(ctx context.Context, pipeline, 
 		return aggregationPage{}, false, nil
 	}
 
-	items, err := c.aggregateByIDs(ctx, pipeline, ids, opts)
-	if err != nil {
+	items, ok, err := c.aggregateByIDs(ctx, pipeline, ids, opts)
+	if err != nil || !ok {
 		return aggregationPage{}, false, err
 	}
 	return aggregationPage{items: items, startCursor: startCursor, endCursor: endCursor, hasMore: hasMore, count: count}, true, nil
@@ -211,11 +214,14 @@ var rowShapingStages = map[string]struct{}{
 func reloadablePipeline(pipeline []any) bool {
 	onlyMatch := true
 	for _, stage := range pipeline {
-		name, ok := stageName(stage)
+		name, arg, ok := stageOf(stage)
 		if !ok {
 			return false
 		}
 		if _, shaping := rowShapingStages[name]; shaping {
+			return false
+		}
+		if writesID(name, arg) {
 			return false
 		}
 		if name != "$match" {
@@ -225,44 +231,84 @@ func reloadablePipeline(pipeline []any) bool {
 	return !onlyMatch
 }
 
-// stageName returns the operator of a single-key pipeline stage.
-func stageName(stage any) (string, bool) {
-	var keys []string
+// stageOf returns the operator and argument of a single-key pipeline stage.
+func stageOf(stage any) (string, any, bool) {
 	switch st := stage.(type) {
 	case bson.M:
-		for k := range st {
-			keys = append(keys, k)
-		}
+		return singleEntry(st)
 	case map[string]any:
-		for k := range st {
-			keys = append(keys, k)
-		}
+		return singleEntry(st)
 	case bson.D:
-		for _, e := range st {
-			keys = append(keys, e.Key)
+		if len(st) != 1 {
+			return "", nil, false
 		}
+		return st[0].Key, st[0].Value, true
 	default:
-		return "", false
+		return "", nil, false
 	}
-	if len(keys) != 1 {
-		return "", false
+}
+
+// singleEntry returns the only entry of m.
+func singleEntry(m map[string]any) (string, any, bool) {
+	if len(m) != 1 {
+		return "", nil, false
 	}
-	return keys[0], true
+	for k, v := range m {
+		return k, v, true
+	}
+	return "", nil, false
+}
+
+// writesID reports whether a field-setting stage may write _id, in which case
+// result rows can no longer be matched to source documents by _id.
+func writesID(name string, arg any) bool {
+	switch name {
+	case "$set", "$addFields", "$project", "$unset":
+	default:
+		return false
+	}
+	switch a := arg.(type) {
+	case bson.M:
+		_, ok := a["_id"]
+		return ok
+	case map[string]any:
+		_, ok := a["_id"]
+		return ok
+	case bson.D:
+		for _, e := range a {
+			if e.Key == "_id" {
+				return true
+			}
+		}
+		return false
+	case string:
+		return a == "_id"
+	case []string:
+		return slices.Contains(a, "_id")
+	case bson.A:
+		return slices.Contains(a, any("_id"))
+	case []any:
+		return slices.Contains(a, any("_id"))
+	default:
+		// unknown shape: assume it may
+		return true
+	}
 }
 
 // aggregateByIDs runs pipeline over the documents whose _id is in ids and
 // returns the rows in the order of ids. The selection runs before the
 // pipeline; reloadablePipeline ensures the pipeline does not depend on its
-// input's order or size.
-func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, ids []bson.RawValue, opts []*options.AggregateOptions) ([]bson.Raw, error) {
+// input's order or size. It reports false if the rows cannot be matched to
+// ids one to one (a row without _id, or several rows per _id).
+func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, ids []bson.RawValue, opts []*options.AggregateOptions) ([]bson.Raw, bool, error) {
 	if len(ids) == 0 {
-		return nil, nil
+		return nil, true, nil
 	}
 
 	pPipeline := append([]any{bson.M{"$match": bson.M{"_id": bson.M{"$in": ids}}}}, pipeline...)
 	cursor, err := c.collection.Aggregate(ctx, pPipeline, opts...)
 	if err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
+		return nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to find: %w", err))
 	}
 	defer func() {
 		_ = cursor.Close(ctx)
@@ -272,16 +318,22 @@ func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, ids []b
 	for cursor.Next(ctx) {
 		var item bson.Raw
 		if err := cursor.Decode(&item); err != nil {
-			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode item: %w", err))
+			return nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to decode item: %w", err))
 		}
 		v, err := item.LookupErr("_id")
 		if err != nil {
-			return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to lookup _id: %w", err))
+			return nil, false, nil
 		}
-		byID[rawValueKey(v)] = item
+		k := rawValueKey(v)
+		if _, dup := byID[k]; dup {
+			// One source document yields several rows (e.g. $unwind): the
+			// page's row cannot be told apart from its siblings.
+			return nil, false, nil
+		}
+		byID[k] = item
 	}
 	if err := cursor.Err(); err != nil {
-		return nil, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
+		return nil, false, rerror.ErrInternalByWithContext(ctx, fmt.Errorf("failed to read cursor: %w", err))
 	}
 
 	items := make([]bson.Raw, 0, len(ids))
@@ -291,7 +343,7 @@ func (c *Collection) aggregateByIDs(ctx context.Context, pipeline []any, ids []b
 			items = append(items, item)
 		}
 	}
-	return items, nil
+	return items, true, nil
 }
 
 // rawValueKey returns a map key that identifies a BSON value by type and bytes.

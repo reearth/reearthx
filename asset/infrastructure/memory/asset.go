@@ -128,10 +128,15 @@ func (r *Asset) Save(_ context.Context, a *asset.Asset) error {
 		return r.err
 	}
 
+	// Serialized with UpdateArchiveExtractionStatusIf so a save cannot land
+	// between its status check and its update.
+	r.lock.Lock()
+	defer r.lock.Unlock()
 	r.data.Store(a.ID(), a)
 	return nil
 }
 
+// UpdateArchiveExtractionStatusIf implements repo.Asset under the repo lock.
 func (r *Asset) UpdateArchiveExtractionStatusIf(_ context.Context, id id.AssetID, from, to asset.ArchiveExtractionStatus) (bool, error) {
 	if r.err != nil {
 		return false, r.err

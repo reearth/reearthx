@@ -171,6 +171,8 @@ func (r *Asset) Save(ctx context.Context, asset *asset.Asset) error {
 	return nil
 }
 
+// UpdateArchiveExtractionStatusIf implements repo.Asset with a single
+// conditional UpdateOne.
 func (r *Asset) UpdateArchiveExtractionStatusIf(ctx context.Context, id id.AssetID, from, to asset.ArchiveExtractionStatus) (bool, error) {
 	res, err := r.client.Client().UpdateOne(ctx, r.writeFilter(bson.M{
 		"id":                      id.String(),

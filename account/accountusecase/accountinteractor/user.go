@@ -14,7 +14,6 @@ import (
 	"github.com/reearth/reearthx/account/accountusecase/accountinterfaces"
 	"github.com/reearth/reearthx/account/accountusecase/accountrepo"
 	"github.com/reearth/reearthx/i18n"
-	"github.com/reearth/reearthx/log"
 	"github.com/reearth/reearthx/mailer"
 	"github.com/reearth/reearthx/rerror"
 	"github.com/samber/lo"
@@ -303,66 +302,37 @@ func (i *User) VerifyUser(ctx context.Context, code string) (*user.User, error) 
 	})
 }
 func (i *User) StartPasswordReset(ctx context.Context, email string) error {
-	var u *user.User
-	var pr, prev *user.PasswordReset
-	if err := Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
-		var err error
-		u, err = i.repos.User.FindByEmail(ctx, email)
-		if err != nil {
-			return err
-		}
-
-		a := u.Auths().GetByProvider(user.ProviderReearth)
-		if a == nil || a.Sub == "" {
-			return accountinterfaces.ErrUserInvalidPasswordReset
-		}
-
-		prev = u.PasswordReset().Clone()
-		pr = user.NewPasswordReset()
-		u.SetPasswordReset(pr)
-
-		return i.repos.User.Save(ctx, u)
-	}); err != nil {
+	u, err := i.repos.User.FindByEmail(ctx, email)
+	if err != nil {
 		return err
 	}
 
-	// The mail is sent after the commit so a slow mail server cannot hold the
-	// transaction open, and the user never receives a token that was not saved.
+	a := u.Auths().GetByProvider(user.ProviderReearth)
+	if a == nil || a.Sub == "" {
+		return accountinterfaces.ErrUserInvalidPasswordReset
+	}
+
+	// The token is saved only after the mail is delivered, outside any open
+	// transaction (a slow mail server cannot hold one open). If delivery fails,
+	// nothing changes and a link the user received earlier keeps working; if
+	// two requests overlap, the last one saved wins, as before.
+	pr := user.NewPasswordReset()
 	if err := i.sendPasswordResetMail(ctx, u, pr); err != nil {
-		// Delivery failed: put the previous reset back so an earlier link the
-		// user already received keeps working.
-		i.restoreUser(ctx, u.ID(), func(cur *user.User) bool {
-			if cur.PasswordReset() == nil || cur.PasswordReset().Token != pr.Token {
-				return false
-			}
-			cur.SetPasswordReset(prev)
-			return true
-		})
 		return err
 	}
-	return nil
-}
 
-// restoreUser applies a compensating change to a user after a mail could not
-// be delivered. revert reports whether it changed the user; it must check that
-// the user still holds the credential this request issued.
-func (i *User) restoreUser(ctx context.Context, uid user.ID, revert func(*user.User) bool) {
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), mailSendTimeout)
-	defer cancel()
-	if err := Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
-		cur, err := i.repos.User.FindByID(ctx, uid)
+	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
+		cur, err := i.repos.User.FindByID(ctx, u.ID())
 		if err != nil {
 			return err
 		}
-		if !revert(cur) {
-			return nil
-		}
+		cur.SetPasswordReset(pr)
 		return i.repos.User.Save(ctx, cur)
-	}); err != nil {
-		log.Errorfc(ctx, "user: failed to restore user %s after mail delivery failed: %v", uid, err)
-	}
+	})
 }
 
+// sendPasswordResetMail renders the reset mail for pr and sends it to u,
+// bounded by mailSendTimeout.
 func (i *User) sendPasswordResetMail(ctx context.Context, u *user.User, pr *user.PasswordReset) error {
 	// Copy the shared template content: concurrent requests must not write to
 	// the package-level value, or one user's mail could carry another's token.

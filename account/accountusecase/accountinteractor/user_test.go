@@ -205,6 +205,38 @@ func TestUser_CreateVerification_DeliveryFailureKeepsPreviousCode(t *testing.T) 
 	assert.Equal(t, prev.Code(), got.Verification().Code())
 }
 
+type funcMailer func(context.Context, []mailer.Contact) error
+
+func (f funcMailer) SendMail(ctx context.Context, to []mailer.Contact, _, _, _ string) error {
+	return f(ctx, to)
+}
+
+// A verification completed while the new mail is being sent must be kept.
+func TestUser_CreateVerification_VerifiedDuringDelivery(t *testing.T) {
+	r := accountmemory.New()
+	ctx := context.Background()
+
+	uid := accountdomain.NewUserID()
+	prev := user.NewVerification()
+	u := user.New().ID(uid).Workspace(accountdomain.NewWorkspaceID()).
+		Email("aaa@bbb.com").Name("NAME").Verification(prev).MustBuild()
+	assert.NoError(t, r.User.Save(ctx, u))
+
+	m := funcMailer(func(ctx context.Context, _ []mailer.Contact) error {
+		cur, err := r.User.FindByID(ctx, uid)
+		assert.NoError(t, err)
+		v := user.VerificationFrom(prev.Code(), prev.Expiration(), true)
+		cur.SetVerification(v)
+		return r.User.Save(ctx, cur)
+	})
+	uc := NewUser(r, &accountgateway.Container{Mailer: m}, "", "")
+	assert.NoError(t, uc.CreateVerification(ctx, "aaa@bbb.com"))
+
+	got, err := r.User.FindByID(ctx, uid)
+	assert.NoError(t, err)
+	assert.True(t, got.Verification().IsVerified())
+}
+
 func TestUser_StartPasswordReset(t *testing.T) {
 	user.DefaultPasswordEncoder = &user.NoopPasswordEncoder{}
 	uid := accountdomain.NewUserID()

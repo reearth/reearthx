@@ -399,43 +399,31 @@ func (i *User) verifySignupSecret(secret *string) error {
 }
 
 func (i *User) CreateVerification(ctx context.Context, email string) error {
-	var u *user.User
-	var vr, prev *user.Verification
-	if err := Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
-		var err error
-		u, err = i.repos.User.FindByEmail(ctx, email)
-		if err != nil {
-			return err
-		}
-		if u.Verification().IsVerified() {
-			u = nil
-			return nil
-		}
-		prev = u.Verification()
-		vr = user.NewVerification()
-		u.SetVerification(vr)
-
-		return i.repos.User.Save(ctx, u)
-	}); err != nil {
+	u, err := i.repos.User.FindByEmail(ctx, email)
+	if err != nil {
 		return err
 	}
-	if u == nil {
+	if u.Verification().IsVerified() {
 		return nil
 	}
 
-	// Sent after the commit, as in Signup: a slow mail server must not hold the
-	// transaction open, and the mailed code must already be saved.
+	// As in StartPasswordReset, the code is saved only after the mail is
+	// delivered, so a failed delivery leaves an earlier link working.
+	vr := user.NewVerification()
 	if err := i.sendVerificationMail(ctx, u, vr); err != nil {
-		// Delivery failed: put the previous verification back so an earlier
-		// link the user already received keeps working.
-		i.restoreUser(ctx, u.ID(), func(cur *user.User) bool {
-			if cur.Verification() == nil || cur.Verification().Code() != vr.Code() {
-				return false
-			}
-			cur.SetVerification(prev)
-			return true
-		})
 		return err
 	}
-	return nil
+
+	return Run0(ctx, nil, i.repos, Usecase().Transaction(), func(ctx context.Context) error {
+		cur, err := i.repos.User.FindByID(ctx, u.ID())
+		if err != nil {
+			return err
+		}
+		// The user may have verified with an earlier link meanwhile.
+		if cur.Verification().IsVerified() {
+			return nil
+		}
+		cur.SetVerification(vr)
+		return i.repos.User.Save(ctx, cur)
+	})
 }

@@ -695,10 +695,7 @@ func (i *Asset) triggerDecompressEvent(ctx context.Context, a *asset.Asset, f *a
 		Path:    f.RootPath(a.UUID()),
 	}
 	if err := i.gateways.TaskRunner.Run(ctx, taskPayload.Payload()); err != nil {
-		if i.markDecompressFailed(ctx, a) {
-			return fmt.Errorf("%w: asset %s: %w", errDecompressNotEnqueued, a.ID(), err)
-		}
-		return err
+		return i.handleEnqueueFailure(ctx, a, err)
 	}
 
 	return nil
@@ -711,24 +708,37 @@ var errDecompressNotEnqueued = errors.New("decompress task not enqueued")
 // cleanupTimeout bounds compensating writes that run detached from the request.
 const cleanupTimeout = 10 * time.Second
 
-// markDecompressFailed moves the asset from "in_progress" to "failed" after the
-// decompress task could not be enqueued. The update is conditional, so a status
-// a worker has written meanwhile is kept. It reports whether the asset is now
-// marked failed.
-func (i *Asset) markDecompressFailed(ctx context.Context, a *asset.Asset) bool {
+// handleEnqueueFailure runs when TaskRunner.Run returned runErr. It moves the
+// asset from "in_progress" to "failed" with a conditional update, so a status
+// a worker has written meanwhile is kept:
+//   - marked failed: returns errDecompressNotEnqueued wrapping runErr
+//   - a worker already moved the status on (the task did run despite the
+//     error, e.g. a timeout after enqueueing): syncs a and returns nil
+//   - the update itself failed: returns runErr
+func (i *Asset) handleEnqueueFailure(ctx context.Context, a *asset.Asset, runErr error) error {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cleanupTimeout)
 	defer cancel()
+
 	ok, err := i.repos.Asset.UpdateArchiveExtractionStatusIf(
 		ctx, a.ID(), asset.ArchiveExtractionStatusInProgress, asset.ArchiveExtractionStatusFailed,
 	)
 	if err != nil {
 		log.Errorfc(ctx, "asset: failed to mark decompression of asset %s failed: %v", a.ID(), err)
-		return false
+		return runErr
 	}
 	if ok {
 		a.UpdateArchiveExtractionStatus(lo.ToPtr(asset.ArchiveExtractionStatusFailed))
+		return fmt.Errorf("%w: asset %s: %w", errDecompressNotEnqueued, a.ID(), runErr)
 	}
-	return ok
+
+	cur, err := i.repos.Asset.FindByID(ctx, a.ID())
+	if err != nil {
+		log.Errorfc(ctx, "asset: failed to reload asset %s after decompress enqueue error: %v", a.ID(), err)
+		return runErr
+	}
+	log.Warnfc(ctx, "asset: decompress enqueue for asset %s reported %v, but a worker already set status %s", a.ID(), runErr, cur.ArchiveExtractionStatus())
+	a.UpdateArchiveExtractionStatus(cur.ArchiveExtractionStatus())
+	return nil
 }
 
 func (i *Asset) Update(
@@ -1016,16 +1026,44 @@ func (i *Asset) BatchDelete(
 	}
 
 	// File deletion cannot be rolled back, so it runs only after the records
-	// are committed. If it fails, the files are orphaned but no asset points to
-	// a missing file; the UUIDs are logged so the files can be cleaned up.
+	// are committed. If it still fails, the files are orphaned but no asset
+	// points to a missing file; the UUIDs are logged so they can be cleaned up.
 	if len(uuids) == 0 {
 		return res, nil
 	}
-	if err := i.gateways.File.DeleteAssets(ctx, uuids); err != nil {
+	if err := i.deleteAssetFiles(ctx, uuids); err != nil {
 		log.Errorfc(ctx, "asset: assets deleted but their files were not; orphaned asset UUIDs: %v: %v", uuids, err)
 		return res, err
 	}
 	return res, nil
+}
+
+// fileDeleteAttempts and fileDeleteBackoff bound the retries of a post-commit
+// file deletion.
+var (
+	fileDeleteAttempts = 3
+	fileDeleteBackoff  = 200 * time.Millisecond
+)
+
+// deleteAssetFiles deletes the files of already-deleted assets, retrying
+// transient failures. It is detached from request cancellation: once the
+// records are gone, abandoning the deletion would only orphan the files.
+func (i *Asset) deleteAssetFiles(ctx context.Context, uuids []string) error {
+	ctx = context.WithoutCancel(ctx)
+	var err error
+	for attempt := range fileDeleteAttempts {
+		if attempt > 0 {
+			time.Sleep(fileDeleteBackoff << (attempt - 1))
+		}
+		actx, cancel := context.WithTimeout(ctx, cleanupTimeout)
+		err = i.gateways.File.DeleteAssets(actx, uuids)
+		cancel()
+		if err == nil {
+			return nil
+		}
+		log.Warnfc(ctx, "asset: deleting files of deleted assets failed (attempt %d/%d): %v", attempt+1, fileDeleteAttempts, err)
+	}
+	return err
 }
 
 func (i *Asset) event(ctx context.Context, e Event) (Dispatch, error) {

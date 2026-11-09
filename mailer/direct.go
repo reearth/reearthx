@@ -80,6 +80,7 @@ func (*direct) hosts(addresses []string) ([]string, error) {
 	return res, nil
 }
 
+// lookupHosts resolves the preferred MX host of each domain.
 func (*direct) lookupHosts(ctx context.Context, hosts []string) ([]string, error) {
 	res := make([]string, 0, len(hosts))
 	for _, h := range hosts {
