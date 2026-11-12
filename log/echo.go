@@ -250,6 +250,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 				"status", res.Status,
 				"bytes_out", res.Size,
 				"latency", latency.Microseconds(),
+				"letency", latency.Microseconds(), // misspelled key kept for one release so existing log queries keep working
 				"latency_human", latencyHuman,
 			)
 			args = append(args, httpRequestFields(req, c.Scheme(), c.RealIP(), res.Status, res.Size, latency)...)

@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	echov5 "github.com/labstack/echo/v5"
@@ -99,6 +101,34 @@ func TestContextFuncs_NoProjectNoTraceFields(t *testing.T) {
 	assertNoTraceFields(t, es[0])
 }
 
+func TestContextFuncs_GCPProjectVar(t *testing.T) {
+	useGCP(t)
+	t.Setenv("GOOGLE_CLOUD_PROJECT", "")
+	prev := GCPProject
+	GCPProject = "configured-project"
+	t.Cleanup(func() { GCPProject = prev })
+	w := &bytes.Buffer{}
+
+	Infoc(ContextWith(contextWithSpan(t, context.Background()), NewWithOutput(w)), "span")
+
+	es := entries(t, w)
+	require.Len(t, es, 1)
+	assert.Equal(t, "projects/configured-project/traces/"+testTraceID, es[0]["logging.googleapis.com/trace"])
+}
+
+func TestDurationString(t *testing.T) {
+	for d, want := range map[time.Duration]string{
+		0:                                "0s",
+		123 * time.Millisecond:           "0.123s",
+		time.Second + 5*time.Microsecond: "1.000005s",
+		90 * time.Second:                 "90s",
+		1234567891 * time.Nanosecond:     "1.234567891s",
+		-1500 * time.Millisecond:         "-1.5s",
+	} {
+		assert.Equal(t, want, durationString(d), d.String())
+	}
+}
+
 func TestSlogHandler_GCPTraceFields(t *testing.T) {
 	useGCP(t)
 	w := &bytes.Buffer{}
@@ -113,8 +143,10 @@ func TestSlogHandler_GCPTraceFields(t *testing.T) {
 	assertNoTraceFields(t, es[1])
 }
 
-func assertAccessLog(t *testing.T, es []map[string]any) {
+func assertAccessLog(t *testing.T, w *bytes.Buffer) {
 	t.Helper()
+	assert.Equal(t, 1, strings.Count(w.String(), `"httpRequest":`), w.String())
+	es := entries(t, w)
 	require.Len(t, es, 2)
 	assert.NotContains(t, es[0], "httpRequest", "incoming entry")
 	assertTraceFields(t, es[0])
@@ -122,17 +154,17 @@ func assertAccessLog(t *testing.T, es []map[string]any) {
 
 	out := es[1]
 	assert.Contains(t, out, "latency")
-	assert.NotContains(t, out, "letency")
+	assert.Equal(t, out["latency"], out["letency"])
 	hr, ok := out["httpRequest"].(map[string]any)
 	require.True(t, ok, "httpRequest object in outgoing entry: %v", out)
 	assert.Equal(t, "GET", hr["requestMethod"])
-	assert.Equal(t, "http://example.com/test?q=1", hr["requestUrl"])
+	assert.Equal(t, "http://example.com/test", hr["requestUrl"])
 	assert.Equal(t, float64(http.StatusCreated), hr["status"])
 	assert.Equal(t, "2", hr["responseSize"])
 	assert.Equal(t, "test-agent", hr["userAgent"])
 	assert.Equal(t, "192.0.2.1", hr["remoteIp"])
 	assert.Equal(t, "HTTP/1.1", hr["protocol"])
-	assert.Regexp(t, `^\d+(\.\d+)?s$`, hr["latency"])
+	assert.Regexp(t, `^\d+(\.\d{1,9})?s$`, hr["latency"])
 }
 
 func newAccessLogRequest() *http.Request {
@@ -162,7 +194,7 @@ func TestEcho_AccessLogger_GCP(t *testing.T) {
 	e.ServeHTTP(rec, newAccessLogRequest())
 	require.Equal(t, http.StatusCreated, rec.Code)
 
-	assertAccessLog(t, entries(t, w))
+	assertAccessLog(t, w)
 }
 
 func TestAccessLoggerV5_GCP(t *testing.T) {
@@ -185,7 +217,7 @@ func TestAccessLoggerV5_GCP(t *testing.T) {
 	e.ServeHTTP(rec, newAccessLogRequest())
 	require.Equal(t, http.StatusCreated, rec.Code)
 
-	assertAccessLog(t, entries(t, w))
+	assertAccessLog(t, w)
 }
 
 func TestEcho_AccessLogger_NotGCP(t *testing.T) {
@@ -198,4 +230,5 @@ func TestEcho_AccessLogger_NotGCP(t *testing.T) {
 
 	assert.NotContains(t, w.String(), "httpRequest")
 	assert.Contains(t, w.String(), "latency")
+	assert.Contains(t, w.String(), "letency")
 }

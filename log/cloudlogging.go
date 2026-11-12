@@ -2,8 +2,10 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -75,9 +77,23 @@ func (h httpRequest) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	if h.referer != "" {
 		enc.AddString("referer", h.referer)
 	}
-	enc.AddString("latency", strconv.FormatFloat(h.latency.Seconds(), 'f', -1, 64)+"s")
+	enc.AddString("latency", durationString(h.latency))
 	enc.AddString("protocol", h.protocol)
 	return nil
+}
+
+// durationString formats d as a protobuf Duration in JSON, such as "0.123s".
+func durationString(d time.Duration) string {
+	sign := ""
+	if d < 0 {
+		sign, d = "-", -d
+	}
+	sec, nsec := int64(d/time.Second), int64(d%time.Second)
+	if nsec == 0 {
+		return sign + strconv.FormatInt(sec, 10) + "s"
+	}
+	frac := strings.TrimRight(fmt.Sprintf("%09d", nsec), "0")
+	return sign + strconv.FormatInt(sec, 10) + "." + frac + "s"
 }
 
 func httpRequestFields(req *http.Request, scheme, remoteIP string, status int, responseSize int64, latency time.Duration) []any {
@@ -86,7 +102,7 @@ func httpRequestFields(req *http.Request, scheme, remoteIP string, status int, r
 	}
 	return []any{gcpHTTPRequestKey, httpRequest{
 		method:       req.Method,
-		url:          scheme + "://" + req.Host + req.URL.RequestURI(),
+		url:          scheme + "://" + req.Host + req.URL.EscapedPath(),
 		requestSize:  req.ContentLength,
 		status:       status,
 		responseSize: responseSize,

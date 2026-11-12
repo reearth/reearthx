@@ -8,6 +8,10 @@ import (
 )
 
 var GCP = false
+
+// GCPProject is the project ID used in logging.googleapis.com/trace.
+// When empty, the GOOGLE_CLOUD_PROJECT environment variable is used.
+var GCPProject string
 var GCPEnv = []string{
 	"CLOUD_RUN_JOB",
 	"K_SERVICE",
@@ -73,6 +77,9 @@ func isGCP() bool {
 func GoogleTraceFromTraceID(trace, projectID string) string {
 	if trace == "" {
 		return ""
+	}
+	if projectID == "" {
+		projectID = GCPProject
 	}
 	if projectID == "" {
 		projectID = os.Getenv("GOOGLE_CLOUD_PROJECT")

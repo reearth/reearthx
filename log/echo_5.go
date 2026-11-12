@@ -57,6 +57,7 @@ func AccessLoggerV5(l *Logger) echov5.MiddlewareFunc {
 				"status", status,
 				"bytes_out", resp.Size,
 				"latency", latency.Microseconds(),
+				"letency", latency.Microseconds(), // misspelled key kept for one release so existing log queries keep working
 				"latency_human", latencyHuman,
 			)
 			args = append(args, httpRequestFields(req, c.Scheme(), c.RealIP(), status, resp.Size, latency)...)
