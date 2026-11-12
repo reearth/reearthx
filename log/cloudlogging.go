@@ -55,7 +55,6 @@ type httpRequest struct {
 	responseSize int64
 	userAgent    string
 	remoteIP     string
-	referer      string
 	latency      time.Duration
 	protocol     string
 }
@@ -73,9 +72,6 @@ func (h httpRequest) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	}
 	if h.remoteIP != "" {
 		enc.AddString("remoteIp", h.remoteIP)
-	}
-	if h.referer != "" {
-		enc.AddString("referer", h.referer)
 	}
 	enc.AddString("latency", durationString(h.latency))
 	enc.AddString("protocol", h.protocol)
@@ -108,7 +104,6 @@ func httpRequestFields(req *http.Request, scheme, remoteIP string, status int, r
 		responseSize: responseSize,
 		userAgent:    req.UserAgent(),
 		remoteIP:     remoteIP,
-		referer:      req.Referer(),
 		latency:      latency,
 		protocol:     req.Proto,
 	}}
