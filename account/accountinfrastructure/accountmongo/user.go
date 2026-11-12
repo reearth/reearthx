@@ -140,10 +140,17 @@ func (r *User) SearchByKeyword(ctx context.Context, keyword string, fields ...st
 		fields = []string{"email", "name"}
 	}
 
-	regex := bson.M{"$regex": primitive.Regex{Pattern: regexp.QuoteMeta(keyword), Options: "i"}}
+	quoted := regexp.QuoteMeta(keyword)
+	// email requires an exact (case-insensitive) match; other fields are partial matches
+	exact := bson.M{"$regex": primitive.Regex{Pattern: "^" + quoted + "$", Options: "i"}}
+	partial := bson.M{"$regex": primitive.Regex{Pattern: quoted, Options: "i"}}
 	orConditions := make([]bson.M, len(fields))
 	for i, field := range fields {
-		orConditions[i] = bson.M{field: regex}
+		if field == "email" {
+			orConditions[i] = bson.M{field: exact}
+		} else {
+			orConditions[i] = bson.M{field: partial}
+		}
 	}
 
 	return r.find(ctx,
