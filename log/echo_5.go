@@ -35,7 +35,7 @@ func AccessLoggerV5(l *Logger) echov5.MiddlewareFunc {
 			if logger == nil {
 				logger = l
 			}
-			logger = logger.WithCaller(false)
+			logger = withTrace(logger.WithCaller(false), req.Context())
 
 			// incoming log
 			logger.Infow(
@@ -59,6 +59,7 @@ func AccessLoggerV5(l *Logger) echov5.MiddlewareFunc {
 				"latency", latency.Microseconds(),
 				"latency_human", latencyHuman,
 			)
+			args = append(args, httpRequestFields(req, c.Scheme(), c.RealIP(), status, resp.Size, latency)...)
 
 			// outcoming log
 			logger.Infow(

@@ -34,7 +34,7 @@ func (h *zapSlogHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return h.logger.Level() <= lv
 }
 
-func (h *zapSlogHandler) Handle(_ context.Context, r slog.Record) error {
+func (h *zapSlogHandler) Handle(ctx context.Context, r slog.Record) error {
 	kvs := attrsToKVs(h.group, h.attrs)
 	r.Attrs(func(a slog.Attr) bool {
 		kvs = appendAttr(kvs, h.group, a)
@@ -42,15 +42,16 @@ func (h *zapSlogHandler) Handle(_ context.Context, r slog.Record) error {
 	})
 
 	msg := r.Message
+	logger := withTrace(h.logger, ctx)
 	switch {
 	case r.Level >= slog.LevelError:
-		h.logger.Errorw(msg, kvs...)
+		logger.Errorw(msg, kvs...)
 	case r.Level >= slog.LevelWarn:
-		h.logger.Warnw(msg, kvs...)
+		logger.Warnw(msg, kvs...)
 	case r.Level >= slog.LevelInfo:
-		h.logger.Infow(msg, kvs...)
+		logger.Infow(msg, kvs...)
 	default:
-		h.logger.Debugw(msg, kvs...)
+		logger.Debugw(msg, kvs...)
 	}
 	return nil
 }

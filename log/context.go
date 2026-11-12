@@ -106,7 +106,7 @@ func Panicc(ctx context.Context, args ...any) {
 
 func getLoggerFromContextOrDefault(ctx context.Context) *Logger {
 	if logger := GetLoggerFromContext(ctx); logger != nil {
-		return logger.AddCallerSkip(1)
+		return withTrace(logger.AddCallerSkip(1), ctx)
 	}
-	return globalLogger
+	return withTrace(globalLogger, ctx)
 }

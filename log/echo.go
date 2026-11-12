@@ -230,7 +230,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 			if logger == nil {
 				logger = l.logger
 			}
-			logger = logger.WithCaller(false)
+			logger = withTrace(logger.WithCaller(false), req.Context())
 
 			// incoming log
 			logger.Infow(
@@ -252,6 +252,7 @@ func (l *Echo) AccessLogger() echo.MiddlewareFunc {
 				"latency", latency.Microseconds(),
 				"latency_human", latencyHuman,
 			)
+			args = append(args, httpRequestFields(req, c.Scheme(), c.RealIP(), res.Status, res.Size, latency)...)
 
 			// outcoming log
 			logger.Infow(

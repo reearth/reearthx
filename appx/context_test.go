@@ -1,14 +1,19 @@
 package appx
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/reearth/reearthx/log"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestContextMiddleware(t *testing.T) {
@@ -65,4 +70,33 @@ func TestRequestIDMiddleware(t *testing.T) {
 	res = lo.Must(http.DefaultClient.Do(req))
 	body = string(lo.Must(io.ReadAll(res.Body)))
 	assert.Equal(t, "xxx", body)
+}
+
+func TestRequestIDMiddleware_TraceFieldOnceWithSpan(t *testing.T) {
+	prev := log.GCP
+	log.GCP = true
+	t.Cleanup(func() { log.GCP = prev })
+	t.Setenv("GOOGLE_CLOUD_PROJECT", "test-project")
+
+	w := &bytes.Buffer{}
+	tid := lo.Must(trace.TraceIDFromHex("4bf92f3577b34da6a3ce929d0e0e4736"))
+	sid := lo.Must(trace.SpanIDFromHex("00f067aa0ba902b7"))
+	withSpan := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			ctx := log.ContextWith(r.Context(), log.NewWithOutput(w))
+			ctx = trace.ContextWithSpanContext(ctx, trace.NewSpanContext(trace.SpanContextConfig{TraceID: tid, SpanID: sid}))
+			next.ServeHTTP(rw, r.WithContext(ctx))
+		})
+	}
+	h := withSpan(RequestIDMiddleware()(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		log.Infoc(r.Context(), "handled")
+	})))
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00")
+	h.ServeHTTP(httptest.NewRecorder(), req)
+
+	out := w.String()
+	require.Contains(t, out, "handled")
+	assert.Equal(t, 1, strings.Count(out, `"logging.googleapis.com/trace":`), out)
 }
