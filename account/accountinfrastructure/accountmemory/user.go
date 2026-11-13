@@ -252,7 +252,11 @@ func (r *User) SearchByKeyword(_ context.Context, keyword string, fields ...stri
 			var fieldValue string
 			switch field {
 			case "email":
-				fieldValue = value.Email()
+				// email requires an exact (case-insensitive) match
+				if strings.EqualFold(value.Email(), keyword) {
+					return true
+				}
+				continue
 			case "name":
 				fieldValue = value.Name()
 			case "alias":
