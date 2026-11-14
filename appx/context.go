@@ -3,7 +3,6 @@ package appx
 import (
 	"context"
 	"net/http"
-	"os"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/log"
@@ -50,8 +49,6 @@ func ContextMiddlewareBy(c func(http.ResponseWriter, *http.Request) context.Cont
 }
 
 func RequestIDMiddleware() func(http.Handler) http.Handler {
-	googleCloudProject := os.Getenv("GOOGLE_CLOUD_PROJECT")
-
 	return ContextMiddlewareBy(func(w http.ResponseWriter, r *http.Request) context.Context {
 		ctx := r.Context()
 		reqid := log.GetReqestID(w, r)
@@ -67,7 +64,7 @@ func RequestIDMiddleware() func(http.Handler) http.Handler {
 			w.Header().Set("X-Request-ID", reqid)
 		} else if googleTrace := log.GoogleTraceFromTraceID(
 			log.TraceIDFrom(reqid),
-			googleCloudProject,
+			"",
 		); googleTrace != "" {
 			logger = logger.With("logging.googleapis.com/trace", googleTrace)
 		} else {

@@ -221,6 +221,12 @@ func TestAccessLoggerV5_GCP(t *testing.T) {
 }
 
 func TestEcho_AccessLogger_NotGCP(t *testing.T) {
+	prev := GCP
+	GCP = false
+	t.Cleanup(func() { GCP = prev })
+	for _, k := range GCPEnv {
+		t.Setenv(k, "")
+	}
 	w := &bytes.Buffer{}
 	e := echo.New()
 	e.Use(NewEchoWithRaw(NewWithOutput(w)).AccessLogger())
