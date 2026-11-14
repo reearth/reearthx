@@ -3,10 +3,10 @@ package appx
 import (
 	"context"
 	"net/http"
-	"os"
 
 	"github.com/google/uuid"
 	"github.com/reearth/reearthx/log"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type authInfoKey struct{}
@@ -49,8 +49,6 @@ func ContextMiddlewareBy(c func(http.ResponseWriter, *http.Request) context.Cont
 }
 
 func RequestIDMiddleware() func(http.Handler) http.Handler {
-	googleCloudProject := os.Getenv("GOOGLE_CLOUD_PROJECT")
-
 	return ContextMiddlewareBy(func(w http.ResponseWriter, r *http.Request) context.Context {
 		ctx := r.Context()
 		reqid := log.GetReqestID(w, r)
@@ -61,9 +59,12 @@ func RequestIDMiddleware() func(http.Handler) http.Handler {
 		logger := log.GetLoggerFromContextOrDefault(ctx).SetPrefix(reqid)
 
 		// https://cloud.google.com/run/docs/logging#correlate-logs
-		if googleTrace := log.GoogleTraceFromTraceID(
+		// With a span in the context, log entries get the trace from the span instead.
+		if trace.SpanContextFromContext(ctx).IsValid() {
+			w.Header().Set("X-Request-ID", reqid)
+		} else if googleTrace := log.GoogleTraceFromTraceID(
 			log.TraceIDFrom(reqid),
-			googleCloudProject,
+			"",
 		); googleTrace != "" {
 			logger = logger.With("logging.googleapis.com/trace", googleTrace)
 		} else {
