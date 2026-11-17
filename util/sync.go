@@ -192,25 +192,57 @@ func (m *SyncMap[K, V]) Len() (i int) {
 	return
 }
 
+// LockMap provides a mutex per key. Entries are reference-counted and removed
+// from the map only when no goroutine holds or waits for the key's lock.
+// The zero value is ready to use.
 type LockMap[T comparable] struct {
-	m SyncMap[T, *sync.Mutex]
+	mu sync.Mutex
+	m  map[T]*lockMapEntry
 }
 
+type lockMapEntry struct {
+	mu   sync.Mutex
+	refs int
+}
+
+// Lock acquires the lock for k and returns a function that releases it.
+// The returned function is safe to call more than once.
 func (m *LockMap[T]) Lock(k T) func() {
-	nl := &sync.Mutex{}
-	l, ok := m.m.LoadOrStore(k, nl)
-	if ok {
-		l.Lock()
-	} else {
-		nl.Lock()
+	m.mu.Lock()
+	if m.m == nil {
+		m.m = map[T]*lockMapEntry{}
 	}
+	e, ok := m.m[k]
+	if !ok {
+		e = &lockMapEntry{}
+		m.m[k] = e
+	}
+	e.refs++
+	m.mu.Unlock()
+
+	e.mu.Lock()
+
+	var once sync.Once
 	return func() {
-		m.Unlock(k)
+		once.Do(func() {
+			m.Unlock(k)
+		})
 	}
 }
 
+// Unlock releases the lock for k. It does nothing if k is not locked.
 func (m *LockMap[T]) Unlock(k T) {
-	if l, ok := m.m.LoadAndDelete(k); ok {
-		l.Unlock()
+	m.mu.Lock()
+	e, ok := m.m[k]
+	if !ok {
+		m.mu.Unlock()
+		return
 	}
+	e.refs--
+	if e.refs == 0 {
+		delete(m.m, k)
+	}
+	m.mu.Unlock()
+
+	e.mu.Unlock()
 }

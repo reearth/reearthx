@@ -4,7 +4,9 @@ import (
 	"slices"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -269,4 +271,45 @@ func TestLockMap(t *testing.T) {
 	wg.Wait()
 	slices.Sort(res)
 	assert.Equal(t, []string{"a", "b", "c"}, res)
+}
+
+func TestLockMap_ManyWaiters(t *testing.T) {
+	m := LockMap[string]{}
+	const n = 72
+
+	var active, maxActive, done int32
+	wg := sync.WaitGroup{}
+	wg.Add(n)
+	for range n {
+		go func() {
+			defer wg.Done()
+			unlock := m.Lock("key")
+			cur := atomic.AddInt32(&active, 1)
+			for {
+				prev := atomic.LoadInt32(&maxActive)
+				if cur <= prev || atomic.CompareAndSwapInt32(&maxActive, prev, cur) {
+					break
+				}
+			}
+			time.Sleep(time.Millisecond)
+			atomic.AddInt32(&active, -1)
+			atomic.AddInt32(&done, 1)
+			unlock()
+		}()
+	}
+
+	finished := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(finished)
+	}()
+	select {
+	case <-finished:
+	case <-time.After(10 * time.Second):
+		t.Fatalf("deadlock: %d/%d goroutines completed", atomic.LoadInt32(&done), n)
+	}
+
+	assert.Equal(t, int32(n), done)
+	assert.Equal(t, int32(1), maxActive, "lock must be mutually exclusive")
+	assert.Empty(t, m.m, "entries must be removed after all locks are released")
 }
