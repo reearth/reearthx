@@ -3,6 +3,7 @@ package mailer
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -80,7 +81,7 @@ func verifyEmails(contacts []Contact) ([]string, error) {
 	for _, c := range contacts {
 		_, err := mail.ParseAddress(c.Email)
 		if err != nil {
-			return nil, fmt.Errorf("invalid email %s", c.Email)
+			return nil, errors.New("invalid email")
 		}
 		emails = append(emails, c.Email)
 	}
@@ -170,5 +171,5 @@ func (l ToList) String() string {
 }
 
 func logMail(ctx context.Context, to ToList, subject string) {
-	log.Infofc(ctx, "mailer: mail sent: To: %s, Subject: %s", to, subject)
+	log.Infofc(ctx, "mailer: mail sent: recipients: %d, subject length: %d", len(to), len(subject))
 }
