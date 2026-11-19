@@ -24,10 +24,11 @@ type Contact struct {
 }
 
 type Config struct {
-	Mailer   string
-	SMTP     SMTPConfig
-	SendGrid SendGridConfig
-	SES      SESConfig
+	Mailer     string
+	SMTP       SMTPConfig
+	SendGrid   SendGridConfig
+	SES        SESConfig
+	Cloudflare CloudflareConfig
 }
 
 type SendGridConfig struct {
@@ -49,6 +50,13 @@ type SESConfig struct {
 	Name  string
 }
 
+type CloudflareConfig struct {
+	Email     string
+	Name      string
+	AccountID string
+	APIToken  string
+}
+
 func New(ctx context.Context, conf *Config) (m Mailer) {
 	mt := conf.Mailer
 	switch mt {
@@ -58,6 +66,8 @@ func New(ctx context.Context, conf *Config) (m Mailer) {
 		m = NewSMTP(conf.SMTP.Host, conf.SMTP.Port, conf.SMTP.SMTPUsername, conf.SMTP.Email, conf.SMTP.Password)
 	case "ses":
 		m = NewSES(ctx, conf.SES.Name, conf.SES.Email)
+	case "cloudflare":
+		m = NewCloudflare(conf.Cloudflare.Name, conf.Cloudflare.Email, conf.Cloudflare.AccountID, conf.Cloudflare.APIToken)
 	default:
 		mt = "logger"
 		m = NewLogger()
