@@ -1,9 +1,12 @@
 package mailer
 
 import (
+	"bytes"
+	"context"
 	"strings"
 	"testing"
 
+	"github.com/reearth/reearthx/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -98,4 +101,21 @@ func Test_message_encodeMessage(t *testing.T) {
 			assert.Equal(tt, tc.wantHtml, strings.Contains(str, tc.htmlContent))
 		})
 	}
+}
+
+func TestLogMail_OmitsRecipients(t *testing.T) {
+	buf := &bytes.Buffer{}
+	ctx := log.ContextWith(context.Background(), log.NewWithOutput(buf))
+
+	logMail(ctx, ToList{
+		{Name: "Alice Example", Email: "alice@example.com"},
+		{Name: "Bob Example", Email: "bob@example.org"},
+	}, "Secret Subject")
+
+	out := buf.String()
+	for _, s := range []string{"alice", "Alice", "bob", "Bob", "example", "@", "Secret Subject"} {
+		assert.NotContains(t, out, s)
+	}
+	assert.Contains(t, out, "recipients: 2")
+	assert.Contains(t, out, "subject length: 14")
 }
