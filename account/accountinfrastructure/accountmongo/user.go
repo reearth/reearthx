@@ -173,7 +173,9 @@ func (r *User) FindByPasswordResetRequest(ctx context.Context, pwdResetToken str
 
 func (r *User) FindBySubOrCreate(ctx context.Context, u *user.User, sub string) (*user.User, error) {
 	userDoc, _ := mongodoc.NewUser(u)
-	if err := r.client.Client().FindOneAndUpdate(
+	// The filter deliberately matches soft-deleted users too: excluding them would make the upsert create a
+	// second user with the same sub. A deactivated user is reported as not found instead.
+	raw, err := r.client.Client().FindOneAndUpdate(
 		ctx,
 		bson.M{
 			"$or": []bson.M{
@@ -188,10 +190,17 @@ func (r *User) FindBySubOrCreate(ctx context.Context, u *user.User, sub string) 
 		},
 		bson.M{"$setOnInsert": userDoc},
 		options.FindOneAndUpdate().SetUpsert(true).SetReturnDocument(options.After),
-	).Decode(&userDoc); err != nil {
+	).Raw()
+	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return nil, accountrepo.ErrDuplicatedUser
 		}
+		return nil, rerror.ErrInternalByWithContext(ctx, err)
+	}
+	if _, err := raw.LookupErr("deletedat"); err == nil {
+		return nil, rerror.ErrNotFound
+	}
+	if err := bson.Unmarshal(raw, &userDoc); err != nil {
 		return nil, rerror.ErrInternalByWithContext(ctx, err)
 	}
 	return userDoc.Model()
@@ -225,7 +234,7 @@ func (r *User) Remove(ctx context.Context, user user.ID) error {
 
 func (r *User) find(ctx context.Context, filter any, options ...*options.FindOptions) (user.List, error) {
 	c := mongodoc.NewUserConsumer(r.host)
-	if err := r.client.Find(ctx, filter, c, options...); err != nil {
+	if err := r.client.Find(ctx, excludeDeleted(filter), c, options...); err != nil {
 		return nil, err
 	}
 	return c.Result, nil
@@ -233,7 +242,7 @@ func (r *User) find(ctx context.Context, filter any, options ...*options.FindOpt
 
 func (r *User) findOne(ctx context.Context, filter any) (*user.User, error) {
 	c := mongodoc.NewUserConsumer(r.host)
-	if err := r.client.FindOne(ctx, filter, c); err != nil {
+	if err := r.client.FindOne(ctx, excludeDeleted(filter), c); err != nil {
 		return nil, err
 	}
 	return c.Result[0], nil
@@ -256,7 +265,7 @@ func filterUsers(ids []user.ID, rows []*user.User) []*user.User {
 
 func (r *User) paginate(ctx context.Context, filter bson.M, pagination *usecasex.Pagination) (user.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewUserConsumer(r.host)
-	pageInfo, err := r.client.Paginate(ctx, filter, nil, pagination, c)
+	pageInfo, err := r.client.Paginate(ctx, excludeDeleted(filter), nil, pagination, c)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}
