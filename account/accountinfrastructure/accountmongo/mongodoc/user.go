@@ -6,6 +6,7 @@ import (
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/user"
 	"github.com/reearth/reearthx/mongox"
+	"github.com/samber/lo"
 )
 
 type PasswordResetDocument struct {
@@ -27,6 +28,11 @@ type UserDocument struct {
 	PasswordReset *PasswordResetDocument
 	Verification  *UserVerificationDoc
 	Metadata      *UserMetadataDoc
+	// Fields shared with reearth-accounts. ReplaceOne writes the whole document, so they must round-trip.
+	LatestLogoutAt *time.Time `bson:"latestlogoutat,omitempty"`
+	CreatedAt      *time.Time `bson:"createdat,omitempty"`
+	UpdatedAt      time.Time  `bson:"updatedat"`
+	DeletedAt      *time.Time `bson:"deletedat,omitempty"`
 }
 
 type UserVerificationDoc struct {
@@ -80,16 +86,20 @@ func NewUser(user *user.User) (*UserDocument, string) {
 	}
 
 	return &UserDocument{
-		ID:            id,
-		Name:          user.Name(),
-		Alias:         user.Alias(),
-		Email:         user.Email(),
-		Subs:          authsdoc,
-		Workspace:     user.Workspace().String(),
-		Verification:  v,
-		Password:      user.Password(),
-		PasswordReset: pwdResetDoc,
-		Metadata:      metadataDoc,
+		ID:             id,
+		Name:           user.Name(),
+		Alias:          user.Alias(),
+		Email:          user.Email(),
+		Subs:           authsdoc,
+		Workspace:      user.Workspace().String(),
+		Verification:   v,
+		Password:       user.Password(),
+		PasswordReset:  pwdResetDoc,
+		Metadata:       metadataDoc,
+		LatestLogoutAt: nonZeroTime(user.LatestLogoutAt()),
+		CreatedAt:      createdAt(user.CreatedAt(), user.ID().Timestamp()),
+		UpdatedAt:      time.Now(),
+		DeletedAt:      user.DeletedAt(),
 	}, id
 }
 
@@ -140,6 +150,9 @@ func (d *UserDocument) Model() (*user.User, error) {
 		Verification(v).
 		EncodedPassword(d.Password).
 		PasswordReset(d.PasswordReset.Model()).
+		LatestLogoutAt(lo.FromPtr(d.LatestLogoutAt)).
+		CreatedAt(d.CreatedAt).
+		DeletedAt(d.DeletedAt).
 		Build()
 
 	if err != nil {
@@ -168,4 +181,21 @@ func NewUserConsumer(host string) *UserConsumer {
 		}
 		return m.WithHost(host), nil
 	})
+}
+
+func nonZeroTime(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
+}
+
+// createdAt falls back to the creation time encoded in the entity's ULID when the model has none:
+// for new entities that is their creation time, and documents written before createdat existed get an
+// accurate value instead of the time of their next save.
+func createdAt(t *time.Time, idTime time.Time) *time.Time {
+	if t != nil {
+		return t
+	}
+	return nonZeroTime(idTime.UTC())
 }

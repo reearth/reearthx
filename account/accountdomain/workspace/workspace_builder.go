@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"errors"
+	"time"
 
 	"github.com/reearth/reearthx/util"
 )
@@ -101,5 +102,25 @@ func (b *Builder) Personal(p bool) *Builder {
 
 func (b *Builder) Policy(p *PolicyID) *Builder {
 	b.w.policy = util.CloneRef(p)
+	return b
+}
+
+func (b *Builder) CreatedAt(t *time.Time) *Builder {
+	b.w.createdAt = util.CloneRef(t)
+	return b
+}
+
+func (b *Builder) CreatedBy(u *UserID) *Builder {
+	b.w.createdBy = util.CloneRef(u)
+	return b
+}
+
+func (b *Builder) DeletedAt(t *time.Time) *Builder {
+	b.w.deletedAt = util.CloneRef(t)
+	return b
+}
+
+func (b *Builder) ScimConfig(c *ScimConfig) *Builder {
+	b.w.scimConfig = c.Clone()
 	return b
 }

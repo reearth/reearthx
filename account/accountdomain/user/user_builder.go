@@ -1,9 +1,12 @@
 package user
 
 import (
+	"time"
+
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/i18n"
 	"github.com/reearth/reearthx/rerror"
+	"github.com/reearth/reearthx/util"
 )
 
 var ErrInvalidName = rerror.NewE(i18n.T("invalid user name"))
@@ -117,5 +120,20 @@ func (b *Builder) Verification(v *Verification) *Builder {
 
 func (b *Builder) Metadata(m *Metadata) *Builder {
 	b.u.metadata = m
+	return b
+}
+
+func (b *Builder) CreatedAt(t *time.Time) *Builder {
+	b.u.createdAt = util.CloneRef(t)
+	return b
+}
+
+func (b *Builder) DeletedAt(t *time.Time) *Builder {
+	b.u.deletedAt = util.CloneRef(t)
+	return b
+}
+
+func (b *Builder) LatestLogoutAt(t time.Time) *Builder {
+	b.u.latestLogoutAt = t
 	return b
 }
