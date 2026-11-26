@@ -257,7 +257,7 @@ func (r *Workspace) RemoveAll(ctx context.Context, ids accountdomain.WorkspaceID
 
 func (r *Workspace) find(ctx context.Context, filter any) (workspace.List, error) {
 	c := mongodoc.NewWorkspaceConsumer()
-	filter = r.f.Filter(filter)
+	filter = r.f.Filter(excludeDeleted(filter))
 	if err := r.client.Find(ctx, filter, c); err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func (r *Workspace) find(ctx context.Context, filter any) (workspace.List, error
 
 func (r *Workspace) findOne(ctx context.Context, filter any, options ...*options.FindOneOptions) (*workspace.Workspace, error) {
 	c := mongodoc.NewWorkspaceConsumer()
-	filter = r.f.Filter(filter)
+	filter = r.f.Filter(excludeDeleted(filter))
 	if err := r.client.FindOne(ctx, filter, c, options...); err != nil {
 		return nil, err
 	}
@@ -279,7 +279,7 @@ func filterWorkspaces(ids []accountdomain.WorkspaceID, rows workspace.List) work
 
 func (r *Workspace) paginate(ctx context.Context, filter bson.M, pagination *usecasex.Pagination) (workspace.List, *usecasex.PageInfo, error) {
 	c := mongodoc.NewWorkspaceConsumer()
-	pageInfo, err := r.client.Paginate(ctx, filter, nil, pagination, c)
+	pageInfo, err := r.client.Paginate(ctx, excludeDeleted(filter), nil, pagination, c)
 	if err != nil {
 		return nil, nil, rerror.ErrInternalBy(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/mail"
 	"slices"
+	"time"
 
 	"github.com/reearth/reearthx/util"
 )
@@ -24,6 +25,12 @@ type User struct {
 	verification  *Verification
 	passwordReset *PasswordReset
 	host          string
+
+	// Fields owned by reearth-accounts, which shares the user collection. reearthx only carries them so that
+	// saving a user does not erase them.
+	createdAt      *time.Time
+	deletedAt      *time.Time
+	latestLogoutAt time.Time
 }
 
 func (u *User) ID() ID {
@@ -200,17 +207,35 @@ func (u *User) Host() string {
 
 func (u *User) Clone() *User {
 	return &User{
-		id:            u.id,
-		name:          u.name,
-		alias:         u.alias,
-		email:         u.email,
-		password:      u.password,
-		workspace:     u.workspace,
-		auths:         slices.Clone(u.auths),
-		metadata:      util.CloneRef(u.metadata),
-		verification:  util.CloneRef(u.verification),
-		passwordReset: util.CloneRef(u.passwordReset),
+		id:             u.id,
+		name:           u.name,
+		alias:          u.alias,
+		email:          u.email,
+		password:       u.password,
+		workspace:      u.workspace,
+		auths:          slices.Clone(u.auths),
+		metadata:       util.CloneRef(u.metadata),
+		verification:   util.CloneRef(u.verification),
+		passwordReset:  util.CloneRef(u.passwordReset),
+		createdAt:      util.CloneRef(u.createdAt),
+		deletedAt:      util.CloneRef(u.deletedAt),
+		latestLogoutAt: u.latestLogoutAt,
 	}
+}
+
+// CreatedAt returns when the user was created, or nil if that is unknown.
+func (u *User) CreatedAt() *time.Time {
+	return util.CloneRef(u.createdAt)
+}
+
+// DeletedAt returns when reearth-accounts deactivated the user, or nil if the user is active.
+func (u *User) DeletedAt() *time.Time {
+	return util.CloneRef(u.deletedAt)
+}
+
+// LatestLogoutAt returns the time of the user's latest logout recorded by reearth-accounts.
+func (u *User) LatestLogoutAt() time.Time {
+	return u.latestLogoutAt
 }
 
 func (u *User) WithHost(host string) *User {

@@ -1,6 +1,8 @@
 package mongodoc
 
 import (
+	"time"
+
 	"github.com/reearth/reearthx/account/accountdomain"
 	"github.com/reearth/reearthx/account/accountdomain/workspace"
 	"github.com/reearth/reearthx/mongox"
@@ -8,9 +10,16 @@ import (
 )
 
 type WorkspaceMemberDocument struct {
-	Role      string
-	InvitedBy string
-	Disabled  bool
+	Role       string
+	InvitedBy  string
+	Disabled   bool
+	ExternalID string `bson:"externalid,omitempty"`
+}
+
+type WorkspaceScimConfigDocument struct {
+	Enabled          bool
+	GroupRoleMapping map[string]string
+	TokenHash        string
 }
 
 type WorkspaceMetadataDocument struct {
@@ -31,24 +40,35 @@ type WorkspaceDocument struct {
 	Integrations map[string]WorkspaceMemberDocument
 	Personal     bool
 	Policy       string `bson:",omitempty"`
+	// MembersHash is maintained for reearth-accounts, which shares this collection and has a unique index on
+	// (alias, members_hash). See ComputeWorkspaceMembersHash.
+	MembersHash string `bson:"members_hash,omitempty"`
+	// Fields shared with reearth-accounts. ReplaceOne writes the whole document, so they must round-trip.
+	ScimConfig *WorkspaceScimConfigDocument `bson:"scimconfig,omitempty"`
+	CreatedAt  *time.Time                   `bson:"createdat,omitempty"`
+	CreatedBy  string                       `bson:"createdby,omitempty"`
+	UpdatedAt  time.Time                    `bson:"updatedat"`
+	DeletedAt  *time.Time                   `bson:"deletedat,omitempty"`
 }
 
 func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 	membersDoc := map[string]WorkspaceMemberDocument{}
 	for uId, m := range ws.Members().Users() {
 		membersDoc[uId.String()] = WorkspaceMemberDocument{
-			Role:      string(m.Role),
-			Disabled:  m.Disabled,
-			InvitedBy: m.InvitedBy.String(),
+			Role:       string(m.Role),
+			Disabled:   m.Disabled,
+			InvitedBy:  m.InvitedBy.String(),
+			ExternalID: m.ExternalID,
 		}
 	}
 
 	integrationsDoc := map[string]WorkspaceMemberDocument{}
 	for iId, m := range ws.Members().Integrations() {
 		integrationsDoc[iId.String()] = WorkspaceMemberDocument{
-			Role:      string(m.Role),
-			Disabled:  m.Disabled,
-			InvitedBy: m.InvitedBy.String(),
+			Role:       string(m.Role),
+			Disabled:   m.Disabled,
+			InvitedBy:  m.InvitedBy.String(),
+			ExternalID: m.ExternalID,
 		}
 	}
 
@@ -63,6 +83,9 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		}
 	}
 
+	// A marshalling error cannot happen with these types; an empty hash is left out of the document.
+	membersHash, _ := ComputeWorkspaceMembersHash(membersDoc, integrationsDoc)
+
 	wId := ws.ID().String()
 	return &WorkspaceDocument{
 		ID:           wId,
@@ -74,6 +97,12 @@ func NewWorkspace(ws *workspace.Workspace) (*WorkspaceDocument, string) {
 		Integrations: integrationsDoc,
 		Personal:     ws.IsPersonal(),
 		Policy:       lo.FromPtr(ws.Policy()).String(),
+		MembersHash:  membersHash,
+		ScimConfig:   newScimConfigDocument(ws.ScimConfig()),
+		CreatedAt:    createdAt(ws.CreatedAt(), ws.ID().Timestamp()),
+		CreatedBy:    lo.FromPtr(ws.CreatedBy()).String(),
+		UpdatedAt:    time.Now(),
+		DeletedAt:    ws.DeletedAt(),
 	}, wId
 }
 
@@ -95,9 +124,10 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 				inviterID = uid
 			}
 			members[uid] = workspace.Member{
-				Role:      workspace.Role(member.Role),
-				Disabled:  member.Disabled,
-				InvitedBy: inviterID,
+				Role:       workspace.Role(member.Role),
+				Disabled:   member.Disabled,
+				InvitedBy:  inviterID,
+				ExternalID: member.ExternalID,
 			}
 		}
 	}
@@ -110,9 +140,10 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 				return nil, err
 			}
 			integrations[iId] = workspace.Member{
-				Role:      workspace.Role(integrationDoc.Role),
-				Disabled:  integrationDoc.Disabled,
-				InvitedBy: accountdomain.MustUserID(integrationDoc.InvitedBy),
+				Role:       workspace.Role(integrationDoc.Role),
+				Disabled:   integrationDoc.Disabled,
+				InvitedBy:  accountdomain.MustUserID(integrationDoc.InvitedBy),
+				ExternalID: integrationDoc.ExternalID,
 			}
 		}
 	}
@@ -120,6 +151,13 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 	var policy *workspace.PolicyID
 	if d.Policy != "" {
 		policy = workspace.PolicyID(d.Policy).Ref()
+	}
+
+	var createdBy *accountdomain.UserID
+	if d.CreatedBy != "" {
+		if uid, err := accountdomain.UserIDFrom(d.CreatedBy); err == nil {
+			createdBy = &uid
+		}
 	}
 
 	metadata := &workspace.Metadata{}
@@ -137,7 +175,41 @@ func (d *WorkspaceDocument) Model() (*workspace.Workspace, error) {
 		Integrations(integrations).
 		Personal(d.Personal).
 		Policy(policy).
+		ScimConfig(d.ScimConfig.Model()).
+		CreatedAt(d.CreatedAt).
+		CreatedBy(createdBy).
+		DeletedAt(d.DeletedAt).
 		Build()
+}
+
+func newScimConfigDocument(c *workspace.ScimConfig) *WorkspaceScimConfigDocument {
+	if c == nil {
+		return nil
+	}
+	m := make(map[string]string, len(c.GroupRoleMapping))
+	for k, v := range c.GroupRoleMapping {
+		m[k] = string(v)
+	}
+	return &WorkspaceScimConfigDocument{
+		Enabled:          c.Enabled,
+		GroupRoleMapping: m,
+		TokenHash:        c.TokenHash,
+	}
+}
+
+func (d *WorkspaceScimConfigDocument) Model() *workspace.ScimConfig {
+	if d == nil {
+		return nil
+	}
+	m := make(map[string]workspace.Role, len(d.GroupRoleMapping))
+	for k, v := range d.GroupRoleMapping {
+		m[k] = workspace.Role(v)
+	}
+	return &workspace.ScimConfig{
+		Enabled:          d.Enabled,
+		GroupRoleMapping: m,
+		TokenHash:        d.TokenHash,
+	}
 }
 
 func NewWorkspaces(workspaces []*workspace.Workspace) ([]*WorkspaceDocument, []string) {

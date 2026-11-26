@@ -25,6 +25,8 @@ type Member struct {
 	Disabled  bool
 	InvitedBy UserID
 	Host      string
+	// ExternalID is the IdP-assigned ID of this membership, managed by reearth-accounts (SCIM).
+	ExternalID string
 }
 
 type Members struct {
