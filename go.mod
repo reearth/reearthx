@@ -29,7 +29,7 @@ require (
 	github.com/jpillora/opts v1.2.3
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/labstack/echo/v4 v4.13.3
-	github.com/labstack/echo/v5 v5.1.0
+	github.com/labstack/echo/v5 v5.4.1
 	github.com/labstack/gommon v0.4.2
 	github.com/maruel/panicparse/v2 v2.5.0
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
@@ -54,10 +54,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
-	golang.org/x/crypto v0.47.0
+	golang.org/x/crypto v0.54.0
 	golang.org/x/exp v0.0.0-20250531010427-b6e5de432a8b
-	golang.org/x/net v0.49.0
-	golang.org/x/text v0.33.0
+	golang.org/x/net v0.57.0
+	golang.org/x/text v0.40.0
 	gopkg.in/go-jose/go-jose.v2 v2.6.3
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -138,12 +138,12 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0 // indirect
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/oauth2 v0.28.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.40.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/time v0.15.0 // indirect
+	golang.org/x/tools v0.47.0 // indirect
 	google.golang.org/api v0.228.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
