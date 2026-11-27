@@ -24,7 +24,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/iancoleman/strcase v0.3.0
-	github.com/jackc/pgx/v5 v5.7.2
+	github.com/jackc/pgx/v5 v5.9.2
 	github.com/jarcoal/httpmock v1.4.0
 	github.com/jpillora/opts v1.2.3
 	github.com/kennygrant/sanitize v1.2.4
